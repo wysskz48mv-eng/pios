@@ -1,82 +1,74 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
 
-export async function POST(request: Request) {
-  // Create supabase with cookies from request
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          const cookieHeader = request.headers.get('cookie') || ''
-          return cookieHeader.split(';').map(c => {
-            const [name, ...rest] = c.trim().split('=')
-            return { name: name.trim(), value: rest.join('=') }
-          }).filter(c => c.name)
-        },
-        setAll() {},
-      },
-    }
-  )
+export const runtime = 'nodejs'
 
+export async function POST() {
+  const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const today = new Date().toISOString().slice(0, 10)
 
-  const [tasksRes, modulesRes, projectsRes, notifRes] = await Promise.all([
+  const [tasksR, modulesR, projectsR, notifsR, chaptersR] = await Promise.all([
     supabase.from('tasks').select('title,domain,priority,due_date,status')
-      .eq('user_id', user.id).neq('status', 'done').order('due_date', { ascending: true }).limit(10),
-    supabase.from('academic_modules').select('title,status,deadline')
-      .eq('user_id', user.id).in('status', ['in_progress', 'upcoming']).limit(5),
+      .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
+      .order('due_date', { ascending: true }).limit(10),
+    supabase.from('academic_modules').select('title,status,deadline,module_type')
+      .eq('user_id', user.id).not('status', 'in', '("passed","failed")').limit(6),
     supabase.from('projects').select('title,domain,status,progress')
-      .eq('user_id', user.id).eq('status', 'active').order('created_at', { ascending: false }).limit(6),
+      .eq('user_id', user.id).eq('status', 'active').limit(6),
     supabase.from('notifications').select('title,type,domain')
-      .eq('user_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(5),
+      .eq('user_id', user.id).eq('read', false).limit(5),
+    supabase.from('thesis_chapters').select('title,chapter_num,status,word_count,target_words')
+      .eq('user_id', user.id).order('chapter_num').limit(6),
   ])
 
-  const dateStr = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-  })
+  const ctx = `
+Today: ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
 
-  const ctx = `Today: ${dateStr}
+OPEN TASKS (${tasksR.data?.length}):
+${tasksR.data?.map(t => `- [${t.priority}] ${t.title} (${t.domain}) — ${t.due_date ? new Date(t.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'no deadline'}`).join('\n')}
 
-Open tasks (${tasksRes.data?.length || 0}):
-${tasksRes.data?.map(t => `- [${t.priority.toUpperCase()}] ${t.title} (${t.domain}) — ${t.due_date ? new Date(t.due_date).toLocaleDateString('en-GB') : 'no date'}`).join('\n') || 'None'}
+ACADEMIC MODULES:
+${modulesR.data?.map(m => `- ${m.title} [${m.status}] — deadline: ${m.deadline ? new Date(m.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD'}`).join('\n')}
 
-Active academic modules:
-${modulesRes.data?.map(m => `- ${m.title}: ${m.status} — deadline ${m.deadline || 'TBC'}`).join('\n') || 'None'}
+THESIS CHAPTERS:
+${chaptersR.data?.map(c => `- Ch${c.chapter_num}: ${c.title} [${c.status}] — ${c.word_count}/${c.target_words} words`).join('\n')}
 
-Active projects:
-${projectsRes.data?.map(p => `- ${p.title} (${p.domain}) — ${p.progress}% complete`).join('\n') || 'None'}
+ACTIVE PROJECTS:
+${projectsR.data?.map(p => `- ${p.title} (${p.domain}) — ${p.progress}% complete`).join('\n')}
 
-Unread notifications:
-${notifRes.data?.map(n => `- [${n.type.toUpperCase()}] ${n.title}`).join('\n') || 'None'}`
+UNREAD ALERTS:
+${notifsR.data?.map(n => `- [${n.type.toUpperCase()}] ${n.title}`).join('\n') || 'None'}
+`
 
-  const system = `You are PIOS AI generating Douglas Masuku's daily morning brief. Douglas is simultaneously: a DBA candidate at University of Portsmouth, Group CEO of Sustain International FZE Ltd, FM consultant pursuing the Qiddiya QPMO-410-CT-07922 RFP, and builder of three SaaS products (SustainEdge, InvestiScript, PIOS).
+  const system = `You are the PIOS AI Companion for Douglas Masuku — founder and Group CEO of Sustain International FZE Ltd, DBA candidate at University of Portsmouth, FM consultant, and technology entrepreneur building SustainEdge (service charge SaaS), InvestiScript (investigative journalism AI platform), and PIOS (personal AI operating system).
 
-Write a morning brief that is: direct, practical, cross-domain aware. 3–4 tight paragraphs of plain prose. No headers. No bullet points. Surface the single most important focus, note any cross-domain conflicts or risks, and flag what needs immediate action today. Maximum 280 words.`
+Generate Douglas's daily morning brief. Be direct, concise, action-oriented. No pleasantries. No bullet points. 3-4 tight paragraphs.
+
+Paragraph 1: The single most important focus today and why.
+Paragraph 2: Cross-domain conflicts or risks you've spotted (academic deadlines clashing with business commitments, etc.).
+Paragraph 3: The 2-3 tasks requiring his personal attention today specifically — not just what's on the list.
+Paragraph 4 (optional): A signal or opportunity from the data worth flagging.
+
+Maximum 280 words. Plain prose only.`
 
   try {
     const content = await callClaude(
-      [{ role: 'user', content: `Generate my morning brief for today.\n\n${ctx}` }],
-      system,
-      650
+      [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}` }],
+      system, 700
     )
-
-    // Upsert the brief into Supabase
     await supabase.from('daily_briefs').upsert({
       user_id: user.id,
       brief_date: today,
       content,
       ai_model: 'claude-sonnet-4-20250514',
     }, { onConflict: 'user_id,brief_date' })
-
     return NextResponse.json({ content, brief_date: today })
   } catch (err) {
     console.error('Brief generation error:', err)
-    return NextResponse.json({ error: 'AI generation failed' }, { status: 500 })
+    return NextResponse.json({ error: 'Brief generation failed' }, { status: 500 })
   }
 }
