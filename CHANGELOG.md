@@ -1,5 +1,15 @@
 # PIOS Changelog
 
+## v1.2.0 — 2026-Q1
+
+### Bug Fixes
+- **Build fix** (`payroll/detect/route.ts`, `brief/route.ts`) — Vercel build failures caused by `try {}` injected inside `Promise.all([...])` arrays from a bad merge. Both files restored to valid TypeScript. [commit 07b8e8c]
+
+### New Features
+- **Literature Library** (`/platform/research`) — My Library tab: GET/POST `/api/literature` route (168L). Lists items with filters (read_status, source_type, tag, text search) + stats. Supports update (read_status, relevance, notes, themes), delete, and AI summary generation (3-4 sentence summary + APA citation + DBA relevance framing + theme extraction). Interactive star rating and notes textarea. Tabs: search · journals · cfp · **library** · import.
+
+---
+
 ## v1.1.0 — 2026-Q1 (March 2026)
 
 ### New Features
