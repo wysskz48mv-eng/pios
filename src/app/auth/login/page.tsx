@@ -103,7 +103,11 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '12px', color: 'var(--pios-dim)' }}>
+        <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '12px', color: 'var(--pios-dim)' }}>
+          Don't have an account?{' '}
+          <a href="/auth/signup" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>Create one →</a>
+        </p>
+        <p style={{ textAlign: 'center', marginTop: '8px', fontSize: '12px', color: 'var(--pios-dim)' }}>
           PIOS · Sustain International FZE Ltd · v1.0
         </p>
       </div>

@@ -18,6 +18,7 @@ const NAV = [
   { href: '/platform/command',   icon: '⬡',  label: 'Live Data',      colour: '#22c55e' },
   { href: '/platform/expenses',  icon: '£',  label: 'Expenses',       colour: '#e05a7a' },
   { href: '/platform/ai',        icon: '◉',  label: 'AI Companion',   colour: '#a78bfa' },
+  { href: '/platform/admin',     icon: '⚙',  label: 'Admin',          colour: '#ef4444' },
 ]
 
 interface SidebarProps {
