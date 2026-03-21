@@ -120,32 +120,37 @@ Staff count: unknown (accountant has the details)`
     }
 
     // Log the chase
-    await supabase.from('payroll_chase_log').insert({
-      user_id: user.id,
-      chase_level: chaseLevel,
-      days_overdue: daysOverdue,
-      expected_date: payrollDueDate,
-      accountant_email: accountant_email ?? null,
-      draft_subject: draft.subject,
-      draft_body: draft.body,
-      sent_at: new Date().toISOString(),
-      status: 'draft',  // User must confirm before sending
-    })
+  try {
+      await supabase.from('payroll_chase_log').insert({
+        user_id: user.id,
+        chase_level: chaseLevel,
+        days_overdue: daysOverdue,
+        expected_date: payrollDueDate,
+        accountant_email: accountant_email ?? null,
+        draft_subject: draft.subject,
+        draft_body: draft.body,
+        sent_at: new Date().toISOString(),
+        status: 'draft',  // User must confirm before sending
+      })
 
-    return NextResponse.json({
-      chase_needed: true,
-      chase_level: chaseLevel,
-      days_overdue: daysOverdue,
-      expected_date: payrollDueDate,
-      draft,
-      hitl_required: true,
-      hitl_message: `${chaseLevel.charAt(0).toUpperCase() + chaseLevel.slice(1)} chase email drafted. Review and send manually — PIOS will not send emails without your explicit approval.`,
-    })
-  } catch (err: any) {
-    console.error('/api/payroll/chase:', err)
-    return NextResponse.json({ error: err.message ?? 'Chase check failed' }, { status: 500 })
-  }
-}
+      return NextResponse.json({
+        chase_needed: true,
+        chase_level: chaseLevel,
+        days_overdue: daysOverdue,
+        expected_date: payrollDueDate,
+        draft,
+        hitl_required: true,
+        hitl_message: `${chaseLevel.charAt(0).toUpperCase() + chaseLevel.slice(1)} chase email drafted. Review and send manually — PIOS will not send emails without your explicit approval.`,
+      })
+    } catch (err: any) {
+      console.error('/api/payroll/chase:', err)
+      return NextResponse.json({ error: err.message ?? 'Chase check failed' }, { status: 500 })
+    }
+
+  } catch (persistErr: any) {
+    console.error('[PIOS] payroll/chase:', persistErr)
+    return NextResponse.json({ error: persistErr.message ?? 'DB error' }, { status: 500 })
+  }}
 
 export async function GET() {
   try {

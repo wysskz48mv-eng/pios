@@ -89,31 +89,36 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
     }
 
     // Log search to DB
-    const { data: searchRecord } = await supabase.from('database_searches').insert({
-      user_id: user.id,
-      query,
-      database_name: database,
-      filters: { yearFrom, yearTo, subjectArea, maxResults },
-      result_count: parsed.results?.length ?? 0,
-      results: parsed.results ?? [],
-      notes: parsed.search_strategy,
-    }).select('id').single()
+  try {
+      const { data: searchRecord } = await supabase.from('database_searches').insert({
+        user_id: user.id,
+        query,
+        database_name: database,
+        filters: { yearFrom, yearTo, subjectArea, maxResults },
+        result_count: parsed.results?.length ?? 0,
+        results: parsed.results ?? [],
+        notes: parsed.search_strategy,
+      }).select('id').single()
 
-    return NextResponse.json({
-      results: parsed.results ?? [],
-      totalFound: parsed.total_found ?? 0,
-      searchStrategy: parsed.search_strategy,
-      aiGuidance: parsed.ai_guidance,
-      searchId: searchRecord?.id,
-      database,
-      query,
-      disclaimer: 'Results are AI-generated based on known literature patterns. Verify via your institutional Scopus/WoS access before citing. Use DOIs to locate actual papers.',
-    })
+      return NextResponse.json({
+        results: parsed.results ?? [],
+        totalFound: parsed.total_found ?? 0,
+        searchStrategy: parsed.search_strategy,
+        aiGuidance: parsed.ai_guidance,
+        searchId: searchRecord?.id,
+        database,
+        query,
+        disclaimer: 'Results are AI-generated based on known literature patterns. Verify via your institutional Scopus/WoS access before citing. Use DOIs to locate actual papers.',
+      })
+    } catch (err: any) {
+      console.error('/api/research/search:', err)
+      return NextResponse.json({ error: err.message ?? 'Search failed' }, { status: 500 })
+    }
+
   } catch (err: any) {
-    console.error('/api/research/search:', err)
-    return NextResponse.json({ error: err.message ?? 'Search failed' }, { status: 500 })
-  }
-}
+    console.error('[PIOS] research/search POST:', err.message)
+    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+  }}
 
 export async function GET(request: Request) {
   try {

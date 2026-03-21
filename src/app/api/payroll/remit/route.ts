@@ -112,33 +112,38 @@ Company: ${run.company_entity ?? 'Sustain International FZE Ltd'}`
       remittance_body: r.notification.body,
     }))
 
-    await supabase.from('transfer_queue').insert(transferInserts)
+  try {
+      await supabase.from('transfer_queue').insert(transferInserts)
 
-    // Mark lines as remittance_sent
-    await supabase.from('payroll_lines').update({
-      remittance_sent: true,
-      remittance_sent_at: new Date().toISOString(),
-    }).in('id', pendingLines.map(l => l.id))
+      // Mark lines as remittance_sent
+      await supabase.from('payroll_lines').update({
+        remittance_sent: true,
+        remittance_sent_at: new Date().toISOString(),
+      }).in('id', pendingLines.map(l => l.id))
 
-    // Update run status
-    await supabase.from('payroll_runs').update({
-      status: 'remittance_sent',
-      remittance_sent_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }).eq('id', run_id)
+      // Update run status
+      await supabase.from('payroll_runs').update({
+        status: 'remittance_sent',
+        remittance_sent_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', run_id)
 
-    return NextResponse.json({
-      success: true,
-      run_id,
-      remittances_queued: remittances.length,
-      transfers_queued: transferInserts.length,
-      total_net: remittances.reduce((s, r) => s + parseFloat(r.net_pay ?? 0), 0).toFixed(2),
-      currency: run.currency,
-      hitl_required: true,
-      hitl_message: `${remittances.length} bank transfers queued for your approval. Go to Transfer Queue to approve each payment. Transfers are NOT sent until you explicitly approve them.`,
-    })
-  } catch (err: any) {
-    console.error('/api/payroll/remit:', err)
-    return NextResponse.json({ error: err.message ?? 'Remittance failed' }, { status: 500 })
-  }
-}
+      return NextResponse.json({
+        success: true,
+        run_id,
+        remittances_queued: remittances.length,
+        transfers_queued: transferInserts.length,
+        total_net: remittances.reduce((s, r) => s + parseFloat(r.net_pay ?? 0), 0).toFixed(2),
+        currency: run.currency,
+        hitl_required: true,
+        hitl_message: `${remittances.length} bank transfers queued for your approval. Go to Transfer Queue to approve each payment. Transfers are NOT sent until you explicitly approve them.`,
+      })
+    } catch (err: any) {
+      console.error('/api/payroll/remit:', err)
+      return NextResponse.json({ error: err.message ?? 'Remittance failed' }, { status: 500 })
+    }
+
+  } catch (persistErr: any) {
+    console.error('[PIOS] payroll/remit:', persistErr)
+    return NextResponse.json({ error: persistErr.message ?? 'DB error' }, { status: 500 })
+  }}
