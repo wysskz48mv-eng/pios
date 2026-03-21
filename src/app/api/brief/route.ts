@@ -44,6 +44,34 @@ UNREAD ALERTS:
 ${notifsR.data?.map(n => `- [${n.type.toUpperCase()}] ${n.title}`).join('\n') || 'None'}
 `
 
+  // Fetch live platform data (non-blocking)
+  let liveCtx = ''
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const [seRes, isRes, ghRes] = await Promise.all([
+      fetch(`${appUrl}/api/live/sustainedge`).then(r => r.json()).catch(() => null),
+      fetch(`${appUrl}/api/live/investiscript`).then(r => r.json()).catch(() => null),
+      fetch(`${appUrl}/api/live/github`).then(r => r.json()).catch(() => null),
+    ])
+    if (seRes?.connected && seRes.snapshot) {
+      const s = seRes.snapshot
+      liveCtx += `
+SUSTAINEDGE LIVE: ${s.tenants?.total ?? 0} tenants · ${s.assets?.total ?? 0} assets · OBE engine: ${s.obe?.engine ?? 'not run'}`
+    }
+    if (isRes?.connected && isRes.snapshot) {
+      const i = isRes.snapshot
+      liveCtx += `
+INVESTISCRIPT LIVE: ${i.users?.total ?? 0} users · ${i.users?.activeTrial ?? 0} active trials · ${i.subscriptions?.total ?? 0} paid subscribers`
+    }
+    if (ghRes?.connected && ghRes.repos) {
+      const heads = Object.entries(ghRes.repos)
+        .map(([, r]: [string, any]) => r.commits?.[0] ? `${r.label}@${r.commits[0].sha}` : null)
+        .filter(Boolean).join(' · ')
+      if (heads) liveCtx += `
+GITHUB HEADS: ${heads}`
+    }
+  } catch { /* silent */ }
+
   const system = `You are the PIOS AI Companion for Douglas Masuku — founder and Group CEO of Sustain International FZE Ltd, DBA candidate at University of Portsmouth, FM consultant, and technology entrepreneur building SustainEdge (service charge SaaS), InvestiScript (investigative journalism AI platform), and PIOS (personal AI operating system).
 
 Generate Douglas's daily morning brief. Be direct, concise, action-oriented. No pleasantries. No bullet points. 3-4 tight paragraphs.
@@ -57,7 +85,7 @@ Maximum 280 words. Plain prose only.`
 
   try {
     const content = await callClaude(
-      [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}` }],
+      [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${liveCtx ? '\n' + liveCtx : ''}` }],
       system, 700
     )
     await supabase.from('daily_briefs').upsert({
