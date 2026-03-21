@@ -14,7 +14,7 @@ export async function GET() {
   try {
     const supabase = createClient()
     const t = Date.now()
-    await supabase.from('tenants').select('id').limit(1)
+    await supabase.from('user_profiles').select('id').limit(1)
     dbLatencyMs = Date.now() - t
   } catch { dbStatus = 'error' }
 
