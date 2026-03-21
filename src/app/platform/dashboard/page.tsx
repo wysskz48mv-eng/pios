@@ -97,7 +97,7 @@ export default function DashboardPage() {
   const DOMAINS = [
     { key: 'academic',      label: 'Academic',      icon: '🎓', extra: `${modules.length} active` },
     { key: 'fm_consulting', label: 'FM Consulting',  icon: '🏗',  extra: 'Qiddiya active' },
-    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: `${seSnap ? seSnap.organisations.total + ' tenants' : 'SE · IS · PIOS'}` },
+    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: `${seSnap ? (seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0) + ' tenants' : 'SE · IS · PIOS'}` },
     { key: 'business',      label: 'Business',       icon: '🏢',  extra: 'Group ops' },
     { key: 'personal',      label: 'Personal',       icon: '✦',   extra: `${projects.length} projects` },
   ]
@@ -138,7 +138,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
                 {[
-                  { l:'Tenants', v: seSnap.organisations?.total ?? 0 },
+                  { l:'Tenants', v: seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0 },
                   { l:'Projects', v: seSnap.projects?.total ?? 0 },
                   { l:'Assets', v: (seSnap.assets?.total ?? 0).toLocaleString() },
                 ].map(m => (
@@ -164,7 +164,7 @@ export default function DashboardPage() {
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
                 {[
                   { l:'Newsrooms', v: isSnap.organisations?.total ?? 0 },
-                  { l:'Investigations', v: isSnap.topics?.total ?? 0 },
+                  { l:'Investigations', v: isSnap.investigations?.total ?? isSnap.topics?.total ?? 0 },
                   { l:'Scripts', v: isSnap.scripts?.total ?? 0 },
                 ].map(m => (
                   <div key={m.l}>
@@ -173,9 +173,11 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-              {isSnap.usage?.thisMonth && (
+              {(isSnap.apiUsage?.costUsd != null || isSnap.usage?.thisMonth != null) && (
                 <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
-                  {isSnap.usage.thisMonth} AI calls this month
+                  {isSnap.apiUsage?.costUsd != null
+                    ? `$${isSnap.apiUsage.costUsd.toFixed(2)} API cost (30d)`
+                    : `${isSnap.usage.thisMonth} AI calls this month`}
                 </div>
               )}
             </div>
