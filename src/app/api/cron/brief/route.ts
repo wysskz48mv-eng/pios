@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { callClaude } from '@/lib/ai/client'
+import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
 
 export const runtime  = 'nodejs'
 export const dynamic  = 'force-dynamic'
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
   // Fetch all active user profiles with auto_brief enabled
   const { data: profiles, error: profErr } = await admin
     .from('user_profiles')
-    .select('id, user_id:id')
+    .select('id, full_name, email')
     .limit(100)
 
   if (profErr || !profiles) {
@@ -101,6 +102,18 @@ Maximum 200 words. Plain prose only. No bullet points.`
         ai_model:  'claude-sonnet-4-20250514',
         generated_by: 'cron',
       }, { onConflict: 'user_id,brief_date' })
+
+      // Deliver brief by email if user has an address stored
+      const userEmail = (profile as any).email
+      const userName  = (profile as any).full_name ?? 'there'
+      if (userEmail) {
+        await sendEmail({
+          to:      userEmail,
+          subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
+          html:    morningBriefHtml(content, today, userName),
+          text:    morningBriefText(content, today, userName),
+        })
+      }
 
       generated++
     } catch (err: any) {
