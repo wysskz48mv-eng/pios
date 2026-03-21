@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { messages } = await request.json()
+  const { messages, domainContext } = await request.json()
   if (!messages?.length) return NextResponse.json({ error: 'No messages' }, { status: 400 })
 
   // Build rich live context for the AI
@@ -36,6 +36,7 @@ Unread alerts: ${notifsR.data?.map(n => `${n.title} [${n.type}]`).join('; ') || 
 Today: ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
 `
 
+  const domainPrefix = domainContext ? `\nDOMAIN FOCUS FOR THIS CONVERSATION:\n${domainContext}\n` : ''
   const system = `You are PIOS AI — Douglas Masuku's personal intelligent operating system companion.
 
 Douglas is:
@@ -50,7 +51,7 @@ You have full access to his live data. Be direct, concise, action-oriented. Surf
 ${liveContext}`
 
   try {
-    const reply = await callClaude(messages, system, 1000)
+    const reply = await callClaude(messages, system + domainPrefix, 1000)
     // Increment AI credit usage
     return NextResponse.json({ reply })
   } catch (err) {
