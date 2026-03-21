@@ -1,5 +1,14 @@
 # PIOS Changelog
 
+## v2.0.0 — 2026-Q1 (Expenses inline edit + Admin env checklist)
+
+### New Features
+- **Expenses inline edit** (`src/app/platform/expenses/page.tsx` +40L) [commit 8f3bebf] — Click any expense description to edit in-place. Enter saves; Escape cancels. PATCH to Supabase with optimistic local update. Edit mode shows ✓ save + ✕ cancel; view mode shows ✎ edit + ✕ delete. Previously expenses could only be deleted and re-added to fix errors.
+
+- **Admin env checklist — two new vars** (`src/app/platform/admin/page.tsx`) [commit 8f3bebf] — `SUPABASE_IS_SERVICE_KEY` (optional, IS live data in Command Centre) and `CRON_SECRET` (required, Bearer auth for `/api/cron/brief`) added to the Vercel env vars checklist. Without `CRON_SECRET` the morning brief cron fires but returns 401 and generates nothing.
+
+---
+
 ## v1.9.0 — 2026-Q1 (Morning Brief Cron + vercel.json)
 
 ### New Features
