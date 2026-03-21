@@ -1,5 +1,14 @@
 # PIOS Changelog
 
+## v1.6.0 — 2026-Q1 (Google Auth + UX Fixes)
+
+### Fixes
+- **Google reconnect always shown** (`src/app/platform/settings/page.tsx`) [commit b08d054] — Previously the 'Connect Google Account' button only appeared when `profile.google_email` was null (not connected). Problem: users who had connected Google before `gmail.modify` scope was added to the OAuth flow could not grant the new scope without reconnecting — the button was hidden. Now: button is always visible, label changes based on state: Connected → `'↻ Reconnect Google (refresh scopes)'` / Not connected → `'Connect Google Account'`. Both use `prompt: 'consent' + access_type: 'offline'` to force full scope re-grant and new refresh token issuance. Required for Gmail API send + Calendar sync to work for existing users.
+
+- **alert() → inline banner notifications** [commit e81456b] — Replaced all `alert()` dialogs with non-blocking inline banner notifications. `alert()` is synchronous, browser-blocking, and fails for users with popup blockers. All PIOS notifications now use the inline banner pattern already established in the dashboard.
+
+---
+
 ## v1.5.0 — 2026-Q1 (Citation Guard Sprint)
 
 ### New Features
