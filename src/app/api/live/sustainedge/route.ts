@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 // GET /api/live/sustainedge
-// Pulls live metrics from the SustainEdge Supabase project
-// Uses service role key stored as SUPABASE_SE_SERVICE_KEY env var
+// Pulls live metrics from the SustainEdge Supabase project.
+// Uses the ACTUAL SE schema: organisations, projects, assets, obe_runs, agent_recommendations
+// PIOS v1.0 | Sustain International FZE Ltd
 
 export const runtime = 'nodejs'
 
@@ -11,7 +12,6 @@ const SE_URL = 'https://oxqqzxvuksgzeeyhufhp.supabase.co'
 const SE_KEY = process.env.SUPABASE_SE_SERVICE_KEY ?? ''
 
 export async function GET() {
-  // Graceful degradation if env var not set
   if (!SE_KEY) {
     return NextResponse.json({
       connected: false,
@@ -22,36 +22,81 @@ export async function GET() {
 
   try {
     const se = createClient(SE_URL, SE_KEY, { auth: { persistSession: false } })
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400_000).toISOString()
 
-    const [tenantsR, projectsR, assetsR, obeRunsR, agentLogsR] = await Promise.all([
-      se.from('tenants').select('id, name, plan, created_at', { count: 'exact', head: false }),
-      se.from('projects').select('id, status', { count: 'exact', head: false }),
-      se.from('assets').select('id, status, asset_value_sar', { count: 'exact', head: false }),
-      se.from('obe_runs').select('id, created_at, total_budget_sar, _engine').order('created_at', { ascending: false }).limit(5),
-      se.from('agent_logs').select('id, agent_type, created_at, status').order('created_at', { ascending: false }).limit(10),
+    const [orgsR, projectsR, assetsR, obeRunsR, agentR, allocR] = await Promise.all([
+      // SaaS tenants = organisations (not property tenants)
+      se.from('organisations').select('id, name, plan, created_at', { count: 'exact', head: false }),
+      se.from('projects').select('id, status, name', { count: 'exact', head: false }),
+      se.from('assets').select('id, status, replacement_cost_sar', { count: 'exact', head: false }),
+      // OBE runs — most recent first
+      se.from('obe_runs').select('id, created_at, total_budget_sar, status').order('created_at', { ascending: false }).limit(5),
+      // Agent recommendations = agent activity log
+      se.from('agent_recommendations').select('id, recommendation_type, created_at, status').order('created_at', { ascending: false }).limit(20),
+      // Allocation configs — shows fairness engine activity
+      se.from('allocation_configurations').select('id, jcv_status, status, created_at').order('created_at', { ascending: false }).limit(5),
     ])
 
+    const orgs   = orgsR.data   ?? []
     const assets = assetsR.data ?? []
-    const totalAssetValue = assets.reduce((sum: number, a: any) => sum + (Number(a.asset_value_sar) || 0), 0)
-    const latestOBE = obeRunsR.data?.[0] ?? null
-    const recentAgentActivity = agentLogsR.data ?? []
+    const obeRuns= obeRunsR.data ?? []
+    const agents = agentR.data  ?? []
 
-    const agentSummary = recentAgentActivity.reduce((acc: Record<string, number>, log: any) => {
-      acc[log.agent_type] = (acc[log.agent_type] || 0) + 1; return acc
+    // Asset portfolio value
+    const totalAssetValue = assets.reduce(
+      (sum: number, a: any) => sum + (Number(a.replacement_cost_sar) || 0), 0
+    )
+
+    // OBE: most recent complete run
+    const latestOBE = obeRuns.find((r: any) => r.status === 'complete') ?? obeRuns[0] ?? null
+
+    // Agent activity breakdown
+    const agentByType = agents.reduce((acc: Record<string, number>, r: any) => {
+      const t = r.recommendation_type ?? 'unknown'
+      acc[t] = (acc[t] || 0) + 1
+      return acc
+    }, {})
+
+    const recentAgents = agents.filter((r: any) => r.created_at >= sevenDaysAgo).length
+
+    // Plan breakdown
+    const planBreakdown = orgs.reduce((acc: Record<string, number>, o: any) => {
+      acc[o.plan ?? 'unknown'] = (acc[o.plan ?? 'unknown'] || 0) + 1
+      return acc
     }, {})
 
     return NextResponse.json({
       connected: true,
       snapshot: {
-        tenants: { total: tenantsR.count ?? 0, list: (tenantsR.data ?? []).map((t: any) => ({ name: t.name, plan: t.plan })) },
-        projects: { total: projectsR.count ?? 0, active: (projectsR.data ?? []).filter((p: any) => p.status === 'active').length },
-        assets: { total: assetsR.count ?? 0, totalValueSAR: totalAssetValue },
+        tenants: {
+          total: orgsR.count ?? 0,
+          list:  orgs.slice(0, 5).map((o: any) => ({ name: o.name, plan: o.plan })),
+          byPlan: planBreakdown,
+        },
+        projects: {
+          total:  projectsR.count ?? 0,
+          active: (projectsR.data ?? []).filter((p: any) => p.status === 'active').length,
+          list:   (projectsR.data ?? []).slice(0, 3).map((p: any) => p.name),
+        },
+        assets: {
+          total:        assetsR.count ?? 0,
+          totalValueSAR: totalAssetValue,
+          active:       assets.filter((a: any) => a.status === 'operational').length,
+        },
         obe: latestOBE ? {
-          lastRun: latestOBE.created_at,
+          lastRun:       latestOBE.created_at,
           totalBudgetSAR: latestOBE.total_budget_sar,
-          engine: latestOBE._engine ?? 'claude',
+          status:        latestOBE.status,
         } : null,
-        agents: { recentRuns: recentAgentActivity.length, byType: agentSummary },
+        agents: {
+          total:       agentR.count ?? agents.length,
+          recentRuns:  recentAgents,
+          byType:      agentByType,
+        },
+        allocations: {
+          total:   allocR.count ?? 0,
+          pending: (allocR.data ?? []).filter((a: any) => a.jcv_status === 'pending').length,
+        },
         pulledAt: new Date().toISOString(),
       },
     })

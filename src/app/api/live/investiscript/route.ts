@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 // GET /api/live/investiscript
-// Pulls live metrics from the InvestiScript Supabase project
+// Pulls live metrics from the InvestiScript Supabase project.
+// Uses the ACTUAL IS schema: Organisation, User, Topic, Script, UsageRecord
+// PIOS v1.0 | Sustain International FZE Ltd
 
 export const runtime = 'nodejs'
 
@@ -20,52 +22,90 @@ export async function GET() {
 
   try {
     const is = createClient(IS_URL, IS_KEY, { auth: { persistSession: false } })
+    const now = new Date()
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400_000).toISOString()
+    const sevenDaysAgo  = new Date(Date.now() -  7 * 86400_000).toISOString()
 
-    const [usersR, subsR, invR, articlesR, apiUsageR] = await Promise.all([
-      is.from('users').select('id, plan, trial_ends_at, created_at', { count: 'exact', head: false }),
-      is.from('subscriptions').select('id, status, plan', { count: 'exact', head: false }),
-      is.from('investigations').select('id, status, created_at', { count: 'exact', head: false }),
-      is.from('articles').select('id, created_at', { count: 'exact', head: false }),
-      is.from('api_usage').select('endpoint, tokens_used, created_at').order('created_at', { ascending: false }).limit(50),
+    const [orgsR, usersR, topicsR, scriptsR, usageR] = await Promise.all([
+      // Organisations = IS tenants (each org is a newsroom)
+      is.from('Organisation').select('id, name, plan, "planStatus", "trialEndsAt", "stripeCustomerId", "createdAt"', { count: 'exact', head: false }),
+      // Users (across all orgs)
+      is.from('User').select('id, "createdAt", role', { count: 'exact', head: false }),
+      // Topics = investigations
+      is.from('Topic').select('id, "createdAt", "organisationId"', { count: 'exact', head: false }),
+      // Scripts = published/drafted articles
+      is.from('Script').select('id, "createdAt"', { count: 'exact', head: false }),
+      // UsageRecord = AI token consumption
+      is.from('UsageRecord').select('"inputTokens", "outputTokens", "costUsd", "createdAt"').gte('"createdAt"', thirtyDaysAgo),
     ])
 
-    const users = usersR.data ?? []
-    const subs = subsR.data ?? []
-    const now = new Date()
+    const orgs   = orgsR.data   ?? []
+    const users  = usersR.data  ?? []
+    const topics = topicsR.data ?? []
+    const usage  = usageR.data  ?? []
 
-    const trialUsers = users.filter((u: any) => u.plan === 'trial' && u.trial_ends_at && new Date(u.trial_ends_at) > now).length
-    const expiredTrials = users.filter((u: any) => u.plan === 'trial' && u.trial_ends_at && new Date(u.trial_ends_at) <= now).length
-    const activeSubscriptions = subs.filter((s: any) => s.status === 'active').length
-    const planBreakdown = subs.reduce((acc: Record<string, number>, s: any) => {
-      if (s.status === 'active') acc[s.plan] = (acc[s.plan] || 0) + 1; return acc
+    // Org breakdowns
+    const trialing       = orgs.filter((o: any) => o.planStatus === 'trialing').length
+    const activeOrgs     = orgs.filter((o: any) => o.planStatus === 'active').length
+    const expiredTrials  = orgs.filter((o: any) => {
+      return o.planStatus === 'trialing' && o.trialEndsAt && new Date(o.trialEndsAt) <= now
+    }).length
+    const activeTrial    = orgs.filter((o: any) => {
+      return o.planStatus === 'trialing' && o.trialEndsAt && new Date(o.trialEndsAt) > now
+    }).length
+    const planBreakdown  = orgs.reduce((acc: Record<string, number>, o: any) => {
+      if (o.planStatus === 'active') acc[o.plan] = (acc[o.plan] || 0) + 1
+      return acc
     }, {})
 
-    const totalTokens = (apiUsageR.data ?? []).reduce((sum: number, r: any) => sum + (Number(r.tokens_used) || 0), 0)
+    // Recency
+    const recentOrgs   = orgs.filter((o: any)   => o.createdAt > thirtyDaysAgo).length
+    const recentUsers  = users.filter((u: any)  => u.createdAt > thirtyDaysAgo).length
+    const recentTopics = topics.filter((t: any) => t.createdAt > sevenDaysAgo).length
 
-    // Signups in last 30 days
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString()
-    const recentSignups = users.filter((u: any) => u.created_at > thirtyDaysAgo).length
+    // Usage
+    const totalInputTokens  = usage.reduce((s: number, r: any) => s + (Number(r.inputTokens)  || 0), 0)
+    const totalOutputTokens = usage.reduce((s: number, r: any) => s + (Number(r.outputTokens) || 0), 0)
+    const totalCostUsd      = usage.reduce((s: number, r: any) => s + (Number(r.costUsd)      || 0), 0)
 
     return NextResponse.json({
       connected: true,
       snapshot: {
         users: {
-          total: usersR.count ?? 0,
-          activeTrial: trialUsers,
-          expiredTrial: expiredTrials,
-          recentSignups,
+          total:         usersR.count  ?? 0,
+          activeTrial,
+          expiredTrial:  expiredTrials,
+          recentSignups: recentUsers,
         },
-        subscriptions: {
-          total: activeSubscriptions,
-          byPlan: planBreakdown,
+        organisations: {
+          total:    orgsR.count ?? 0,
+          trialing,
+          active:   activeOrgs,
+          recentNew: recentOrgs,
+          byPlan:   planBreakdown,
         },
-        investigations: { total: invR.count ?? 0 },
-        articles: { total: articlesR.count ?? 0 },
-        apiUsage: { recentTokens: totalTokens },
-        pulledAt: new Date().toISOString(),
+        investigations: {
+          total:       topicsR.count ?? 0,
+          recentWeek:  recentTopics,
+        },
+        scripts: {
+          total: scriptsR.count ?? 0,
+        },
+        apiUsage: {
+          inputTokens:   totalInputTokens,
+          outputTokens:  totalOutputTokens,
+          totalTokens:   totalInputTokens + totalOutputTokens,
+          costUsd:       Math.round(totalCostUsd * 100) / 100,
+          period:        'last 30 days',
+        },
+        pulledAt: now.toISOString(),
       },
     })
   } catch (err: any) {
-    return NextResponse.json({ connected: false, error: err.message ?? 'Unknown error', snapshot: null })
+    return NextResponse.json({
+      connected: false,
+      error: err.message ?? 'Unknown error',
+      snapshot: null,
+    })
   }
 }

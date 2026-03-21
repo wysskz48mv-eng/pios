@@ -378,16 +378,16 @@ export default function CommandPage() {
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:12, marginBottom:20 }}>
               {[
-                { label:'Tenants', big:seData?.tenants?.total??'—', sub:seData?.tenants?.list?.map((t:any)=>t.name).join(', ')||'No tenants yet' },
-                { label:'Projects', big:seData?.projects?.total??'—', sub:`${seData?.projects?.active??0} active` },
-                { label:'Asset Portfolio', big:seData?.assets?.totalValueSAR?formatSAR(seData.assets.totalValueSAR):'—', sub:`${seData?.assets?.total??0} assets` },
-                { label:'OBE Engine', big:seData?.obe?null:'—', sub:seData?.obe?.lastRun?`Last run ${timeAgo(seData.obe.lastRun)}`:'No OBE runs yet', pill:seData?.obe },
-                { label:'Agent Activity', big:seData?.agents?.recentRuns??'—', sub:seData?.agents?.byType?Object.entries(seData.agents.byType).map(([k,v])=>`${k}: ${v}`).join(' · '):'No agent runs' },
+                { label:'SaaS Orgs',      big:seData?.tenants?.total??'—',                    sub:seData?.tenants?.list?.map((t:any)=>t.name).join(', ')||'No orgs yet' },
+                { label:'Projects',       big:seData?.projects?.total??'—',                   sub:`${seData?.projects?.active??0} active · ${seData?.projects?.list?.join(', ')||''}` },
+                { label:'Asset Portfolio',big:seData?.assets?.totalValueSAR?formatSAR(seData.assets.totalValueSAR):'—', sub:`${seData?.assets?.total??0} assets · ${seData?.assets?.active??0} operational` },
+                { label:'OBE Engine',     big:seData?.obe?'✓ Live':'—',                       sub:seData?.obe?.lastRun?`Last run ${timeAgo(seData.obe.lastRun)}`:'No OBE runs yet' },
+                { label:'AI Agents',      big:seData?.agents?.recentRuns??'—',                sub:`${seData?.agents?.total??0} total · ${seData?.agents?.byType?Object.keys(seData.agents.byType).length:0} types` },
+                { label:'Allocations',    big:seData?.allocations?.total??'—',                sub:`${seData?.allocations?.pending??0} pending JCV` },
               ].map(s => (
                 <div key={s.label} style={CARD}>
                   <div style={LABEL}>{s.label}</div>
-                  {s.pill ? <div style={{ ...BIG, fontSize:18 }}><Pill color={s.pill.engine==='python'?'#22c55e':'#a78bfa'}>{s.pill.engine==='python'?'Python':'Claude'}</Pill></div>
-                    : <div style={s.big?.toString().length>6?{...BIG,fontSize:18}:BIG}>{s.big}</div>}
+                  <div style={s.big?.toString().length>6?{...BIG,fontSize:18}:BIG}>{s.big}</div>
                   <div style={SUB}>{s.sub}</div>
                 </div>
               ))}
@@ -401,11 +401,12 @@ export default function CommandPage() {
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:12, marginBottom:20 }}>
               {[
-                { label:'Total Users', big:isData?.users?.total??'—', sub:`${isData?.users?.recentSignups??0} last 30 days` },
-                { label:'Active Trials', big:isData?.users?.activeTrial??'—', sub:`${isData?.users?.expiredTrial??0} expired` },
-                { label:'Paid Subscribers', big:isData?.subscriptions?.total??'—', sub:isData?.subscriptions?.byPlan?Object.entries(isData.subscriptions.byPlan).map(([k,v])=>`${k}: ${v}`).join(' · '):'No paid plans' },
-                { label:'Investigations', big:isData?.investigations?.total??'—', sub:`${isData?.articles?.total??0} articles` },
-                { label:'API Tokens', big:isData?.apiUsage?.recentTokens?`${(isData.apiUsage.recentTokens/1000).toFixed(0)}K`:'—', sub:'tokens used' },
+                { label:'Newsrooms',       big:isData?.organisations?.total??'—',         sub:`${isData?.organisations?.recentNew??0} new (30d)` },
+                { label:'Active Trials',   big:isData?.organisations?.trialing??'—',       sub:`${isData?.organisations?.expiredTrial??0} expired` },
+                { label:'Paid Orgs',       big:isData?.organisations?.active??'—',         sub:isData?.organisations?.byPlan?Object.entries(isData.organisations.byPlan).map(([k,v])=>`${k}: ${v}`).join(' · '):'No paid plans' },
+                { label:'Investigations',  big:isData?.investigations?.total??'—',         sub:`${isData?.investigations?.recentWeek??0} this week` },
+                { label:'Users',           big:isData?.users?.total??'—',                  sub:`${isData?.users?.recentSignups??0} last 30 days` },
+                { label:'AI Tokens (30d)', big:isData?.apiUsage?.totalTokens!=null?`${(isData.apiUsage.totalTokens/1000).toFixed(0)}K`:'—', sub:isData?.apiUsage?.costUsd!=null?`$${isData.apiUsage.costUsd} cost`:'tokens used' },
               ].map(s => (
                 <div key={s.label} style={CARD}><div style={LABEL}>{s.label}</div><div style={BIG}>{s.big}</div><div style={SUB}>{s.sub}</div></div>
               ))}
