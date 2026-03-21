@@ -52,6 +52,14 @@ export default function ExpensesPage() {
     const { data:{ user } } = await supabase.auth.getUser()
     if (!user) return
     await supabase.from('expenses').insert({ ...form, amount:parseFloat(form.amount), user_id:user.id, updated_at:new Date().toISOString() })
+    // Notify on large expenses (>£500 / >€500 / >$500 / >SAR 2000)
+    const amt = parseFloat(form.amount)
+    const thresholds: Record<string,number> = { GBP:500, EUR:500, USD:500, AED:2000, SAR:2000, QAR:2000 }
+    const threshold = thresholds[form.currency] ?? 500
+    if (amt >= threshold) {
+      await fetch('/api/notifications', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'create', title:`Large expense: ${form.currency} ${amt.toFixed(0)} — ${form.description}`, type:'warning', domain:form.domain, action_url:'/platform/expenses' }) })
+    }
     setForm({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP', billable:false, client:'', notes:'' })
     setShowAdd(false); load()
   }

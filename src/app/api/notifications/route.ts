@@ -50,6 +50,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    if (body.action === 'create') {
+      const { title, type = 'info', domain, action_url, body: msgBody } = body
+      if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
+      await supabase.from('notifications').insert({
+        user_id:    user.id,
+        title,
+        body:       msgBody ?? null,
+        type,
+        domain:     domain ?? null,
+        action_url: action_url ?? null,
+        read:       false,
+      })
+      return NextResponse.json({ ok: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
