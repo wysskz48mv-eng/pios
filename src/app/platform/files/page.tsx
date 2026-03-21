@@ -160,7 +160,8 @@ function FilesTab({ spaces }: { spaces:any[] }) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('all')
   const [extracting, setExtracting] = useState<string|null>(null)
-  const [extractMsg,  setExtractMsg]  = useState<string|null>(null)
+  const [extractMsg,       setExtractMsg]       = useState<string|null>(null)
+  const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string|null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -360,7 +361,8 @@ function RulesTab({ spaces }: { spaces:any[] }) {
   }
 
   async function deleteRule(id:string) {
-    if (!confirm('Delete this rule?')) return
+    if (deleteRuleConfirm !== rule.id) { setDeleteRuleConfirm(rule.id); return }
+    setDeleteRuleConfirm(null)
     await fetch('/api/files', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_rule', id }) })
     load()
   }

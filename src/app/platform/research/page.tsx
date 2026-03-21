@@ -321,7 +321,7 @@ function JournalsTab() {
   }
 
   async function deleteJournal(id: string) {
-    if (!confirm('Remove this journal from your watchlist?')) return
+    if (!window.confirm('Remove this journal from your watchlist?')) return
     await fetch('/api/research/journals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
     if (selected?.id === id) setSelected(null)
     load()
@@ -783,7 +783,7 @@ function LibraryTab() {
   }
 
   async function deleteItem(id: string) {
-    if (!confirm('Remove from library?')) return
+    if (!window.confirm('Remove from library?')) return
     setDeleting(id)
     await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
     setItems(prev => prev.filter(i => i.id !== id))

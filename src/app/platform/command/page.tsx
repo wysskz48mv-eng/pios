@@ -266,7 +266,8 @@ export default function CommandPage() {
   const [feeds, setFeeds]       = useState<any[]>([])
   const [feedSettings, setFeedSettings] = useState<any>({ command_layout:'grid', brief_include_feeds:true, show_relevance:true })
   const [loading, setLoading]   = useState(true)
-  const [feedsLoading, setFeedsLoading] = useState(true)
+  const [feedsLoading,       setFeedsLoading]       = useState(true)
+  const [deleteFeedConfirm, setDeleteFeedConfirm] = useState<string|null>(null)
   const [lastRefresh, setLastRefresh]   = useState<Date|null>(null)
   const [editingFeed, setEditingFeed]   = useState<any|null>(null)
   const [showAddFeed, setShowAddFeed]   = useState(false)
@@ -307,7 +308,8 @@ export default function CommandPage() {
   }
 
   async function handleDeleteFeed(id: string) {
-    if (!confirm('Remove this feed?')) return
+    if (deleteFeedConfirm !== id) { setDeleteFeedConfirm(id); return }
+    setDeleteFeedConfirm(null)
     await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete', id }) })
     setFeeds(prev => prev.filter(f => f.id !== id))
   }
