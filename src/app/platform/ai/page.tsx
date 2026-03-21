@@ -12,7 +12,7 @@ const DOMAIN_MODES = [
   { key:'general',      label:'General',      icon:'◉', colour:'#a78bfa', prompt:'' },
   { key:'academic',     label:'DBA Research', icon:'🎓', colour:'#6c8eff', prompt:'Focus on my DBA research at University of Portsmouth. Topic: AI-enabled forecasting in GCC FM. Theory: STS + sensemaking.' },
   { key:'fm_consulting',label:'FM Consulting', icon:'🏗️', colour:'#2dd4a0', prompt:'Focus on FM consulting. Key projects: Qiddiya (QPMO-410-CT-07922), King Salman Park (SAR 229.6M). Reference SustainEdge platform.' },
-  { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'#f59e0b', prompt:'Focus on my SaaS platforms: SustainEdge v5.2 (service charge), InvestiScript v3 (AI journalism), PIOS v1.0. Stack: Next.js 14, Supabase, Claude API.' },
+  { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'#f59e0b', prompt:'Focus on my SaaS platforms: VeritasEdge™ v5.8 (service charge), InvestiScript v3 (AI journalism), PIOS v2.0. Stack: Next.js 14, Supabase, Claude API.' },
   { key:'business',     label:'Business',     icon:'🏢', colour:'#e05a7a', prompt:'Focus on company management: Sustain International FZE Ltd (UAE), Sustain International UK Ltd, VeritasIQ Technologies Ltd. Governance, compliance, financials.' },
 ] as const
 
@@ -21,7 +21,7 @@ const SHORTCUTS = [
   { label:'Cross-domain conflicts?',          prompt:'Are there any cross-domain conflicts or risks I should be aware of right now?' },
   { label:'DBA thesis next step',             prompt:'What is the most important next step I should take on my DBA thesis this week?' },
   { label:'Qiddiya RFP status',               prompt:'Summarise where we stand on the Qiddiya QPMO-410-CT-07922 proposal and what actions remain.' },
-  { label:'SustainEdge sprint status',        prompt:'What was completed in the last SustainEdge sprint and what needs to happen next?' },
+  { label:'VeritasEdge sprint status',        prompt:'What was completed in the last VeritasEdge sprint and what needs to happen next?' },
   { label:'Draft a client email',             prompt:'Help me draft a professional email to a client. Tell me who the client is and what you need to communicate.' },
   { label:'FM market signal',                 prompt:'What is the most important FM industry development I should be paying attention to right now?' },
   { label:'Summarise this week',              prompt:'Give me a summary of what I have accomplished this week and what is outstanding.' },

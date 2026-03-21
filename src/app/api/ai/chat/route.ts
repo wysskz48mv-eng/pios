@@ -2,8 +2,28 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
 
-export const runtime = 'nodejs'
+export const runtime    = 'nodejs'
+export const maxDuration = 60
 
+/**
+ * POST /api/ai/chat
+ * Powers the PIOS AI Companion (/platform/ai).
+ *
+ * Injects live context per call:
+ *   - Today's brief (if generated) — gives the AI Douglas's full daily snapshot
+ *   - Overdue tasks (flagged separately — not buried in the task list)
+ *   - Due-today tasks
+ *   - Open tasks with priorities
+ *   - Academic modules + thesis velocity
+ *   - Active projects
+ *   - Unread notifications
+ *   - Domain focus (from domainContext param)
+ *
+ * System prompt encodes Douglas's full profile so responses are
+ * contextually appropriate without him having to re-explain his work.
+ *
+ * PIOS v2.0 | Sustain International FZE Ltd
+ */
 export async function POST(request: Request) {
   try {
     const supabase = createClient()
@@ -13,47 +33,113 @@ export async function POST(request: Request) {
     const { messages, domainContext } = await request.json()
     if (!messages?.length) return NextResponse.json({ error: 'No messages' }, { status: 400 })
 
-    // Build rich live context for the AI
-    const [tasksR, modulesR, projectsR, chaptersR, notifsR] = await Promise.all([
+    const today = new Date().toISOString().slice(0, 10)
+
+    // Gather live context in parallel
+    const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR] = await Promise.all([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
         .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
-        .order('due_date', { ascending: true }).limit(8),
+        .order('due_date', { ascending: true }).limit(15),
       supabase.from('academic_modules').select('title,status,deadline')
-        .eq('user_id', user.id).not('status', 'in', '("passed","failed")').limit(5),
+        .eq('user_id', user.id).not('status', 'in', '("passed","failed")').limit(6),
       supabase.from('projects').select('title,domain,progress,status')
-        .eq('user_id', user.id).eq('status', 'active').limit(5),
+        .eq('user_id', user.id).eq('status', 'active').limit(6),
       supabase.from('thesis_chapters').select('title,chapter_num,status,word_count,target_words')
         .eq('user_id', user.id).order('chapter_num').limit(6),
-      supabase.from('notifications').select('title,type').eq('user_id', user.id).eq('read', false).limit(3),
+      supabase.from('notifications').select('title,type,domain')
+        .eq('user_id', user.id).eq('read', false)
+        .order('created_at', { ascending: false }).limit(5),
+      supabase.from('daily_briefs').select('content')
+        .eq('user_id', user.id).eq('brief_date', today).maybeSingle(),
     ])
 
-    const liveContext = `
-CURRENT CONTEXT (live data):
-Open tasks: ${tasksR.data?.map(t => `${t.title} [${t.priority}/${t.domain}]`).join('; ') || 'none'}
-Academic modules: ${modulesR.data?.map(m => `${m.title} [${m.status}]`).join('; ') || 'none'}
-Active projects: ${projectsR.data?.map(p => `${p.title} ${p.progress}%`).join('; ') || 'none'}
-Thesis chapters: ${chaptersR.data?.map(c => `Ch${c.chapter_num} ${c.status} ${c.word_count}/${c.target_words}w`).join('; ') || 'none'}
-Unread alerts: ${notifsR.data?.map(n => `${n.title} [${n.type}]`).join('; ') || 'none'}
-Today: ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-`
+    const tasks    = tasksR.data ?? []
+    const overdue  = tasks.filter(t => t.due_date && t.due_date < today)
+    const dueToday = tasks.filter(t => t.due_date === today)
+    const upcoming = tasks.filter(t => !t.due_date || t.due_date > today)
 
-    const domainPrefix = domainContext ? `\nDOMAIN FOCUS FOR THIS CONVERSATION:\n${domainContext}\n` : ''
+    // Thesis velocity
+    const chapters    = chaptersR.data ?? []
+    const totalWords  = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
+    const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
+    const nearestDl   = (modulesR.data ?? []).map(m => m.deadline).filter(Boolean).sort()[0]
+    const daysLeft    = nearestDl
+      ? Math.max(1, Math.round((new Date(nearestDl).getTime() - Date.now()) / 86400000))
+      : null
+    const wordsPerDay = daysLeft ? Math.ceil(Math.max(0, targetWords - totalWords) / daysLeft) : null
+
+    const fmt = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+
+    // Build live context block
+    const liveCtx = [
+      `TODAY: ${new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`,
+
+      overdue.length > 0
+        ? `⚠ OVERDUE (${overdue.length}):\n` +
+          overdue.map(t => `  - [${(t.priority??'').toUpperCase()}] ${t.title} (${t.domain}) — was due ${fmt(t.due_date)}`).join('\n')
+        : null,
+
+      dueToday.length > 0
+        ? `DUE TODAY: ` + dueToday.map(t => `${t.title} [${t.domain}]`).join(', ')
+        : null,
+
+      upcoming.length > 0
+        ? `OPEN TASKS: ` + upcoming.slice(0,6).map(t => `${t.title} [${t.priority}/${t.domain}${t.due_date ? ' · ' + fmt(t.due_date) : ''}]`).join('; ')
+        : null,
+
+      (modulesR.data ?? []).length > 0
+        ? `MODULES: ` + (modulesR.data ?? []).map(m => `${m.title} [${m.status}${m.deadline ? ' · ' + fmt(m.deadline) : ''}]`).join('; ')
+        : null,
+
+      chapters.length > 0
+        ? `THESIS: ${totalWords.toLocaleString()}/${targetWords.toLocaleString()} words (${Math.round(totalWords/Math.max(targetWords,1)*100)}%)` +
+          (wordsPerDay ? ` · ${wordsPerDay.toLocaleString()} words/day needed` : '')
+        : null,
+
+      (projectsR.data ?? []).length > 0
+        ? `PROJECTS: ` + (projectsR.data ?? []).map(p => `${p.title} ${p.progress ?? 0}% [${p.domain}]`).join('; ')
+        : null,
+
+      (notifsR.data ?? []).length > 0
+        ? `ALERTS: ` + (notifsR.data ?? []).map(n => `${n.title} [${n.type}]`).join('; ')
+        : null,
+    ].filter(Boolean).join('\n')
+
+    // Include today's brief if it exists — it's the richest single-page summary
+    const briefSection = briefR.data?.content
+      ? `\nTODAY'S BRIEF:\n${briefR.data.content}`
+      : ''
+
+    const domainSection = domainContext
+      ? `\nCONVERSATION DOMAIN FOCUS:\n${domainContext}`
+      : ''
 
     const system = `You are PIOS AI — Douglas Masuku's personal intelligent operating system companion.
 
-Douglas is:
+DOUGLAS'S PROFILE:
 - Group CEO, Sustain International FZE Ltd (UAE/UK holding company)
-- DBA candidate, University of Portsmouth (research: AI-enabled forecasting in GCC FM contexts, STS + sensemaking theory)
-- FM consultant (Qiddiya RFP QPMO-410-CT-07922 active, KSP reference deployment SAR 229.6M)
-- SaaS founder: SustainEdge v5.2 (service charge platform, live), InvestiScript v3 (AI journalism, live), PIOS v1.0 (this platform, just launched)
-- Key IP: HDCA (patent pending), SE-CAFX climate adjustment factors, SE-PMF methodology
+- DBA candidate, University of Portsmouth (AI-enabled forecasting in GCC FM contexts; STS + sensemaking theory)
+- FM consultant — Qiddiya RFP QPMO-410-CT-07922 active, KSP reference deployment SAR 229.6M annual SC budget
+- SaaS founder:
+    · VeritasEdge™ v5.8 — service charge platform for GCC master communities (live at sustainedge.vercel.app)
+    · InvestiScript v3 — AI investigative journalism platform (live at investiscript.vercel.app)
+    · PIOS v2.0 — this personal AI operating system (live at pios-*.vercel.app)
+- Key IP: HDCA™ (patent pending), VE-CAFX™ climate adjustment factors, VE-PMF™ methodology, VE-BENCH™ benchmarking
+- Working with Claude as primary technical implementer — non-technical founder
 
-You have full access to his live data. Be direct, concise, action-oriented. Surface cross-domain conflicts. No unnecessary pleasantries.
+BEHAVIOUR RULES:
+- Be direct, concise, action-oriented. No pleasantries.
+- Reference live data naturally when relevant ("you have 3 overdue tasks", not "according to your data…")
+- Spot cross-domain conflicts proactively (DBA deadline clashing with business commitment, etc.)
+- When discussing VeritasEdge/InvestiScript/PIOS, you know the technical stack: Next.js 14, TypeScript, Supabase, Python FastAPI, LangGraph, Claude claude-sonnet-4-6
+- For DBA research questions, use STS (sociotechnical systems), sensemaking (Weick), TAM/UTAUT as default theoretical frames
 
-${liveContext}${domainPrefix}`
+LIVE DATA (current as of this message):
+${liveCtx}${briefSection}${domainSection}`
 
-    const reply = await callClaude(messages, system, 1000)
+    const reply = await callClaude(messages, system, 1200)
     return NextResponse.json({ reply })
+
   } catch (err: any) {
     console.error('AI chat error:', err)
     return NextResponse.json({ error: err.message ?? 'AI unavailable. Please try again.' }, { status: 500 })
