@@ -593,8 +593,8 @@ function ChaseTab() {
                 <div>
                   <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-muted)', marginBottom:6 }}>Draft email:</div>
                   <div style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface2)', marginBottom:10 }}>
-                    <div style={{ fontSize:12, fontWeight:600, marginBottom:4 }}>Subject: {chaseResult.draft.subject}</div>
-                    <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, whiteSpace:'pre-wrap' as const }}>{chaseResult.draft.body}</div>
+                    <div style={{ fontSize:12, fontWeight:600, marginBottom:4 }}>Subject: {String(chaseResult.draft?.subject ?? '')}</div>
+                    <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, whiteSpace:'pre-wrap' as const }}>{typeof chaseResult.draft?.body === 'string' ? chaseResult.draft.body : String(chaseResult.draft?.body ?? '')}</div>
                   </div>
                   <p style={{ fontSize:11, color:'#f59e0b' }}>⚠ Review and copy this email to send manually. PIOS has not sent this email.</p>
                 </div>

@@ -144,7 +144,7 @@ export default function EmailPage() {
           <div style={{ display:'flex',flexDirection:'column' as const,gap:8,marginBottom:10 }}>
             <input className="pios-input" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...p,to:e.target.value}))} />
             <input className="pios-input" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...p,subject:e.target.value}))} />
-            <textarea className="pios-input" placeholder="Message…" rows={5} value={compose.body} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
+            <textarea className="pios-input" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
           </div>
           <div style={{ display:'flex',gap:8,alignItems:'center' }}>
             <button onClick={async()=>{

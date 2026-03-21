@@ -177,7 +177,7 @@ export default function AiPage() {
   }
 
   async function copyChat() {
-    const text = messages.map(m => `${m.role === 'user' ? 'You' : 'PIOS AI'}:\n${m.content}`).join('\n\n---\n\n')
+    const text = messages.map(m => `${m.role === 'user' ? 'You' : 'PIOS AI'}:\n${typeof m.content === 'string' ? m.content : String(m.content ?? '')}`).join('\n\n---\n\n')
     await navigator.clipboard.writeText(text)
     setCopying(true)
     setTimeout(() => setCopying(false), 2000)
@@ -309,7 +309,7 @@ export default function AiPage() {
                   fontSize: 13, lineHeight: 1.7, color: 'var(--pios-text)',
                   whiteSpace: 'pre-wrap',
                 }}>
-                  {m.content}
+                  {typeof m.content === 'string' ? m.content : String(m.content ?? '')}
                   {m.timestamp && <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginTop: 6, textAlign: m.role === 'user' ? 'right' : 'left' }}><TimeAgo iso={m.timestamp} /></div>}
                 </div>
               </div>
