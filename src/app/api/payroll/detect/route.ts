@@ -5,18 +5,16 @@ import { callClaude } from '@/lib/ai/client'
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
-// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/payroll/detect
 // Scans recent emails for payroll data from the accountant.
 // If found, extracts pay lines and creates a draft payroll run.
-// ─────────────────────────────────────────────────────────────────────────────
 
 export async function POST() {
-  try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  try {
     // Fetch recent unprocessed emails likely to be payroll
     const { data: emails } = await supabase.from('email_items')
       .select('id, subject, sender_name, sender_email, snippet, body_text, received_at')
@@ -59,71 +57,65 @@ Return ONLY valid JSON or null if this is not a payroll email:
       "net_pay": 0.00
     }
   ],
-  "confidence": 0.0-1.0,
-  "notes": "any extraction notes"
+  "confidence": 0.0
 }`
-
-      const raw = await callClaude(
-        [{ role: 'user', content: `Email from: ${email.sender_name} <${email.sender_email}>\nSubject: ${email.subject}\n\n${text}` }],
-        system, 1500
-      )
 
       let extracted: any = null
       try {
+        const raw = await callClaude(
+          [{ role: 'user', content: `Email from: ${email.sender_name} <${email.sender_email}>\nSubject: ${email.subject}\n\n${text}` }],
+          system, 1500
+        )
         const clean = raw.replace(/```json|```/g, '').trim()
         extracted = JSON.parse(clean)
-      } catch { continue }
+      } catch {
+        continue
+      }
 
       if (!extracted?.is_payroll || !extracted?.lines?.length) continue
 
-      // Create draft payroll run
       const totalGross = extracted.lines.reduce((s: number, l: any) => s + (l.gross_pay || 0), 0)
       const totalNet   = extracted.lines.reduce((s: number, l: any) => s + (l.net_pay || 0), 0)
       const totalTax   = extracted.lines.reduce((s: number, l: any) => s + (l.tax_deduction || 0) + (l.ni_deduction || 0), 0)
 
-  try {
-        const { data: run } = await supabase.from('payroll_runs').insert({
-          user_id: user.id,
-          pay_period: extracted.pay_period,
-          pay_date: extracted.pay_date,
-          status: 'draft',
-          source: 'email_detected',
-          source_email_id: email.id,
-          total_gross: totalGross,
-          total_net: totalNet,
-          total_tax: totalTax,
-          currency: extracted.currency ?? 'GBP',
-          company_entity: extracted.company_entity,
-          notes: `Auto-detected from email: "${email.subject}" — ${email.sender_name}`,
-        }).select('id').single()
+      const { data: run } = await supabase.from('payroll_runs').insert({
+        user_id: user.id,
+        pay_period: extracted.pay_period,
+        pay_date: extracted.pay_date,
+        status: 'draft',
+        source: 'email_detected',
+        source_email_id: email.id,
+        total_gross: totalGross,
+        total_net: totalNet,
+        total_tax: totalTax,
+        currency: extracted.currency ?? 'GBP',
+        company_entity: extracted.company_entity,
+        notes: `Auto-detected from email: "${email.subject}" — ${email.sender_name}`,
+      }).select('id').single()
 
-        if (run) {
-          await supabase.from('payroll_lines').insert(
-            extracted.lines.map((l: any) => ({ ...l, payroll_run_id: run.id, user_id: user.id }))
-          )
-        }
-
-        return NextResponse.json({
-          detected: true,
-          run_id: run?.id,
-          pay_period: extracted.pay_period,
-          staff_count: extracted.lines.length,
-          total_net: totalNet,
-          currency: extracted.currency ?? 'GBP',
-          email_subject: email.subject,
-          confidence: extracted.confidence,
-          message: `Payroll run detected for ${extracted.pay_period} — ${extracted.lines.length} staff members, net total ${extracted.currency} ${totalNet.toFixed(2)}. Review and approve to issue remittances.`,
-          hitl_required: true,
-        })
+      if (run) {
+        await supabase.from('payroll_lines').insert(
+          extracted.lines.map((l: any) => ({ ...l, payroll_run_id: run.id, user_id: user.id }))
+        )
       }
 
-      return NextResponse.json({ detected: false, message: 'Payroll emails found but no extractable pay data. Review manually.' })
-    } catch (err: any) {
-      console.error('/api/payroll/detect:', err)
-      return NextResponse.json({ error: err.message }, { status: 500 })
+      return NextResponse.json({
+        detected: true,
+        run_id: run?.id,
+        pay_period: extracted.pay_period,
+        staff_count: extracted.lines.length,
+        total_net: totalNet,
+        currency: extracted.currency ?? 'GBP',
+        email_subject: email.subject,
+        confidence: extracted.confidence,
+        message: `Payroll run detected for ${extracted.pay_period} — ${extracted.lines.length} staff members, net total ${extracted.currency} ${totalNet.toFixed(2)}. Review and approve to issue remittances.`,
+        hitl_required: true,
+      })
     }
 
-  } catch (persistErr: any) {
-    console.error('[PIOS] payroll/detect:', persistErr)
-    return NextResponse.json({ error: persistErr.message ?? 'DB error' }, { status: 500 })
-  }}
+    return NextResponse.json({ detected: false, message: 'Payroll emails found but no extractable pay data. Review manually.' })
+  } catch (err: any) {
+    console.error('/api/payroll/detect:', err)
+    return NextResponse.json({ error: err.message ?? 'Detection failed' }, { status: 500 })
+  }
+}
