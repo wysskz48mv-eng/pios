@@ -13,7 +13,10 @@ export default function DashboardPage() {
   const [loading, setLoading]   = useState(true)
   const [briefLoading, setBriefLoading] = useState(false)
   const [tenant, setTenant]     = useState<any>(null)
-  const [todayEvents, setTodayEvents] = useState<any[]>([])
+  const [todayEvents,   setTodayEvents]   = useState<any[]>([])
+  const [pendingInvoices, setPendingInvoices] = useState<number>(0)
+  const [actionEmails,    setActionEmails]    = useState<number>(0)
+  const [pendingTransfers,setPendingTransfers]= useState<number>(0)
   const supabase = createClient()
 
   const load = useCallback(async () => {
@@ -41,6 +44,15 @@ export default function DashboardPage() {
     const todayEnd   = new Date(); todayEnd.setHours(23,59,59,999)
     const calRes = await supabase.from('calendar_events').select('id,title,start_time,end_time,location,domain,all_day,google_meet_url').eq('user_id', user.id).gte('start_time', todayStart.toISOString()).lte('start_time', todayEnd.toISOString()).order('start_time')
     setTodayEvents(calRes.data ?? [])
+    // Fetch alert counts
+    const [invR, emlR, tsfR] = await Promise.all([
+      supabase.from('invoices').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'pending'),
+      supabase.from('email_items').select('id', { count: 'exact' }).eq('user_id', user.id).not('action_required', 'is', null).in('status', ['unprocessed','triaged']),
+      supabase.from('transfer_queue').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'queued'),
+    ])
+    setPendingInvoices(invR.count ?? 0)
+    setActionEmails(emlR.count ?? 0)
+    setPendingTransfers(tsfR.count ?? 0)
     setTasks(tR.data ?? [])
     setProjects(pR.data ?? [])
     setModules(mR.data ?? [])
@@ -125,6 +137,36 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Alert banner — pending actions */}
+      {(pendingInvoices > 0 || actionEmails > 0 || pendingTransfers > 0) && (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
+          {pendingInvoices > 0 && (
+            <Link href="/platform/files" style={{ textDecoration:'none' }}>
+              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #f59e0b', cursor:'pointer' }}>
+                <div style={{ fontSize:16, fontWeight:800, color:'#f59e0b', lineHeight:1, marginBottom:3 }}>{pendingInvoices}</div>
+                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>invoice{pendingInvoices!==1?'s':''} pending approval</div>
+              </div>
+            </Link>
+          )}
+          {actionEmails > 0 && (
+            <Link href="/platform/email" style={{ textDecoration:'none' }}>
+              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #6c8eff', cursor:'pointer' }}>
+                <div style={{ fontSize:16, fontWeight:800, color:'#6c8eff', lineHeight:1, marginBottom:3 }}>{actionEmails}</div>
+                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>email{actionEmails!==1?'s':''} need action</div>
+              </div>
+            </Link>
+          )}
+          {pendingTransfers > 0 && (
+            <Link href="/platform/payroll" style={{ textDecoration:'none' }}>
+              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #a78bfa', cursor:'pointer' }}>
+                <div style={{ fontSize:16, fontWeight:800, color:'#a78bfa', lineHeight:1, marginBottom:3 }}>{pendingTransfers}</div>
+                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>transfer{pendingTransfers!==1?'s':''} queued for approval</div>
+              </div>
+            </Link>
+          )}
         </div>
       )}
 
