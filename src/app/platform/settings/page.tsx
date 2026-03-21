@@ -35,7 +35,8 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<any>(null)
   const [tenant,  setTenant]  = useState<any>(null)
   const [user,    setUser]    = useState<any>(null)
-  const [feedSettings, setFeedSettings] = useState<any>(null)
+  const [feedSettings,   setFeedSettings]   = useState<any>(null)
+  const [billingNotice,  setBillingNotice]  = useState<{msg:string,ok:boolean}|null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)
@@ -65,6 +66,15 @@ export default function SettingsPage() {
         organisation: pR.data.organisation ?? '',
       })
       setLoading(false)
+      // Handle Stripe portal return params
+      if (typeof window !== 'undefined') {
+        const p = new URLSearchParams(window.location.search)
+        const b = p.get('billing')
+        if (b === 'returned')       setBillingNotice({ msg:'✓ Subscription updated. Changes take effect immediately.', ok:true })
+        if (b === 'error')          setBillingNotice({ msg:'Billing portal error. Please try again.', ok:false })
+        if (b === 'not_subscribed') setBillingNotice({ msg:'No active subscription. Subscribe to a plan above.', ok:false })
+        if (b) window.history.replaceState({}, '', '/platform/settings')
+      }
     }
     load()
   }, [])
@@ -168,6 +178,30 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
+          {tenant?.stripe_customer_id && (
+            <div style={{ marginTop:14, display:'flex', gap:8, flexWrap:'wrap' as const }}>
+              <Link
+                href="/api/stripe/portal"
+                style={{ fontSize:12, padding:'7px 14px', borderRadius:8,
+                  background:'rgba(99,91,255,0.1)', border:'1px solid rgba(99,91,255,0.3)',
+                  color:'#a78bfa', textDecoration:'none', fontWeight:600 }}
+              >
+                ⚙ Manage subscription →
+              </Link>
+              <span style={{ fontSize:11, color:'var(--pios-dim)', alignSelf:'center' }}>
+                Update payment method · Cancel · View invoices
+              </span>
+            </div>
+          )}
+          {/* Billing status notices */}
+          {billingNotice && (
+            <div style={{ marginTop:10, padding:'8px 12px', borderRadius:6, fontSize:12,
+              background: billingNotice.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+              color: billingNotice.ok ? '#22c55e' : '#ef4444',
+              border: `1px solid ${billingNotice.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
+              {billingNotice.msg}
+            </div>
+          )}
         </Section>
 
         {/* Integrations */}
