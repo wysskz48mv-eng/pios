@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   // Fetch all active user profiles with auto_brief enabled
   const { data: profiles, error: profErr } = await admin
     .from('user_profiles')
-    .select('id, full_name, email')
+    .select('id, full_name, billing_email, google_email')
     .limit(100)
 
   if (profErr || !profiles) {
@@ -104,7 +104,7 @@ Maximum 200 words. Plain prose only. No bullet points.`
       }, { onConflict: 'user_id,brief_date' })
 
       // Deliver brief by email if user has an address stored
-      const userEmail = (profile as any).email
+      const userEmail = (profile as any).billing_email ?? (profile as any).google_email
       const userName  = (profile as any).full_name ?? 'there'
       if (userEmail) {
         await sendEmail({
