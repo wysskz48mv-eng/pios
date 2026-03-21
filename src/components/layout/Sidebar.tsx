@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -33,6 +33,19 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
   const router   = useRouter()
   const supabase = createClient()
   const [collapsed, setCollapsed] = useState(false)
+  const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    // Poll notifications every 60s
+    const load = () =>
+      fetch('/api/notifications')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setUnread(d.unread ?? 0) })
+        .catch(() => {})
+    load()
+    const interval = setInterval(load, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -114,6 +127,33 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
 
       {/* Bottom */}
       <div style={{ borderTop: '1px solid var(--pios-border)', padding: '8px 0' }}>
+        <Link href="/platform/dashboard" style={{ textDecoration: 'none' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: collapsed ? '10px 0' : '9px 16px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            color: 'var(--pios-muted)', cursor: 'pointer',
+            position: 'relative' as const,
+          }}>
+            <span style={{ fontSize: '16px', position: 'relative' as const }}>
+              🔔
+              {unread > 0 && (
+                <span style={{
+                  position: 'absolute' as const, top: -4, right: -4,
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: '#ef4444', color: '#fff',
+                  fontSize: 9, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>{unread > 9 ? '9+' : unread}</span>
+              )}
+            </span>
+            {!collapsed && (
+              <span style={{ fontSize: '13px' }}>
+                Notifications{unread > 0 ? ` (${unread})` : ''}
+              </span>
+            )}
+          </div>
+        </Link>
         <Link href="/platform/settings" style={{ textDecoration: 'none' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
