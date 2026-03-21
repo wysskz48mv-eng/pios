@@ -96,13 +96,19 @@ function RunsTab() {
     setRemitting(true)
     const res = await fetch('/api/payroll/remit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ run_id: selectedRun.id, preview_only: false }) })
     const d = await res.json()
-    if (d.success) { alert(`✓ ${d.remittances_queued} remittances queued for approval in Transfer Queue.`); setRemitPreview(null); loadRuns() }
-    else alert(d.error ?? 'Failed')
+    if (d.success) { setBanner({msg:`✓ ${d.remittances_queued} remittances queued in Transfer Queue.`, ok:true}); setRemitPreview(null); loadRuns() }
+    else setBanner({msg:d.error ?? 'Failed', ok:false})
     setRemitting(false)
   }
 
   return (
     <div>
+    {banner && (
+      <div className="pios-card flex items-center gap-3 text-sm" style={{ padding:'10px 14px', marginBottom:12, borderLeft:`3px solid ${banner.ok?'#22c55e':'#ef4444'}` }}>
+        <span style={{ color: banner.ok?'#22c55e':'#ef4444' }}>{banner.msg}</span>
+        <button onClick={()=>setBanner(null)} style={{ marginLeft:'auto', fontSize:11, color:'var(--pios-dim)' }}>✕</button>
+      </div>
+    )}
       {HITL_BANNER}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <div style={{ fontSize:13, color:'var(--pios-muted)' }}>{runs.length} payroll runs</div>

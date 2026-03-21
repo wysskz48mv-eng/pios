@@ -160,6 +160,7 @@ function FilesTab({ spaces }: { spaces:any[] }) {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('all')
   const [extracting, setExtracting] = useState<string|null>(null)
+  const [extractMsg,  setExtractMsg]  = useState<string|null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -176,10 +177,10 @@ function FilesTab({ spaces }: { spaces:any[] }) {
     const data = await res.json()
     setExtracting(null)
     if (data.invoice_id) {
-      alert(`Invoice extracted! ID: ${data.invoice_id}\n\n${data.hitl_message}`)
+      setExtractMsg(`✓ Invoice extracted (ID: ${data.invoice_id}) — ${data.hitl_message}`)
       setItems(prev => prev.map(i => i.id===itemId ? {...i, ai_category:'invoice'} : i))
     } else {
-      alert(data.error ?? 'Extraction failed')
+      setExtractMsg(`✗ ${data.error ?? 'Extraction failed'}`)
     }
   }
 

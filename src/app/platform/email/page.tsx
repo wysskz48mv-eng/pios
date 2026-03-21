@@ -74,12 +74,12 @@ export default function EmailPage() {
         setEmails(prev => prev.map(e => e.id === selected.id ? { ...e, status: 'actioned' } : e))
         setReplyText('')
       } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
-        alert(`⚠ ${d.error}\n\nGo to Settings → Connect Google Account to grant Gmail access.`)
+        setBanner({msg:`⚠ ${d.error}\n\nGo to Settings → Connect Google Account to grant Gmail access.`, ok:false})
       } else {
-        alert(`Send failed: ${d.error ?? 'Unknown error'}`)
+        setBanner({msg:`Send failed: ${d.error ?? 'Unknown error'}`, ok:false})
       }
     } catch (err: any) {
-      alert(`Send failed: ${err.message}`)
+      setBanner({msg:`Send failed: ${err.message}`, ok:false})
     }
     setReplying(false)
   }
@@ -98,8 +98,8 @@ export default function EmailPage() {
     const res = await fetch('/api/files/invoice', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ source:'email', source_id:selected.id }) })
     const d = await res.json()
     setExtracting(false)
-    if (d.invoice_id) alert(`✓ Invoice extracted.\n${d.hitl_message}`)
-    else alert(d.error ?? 'No invoice detected in this email.')
+    if (d.invoice_id) setBanner({msg:`✓ Invoice extracted.\n${d.hitl_message}`, ok:true})
+    else setBanner({msg:d.error ?? 'No invoice detected in this email.', ok:false})
   }
 
   async function createTask() {
@@ -112,7 +112,7 @@ export default function EmailPage() {
       description: `From: ${selected.sender_name} <${selected.sender_email}>\n\n${selected.snippet?.slice(0,200)}`,
     })})
     setCreatingTask(false)
-    alert('✓ Task created — check your Tasks page.')
+    setBanner({msg:'✓ Task created — check your Tasks page.', ok:true})
   }
 
   const unreadCount = emails.filter(e=>e.status==='unprocessed'||e.status==='triaged').length
@@ -156,11 +156,11 @@ export default function EmailPage() {
               if (d.sent) {
                 setCompose({to:'',subject:'',body:''})
                 setShowCompose(false)
-                alert('✓ Email sent.')
+                setBanner({msg:'✓ Email sent.', ok:true})
               } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
-                alert(`⚠ ${d.error}`)
+                setBanner({msg:`⚠ ${d.error}`, ok:false})
               } else {
-                alert(`Send failed: ${d.error ?? 'Unknown error'}`)
+                setBanner({msg:`Send failed: ${d.error ?? 'Unknown error'}`, ok:false})
               }
             }} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>Send</button>
             <button onClick={()=>setShowCompose(false)} className="pios-btn pios-btn-ghost" style={{ fontSize:12 }}>Cancel</button>
