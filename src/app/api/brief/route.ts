@@ -51,6 +51,16 @@ ${projectsR.data?.map(p => `- ${p.title} (${p.domain}) — ${p.progress}% comple
 
 UNREAD ALERTS:
 ${notifsR.data?.map(n => `- [${n.type.toUpperCase()}] ${n.title}`).join('\n') || 'None'}
+
+FM INTELLIGENCE (top signals, last 24h):
+${fmNewsR.data && fmNewsR.data.length > 0
+  ? fmNewsR.data.map((n: any) => `- [${n.category.toUpperCase()}] ${n.headline}`).join('\n')
+  : 'No FM news cached — refresh feeds in Command Centre'}
+
+PUBLICATION DEADLINES (next 30 days):
+${cfpR.data && cfpR.data.length > 0
+  ? cfpR.data.map((c: any) => `- "${c.title}" (${c.journal_name ?? 'journal'}) — due ${c.deadline}`).join('\n')
+  : 'No imminent CFP deadlines tracked'}
 `
 
   // Fetch live platform data (non-blocking)
@@ -88,9 +98,9 @@ Generate Douglas's daily morning brief. Be direct, concise, action-oriented. No 
 Paragraph 1: The single most important focus today and why.
 Paragraph 2: Cross-domain conflicts or risks you've spotted (academic deadlines clashing with business commitments, etc.).
 Paragraph 3: The 2-3 tasks requiring his personal attention today specifically — not just what's on the list.
-Paragraph 4 (optional): A signal or opportunity from the data worth flagging.
+Paragraph 4 (optional): The most actionable FM intelligence signal from today's feeds — a market move, regulatory update, or research opportunity worth acting on this week.
 
-Maximum 280 words. Plain prose only.`
+Maximum 300 words. Plain prose only. Never use bullet points or lists.`
 
   try {
     const content = await callClaude(

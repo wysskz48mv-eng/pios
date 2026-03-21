@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 const NAV = [
   { href: '/platform/dashboard', icon: '⊞', label: 'Command Centre' },
   { href: '/platform/academic',  icon: '🎓', label: 'Academic',       colour: '#6c8eff' },
+  { href: '/platform/research',  icon: '🔬', label: 'Research Hub',   colour: '#6c8eff' },
   { href: '/platform/tasks',     icon: '✓',  label: 'Tasks',          colour: '#a78bfa' },
   { href: '/platform/calendar',  icon: '📅', label: 'Calendar',       colour: '#22d3ee' },
   { href: '/platform/email',     icon: '✉',  label: 'Inbox',          colour: '#2dd4a0' },
