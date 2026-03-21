@@ -321,7 +321,8 @@ function JournalsTab() {
   }
 
   async function deleteJournal(id: string) {
-    if (!window.confirm('Remove this journal from your watchlist?')) return
+    if (deleteJournalConfirm !== id) { setDeleteJournalConfirm(id); return }
+    setDeleteJournalConfirm(null)
     await fetch('/api/research/journals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
     if (selected?.id === id) setSelected(null)
     load()
@@ -738,6 +739,7 @@ function ImportTab() {
 function LibraryTab() {
   const supabase = createClient()
   const [items,    setItems]    = useState<any[]>([])
+  const [deleteItemConfirm, setDeleteItemConfirm] = useState<string|null>(null)
   const [stats,    setStats]    = useState<any>(null)
   const [loading,  setLoading]  = useState(true)
   const [selected, setSelected] = useState<any>(null)
@@ -783,7 +785,8 @@ function LibraryTab() {
   }
 
   async function deleteItem(id: string) {
-    if (!window.confirm('Remove from library?')) return
+    if (deleteItemConfirm !== id) { setDeleteItemConfirm(id); return }
+    setDeleteItemConfirm(null)
     setDeleting(id)
     await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
     setItems(prev => prev.filter(i => i.id !== id))
