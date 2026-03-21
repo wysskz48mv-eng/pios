@@ -176,6 +176,32 @@ export async function GET(req: NextRequest) {
           html:    morningBriefHtml(content, today, userName),
           text:    morningBriefText(content, today, userName),
         }).catch(() => {})
+
+        // Task urgency alert — separate email if overdue or due tomorrow
+        const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+        const urgentTasks = tasks.filter(t =>
+          (t.due_date && t.due_date < today) ||  // overdue
+          t.due_date === today ||                  // due today
+          t.due_date === tomorrow                  // due tomorrow
+        )
+        if (urgentTasks.length > 0 && overdue.length > 0) {
+          // Only send separate alert email if there are actually overdue tasks
+          const overdueLines = overdue.map(t =>
+            `• [${(t.priority??'').toUpperCase()}] ${t.title} — was due ${t.due_date}`
+          ).join('\n')
+          const dueTodayLines = dueToday.map(t => `• ${t.title} [${t.domain}]`).join('\n')
+          await sendEmail({
+            to:      userEmail,
+            subject: `⚠ ${overdue.length} overdue task${overdue.length > 1 ? 's' : ''} — PIOS Alert`,
+            html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+              <h2 style="color:#ef4444;margin-bottom:8px">⚠ Overdue Tasks (${overdue.length})</h2>
+              <pre style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:12px;font-size:13px;white-space:pre-wrap">${overdueLines}</pre>
+              ${dueTodayLines ? `<h3 style="color:#f97316;margin-top:16px">Due Today</h3><pre style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:12px;font-size:13px;white-space:pre-wrap">${dueTodayLines}</pre>` : ''}
+              <p style="color:#6b7280;font-size:12px;margin-top:16px">Sent by PIOS · <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.vercel.app'}/platform/tasks">View all tasks →</a></p>
+            </div>`,
+            text: `OVERDUE TASKS (${overdue.length}):\n${overdueLines}\n${dueTodayLines ? '\nDUE TODAY:\n' + dueTodayLines : ''}`,
+          }).catch(() => {})
+        }
       }
 
       generated++
