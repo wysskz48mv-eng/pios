@@ -69,7 +69,7 @@ export async function GET() {
     google_token:   { ok: googleTokenOk, label: 'Google token (OAuth connected)', required: false },
     resend:         { ok: resendOk,      label: 'Resend Email (RESEND_API_KEY)', required: true },
     stripe:         { ok: stripeOk,      label: 'Stripe billing',         required: false },
-    se_live_data:   { ok: seDataOk,      label: 'SustainEdge live data',  required: false },
+    se_live_data:   { ok: seDataOk,      label: 'VeritasEdge™ live data',  required: false },
     is_live_data:   { ok: isDataOk,      label: 'InvestiScript live data',required: false },
     github_pat:     { ok: githubOk,      label: 'GitHub PAT (Live Data)', required: false },
   }

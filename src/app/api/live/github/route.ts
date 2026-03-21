@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 
 const REPOS = [
-  { key: 'sustainedge',  repo: 'wysskz48mv-eng/sustainedge',   label: 'SustainEdge' },
+  { key: 'sustainedge',  repo: 'wysskz48mv-eng/sustainedge',   label: 'VeritasEdge™' },
   { key: 'investiscript', repo: 'wysskz48mv-eng/investiscript', label: 'InvestiScript' },
   { key: 'pios',          repo: 'wysskz48mv-eng/pios',          label: 'PIOS' },
 ]

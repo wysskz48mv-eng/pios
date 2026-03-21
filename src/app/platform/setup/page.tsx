@@ -41,7 +41,7 @@ const STEPS: Step[] = [
         label:    'Add to Vercel',
         key:      'CRON_SECRET',
         value:    '<your generated secret>',
-        note:     'Vercel → sustainedge → Settings → Environment Variables → Add',
+        note:     'Vercel → veritasedge → Settings → Environment Variables → Add',
         url:      'https://vercel.com/wysskz48mv-eng/pios/settings/environment-variables',
         urlLabel: 'Open Vercel Env Vars →',
       },
@@ -127,7 +127,7 @@ const STEPS: Step[] = [
     tagColour: '#4d9fff',
     items: [
       {
-        label:    'SustainEdge service key',
+        label:    'VeritasEdge™ service key',
         key:      'SUPABASE_SE_SERVICE_KEY',
         value:    '<SE service_role key from Supabase>',
         url:      'https://supabase.com/dashboard/project/oxqqzxvuksgzeeyhufhp/settings/api',

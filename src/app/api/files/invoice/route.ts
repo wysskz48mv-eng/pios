@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const system = `You are an invoice data extraction AI. Extract all invoice fields from the provided text. Today is ${today}.
 
 Douglas Masuku's companies: Sustain International FZE Ltd (UAE), Sustain International UK Ltd (UK), VeritasIQ Technologies Ltd (UK).
-His projects: Qiddiya (QPMO-410), King Salman Park (KSP), SustainEdge, InvestiScript, PIOS.
+His projects: Qiddiya (QPMO-410), King Salman Park (KSP), VeritasEdge™, InvestiScript, PIOS.
 
 Return ONLY valid JSON:
 {

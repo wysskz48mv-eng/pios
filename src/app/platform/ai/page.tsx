@@ -11,7 +11,7 @@ interface Message { role: 'user' | 'assistant'; content: string; timestamp?: str
 const DOMAIN_MODES = [
   { key:'general',      label:'General',      icon:'◉', colour:'#a78bfa', prompt:'' },
   { key:'academic',     label:'DBA Research', icon:'🎓', colour:'#6c8eff', prompt:'Focus on my DBA research at University of Portsmouth. Topic: AI-enabled forecasting in GCC FM. Theory: STS + sensemaking.' },
-  { key:'fm_consulting',label:'FM Consulting', icon:'🏗️', colour:'#2dd4a0', prompt:'Focus on FM consulting. Key projects: Qiddiya (QPMO-410-CT-07922), King Salman Park (SAR 229.6M). Reference SustainEdge platform.' },
+  { key:'fm_consulting',label:'FM Consulting', icon:'🏗️', colour:'#2dd4a0', prompt:'Focus on FM consulting. Key projects: Qiddiya (QPMO-410-CT-07922), King Salman Park (SAR 229.6M). Reference VeritasEdge™ platform.' },
   { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'#f59e0b', prompt:'Focus on my SaaS platforms: VeritasEdge™ v5.8 (service charge), InvestiScript v3 (AI journalism), PIOS v2.0. Stack: Next.js 14, Supabase, Claude API.' },
   { key:'business',     label:'Business',     icon:'🏢', colour:'#e05a7a', prompt:'Focus on company management: Sustain International FZE Ltd (UAE), Sustain International UK Ltd, VeritasIQ Technologies Ltd. Governance, compliance, financials.' },
 ] as const

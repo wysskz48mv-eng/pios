@@ -46,7 +46,7 @@ ${keywordsStr}
 ${sourcesStr}
 ${excludeStr}
 Return ${topic.max_items ?? 8} news items, most relevant and recent first.
-Context: User is a GCC FM consultant, DBA researcher (AI in FM), and SaaS founder (SustainEdge, InvestiScript, PIOS).`
+Context: User is a GCC FM consultant, DBA researcher (AI in FM), and SaaS founder (VeritasEdge™, InvestiScript, PIOS).`
 
   const raw = await callClaude(
     [{ role: 'user', content: userPrompt }],

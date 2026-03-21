@@ -363,7 +363,7 @@ export default function CommandPage() {
         <>
           {/* Connection bar */}
           <div style={{ ...CARD, marginBottom:20, padding:'12px 20px', display:'flex', gap:24, flexWrap:'wrap' as const }}>
-            {[{ label:'SustainEdge DB', ok:se?.connected },{ label:'InvestiScript DB', ok:is_?.connected },{ label:'GitHub', ok:gh?.connected }]
+            {[{ label:'VeritasEdge™ DB', ok:se?.connected },{ label:'InvestiScript DB', ok:is_?.connected },{ label:'GitHub', ok:gh?.connected }]
               .map(({ label, ok }) => (
               <div key={label} style={{ display:'flex', alignItems:'center', fontSize:13 }}>
                 <StatusDot ok={!!ok} />
@@ -373,8 +373,8 @@ export default function CommandPage() {
             ))}
           </div>
 
-          {/* SustainEdge */}
-          <div style={{ marginBottom:8 }}><div style={{ ...LABEL, fontSize:12, marginBottom:12 }}>⚡ SustainEdge · Service Charge Platform</div></div>
+          {/* VeritasEdge™ */}
+          <div style={{ marginBottom:8 }}><div style={{ ...LABEL, fontSize:12, marginBottom:12 }}>⚡ VeritasEdge™ · Service Charge Platform</div></div>
           {!se?.connected ? (
             <div style={{ ...CARD, marginBottom:20, color:'var(--pios-muted)', fontSize:13 }}>{loading ? <Spinner /> : <>Configure <code>SUPABASE_SE_SERVICE_KEY</code> in Vercel to connect.</>}</div>
           ) : (
@@ -451,7 +451,7 @@ export default function CommandPage() {
             <div style={{ ...CARD, marginTop:8, borderColor:'rgba(167,139,250,0.3)', background:'rgba(167,139,250,0.05)' }}>
               <div style={{ fontWeight:700, fontSize:13, marginBottom:12, color:'#a78bfa' }}>⚙ Vercel Environment Variables Needed</div>
               <div style={{ display:'flex', flexDirection:'column' as const, gap:8, fontSize:12 }}>
-                {!se?.connected && <div><code style={{ color:'#f59e0b' }}>SUPABASE_SE_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ SustainEdge service role key (Project oxqqzxvuksgzeeyhufhp)</span></div>}
+                {!se?.connected && <div><code style={{ color:'#f59e0b' }}>SUPABASE_SE_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ VeritasEdge™ service role key (Project oxqqzxvuksgzeeyhufhp)</span></div>}
                 {!is_?.connected && <div><code style={{ color:'#f59e0b' }}>SUPABASE_IS_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ InvestiScript service role key (Project dexsdwqkunnmhxcwayda)</span></div>}
                 {!gh?.connected && <div><code style={{ color:'#f59e0b' }}>GITHUB_PAT</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ GitHub PAT with repo scope</span></div>}
               </div>

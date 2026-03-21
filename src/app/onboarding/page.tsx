@@ -85,7 +85,7 @@ export default function OnboardingPage() {
     job_title:       '',
     organisation:    '',
     programme_name:  '',
-    university:      'University of Portsmouth',
+    university:      '',
     timezone:        'Asia/Dubai',
   })
   const f = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
@@ -197,16 +197,16 @@ export default function OnboardingPage() {
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 16 }}>
               <div>
                 <Label>Full name *</Label>
-                <Input value={form.full_name} onChange={v => f('full_name', v)} placeholder="Douglas Masuku" />
+                <Input value={form.full_name} onChange={v => f('full_name', v)} placeholder="Your full name" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <Label>Job title</Label>
-                  <Input value={form.job_title} onChange={v => f('job_title', v)} placeholder="Founder & CEO" />
+                  <Input value={form.job_title} onChange={v => f('job_title', v)} placeholder="Your job title" />
                 </div>
                 <div>
                   <Label>Organisation</Label>
-                  <Input value={form.organisation} onChange={v => f('organisation', v)} placeholder="Sustain International FZE Ltd" />
+                  <Input value={form.organisation} onChange={v => f('organisation', v)} placeholder="Your organisation" />
                 </div>
               </div>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
@@ -214,11 +214,11 @@ export default function OnboardingPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
                     <Label>Programme</Label>
-                    <Input value={form.programme_name} onChange={v => f('programme_name', v)} placeholder="DBA" />
+                    <Input value={form.programme_name} onChange={v => f('programme_name', v)} placeholder="e.g. DBA, MBA, MSc" />
                   </div>
                   <div>
                     <Label>University</Label>
-                    <Input value={form.university} onChange={v => f('university', v)} placeholder="University of Portsmouth" />
+                    <Input value={form.university} onChange={v => f('university', v)} placeholder="Your university" />
                   </div>
                 </div>
               </div>

@@ -37,7 +37,7 @@ export function AiChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     'What\'s my single most important task today?',
     'Any cross-domain conflicts I should know about?',
     'Summarise my DBA thesis progress',
-    'What has changed in SustainEdge this sprint?',
+    'What has changed in VeritasEdge™ this sprint?',
   ]
 
   if (!isOpen) return null

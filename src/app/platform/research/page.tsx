@@ -650,12 +650,12 @@ function ImportTab() {
         <div className="pios-card" style={{ marginBottom: 14, borderLeft: `3px solid ${ACCENT}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Scopus — Institutional Access</div>
           <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 12 }}>
-            University of Portsmouth provides Scopus access. The PIOS search tab uses AI to simulate results — for authoritative data, use your institutional login.
+            Your university library provides database access. The PIOS search tab uses AI to simulate results — for authoritative data, use your institutional login.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6, marginBottom: 12 }}>
             {[
               { step: '1', text: 'Go to library.port.ac.uk → Databases A-Z → Scopus' },
-              { step: '2', text: 'Sign in with your University of Portsmouth credentials' },
+              { step: '2', text: 'Sign in with your institutional credentials' },
               { step: '3', text: 'Run your search, select papers, click Export → CSV/RIS' },
               { step: '4', text: 'Import the CSV into Mendeley or Zotero (see right panel)' },
             ].map(s => (

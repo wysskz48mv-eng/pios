@@ -61,7 +61,7 @@ export default function SettingsPage() {
         full_name: pR.data.full_name ?? '',
         billing_email: pR.data.billing_email ?? '',
         programme_name: pR.data.programme_name ?? '',
-        university: pR.data.university ?? 'University of Portsmouth',
+        university: pR.data.university ?? '',
         timezone: pR.data.timezone ?? 'Europe/London',
         job_title: pR.data.job_title ?? '',
         organisation: pR.data.organisation ?? '',
