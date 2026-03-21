@@ -12,7 +12,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = new Set([
   '/auth/login',
+  '/auth/signup',
+  '/auth/verify',
   '/auth/callback',
+  '/auth/reset-password',
   '/api/stripe/webhook',   // Stripe must bypass auth — verified by signature
   '/api/health',
 ])
