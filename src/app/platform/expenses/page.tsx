@@ -1,95 +1,244 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { domainColour, domainLabel, formatDate } from '@/lib/utils'
+import { domainColour, domainLabel } from '@/lib/utils'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Expenses — tracking, tax year breakdown, category summary, delete
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CATEGORIES = ['travel','software','research','consulting','equipment','meals','accommodation','professional_fees','other']
+const CURRENCIES = ['GBP','USD','SAR','AED','EUR']
+const DOMAINS    = ['academic','fm_consulting','saas','business','personal'] as const
+
+function getTaxYear(date: string): string {
+  const d = new Date(date)
+  const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate()
+  if (m < 4 || (m===4 && day < 6)) return `${y-1}-${String(y).slice(2)}`
+  return `${y}-${String(y+1).slice(2)}`
+}
+
+function Bar({ pct, colour='#6c8eff' }: { pct:number; colour?:string }) {
+  return <div style={{ height:4,background:'var(--pios-surface2)',borderRadius:2,overflow:'hidden' }}>
+    <div style={{ height:'100%',width:`${Math.min(100,pct)}%`,background:colour,borderRadius:2,transition:'width 0.4s' }} />
+  </div>
+}
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP' })
+  const [loading,  setLoading]  = useState(true)
+  const [showAdd,  setShowAdd]  = useState(false)
+  const [deleting, setDeleting] = useState<string|null>(null)
+  const [taxYear,  setTaxYear]  = useState('all')
+  const [domainFilter, setDomainFilter] = useState('all')
+  const [form, setForm] = useState({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP', billable:false, client:'', notes:'' })
   const supabase = createClient()
 
-  useEffect(() => { load() }, [])
-  async function load() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase.from('expenses').select('*').eq('user_id',user.id).order('date',{ascending:false}).limit(50)
+  const load = useCallback(async () => {
+    setLoading(true)
+    const { data:{ user } } = await supabase.auth.getUser()
+    if (!user) { setLoading(false); return }
+    const { data } = await supabase.from('expenses').select('*').eq('user_id',user.id).order('date',{ascending:false}).limit(200)
     setExpenses(data ?? [])
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
   async function add() {
-    if (!form.description.trim() || !form.amount) return
-    const { data: { user } } = await supabase.auth.getUser()
+    if (!form.description.trim()||!form.amount) return
+    const { data:{ user } } = await supabase.auth.getUser()
     if (!user) return
-    await supabase.from('expenses').insert({ ...form, amount:parseFloat(form.amount), user_id:user.id })
-    setForm({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP' })
+    await supabase.from('expenses').insert({ ...form, amount:parseFloat(form.amount), user_id:user.id, updated_at:new Date().toISOString() })
+    setForm({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP', billable:false, client:'', notes:'' })
     setShowAdd(false); load()
   }
 
-  const total = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
-  const thisMonth = expenses.filter(e=>e.date?.startsWith(new Date().toISOString().slice(0,7))).reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
+  async function del(id: string) {
+    setDeleting(id)
+    await supabase.from('expenses').delete().eq('id',id)
+    setExpenses(p => p.filter(e => e.id !== id))
+    setDeleting(null)
+  }
+
+  // Filter
+  const filtered = expenses.filter(e => {
+    if (taxYear !== 'all' && getTaxYear(e.date) !== taxYear) return false
+    if (domainFilter !== 'all' && e.domain !== domainFilter) return false
+    return true
+  })
+
+  // Tax years available
+  const taxYears = [...new Set(expenses.map(e => getTaxYear(e.date)))].sort().reverse()
+
+  // Summaries
+  const total      = filtered.reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
+  const thisMonth  = filtered.filter(e=>e.date?.startsWith(new Date().toISOString().slice(0,7))).reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
+  const billable   = filtered.filter(e=>e.billable).reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
+
+  // By category
+  const byCat: Record<string,number> = {}
+  filtered.forEach(e => { const c=e.category||'other'; byCat[c]=(byCat[c]||0)+(parseFloat(e.amount)||0) })
+  const catEntries = Object.entries(byCat).sort((a,b)=>b[1]-a[1])
+  const maxCat = catEntries[0]?.[1] ?? 1
+
+  // By domain
+  const byDomain: Record<string,number> = {}
+  filtered.forEach(e => { byDomain[e.domain]=(byDomain[e.domain]||0)+(parseFloat(e.amount)||0) })
+
+  const currency = filtered[0]?.currency ?? 'GBP'
+  const fmt = (n:number) => `${currency} ${n.toFixed(2)}`
 
   return (
     <div className="fade-in">
-      <div style={{ marginBottom:'24px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <h1 style={{ fontSize:'22px', fontWeight:700 }}>Expenses</h1>
-        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:'12px' }}>+ Add Expense</button>
+      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20 }}>
+        <div>
+          <h1 style={{ fontSize:22,fontWeight:700,marginBottom:4 }}>Expenses</h1>
+          <p style={{ fontSize:13,color:'var(--pios-muted)' }}>Track, categorise, and reconcile for tax purposes</p>
+        </div>
+        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add expense</button>
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'12px', marginBottom:'20px' }}>
+
+      {/* Stats */}
+      <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20 }}>
         {[
-          { label:'This month', value:`£${thisMonth.toFixed(2)}`, colour:'#a78bfa' },
-          { label:'Total tracked', value:`£${total.toFixed(2)}`, colour:'#6c8eff' },
-          { label:'Entries', value:expenses.length, colour:'#2dd4a0' },
+          { label:'This month',     value:fmt(thisMonth), colour:'#a78bfa' },
+          { label:'Total (filtered)', value:fmt(total),    colour:'#6c8eff' },
+          { label:'Billable',       value:fmt(billable),  colour:'#22c55e' },
+          { label:'Entries',        value:filtered.length, colour:'#2dd4a0' },
         ].map(s=>(
-          <div key={s.label} className="pios-card-sm">
-            <div style={{ fontSize:'20px', fontWeight:700, color:s.colour, marginBottom:'4px' }}>{s.value}</div>
-            <div style={{ fontSize:'12px', color:'var(--pios-muted)' }}>{s.label}</div>
+          <div key={s.label} className="pios-card-sm" style={{ padding:'12px 14px' }}>
+            <div style={{ fontSize:18,fontWeight:800,color:s.colour,lineHeight:1,marginBottom:3 }}>{s.value}</div>
+            <div style={{ fontSize:11,color:'var(--pios-muted)' }}>{s.label}</div>
           </div>
         ))}
       </div>
+
+      {/* Add form */}
       {showAdd && (
-        <div className="pios-card" style={{ marginBottom:'16px', borderColor:'rgba(167,139,250,0.3)' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto auto', gap:'8px', marginBottom:'10px' }}>
-            <input className="pios-input" placeholder="Description…" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} />
-            <input type="number" className="pios-input" placeholder="Amount" style={{ width:'100px' }} value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} />
-            <input className="pios-input" placeholder="Category" style={{ width:'120px' }} value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={form.domain} onChange={e=>setForm(p=>({...p,domain:e.target.value}))}>
-              {['academic','fm_consulting','saas','business','personal'].map(d=><option key={d} value={d}>{domainLabel(d)}</option>)}
+        <div className="pios-card" style={{ marginBottom:16,borderColor:'rgba(167,139,250,0.3)' }}>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr auto auto auto auto',gap:8,marginBottom:8 }}>
+            <input className="pios-input" placeholder="Description *" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} />
+            <input type="number" className="pios-input" placeholder="Amount" style={{ width:100 }} value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...p,currency:e.target.value}))}>
+              {CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className="pios-input" style={{ width:'auto' }} value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}>
+              <option value="">Category…</option>
+              {CATEGORIES.map(c=><option key={c} value={c}>{c.replace('_',' ')}</option>)}
             </select>
             <input type="date" className="pios-input" style={{ width:'auto' }} value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} />
           </div>
-          <div style={{ display:'flex', gap:'8px' }}>
-            <button className="pios-btn pios-btn-primary" onClick={add} style={{ fontSize:'12px' }}>Add</button>
-            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:'12px' }}>Cancel</button>
+          <div style={{ display:'grid',gridTemplateColumns:'auto 1fr 1fr auto',gap:8,marginBottom:8 }}>
+            <select className="pios-input" style={{ width:'auto' }} value={form.domain} onChange={e=>setForm(p=>({...p,domain:e.target.value}))}>
+              {DOMAINS.map(d=><option key={d} value={d}>{domainLabel(d)}</option>)}
+            </select>
+            <input className="pios-input" placeholder="Client (if billable)" value={form.client} onChange={e=>setForm(p=>({...p,client:e.target.value}))} />
+            <input className="pios-input" placeholder="Notes" value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} />
+            <label style={{ display:'flex',alignItems:'center',gap:6,fontSize:12,cursor:'pointer',whiteSpace:'nowrap' as const }}>
+              <input type="checkbox" checked={form.billable} onChange={e=>setForm(p=>({...p,billable:e.target.checked}))} />
+              Billable
+            </label>
+          </div>
+          <div style={{ display:'flex',gap:8 }}>
+            <button className="pios-btn pios-btn-primary" onClick={add} style={{ fontSize:12 }}>Add expense</button>
+            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
-      <div className="pios-card" style={{ padding:0, overflow:'hidden' }}>
-        <table style={{ width:'100%', borderCollapse:'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom:'1px solid var(--pios-border)' }}>
-              {['Date','Description','Category','Domain','Amount'].map(h=>(
-                <th key={h} style={{ padding:'10px 16px', textAlign:'left', fontSize:'11px', fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{h}</th>
+
+      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20 }}>
+        {/* By category */}
+        <div className="pios-card">
+          <div style={{ fontSize:13,fontWeight:700,marginBottom:14 }}>By category</div>
+          {catEntries.length===0 ? <p style={{ fontSize:12,color:'var(--pios-dim)' }}>No data</p> : (
+            <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
+              {catEntries.map(([cat,amt])=>(
+                <div key={cat}>
+                  <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
+                    <span style={{ fontSize:12,fontWeight:500 }}>{cat.replace('_',' ')}</span>
+                    <span style={{ fontSize:12,fontWeight:700 }}>{fmt(amt)}</span>
+                  </div>
+                  <Bar pct={(amt/maxCat)*100} />
+                </div>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {expenses.map((e,i) => (
-              <tr key={e.id} style={{ borderBottom:'1px solid var(--pios-border)', background:i%2===0?'transparent':'rgba(255,255,255,0.02)' }}>
-                <td style={{ padding:'10px 16px', fontSize:'12px', color:'var(--pios-muted)' }}>{formatDate(e.date)}</td>
-                <td style={{ padding:'10px 16px', fontSize:'13px' }}>{e.description}</td>
-                <td style={{ padding:'10px 16px', fontSize:'12px', color:'var(--pios-muted)' }}>{e.category||'—'}</td>
-                <td style={{ padding:'10px 16px' }}>
-                  <span style={{ fontSize:'10px', padding:'2px 8px', borderRadius:'20px', background:`${domainColour(e.domain)}20`, color:domainColour(e.domain) }}>{domainLabel(e.domain)}</span>
-                </td>
-                <td style={{ padding:'10px 16px', fontSize:'13px', fontWeight:600, color:'var(--pios-text)' }}>{e.currency} {parseFloat(e.amount).toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {expenses.length === 0 && <p style={{ textAlign:'center', padding:'40px', color:'var(--pios-dim)', fontSize:'13px' }}>No expenses logged yet</p>}
+            </div>
+          )}
+        </div>
+
+        {/* By domain */}
+        <div className="pios-card">
+          <div style={{ fontSize:13,fontWeight:700,marginBottom:14 }}>By domain</div>
+          {Object.keys(byDomain).length===0 ? <p style={{ fontSize:12,color:'var(--pios-dim)' }}>No data</p> : (
+            <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
+              {Object.entries(byDomain).sort((a,b)=>b[1]-a[1]).map(([dom,amt])=>(
+                <div key={dom}>
+                  <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
+                    <span style={{ fontSize:12,fontWeight:500 }}>{domainLabel(dom)}</span>
+                    <span style={{ fontSize:12,fontWeight:700,color:domainColour(dom) }}>{fmt(amt)}</span>
+                  </div>
+                  <Bar pct={(amt/total)*100} colour={domainColour(dom)} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Filters */}
+      <div style={{ display:'flex',gap:12,marginBottom:16,flexWrap:'wrap' as const,alignItems:'center' }}>
+        <div style={{ display:'flex',gap:4,flexWrap:'wrap' as const }}>
+          {[['all','All years'],...taxYears.map(y=>[y,`${y} tax year`])].map(([v,l])=>(
+            <button key={v} onClick={()=>setTaxYear(v)} style={{ padding:'4px 12px',borderRadius:20,fontSize:11,border:'1px solid var(--pios-border)',background:taxYear===v?'var(--pios-surface)':'transparent',color:taxYear===v?'var(--pios-text)':'var(--pios-muted)',fontWeight:taxYear===v?600:400,cursor:'pointer' }}>{l}</button>
+          ))}
+        </div>
+        <div style={{ width:'1px',height:20,background:'var(--pios-border)' }} />
+        <div style={{ display:'flex',gap:4,flexWrap:'wrap' as const }}>
+          {(['all',...DOMAINS] as const).map(d=>(
+            <button key={d} onClick={()=>setDomainFilter(d)} style={{ padding:'4px 12px',borderRadius:20,fontSize:11,border:'none',cursor:'pointer',background:domainFilter===d?domainColour(d==='all'?'personal':d):'var(--pios-surface2)',color:domainFilter===d?'#0a0b0d':'var(--pios-muted)',fontWeight:domainFilter===d?600:400 }}>
+              {d==='all'?'All':domainLabel(d)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      {loading ? <p style={{ textAlign:'center' as const,padding:'40px',color:'var(--pios-muted)',fontSize:13 }}>Loading…</p> : (
+        <div className="pios-card" style={{ padding:0,overflow:'hidden' }}>
+          <table style={{ width:'100%',borderCollapse:'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom:'1px solid var(--pios-border)' }}>
+                {['Date','Description','Category','Domain','Notes','Amount',''].map(h=>(
+                  <th key={h} style={{ padding:'10px 14px',textAlign:'left' as const,fontSize:11,fontWeight:600,color:'var(--pios-muted)',textTransform:'uppercase' as const,letterSpacing:'0.05em' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((e,i)=>(
+                <tr key={e.id} style={{ borderBottom:'1px solid var(--pios-border)',background:i%2===0?'transparent':'rgba(255,255,255,0.01)' }}>
+                  <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)',whiteSpace:'nowrap' as const }}>{e.date}</td>
+                  <td style={{ padding:'10px 14px',fontSize:13 }}>
+                    {e.description}
+                    {e.billable&&<span style={{ marginLeft:6,fontSize:10,padding:'1px 6px',borderRadius:10,background:'rgba(34,197,94,0.1)',color:'#22c55e',fontWeight:600 }}>Billable{e.client?` · ${e.client}`:''}</span>}
+                  </td>
+                  <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)' }}>{e.category?.replace('_',' ')||'—'}</td>
+                  <td style={{ padding:'10px 14px' }}>
+                    <span style={{ fontSize:10,padding:'2px 8px',borderRadius:20,background:`${domainColour(e.domain)}20`,color:domainColour(e.domain) }}>{domainLabel(e.domain)}</span>
+                  </td>
+                  <td style={{ padding:'10px 14px',fontSize:11,color:'var(--pios-dim)',maxWidth:200 }}><span style={{ overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'block' }}>{e.notes||'—'}</span></td>
+                  <td style={{ padding:'10px 14px',fontSize:13,fontWeight:700,whiteSpace:'nowrap' as const }}>{e.currency} {parseFloat(e.amount).toFixed(2)}</td>
+                  <td style={{ padding:'10px 14px',textAlign:'right' as const }}>
+                    <button onClick={()=>del(e.id)} disabled={deleting===e.id} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(239,68,68,0.2)',background:'none',cursor:'pointer',color:'#ef4444' }}>
+                      {deleting===e.id?'…':'✕'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filtered.length===0&&<p style={{ textAlign:'center' as const,padding:'40px',color:'var(--pios-dim)',fontSize:13 }}>No expenses match the current filters.</p>}
+        </div>
+      )}
     </div>
   )
 }

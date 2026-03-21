@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [loading, setLoading]   = useState(true)
   const [briefLoading, setBriefLoading] = useState(false)
   const [tenant, setTenant]     = useState<any>(null)
+  const [todayEvents, setTodayEvents] = useState<any[]>([])
   const supabase = createClient()
 
   const load = useCallback(async () => {
@@ -35,6 +36,11 @@ export default function DashboardPage() {
       supabase.from('tenants').select('plan,ai_credits_used,ai_credits_limit,name')
         .single(),
     ])
+    // Fetch today's calendar events
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0)
+    const todayEnd   = new Date(); todayEnd.setHours(23,59,59,999)
+    const calRes = await supabase.from('calendar_events').select('id,title,start_time,end_time,location,domain,all_day,google_meet_url').eq('user_id', user.id).gte('start_time', todayStart.toISOString()).lte('start_time', todayEnd.toISOString()).order('start_time')
+    setTodayEvents(calRes.data ?? [])
     setTasks(tR.data ?? [])
     setProjects(pR.data ?? [])
     setModules(mR.data ?? [])
@@ -96,6 +102,31 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Today's Agenda */}
+      {todayEvents.length > 0 && (
+        <div className="pios-card" style={{ marginBottom:16, borderLeft:'3px solid #22d3ee' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+            <span style={{ fontSize:13, fontWeight:600 }}>Today's Calendar</span>
+            <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{todayEvents.length} event{todayEvents.length!==1?'s':''}</span>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+            {todayEvents.map((e:any) => (
+              <div key={e.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'6px 0', borderBottom:'1px solid var(--pios-border)' }}>
+                <div style={{ minWidth:50, fontSize:12, fontWeight:600, color:'#22d3ee' }}>
+                  {e.all_day ? 'All day' : new Date(e.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
+                </div>
+                <div style={{ flex:1, fontSize:13, fontWeight:500 }}>{e.title}</div>
+                {e.location && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>📍 {e.location}</div>}
+                {e.google_meet_url && <a href={e.google_meet_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#22c55e' }}>🎥 Join</a>}
+                <span style={{ fontSize:10, padding:'1px 6px', borderRadius:3, background:`${domainColour(e.domain||'personal')}20`, color:domainColour(e.domain||'personal') }}>
+                  {domainLabel(e.domain||'personal')}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* AI Morning Brief */}
       <div className="pios-card" style={{ borderColor: 'rgba(167,139,250,0.2)', marginBottom: 16 }}>
