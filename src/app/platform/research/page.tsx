@@ -9,7 +9,7 @@ import { formatDate } from '@/lib/utils'
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ACCENT = '#6c8eff'
-const TABS = ['search', 'journals', 'cfp', 'import'] as const
+const TABS = ['search', 'journals', 'cfp', 'library', 'import'] as const
 type Tab = typeof TABS[number]
 
 const DB_OPTIONS = [
@@ -696,6 +696,260 @@ function ImportTab() {
   )
 }
 
+// ── LITERATURE LIBRARY TAB ────────────────────────────────────────────────────
+function LibraryTab() {
+  const supabase = createClient()
+  const [items,    setItems]    = useState<any[]>([])
+  const [stats,    setStats]    = useState<any>(null)
+  const [loading,  setLoading]  = useState(true)
+  const [selected, setSelected] = useState<any>(null)
+  const [filter,   setFilter]   = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [search,   setSearch]   = useState('')
+  const [aiLoading, setAiLoading] = useState<string|null>(null)
+  const [deleting,  setDeleting]  = useState<string|null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportText, setExportText] = useState<string|null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    const params = new URLSearchParams()
+    if (filter !== 'all') params.set('read_status', filter)
+    if (typeFilter !== 'all') params.set('source_type', typeFilter)
+    if (search.trim()) params.set('q', search.trim())
+    const res = await fetch(`/api/literature?${params}`)
+    const d = await res.json()
+    setItems(d.items ?? [])
+    setStats(d.stats)
+    setLoading(false)
+  }, [filter, typeFilter, search])
+
+  useEffect(() => { load() }, [load])
+
+  async function updateItem(id: string, updates: any) {
+    await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id, ...updates }) })
+    setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
+    if (selected?.id === id) setSelected((p: any) => ({ ...p, ...updates }))
+  }
+
+  async function generateSummary(id: string) {
+    setAiLoading(id)
+    const res = await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'ai_summary', id }) })
+    const d = await res.json()
+    if (d.summary) {
+      const updates = { ai_summary: d.summary, citation_apa: d.citation_apa, themes: d.suggested_themes ?? [], relevance: d.suggested_relevance_score }
+      setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
+      if (selected?.id === id) setSelected((p: any) => ({ ...p, ...updates }))
+    }
+    setAiLoading(null)
+  }
+
+  async function deleteItem(id: string) {
+    if (!confirm('Remove from library?')) return
+    setDeleting(id)
+    await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) })
+    setItems(prev => prev.filter(i => i.id !== id))
+    if (selected?.id === id) setSelected(null)
+    setDeleting(null)
+  }
+
+  async function exportLibrary(fmt: 'apa' | 'bibtex') {
+    setExporting(true)
+    const res = await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'export', format: fmt }) })
+    const d = await res.json()
+    setExportText(d.export ?? '')
+    setExporting(false)
+  }
+
+  const READ_COLOURS: Record<string, string> = { unread: '#64748b', reading: '#6c8eff', read: '#22c55e', revisit: '#f59e0b' }
+  const TYPE_ICONS:   Record<string, string> = { journal: '📄', book: '📚', conference: '🎤', report: '📋', thesis: '🎓', website: '🌐', other: '📁' }
+
+  return (
+    <div>
+      {/* Stats */}
+      {stats && stats.total > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 16 }}>
+          {[
+            { label: 'Total', val: stats.total, c: '#6c8eff', f: 'all' },
+            { label: 'Unread', val: stats.unread, c: '#64748b', f: 'unread' },
+            { label: 'Reading', val: stats.reading, c: '#6c8eff', f: 'reading' },
+            { label: 'Read', val: stats.read, c: '#22c55e', f: 'read' },
+            { label: 'Revisit', val: stats.revisit, c: '#f59e0b', f: 'revisit' },
+          ].map(s => (
+            <div key={s.label} className="pios-card-sm" style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => setFilter(s.f)}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: s.c, lineHeight: 1, marginBottom: 2 }}>{s.val}</div>
+              <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Search + filters */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' as const, alignItems: 'center' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+          <input className="pios-input" placeholder="Search title, journal, notes…"
+            value={search} onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && load()}
+            style={{ paddingLeft: 28, fontSize: 12 }} />
+          <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--pios-dim)', fontSize: 13 }}>🔍</span>
+        </div>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' as const }}>
+          {[['all','All'],['unread','Unread'],['reading','Reading'],['read','Read'],['revisit','Revisit']].map(([v,l]) => (
+            <button key={v} onClick={() => setFilter(v)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, border: '1px solid var(--pios-border)', background: filter===v?'var(--pios-surface)':'transparent', color: filter===v?'var(--pios-text)':'var(--pios-muted)', fontWeight: filter===v?600:400, cursor: 'pointer' }}>{l}</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {[['all','All'],['journal','Journal'],['book','Book'],['conference','Conf'],['report','Report'],['thesis','Thesis']].map(([v,l]) => (
+            <button key={v} onClick={() => setTypeFilter(v)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, border: 'none', background: typeFilter===v?ACCENT+'20':'var(--pios-surface2)', color: typeFilter===v?ACCENT:'var(--pios-muted)', fontWeight: typeFilter===v?600:400, cursor: 'pointer' }}>{l}</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+          <button onClick={() => exportLibrary('apa')} disabled={exporting} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', color: 'var(--pios-muted)' }}>{exporting?'⟳':'⬇'} APA</button>
+          <button onClick={() => exportLibrary('bibtex')} disabled={exporting} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', color: 'var(--pios-muted)' }}>{exporting?'⟳':'⬇'} BibTeX</button>
+        </div>
+      </div>
+
+      {/* Export output */}
+      {exportText !== null && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Export ready — click to select all</span>
+            <button onClick={() => setExportText(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--pios-muted)', fontSize: 13 }}>✕</button>
+          </div>
+          <textarea readOnly value={exportText} rows={8}
+            style={{ width: '100%', fontFamily: 'monospace', fontSize: 11, background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)', borderRadius: 6, padding: '10px', color: 'var(--pios-text)', resize: 'vertical' as const }}
+            onClick={e => (e.target as HTMLTextAreaElement).select()} />
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 1fr' : '1fr', gap: 16 }}>
+        {/* List */}
+        <div>
+          {loading ? (
+            <div style={{ padding: '32px 0', textAlign: 'center' as const, color: 'var(--pios-muted)', fontSize: 13 }}>Loading library…</div>
+          ) : items.length === 0 ? (
+            <div className="pios-card" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Library is empty</div>
+              <p style={{ fontSize: 13, color: 'var(--pios-muted)' }}>Add papers via the ⬇ Import & Connect tab or the 🔍 Database Search tab.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+              {items.map(item => (
+                <div key={item.id} onClick={() => setSelected(selected?.id===item.id ? null : item)}
+                  className="pios-card" style={{ padding: '12px 16px', cursor: 'pointer',
+                    border: `1px solid ${selected?.id===item.id ? ACCENT+'50' : 'var(--pios-border)'}`,
+                    background: selected?.id===item.id ? ACCENT+'05' : 'var(--pios-surface)' }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{TYPE_ICONS[item.source_type] ?? '📄'}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35, marginBottom: 3 }}>{item.title}</div>
+                      <div style={{ fontSize: 11, color: 'var(--pios-muted)', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                        {item.authors?.length > 0 && <span>{(item.authors as string[]).slice(0,2).join(', ')}{item.authors.length > 2 ? ' et al.' : ''}</span>}
+                        {item.year && <><span>·</span><span>{item.year}</span></>}
+                        {item.journal && <><span>·</span><span style={{ fontStyle: 'italic' }}>{item.journal}</span></>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 5, flexWrap: 'wrap' as const, alignItems: 'center' }}>
+                        <select value={item.read_status} onClick={e => e.stopPropagation()}
+                          onChange={e => updateItem(item.id, { read_status: e.target.value })}
+                          style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, border: 'none', cursor: 'pointer', background: (READ_COLOURS[item.read_status]??'#64748b')+'20', color: READ_COLOURS[item.read_status]??'#64748b', fontWeight: 600, outline: 'none' }}>
+                          {['unread','reading','read','revisit'].map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        {item.relevance && <span style={{ fontSize: 11, color: '#f59e0b' }}>{'★'.repeat(item.relevance)}{'☆'.repeat(5-item.relevance)}</span>}
+                        {item.ai_summary && <span style={{ fontSize: 10, color: '#a78bfa' }}>✦ AI</span>}
+                        {item.doi && <a href={`https://doi.org/${item.doi}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: ACCENT }}>DOI →</a>}
+                        {(item.tags as string[])?.slice(0,3).map((t: string) => (
+                          <span key={t} style={{ fontSize: 9, padding: '1px 6px', borderRadius: 10, background: 'var(--pios-surface2)', color: 'var(--pios-dim)' }}>{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <button onClick={e => { e.stopPropagation(); deleteItem(item.id) }} disabled={deleting===item.id}
+                      style={{ fontSize: 11, padding: '3px 6px', borderRadius: 5, border: '1px solid rgba(239,68,68,0.2)', background: 'none', cursor: 'pointer', color: '#ef4444', flexShrink: 0, opacity: 0.6 }}>
+                      {deleting===item.id ? '…' : '✕'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Detail */}
+        {selected && (
+          <div>
+            <div className="pios-card" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginBottom: 4 }}>{selected.title}</div>
+                  <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
+                    {(selected.authors as string[])?.join(', ')} {selected.year ? `(${selected.year})` : ''}
+                  </div>
+                </div>
+                <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--pios-muted)', fontSize: 16, marginLeft: 8 }}>✕</button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 11, color: 'var(--pios-muted)' }}>Relevance:</span>
+                {[1,2,3,4,5].map(n => (
+                  <button key={n} onClick={() => updateItem(selected.id, { relevance: n })}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: n<=(selected.relevance??0)?'#f59e0b':'var(--pios-dim)', padding: '0 1px', lineHeight: 1 }}>★</button>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginBottom: 4 }}>Notes</div>
+                <textarea className="pios-input" rows={3} placeholder="Add reading notes…"
+                  defaultValue={selected.notes ?? ''}
+                  onBlur={e => updateItem(selected.id, { notes: e.target.value })}
+                  style={{ width: '100%', resize: 'vertical' as const, fontFamily: 'inherit', fontSize: 12 }} />
+              </div>
+
+              {selected.ai_summary ? (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#a78bfa', marginBottom: 6 }}>✦ AI Summary</div>
+                  <p style={{ fontSize: 12, color: 'var(--pios-text)', lineHeight: 1.65, marginBottom: 8 }}>{selected.ai_summary}</p>
+                  {selected.citation_apa && (
+                    <div style={{ padding: '8px 10px', borderRadius: 6, background: 'var(--pios-surface2)', fontSize: 11, color: 'var(--pios-muted)', fontStyle: 'italic' }}>
+                      {selected.citation_apa}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button onClick={() => generateSummary(selected.id)} disabled={aiLoading===selected.id}
+                  style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px dashed rgba(167,139,250,0.3)', background: 'none', cursor: 'pointer', color: '#a78bfa', fontSize: 12, marginBottom: 12 }}>
+                  {aiLoading===selected.id ? '⟳ Generating…' : '✦ Generate AI summary + APA citation'}
+                </button>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {[
+                  { label: 'Type',   value: selected.source_type },
+                  { label: 'Journal',value: selected.journal ?? '—' },
+                  { label: 'DOI',    value: selected.doi ?? '—' },
+                  { label: 'Added',  value: selected.created_at ? new Date(selected.created_at).toLocaleDateString('en-GB') : '—' },
+                ].map(f => (
+                  <div key={f.label} style={{ padding: '6px 8px', borderRadius: 5, background: 'var(--pios-surface2)' }}>
+                    <div style={{ fontSize: 9, color: 'var(--pios-dim)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 1 }}>{f.label}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600 }}>{f.value}</div>
+                  </div>
+                ))}
+              </div>
+              {(selected.themes as string[])?.length > 0 && (
+                <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap' as const, gap: 4 }}>
+                  {(selected.themes as string[]).map((t: string) => (
+                    <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: '#a78bfa20', color: '#a78bfa' }}>{t}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 export default function ResearchPage() {
   const [tab, setTab] = useState<Tab>('search')
@@ -715,12 +969,14 @@ export default function ResearchPage() {
         <TabBtn active={tab === 'search'}   onClick={() => setTab('search')}>🔍 Database Search</TabBtn>
         <TabBtn active={tab === 'journals'} onClick={() => setTab('journals')}>📔 Journal Watchlist</TabBtn>
         <TabBtn active={tab === 'cfp'}      onClick={() => setTab('cfp')}>📣 Calls for Papers</TabBtn>
+        <TabBtn active={tab === 'library'}  onClick={() => setTab('library')}>📚 My Library</TabBtn>
         <TabBtn active={tab === 'import'}   onClick={() => setTab('import')}>⬇ Import & Connect</TabBtn>
       </div>
 
       {tab === 'search'   && <SearchTab />}
       {tab === 'journals' && <JournalsTab />}
       {tab === 'cfp'      && <CFPTab />}
+      {tab === 'library'  && <LibraryTab />}
       {tab === 'import'   && <ImportTab />}
     </div>
   )
