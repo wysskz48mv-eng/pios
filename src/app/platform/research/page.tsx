@@ -281,6 +281,7 @@ function JournalsTab() {
   const [showAdd, setShowAdd]   = useState(false)
   const [addForm, setAddForm]   = useState({ journal_name: '', publisher: '', impact_factor: '', quartile: 'Q2', subject_area: '', submission_url: '', guidelines_url: '', priority: 'medium' })
   const [saving, setSaving]     = useState(false)
+  const [deleteJournalConfirm, setDeleteJournalConfirm] = useState<string|null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)

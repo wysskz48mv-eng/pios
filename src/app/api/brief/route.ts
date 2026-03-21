@@ -28,14 +28,12 @@ export async function POST() {
       supabase.from('fm_news_items').select('headline,category,relevance,summary')
         .eq('user_id', user.id)
         .gte('fetched_at', new Date(Date.now() - 86400000).toISOString())
-        .order('relevance', { ascending: false }).limit(5)
-        .then(r => r).catch(() => ({ data: [] as any[] })),
+        .order('relevance', { ascending: false }).limit(5),
       supabase.from('paper_calls').select('title,journal_name,deadline,relevance_score')
         .eq('user_id', user.id).in('status', ['new','considering','planning'])
         .gte('deadline', new Date().toISOString().slice(0,10))
         .lte('deadline', new Date(Date.now() + 30*86400000).toISOString().slice(0,10))
-        .order('deadline').limit(3)
-        .then(r => r).catch(() => ({ data: [] as any[] })),
+        .order('deadline').limit(3),
     ])
 
     const fmNews = (fmNewsR as any).data ?? []

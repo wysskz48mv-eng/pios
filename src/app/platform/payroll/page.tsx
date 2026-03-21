@@ -52,6 +52,7 @@ function RunsTab() {
   const [linesLoading, setLinesLoading] = useState(false)
   const [remitting, setRemitting] = useState(false)
   const [remitPreview, setRemitPreview] = useState<any>(null)
+  const [banner, setBanner] = useState<{msg:string;ok:boolean}|null>(null)
 
   const loadRuns = useCallback(async () => {
     setLoading(true)

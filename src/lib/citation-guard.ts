@@ -121,7 +121,7 @@ function titleMatchScore(a: string, b: string): 'exact' | 'close' | 'mismatch' {
   if (na === nb) return 'exact'
   // Word overlap
   const wa = new Set(na.split(' ')), wb = new Set(nb.split(' '))
-  const overlap = [...wa].filter(w => wb.has(w) && w.length > 3).length
+  const overlap = Array.from(wa).filter(w => wb.has(w) && w.length > 3).length
   const minLen = Math.min(wa.size, wb.size)
   if (minLen > 0 && overlap / minLen >= 0.6) return 'close'
   return 'mismatch'

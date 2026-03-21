@@ -94,7 +94,7 @@ export default function ExpensesPage() {
   })
 
   // Tax years available
-  const taxYears = [...new Set(expenses.map(e => getTaxYear(e.date)))].sort().reverse()
+  const taxYears = Array.from(new Set(expenses.map(e => getTaxYear(e.date)))).sort().reverse()
 
   // Summaries
   const total      = filtered.reduce((s,e)=>s+(parseFloat(e.amount)||0),0)

@@ -400,7 +400,7 @@ export default function TasksPage() {
                         {t.description && <span style={{ fontSize:10, color:'var(--pios-dim)' }}>📝</span>}
                       </div>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8 }}>
-                        <StatusPill status={t.status} onClick={e=>{(e as any).stopPropagation?.();cycleStatus(t.id,t.status)}} />
+                        <StatusPill status={t.status} onClick={()=>cycleStatus(t.id,t.status)} />
                         <button onClick={e=>{e.stopPropagation?.();deleteTask(t.id)}} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--pios-dim)', fontSize:13, padding:'0 2px', lineHeight:1 }}>✕</button>
                       </div>
                     </div>

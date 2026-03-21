@@ -28,6 +28,7 @@ export default function EmailPage() {
   const [extracting, setExtracting] = useState(false)
   const [creatingTask, setCreatingTask] = useState(false)
   const [archiving, setArchiving] = useState<string|null>(null)
+  const [banner, setBanner] = useState<{msg:string;ok:boolean}|null>(null)
   const supabase = createClient()
 
   const load = useCallback(async () => {

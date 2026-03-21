@@ -343,6 +343,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
+  const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string|null>(null)
   const [form, setForm] = useState({ name:'', trigger_type:'email_sender', trigger_value:'', trigger_match:'contains', action_type:'assign_project', action_value:'', priority:50 })
   function f(k:string,v:any) { setForm(p=>({...p,[k]:v})) }
 
@@ -361,7 +362,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
   }
 
   async function deleteRule(id:string) {
-    if (deleteRuleConfirm !== rule.id) { setDeleteRuleConfirm(rule.id); return }
+    if (deleteRuleConfirm !== id) { setDeleteRuleConfirm(id); return }
     setDeleteRuleConfirm(null)
     await fetch('/api/files', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_rule', id }) })
     load()
