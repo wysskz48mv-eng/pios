@@ -62,6 +62,7 @@ function SearchTab() {
   const [maxResults, setMaxResults] = useState(10)
   const [loading,    setLoading]    = useState(false)
   const [results,    setResults]    = useState<any[]>([])
+  const [guardSummary, setGuardSummary] = useState<any>(null)
   const [meta,       setMeta]       = useState<any>(null)
   const [history,    setHistory]    = useState<any[]>([])
   const [expanded,   setExpanded]   = useState<Set<number>>(new Set())
@@ -78,7 +79,7 @@ function SearchTab() {
 
   async function search() {
     if (!query.trim()) return
-    setLoading(true); setResults([]); setMeta(null)
+    setLoading(true); setResults([]); setMeta(null); setGuardSummary(null)
     const res = await fetch('/api/research/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -86,6 +87,7 @@ function SearchTab() {
     })
     const data = await res.json()
     setResults(data.results ?? [])
+    if (data.guardSummary) setGuardSummary(data.guardSummary)
     setMeta(data)
     setLoading(false)
   }
@@ -165,6 +167,19 @@ function SearchTab() {
               💡 <strong>AI guidance:</strong> {meta.aiGuidance}
             </div>
           )}
+          {guardSummary && (
+            <div style={{ padding:'10px 14px', borderRadius:8, marginBottom:14, display:'flex', gap:16, alignItems:'center', flexWrap:'wrap',
+              background: guardSummary.fabricated_risk > 0 ? 'rgba(239,68,68,0.07)' : guardSummary.needs_review > 0 ? 'rgba(245,158,11,0.07)' : 'rgba(34,197,94,0.07)',
+              border: `1px solid ${guardSummary.fabricated_risk > 0 ? 'rgba(239,68,68,0.2)' : guardSummary.needs_review > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
+              <span style={{ fontSize:12, fontWeight:600, color: guardSummary.fabricated_risk > 0 ? '#ef4444' : guardSummary.needs_review > 0 ? '#f59e0b' : '#22c55e' }}>
+                🔍 Citation Guard:
+              </span>
+              <span style={{ fontSize:12, color:'var(--pios-muted)' }}>
+                {guardSummary.verified} verified · {guardSummary.needs_review} needs review · {guardSummary.fabricated_risk} unverifiable
+              </span>
+              {guardSummary.warning && <span style={{ fontSize:11, color:'#f59e0b' }}>⚠ {guardSummary.warning}</span>}
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
             {results.map((r, i) => (
               <div key={i} className="pios-card" style={{ padding: '16px 18px' }}>
@@ -181,9 +196,24 @@ function SearchTab() {
                       {r.open_access && <span style={{ color: '#22c55e', fontWeight: 600 }}>OA</span>}
                     </div>
                   </div>
-                  <button onClick={() => toggleExpand(i)} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', color: 'var(--pios-muted)', flexShrink: 0 }}>
-                    {expanded.has(i) ? 'Less ▲' : 'More ▼'}
-                  </button>
+                  <div style={{ display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
+                    {r.provenance_label && (() => {
+                      const badges: Record<string,{text:string,colour:string,bg:string}> = {
+                        AI_VERIFIED:    { text:'✓ Verified',       colour:'#22c55e', bg:'rgba(34,197,94,0.1)' },
+                        AI_UNVERIFIED:  { text:'⚠ Unverified',     colour:'#f59e0b', bg:'rgba(245,158,11,0.1)' },
+                        FABRICATED_RISK:{ text:'✗ Check manually', colour:'#ef4444', bg:'rgba(239,68,68,0.1)' },
+                      }
+                      const b = badges[r.provenance_label]
+                      return b ? (
+                        <span title={r.verification_note ?? r.hitl_reason ?? ''} style={{ fontSize:10, padding:'2px 8px', borderRadius:20, fontWeight:600, background:b.bg, color:b.colour }}>
+                          {b.text}
+                        </span>
+                      ) : null
+                    })()}
+                    <button onClick={() => toggleExpand(i)} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', color: 'var(--pios-muted)' }}>
+                      {expanded.has(i) ? 'Less ▲' : 'More ▼'}
+                    </button>
+                  </div>
                 </div>
                 {expanded.has(i) && (
                   <div style={{ borderTop: '1px solid var(--pios-border)', paddingTop: 10, marginTop: 8 }}>
@@ -202,6 +232,14 @@ function SearchTab() {
                           style={{ fontSize: 11, color: ACCENT, marginLeft: 'auto' }}>
                           DOI: {r.doi} →
                         </a>
+                      )}
+                      {r.crossref_title && r.provenance_label === 'FABRICATED_RISK' && (
+                        <div style={{ width:'100%', marginTop:6, padding:'6px 10px', borderRadius:6, background:'rgba(239,68,68,0.08)', fontSize:11, color:'#ef4444' }}>
+                          ⚠ CrossRef title: "{r.crossref_title}" — differs from AI output. Verify before citing.
+                        </div>
+                      )}
+                      {r.requires_hitl && r.hitl_reason && (
+                        <div style={{ width:'100%', marginTop:4, fontSize:11, color:'#f59e0b' }}>HITL: {r.hitl_reason}</div>
                       )}
                     </div>
                   </div>
@@ -737,7 +775,7 @@ function LibraryTab() {
     const res = await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'ai_summary', id }) })
     const d = await res.json()
     if (d.summary) {
-      const updates = { ai_summary: d.summary, citation_apa: d.citation_apa, themes: d.suggested_themes ?? [], relevance: d.suggested_relevance_score }
+      const updates = { ai_summary: d.summary, citation_apa: d.citation_apa, themes: d.suggested_themes ?? [], relevance: d.suggested_relevance_score, _guard: d.guard ?? null }
       setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
       if (selected?.id === id) setSelected((p: any) => ({ ...p, ...updates }))
     }
@@ -908,6 +946,17 @@ function LibraryTab() {
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#a78bfa', marginBottom: 6 }}>✦ AI Summary</div>
                   <p style={{ fontSize: 12, color: 'var(--pios-text)', lineHeight: 1.65, marginBottom: 8 }}>{selected.ai_summary}</p>
+                  {selected._guard && (
+                    <div style={{ marginBottom:6, padding:'5px 10px', borderRadius:6, fontSize:11, fontWeight:600,
+                      background: selected._guard.provenance_label==='AI_VERIFIED' ? 'rgba(34,197,94,0.08)' : selected._guard.provenance_label==='FABRICATED_RISK' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
+                      color: selected._guard.provenance_label==='AI_VERIFIED' ? '#22c55e' : selected._guard.provenance_label==='FABRICATED_RISK' ? '#ef4444' : '#f59e0b',
+                    }}>
+                      {selected._guard.provenance_label==='AI_VERIFIED' ? '✓ CrossRef verified' :
+                       selected._guard.provenance_label==='FABRICATED_RISK' ? '✗ Not found in CrossRef — verify before citing' :
+                       '⚠ Partial verification'}
+                      {selected._guard.hitl_reason && <span style={{ fontWeight:400, marginLeft:6 }}>· {selected._guard.hitl_reason}</span>}
+                    </div>
+                  )}
                   {selected.citation_apa && (
                     <div style={{ padding: '8px 10px', borderRadius: 6, background: 'var(--pios-surface2)', fontSize: 11, color: 'var(--pios-muted)', fontStyle: 'italic' }}>
                       {selected.citation_apa}
