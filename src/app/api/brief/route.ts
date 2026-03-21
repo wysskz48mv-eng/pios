@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
+import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
 
 export const runtime = 'nodejs'
 
@@ -114,6 +115,18 @@ Maximum 300 words. Plain prose only. Never use bullet points or lists.`
       content,
       ai_model: 'claude-sonnet-4-20250514',
     }, { onConflict: 'user_id,brief_date' })
+
+    // Deliver by email (fire-and-forget — never block the response)
+    const { data: profile } = await supabase
+      .from('user_profiles').select('email, full_name').eq('id', user.id).single()
+    if (profile?.email) {
+      sendEmail({
+        to:      profile.email,
+        subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
+        html:    morningBriefHtml(content, today, profile.full_name ?? 'there'),
+        text:    morningBriefText(content, today, profile.full_name ?? 'there'),
+      }).catch(() => {/* silent */})
+    }
 
     return NextResponse.json({ content, brief_date: today })
   } catch (err: any) {

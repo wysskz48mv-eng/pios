@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendEmail, welcomeHtml } from '@/lib/email/resend'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -50,7 +51,20 @@ export async function GET(request: Request) {
         }).eq('id', data.user.id)
       }
 
-      return NextResponse.redirect(`${origin}/platform/dashboard`)
+      // New user — send welcome email (fire-and-forget, never block redirect)
+      const isNewUser = !profile
+      if (isNewUser && data.user.email) {
+        const name = data.user.user_metadata?.full_name ?? data.user.email.split('@')[0]
+        sendEmail({
+          to:      data.user.email,
+          subject: 'Welcome to PIOS — your intelligent operating system',
+          html:    welcomeHtml(name, 'Individual'),
+        }).catch(() => {/* silent — email is non-critical */})
+      }
+
+      // New users land on onboarding; returning users go straight to dashboard
+      const dest = isNewUser ? `${origin}/onboarding` : `${origin}/platform/dashboard`
+      return NextResponse.redirect(dest)
     }
   }
   return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`)
