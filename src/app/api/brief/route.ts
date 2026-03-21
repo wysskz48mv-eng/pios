@@ -1,29 +1,61 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
 import { createNotification } from '@/lib/notifications'
 import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
 
-export const runtime = 'nodejs'
+export const runtime    = 'nodejs'
+export const maxDuration = 60
 
-export async function POST() {
+/**
+ * POST /api/brief[?force=1]
+ * Generates (or force-refreshes) the morning brief for the current user.
+ *
+ * Default: returns cached brief if one already exists for today.
+ * ?force=1: regenerates fresh regardless of cache. No email sent on refresh.
+ *
+ * Context gathered:
+ *   - Overdue tasks (flagged prominently), due-today, upcoming
+ *   - Expense claims awaiting reimbursement
+ *   - Queued payroll transfers
+ *   - Academic modules + thesis chapter word velocity
+ *   - Active projects with progress
+ *   - Unread notifications
+ *   - FM news (last 24h)
+ *   - Imminent CFP deadlines
+ *   - Live VeritasEdge / InvestiScript metrics
+ *
+ * PIOS v2.0 | Sustain International FZE Ltd
+ */
+export async function POST(req: NextRequest) {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const force = new URL(req.url).searchParams.get('force') === '1'
     const today = new Date().toISOString().slice(0, 10)
+    const now   = new Date()
 
-    const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR] = await Promise.all([
+    // Return cached unless forced
+    if (!force) {
+      const { data: cached } = await supabase
+        .from('daily_briefs').select('content').eq('user_id', user.id).eq('brief_date', today).single()
+      if (cached?.content) return NextResponse.json({ content: cached.content, brief_date: today, cached: true })
+    }
+
+    // Gather all context in parallel
+    const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR, expensesR, payrollR] = await Promise.all([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
         .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
-        .order('due_date', { ascending: true }).limit(10),
+        .order('due_date', { ascending: true }).limit(15),
       supabase.from('academic_modules').select('title,status,deadline,module_type')
         .eq('user_id', user.id).not('status', 'in', '("passed","failed")').limit(6),
       supabase.from('projects').select('title,domain,status,progress')
         .eq('user_id', user.id).eq('status', 'active').limit(6),
       supabase.from('notifications').select('title,type,domain')
-        .eq('user_id', user.id).eq('read', false).limit(5),
+        .eq('user_id', user.id).eq('read', false)
+        .order('created_at', { ascending: false }).limit(5),
       supabase.from('thesis_chapters').select('title,chapter_num,status,word_count,target_words')
         .eq('user_id', user.id).order('chapter_num').limit(6),
       supabase.from('fm_news_items').select('headline,category,relevance,summary')
@@ -32,112 +64,159 @@ export async function POST() {
         .order('relevance', { ascending: false }).limit(5),
       supabase.from('paper_calls').select('title,journal_name,deadline,relevance_score')
         .eq('user_id', user.id).in('status', ['new','considering','planning'])
-        .gte('deadline', new Date().toISOString().slice(0,10))
-        .lte('deadline', new Date(Date.now() + 30*86400000).toISOString().slice(0,10))
+        .gte('deadline', today)
+        .lte('deadline', new Date(Date.now() + 30 * 86400000).toISOString().slice(0,10))
         .order('deadline').limit(3),
+      supabase.from('expenses').select('description,amount,currency,date')
+        .eq('user_id', user.id).eq('billable', true)
+        .is('reimbursed_at', null)
+        .order('date', { ascending: false }).limit(5),
+      supabase.from('transfer_queue').select('description,amount_gbp,status')
+        .eq('user_id', user.id).eq('status', 'queued').limit(3),
     ])
 
-    const fmNews = (fmNewsR as any).data ?? []
-    const cfps   = (cfpR   as any).data ?? []
+    const tasks     = tasksR.data ?? []
+    const overdue   = tasks.filter(t => t.due_date && t.due_date < today)
+    const dueToday  = tasks.filter(t => t.due_date === today)
+    const upcoming  = tasks.filter(t => !t.due_date || t.due_date > today)
 
-    const ctx = `Today: ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+    // Thesis velocity
+    const chapters    = chaptersR.data ?? []
+    const totalWords  = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
+    const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
+    const nearestDl   = (modulesR.data ?? []).map(m => m.deadline).filter(Boolean).sort()[0]
+    const daysLeft    = nearestDl ? Math.max(1, Math.round((new Date(nearestDl).getTime() - now.getTime()) / 86400000)) : null
+    const wordsPerDay = daysLeft ? Math.ceil(Math.max(0, targetWords - totalWords) / daysLeft) : null
 
-OPEN TASKS (${tasksR.data?.length ?? 0}):
-${tasksR.data?.map(t => `- [${t.priority}] ${t.title} (${t.domain}) — ${t.due_date ? new Date(t.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'no deadline'}`).join('\n') || 'none'}
+    const fmt = (d: string) => new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
 
-ACADEMIC MODULES:
-${modulesR.data?.map(m => `- ${m.title} [${m.status}] — deadline: ${m.deadline ? new Date(m.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD'}`).join('\n') || 'none'}
+    const ctx = [
+      `DATE: ${now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`,
 
-THESIS CHAPTERS:
-${chaptersR.data?.map(c => `- Ch${c.chapter_num}: ${c.title} [${c.status}] — ${c.word_count}/${c.target_words} words`).join('\n') || 'none'}
+      overdue.length > 0
+        ? `OVERDUE TASKS — REQUIRES IMMEDIATE ATTENTION (${overdue.length}):\n` +
+          overdue.map(t => `- [${(t.priority ?? '').toUpperCase()}] ${t.title} (${t.domain}) — was due ${fmt(t.due_date)}`).join('\n')
+        : 'OVERDUE TASKS: none',
 
-ACTIVE PROJECTS:
-${projectsR.data?.map(p => `- ${p.title} (${p.domain}) — ${p.progress}% complete`).join('\n') || 'none'}
+      dueToday.length > 0
+        ? `DUE TODAY (${dueToday.length}):\n` + dueToday.map(t => `- [${t.priority}] ${t.title} (${t.domain})`).join('\n')
+        : 'DUE TODAY: none',
 
-UNREAD ALERTS:
-${notifsR.data?.map(n => `- [${n.type.toUpperCase()}] ${n.title}`).join('\n') || 'None'}
+      upcoming.length > 0
+        ? `UPCOMING (${upcoming.length} open):\n` + upcoming.slice(0,6).map(t =>
+            `- [${t.priority}] ${t.title} (${t.domain}) — ${t.due_date ? fmt(t.due_date) : 'no date'}`).join('\n')
+        : '',
 
-FM INTELLIGENCE (top signals, last 24h):
-${fmNews.length > 0
-  ? fmNews.map((n: any) => `- [${n.category.toUpperCase()}] ${n.headline}`).join('\n')
-  : 'No FM news cached — refresh feeds in Command Centre'}
+      `ACADEMIC MODULES:\n` + ((modulesR.data ?? []).map(m =>
+        `- ${m.title} [${m.status}] — ${m.deadline ? fmt(m.deadline) : 'TBD'}`).join('\n') || 'none'),
 
-PUBLICATION DEADLINES (next 30 days):
-${cfps.length > 0
-  ? cfps.map((c: any) => `- "${c.title}" (${c.journal_name ?? 'journal'}) — due ${c.deadline}`).join('\n')
-  : 'No imminent CFP deadlines tracked'}`
+      chapters.length > 0
+        ? `THESIS: ${totalWords.toLocaleString()}/${targetWords.toLocaleString()} words (${Math.round(totalWords/Math.max(targetWords,1)*100)}%)` +
+          (wordsPerDay ? ` · needs ${wordsPerDay.toLocaleString()} words/day` : '') + '\n' +
+          chapters.map(c => `- Ch${c.chapter_num} ${c.title}: ${c.word_count ?? 0}/${c.target_words ?? 8000} words [${c.status}]`).join('\n')
+        : '',
 
-    // Fetch live platform data (non-blocking)
+      (projectsR.data ?? []).length > 0
+        ? `ACTIVE PROJECTS:\n` + (projectsR.data ?? []).map(p => `- ${p.title} (${p.domain}) — ${p.progress ?? 0}% done`).join('\n')
+        : '',
+
+      (notifsR.data ?? []).length > 0
+        ? `UNREAD ALERTS (${notifsR.data?.length}):\n` + (notifsR.data ?? []).map(n => `- [${n.type.toUpperCase()}] ${n.title}`).join('\n')
+        : 'UNREAD ALERTS: none',
+
+      (expensesR.data ?? []).length > 0
+        ? `UNBILLED EXPENSES (${expensesR.data?.length}):\n` + (expensesR.data ?? []).map(e => `- ${e.currency} ${e.amount} — ${e.description} (${fmt(e.date)})`).join('\n')
+        : '',
+
+      (payrollR.data ?? []).length > 0
+        ? `QUEUED TRANSFERS (${payrollR.data?.length}):\n` + (payrollR.data ?? []).map(t => `- GBP ${t.amount_gbp} — ${t.description}`).join('\n')
+        : '',
+
+      (fmNewsR.data ?? []).length > 0
+        ? `FM INTELLIGENCE (last 24h):\n` + (fmNewsR.data ?? []).map((n: any) => `- [${(n.category ?? '').toUpperCase()}] ${n.headline}`).join('\n')
+        : 'FM INTELLIGENCE: no fresh signals',
+
+      (cfpR.data ?? []).length > 0
+        ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: any) => `- "${c.title}" (${c.journal_name ?? 'journal'}) — ${c.deadline}`).join('\n')
+        : '',
+    ].filter(Boolean).join('\n\n')
+
+    // Live platform metrics (non-blocking)
     let liveCtx = ''
     try {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const [seRes, isRes, ghRes] = await Promise.all([
-        fetch(`${appUrl}/api/live/sustainedge`).then(r => r.json()).catch(() => null),
-        fetch(`${appUrl}/api/live/investiscript`).then(r => r.json()).catch(() => null),
-        fetch(`${appUrl}/api/live/github`).then(r => r.json()).catch(() => null),
+      const [seRes, isRes, ghRes] = await Promise.allSettled([
+        fetch(`${appUrl}/api/live/sustainedge`).then(r => r.json()),
+        fetch(`${appUrl}/api/live/investiscript`).then(r => r.json()),
+        fetch(`${appUrl}/api/live/github`).then(r => r.json()),
       ])
-      if (seRes?.connected && seRes.snapshot) {
-        const s = seRes.snapshot
-        liveCtx += `\nSUSTAINEDGE LIVE: ${s.tenants?.total ?? 0} tenants · ${s.assets?.total ?? 0} assets · OBE engine: ${s.obe?.engine ?? 'not run'}`
+      if (seRes.status === 'fulfilled' && seRes.value?.connected) {
+        const s = seRes.value.snapshot
+        liveCtx += `\nVERITASEDGE: ${s?.organisations?.total ?? 0} tenants, ${s?.assets?.total ?? 0} assets`
       }
-      if (isRes?.connected && isRes.snapshot) {
-        const i = isRes.snapshot
-        liveCtx += `\nINVESTISCRIPT LIVE: ${i.users?.total ?? 0} users · ${i.users?.activeTrial ?? 0} active trials · ${i.subscriptions?.total ?? 0} paid subscribers`
+      if (isRes.status === 'fulfilled' && isRes.value?.connected) {
+        const i = isRes.value.snapshot
+        liveCtx += `\nINVESTISCRIPT: ${i?.organisations?.total ?? 0} newsrooms, ${i?.topics?.total ?? 0} investigations`
       }
-      if (ghRes?.connected && ghRes.repos) {
-        const heads = Object.entries(ghRes.repos)
-          .map(([, r]: [string, any]) => r.commits?.[0] ? `${r.label}@${(r as any).commits[0].sha}` : null)
-          .filter(Boolean).join(' · ')
-        if (heads) liveCtx += `\nGITHUB HEADS: ${heads}`
+      if (ghRes.status === 'fulfilled' && ghRes.value?.connected && ghRes.value.repos) {
+        const commits = Object.values(ghRes.value.repos as Record<string,any>)
+          .map(r => r.commits?.[0] ? `${r.label}: ${(r.commits[0].message ?? '').slice(0,60)}` : null)
+          .filter(Boolean).slice(0,3).join(' | ')
+        if (commits) liveCtx += `\nLATEST COMMITS: ${commits}`
       }
-    } catch { /* silent */ }
+    } catch { /* never block */ }
 
-    const system = `You are the PIOS AI Companion for Douglas Masuku — founder and Group CEO of Sustain International FZE Ltd, DBA candidate at University of Portsmouth, FM consultant, and technology entrepreneur building SustainEdge (service charge SaaS), InvestiScript (investigative journalism AI platform), and PIOS (personal AI operating system).
+    const system = `You are the PIOS AI Companion for Douglas Masuku — founder CEO of Sustain International FZE Ltd, DBA candidate at University of Portsmouth, FM consultant building VeritasEdge™ (service charge SaaS), InvestiScript (investigative journalism AI), and PIOS.
 
-Generate Douglas's daily morning brief. Be direct, concise, action-oriented. No pleasantries. No bullet points. 3-4 tight paragraphs.
+Generate his morning brief. Be direct and action-oriented. No pleasantries.
 
-Paragraph 1: The single most important focus today and why.
-Paragraph 2: Cross-domain conflicts or risks you've spotted (academic deadlines clashing with business commitments, etc.).
-Paragraph 3: The 2-3 tasks requiring his personal attention today specifically — not just what's on the list.
-Paragraph 4 (optional): The most actionable FM intelligence signal from today's feeds — a market move, regulatory update, or research opportunity worth acting on this week.
-
-Maximum 300 words. Plain prose only. Never use bullet points or lists.`
+Rules:
+- If overdue tasks exist, lead with them — they are the #1 priority
+- Flag if thesis writing pace is dangerously behind
+- Identify cross-domain conflicts (academic vs business deadlines)
+- Name the 2–3 items requiring his personal decision or action today
+- Close with one actionable FM/platform signal if present
+- Max 300 words. Plain prose, no bullet points, no lists.`
 
     const content = await callClaude(
-      [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${liveCtx ? '\n' + liveCtx : ''}` }],
+      [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${liveCtx ? '\n\nPLATFORM STATUS:' + liveCtx : ''}` }],
       system, 700
     )
 
+    // Upsert — always overwrites stale brief on refresh
     await supabase.from('daily_briefs').upsert({
-      user_id: user.id,
-      brief_date: today,
+      user_id:      user.id,
+      brief_date:   today,
       content,
-      ai_model: 'claude-sonnet-4-20250514',
+      ai_model:     'claude-sonnet-4-20250514',
+      generated_by: force ? 'user_refresh' : 'user',
     }, { onConflict: 'user_id,brief_date' })
 
-    // Deliver by email (fire-and-forget — never block the response)
-    const { data: profile } = await supabase
-      .from('user_profiles').select('email, full_name').eq('id', user.id).single()
-    if (profile?.email) {
-      sendEmail({
-        to:      profile.email,
-        subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
-        html:    morningBriefHtml(content, today, profile.full_name ?? 'there'),
-        text:    morningBriefText(content, today, profile.full_name ?? 'there'),
-      }).catch(() => {/* silent */})
+    // Email on first generate only (not on refresh)
+    if (!force) {
+      const { data: profile } = await supabase
+        .from('user_profiles').select('billing_email, google_email, full_name').eq('id', user.id).single()
+      const userEmail = (profile as any)?.billing_email ?? (profile as any)?.google_email
+      const userName  = (profile as any)?.full_name ?? 'there'
+      if (userEmail) {
+        sendEmail({
+          to:      userEmail,
+          subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
+          html:    morningBriefHtml(content, today, userName),
+          text:    morningBriefText(content, today, userName),
+        }).catch(() => {})
+      }
     }
 
-    // Create in-app notification for new brief
     await createNotification({
       userId:    user.id,
-      title:     `Morning brief ready — ${new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'short'})}`,
+      title:     `${force ? '↺ Brief refreshed' : 'Morning brief ready'} — ${now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' })}`,
       body:      content.slice(0, 120) + (content.length > 120 ? '…' : ''),
-      type:      'ai',
-      domain:    'ai',
-      actionUrl: '/platform/dashboard',
+      type:      'ai', domain: 'ai', actionUrl: '/platform/dashboard',
     })
 
-    return NextResponse.json({ content, brief_date: today })
+    return NextResponse.json({ content, brief_date: today, cached: false, refreshed: force })
+
   } catch (err: any) {
     console.error('Brief generation error:', err)
     return NextResponse.json({ error: err.message ?? 'Brief generation failed' }, { status: 500 })

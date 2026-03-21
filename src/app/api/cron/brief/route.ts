@@ -1,42 +1,47 @@
 /**
  * GET /api/cron/brief
- * Vercel Cron Job — runs daily at 06:00 UTC (08:00 UAE / 07:00 UK)
- * Generates and caches morning briefs for all active PIOS users
- * who have auto_brief enabled (default: true) in their feed settings.
+ * Vercel Cron — runs daily at 06:00 UTC (08:00 UAE / 07:00 UK)
+ * Generates morning briefs for all active PIOS users.
  *
- * Called by Vercel Cron — protected by CRON_SECRET header.
- * User-initiated brief generation still goes through POST /api/brief.
+ * Uses upsert — always overwrites any existing brief for today.
+ * This means re-running the cron (or triggering it manually) refreshes
+ * every user's brief with current data rather than skipping them.
  *
- * PIOS v1.0 | Sustain International FZE Ltd
+ * Context per user:
+ *   - Overdue tasks (flagged prominently)
+ *   - Due-today and upcoming tasks
+ *   - Unbilled expenses + queued transfers
+ *   - Academic modules + thesis velocity
+ *   - FM news (last 24h)
+ *   - CFP deadlines (next 30 days)
+ *
+ * PIOS v2.0 | Sustain International FZE Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { callClaude } from '@/lib/ai/client'
 import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
 
-export const runtime  = 'nodejs'
-export const dynamic  = 'force-dynamic'
-export const maxDuration = 300 // 5 min — enough to process ~50 users serially
+export const runtime     = 'nodejs'
+export const dynamic     = 'force-dynamic'
+export const maxDuration = 300
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 function authOk(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
-  if (!secret) return false // Must configure CRON_SECRET in Vercel env
-  return req.headers.get('authorization') === `Bearer ${secret}`
+  return !!secret && req.headers.get('authorization') === `Bearer ${secret}`
 }
 
 export async function GET(req: NextRequest) {
-  if (!authOk(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!authOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin  = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } })
   const today  = new Date().toISOString().slice(0, 10)
+  const now    = new Date()
   const start  = Date.now()
 
-  // Fetch all active user profiles with auto_brief enabled
   const { data: profiles, error: profErr } = await admin
     .from('user_profiles')
     .select('id, full_name, billing_email, google_email')
@@ -47,63 +52,121 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 
-  // Find users who already have a brief today (skip them)
-  const { data: existing } = await admin
-    .from('daily_briefs')
-    .select('user_id')
-    .eq('brief_date', today)
+  let generated = 0, failed = 0
 
-  const alreadyDone = new Set((existing ?? []).map((b: any) => b.user_id))
-  const pending = profiles.filter((p: any) => !alreadyDone.has(p.id))
-
-  let generated = 0
-  let skipped   = alreadyDone.size
-  let failed    = 0
-
-  for (const profile of pending) {
+  for (const profile of profiles) {
     const uid = profile.id
     try {
-      // Fetch this user's context (tasks, academic modules, thesis chapters)
-      const [tasksR, modulesR, chaptersR] = await Promise.all([
+      // Gather full context for this user
+      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR] = await Promise.all([
         admin.from('tasks').select('title,domain,priority,due_date,status')
           .eq('user_id', uid).not('status', 'in', '("done","cancelled")')
-          .order('due_date', { ascending: true }).limit(8),
+          .order('due_date', { ascending: true }).limit(15),
         admin.from('academic_modules').select('title,status,deadline')
           .eq('user_id', uid).not('status', 'in', '("passed","failed")').limit(5),
         admin.from('thesis_chapters').select('title,chapter_num,status,word_count,target_words')
           .eq('user_id', uid).order('chapter_num').limit(5),
+        admin.from('projects').select('title,domain,status,progress')
+          .eq('user_id', uid).eq('status', 'active').limit(4),
+        admin.from('fm_news_items').select('headline,category,relevance')
+          .eq('user_id', uid)
+          .gte('fetched_at', new Date(Date.now() - 86400000).toISOString())
+          .order('relevance', { ascending: false }).limit(4),
+        admin.from('paper_calls').select('title,journal_name,deadline')
+          .eq('user_id', uid).in('status', ['new','considering','planning'])
+          .gte('deadline', today)
+          .lte('deadline', new Date(Date.now() + 30 * 86400000).toISOString().slice(0,10))
+          .order('deadline').limit(3),
+        admin.from('expenses').select('description,amount,currency,date')
+          .eq('user_id', uid).eq('billable', true)
+          .is('reimbursed_at', null)
+          .order('date', { ascending: false }).limit(4),
+        admin.from('transfer_queue').select('description,amount_gbp,status')
+          .eq('user_id', uid).eq('status', 'queued').limit(3),
       ])
 
-      // Skip users with no data to brief on
-      const taskCount = tasksR.data?.length ?? 0
-      const modCount  = modulesR.data?.length ?? 0
-      if (taskCount + modCount === 0) { skipped++; continue }
+      const tasks     = tasksR.data ?? []
+      const overdue   = tasks.filter(t => t.due_date && t.due_date < today)
+      const dueToday  = tasks.filter(t => t.due_date === today)
+      const upcoming  = tasks.filter(t => !t.due_date || t.due_date > today)
+
+      // Skip users with nothing to brief on
+      if (tasks.length + (modulesR.data?.length ?? 0) === 0) continue
+
+      // Thesis velocity
+      const chapters    = chaptersR.data ?? []
+      const totalWords  = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
+      const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
+      const nearestDl   = (modulesR.data ?? []).map(m => m.deadline).filter(Boolean).sort()[0]
+      const daysLeft    = nearestDl ? Math.max(1, Math.round((new Date(nearestDl).getTime() - now.getTime()) / 86400000)) : null
+      const wordsPerDay = daysLeft ? Math.ceil(Math.max(0, targetWords - totalWords) / daysLeft) : null
+
+      const fmt = (d: string) => new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
 
       const ctx = [
-        `Today: ${new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`,
-        `OPEN TASKS (${taskCount}):\n${tasksR.data?.map(t => `- [${t.priority}] ${t.title} (${t.domain}) — ${t.due_date ? new Date(t.due_date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : 'no deadline'}`).join('\n') || 'none'}`,
-        `ACADEMIC MODULES:\n${modulesR.data?.map(m => `- ${m.title} [${m.status}] — deadline: ${m.deadline ? new Date(m.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : 'TBD'}`).join('\n') || 'none'}`,
-        chaptersR.data?.length ? `THESIS CHAPTERS:\n${chaptersR.data.map(c => `Ch.${c.chapter_num} ${c.title}: ${c.word_count ?? 0}/${c.target_words ?? 8000} words [${c.status}]`).join('\n')}` : '',
+        `DATE: ${now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`,
+
+        overdue.length > 0
+          ? `OVERDUE TASKS — REQUIRES IMMEDIATE ATTENTION (${overdue.length}):\n` +
+            overdue.map(t => `- [${(t.priority ?? '').toUpperCase()}] ${t.title} (${t.domain}) — was due ${fmt(t.due_date)}`).join('\n')
+          : 'OVERDUE TASKS: none',
+
+        dueToday.length > 0
+          ? `DUE TODAY (${dueToday.length}):\n` + dueToday.map(t => `- [${t.priority}] ${t.title} (${t.domain})`).join('\n')
+          : 'DUE TODAY: none',
+
+        upcoming.length > 0
+          ? `UPCOMING (${upcoming.length}):\n` + upcoming.slice(0,5).map(t =>
+              `- [${t.priority}] ${t.title} (${t.domain}) — ${t.due_date ? fmt(t.due_date) : 'no date'}`).join('\n')
+          : '',
+
+        `ACADEMIC MODULES:\n` + ((modulesR.data ?? []).map(m =>
+          `- ${m.title} [${m.status}] — ${m.deadline ? fmt(m.deadline) : 'TBD'}`).join('\n') || 'none'),
+
+        chapters.length > 0
+          ? `THESIS: ${totalWords.toLocaleString()}/${targetWords.toLocaleString()} words (${Math.round(totalWords/Math.max(targetWords,1)*100)}%)` +
+            (wordsPerDay ? ` · needs ${wordsPerDay.toLocaleString()} words/day` : '') + '\n' +
+            chapters.map(c => `- Ch${c.chapter_num} ${c.title}: ${c.word_count ?? 0}/${c.target_words ?? 8000} [${c.status}]`).join('\n')
+          : '',
+
+        (projectsR.data ?? []).length > 0
+          ? `ACTIVE PROJECTS:\n` + (projectsR.data ?? []).map(p => `- ${p.title} (${p.domain}) — ${p.progress ?? 0}%`).join('\n')
+          : '',
+
+        (expensesR.data ?? []).length > 0
+          ? `UNBILLED EXPENSES (${expensesR.data?.length}):\n` + (expensesR.data ?? []).map(e => `- ${e.currency} ${e.amount} — ${e.description} (${fmt(e.date)})`).join('\n')
+          : '',
+
+        (payrollR.data ?? []).length > 0
+          ? `QUEUED TRANSFERS (${payrollR.data?.length}):\n` + (payrollR.data ?? []).map(t => `- GBP ${t.amount_gbp} — ${t.description}`).join('\n')
+          : '',
+
+        (fmNewsR.data ?? []).length > 0
+          ? `FM INTELLIGENCE:\n` + (fmNewsR.data ?? []).map((n: any) => `- [${(n.category ?? '').toUpperCase()}] ${n.headline}`).join('\n')
+          : 'FM INTELLIGENCE: no fresh signals',
+
+        (cfpR.data ?? []).length > 0
+          ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: any) => `- "${c.title}" — ${c.deadline}`).join('\n')
+          : '',
       ].filter(Boolean).join('\n\n')
 
-      const system = `You are PIOS, a PhD/DBA student's integrated OS. Generate a personalised morning brief for today.
-Be warm but direct. Focus on highest-priority items. Flag any overdue tasks or upcoming deadlines.
-Maximum 200 words. Plain prose only. No bullet points.`
+      const system = `You are PIOS, a personal AI operating system for a PhD/DBA student and entrepreneur. Generate a personalised morning brief. Be direct. Lead with overdue tasks if any. Flag thesis pace risk. Spot cross-domain conflicts. Name 2-3 items needing personal action today. Max 250 words. Plain prose, no bullet points.`
 
       const content = await callClaude(
         [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}` }],
         system, 500
       )
 
+      // Always upsert — refreshes any existing brief for today
       await admin.from('daily_briefs').upsert({
-        user_id:   uid,
-        brief_date: today,
+        user_id:      uid,
+        brief_date:   today,
         content,
-        ai_model:  'claude-sonnet-4-20250514',
+        ai_model:     'claude-sonnet-4-20250514',
         generated_by: 'cron',
       }, { onConflict: 'user_id,brief_date' })
 
-      // Deliver brief by email if user has an address stored
+      // Email delivery
       const userEmail = (profile as any).billing_email ?? (profile as any).google_email
       const userName  = (profile as any).full_name ?? 'there'
       if (userEmail) {
@@ -112,7 +175,7 @@ Maximum 200 words. Plain prose only. No bullet points.`
           subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
           html:    morningBriefHtml(content, today, userName),
           text:    morningBriefText(content, today, userName),
-        })
+        }).catch(() => {})
       }
 
       generated++
@@ -123,7 +186,6 @@ Maximum 200 words. Plain prose only. No bullet points.`
   }
 
   const elapsed = Math.round((Date.now() - start) / 1000)
-  console.log(`[cron/brief] Done: ${generated} generated, ${skipped} skipped, ${failed} failed in ${elapsed}s`)
-
-  return NextResponse.json({ date: today, generated, skipped, failed, elapsed_s: elapsed })
+  console.log(`[cron/brief] ${generated} generated, ${failed} failed in ${elapsed}s`)
+  return NextResponse.json({ date: today, generated, failed, elapsed_s: elapsed })
 }

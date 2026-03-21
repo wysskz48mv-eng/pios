@@ -83,10 +83,11 @@ export default function DashboardPage() {
   const weekDeadlines  = modules.filter(m => m.deadline &&
     new Date(m.deadline) < new Date(Date.now() + 7 * 86400000)).length
 
-  async function generateBrief() {
+  async function generateBrief(force = false) {
     setBriefLoading(true)
     try {
-      const res = await fetch('/api/brief', { method: 'POST' })
+      const url = force ? '/api/brief?force=1' : '/api/brief'
+      const res = await fetch(url, { method: 'POST' })
       const data = await res.json()
       if (data.content) setBrief(data.content)
     } catch { /* silent */ }
@@ -245,9 +246,16 @@ export default function DashboardPage() {
             <span style={{ fontSize: 13, fontWeight: 600 }}>AI Morning Brief</span>
             <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>claude-sonnet-4</span>
           </div>
-          <button onClick={generateBrief} disabled={briefLoading} className="pios-btn pios-btn-ghost" style={{ fontSize: 11, padding: '4px 12px' }}>
-            {briefLoading ? '⏳ Generating…' : brief ? '↻ Regenerate' : 'Generate today\'s brief →'}
-          </button>
+          <div style={{ display:'flex', gap:4 }}>
+            <button onClick={() => generateBrief(false)} disabled={briefLoading} className="pios-btn pios-btn-ghost" style={{ fontSize: 11, padding: '4px 12px' }}>
+              {briefLoading ? '⏳ Generating…' : brief ? '↻ Refresh' : 'Generate today\'s brief →'}
+            </button>
+            {brief && !briefLoading && (
+              <button onClick={() => generateBrief(true)} title="Force regenerate with latest data" className="pios-btn pios-btn-ghost" style={{ fontSize: 11, padding: '4px 8px', color:'var(--pios-muted)' }}>
+                ⟳
+              </button>
+            )}
+          </div>
         </div>
         {brief ? (
           <p style={{ fontSize: 13, lineHeight: 1.75, whiteSpace: 'pre-wrap', color: 'var(--pios-text)' }}>{brief}</p>
