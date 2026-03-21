@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/feeds",
+      "schedule": "0 5 * * *"
+    },
+    {
       "path": "/api/cron/brief",
       "schedule": "0 6 * * *"
     }
@@ -17,6 +21,9 @@
     },
     "src/app/api/research/search/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/cron/feeds/route.ts": {
+      "maxDuration": 300
     }
   }
 }
