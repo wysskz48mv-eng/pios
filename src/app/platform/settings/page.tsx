@@ -68,7 +68,8 @@ export default async function SettingsPage() {
           <div style={{ fontSize:'14px', fontWeight:600, marginBottom:'16px', paddingBottom:'12px', borderBottom:'1px solid var(--pios-border)' }}>Integrations</div>
           {[
             { name:'Google (Gmail + Calendar)', connected:!!profile?.google_email, detail:profile?.google_email, colour:'#4285F4' },
-            { name:'Zotero (Research Library)', connected:false, detail:'Connect to sync literature', colour:'#CC2936' },
+            { name:'Zotero (Research Library)', connected:false, detail:'Set Zotero Key in Research Hub → Import & Connect', colour:'#CC2936' },
+            { name:'Intelligence Feeds', connected:true, detail:'Configure in Command Centre → Intelligence Feeds', colour:'#22c55e' },
             { name:'Stripe (Billing)', connected:!!tenant?.stripe_customer_id, detail:'Managed automatically', colour:'#635BFF' },
           ].map(i=>(
             <div key={i.name} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid var(--pios-border)' }}>
