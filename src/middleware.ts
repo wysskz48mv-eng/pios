@@ -16,6 +16,8 @@ const PUBLIC_PATHS = new Set([
   '/auth/verify',
   '/auth/callback',
   '/auth/reset-password',
+  '/privacy',
+  '/terms',
   '/api/stripe/webhook',   // Stripe must bypass auth — verified by signature
   '/api/health',
 ])
