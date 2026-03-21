@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const [pendingInvoices, setPendingInvoices] = useState<number>(0)
   const [actionEmails,    setActionEmails]    = useState<number>(0)
   const [pendingTransfers,setPendingTransfers]= useState<number>(0)
+  const [seSnap, setSeSnap] = useState<any>(null)
+  const [isSnap, setIsSnap] = useState<any>(null)
   const supabase = createClient()
 
   const load = useCallback(async () => {
@@ -63,6 +65,16 @@ export default function DashboardPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Fetch cross-platform live snapshots (non-blocking, runs once)
+  useEffect(() => {
+    fetch('/api/live/sustainedge').then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.connected && d?.snapshot) setSeSnap(d.snapshot) })
+      .catch(() => {})
+    fetch('/api/live/investiscript').then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.connected && d?.snapshot) setIsSnap(d.snapshot) })
+      .catch(() => {})
+  }, [])
+
   const domainCounts = tasks.reduce((acc: Record<string,number>, t) => {
     acc[t.domain] = (acc[t.domain] || 0) + 1; return acc
   }, {})
@@ -84,7 +96,7 @@ export default function DashboardPage() {
   const DOMAINS = [
     { key: 'academic',      label: 'Academic',      icon: '🎓', extra: `${modules.length} active` },
     { key: 'fm_consulting', label: 'FM Consulting',  icon: '🏗',  extra: 'Qiddiya active' },
-    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: 'SE · IS · PIOS' },
+    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: `${seSnap ? seSnap.organisations.total + ' tenants' : 'SE · IS · PIOS'}` },
     { key: 'business',      label: 'Business',       icon: '🏢',  extra: 'Group ops' },
     { key: 'personal',      label: 'Personal',       icon: '✦',   extra: `${projects.length} projects` },
   ]
@@ -113,6 +125,62 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* SaaS Platform Live Metrics */}
+      {(seSnap || isSnap) && (
+        <div style={{ display:'grid', gridTemplateColumns: seSnap && isSnap ? '1fr 1fr' : '1fr', gap:10, marginBottom:16 }}>
+          {seSnap && (
+            <div className="pios-card-sm" style={{ borderLeft:'3px solid #0ECFB0' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                <span style={{ fontSize:12, fontWeight:700, color:'#0ECFB0' }}>VeritasEdge™</span>
+                <span style={{ fontSize:10, padding:'1px 6px', borderRadius:20, background:'rgba(14,207,176,0.1)', color:'#0ECFB0', fontWeight:600 }}>LIVE</span>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
+                {[
+                  { l:'Tenants', v: seSnap.organisations?.total ?? 0 },
+                  { l:'Projects', v: seSnap.projects?.total ?? 0 },
+                  { l:'Assets', v: (seSnap.assets?.total ?? 0).toLocaleString() },
+                ].map(m => (
+                  <div key={m.l}>
+                    <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{m.v}</div>
+                    <div style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.l}</div>
+                  </div>
+                ))}
+              </div>
+              {seSnap.obe?.totalBudgetSAR && (
+                <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
+                  Last OBE: SAR {(seSnap.obe.totalBudgetSAR/1e6).toFixed(1)}M
+                </div>
+              )}
+            </div>
+          )}
+          {isSnap && (
+            <div className="pios-card-sm" style={{ borderLeft:'3px solid #6c8eff' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                <span style={{ fontSize:12, fontWeight:700, color:'#6c8eff' }}>InvestiScript</span>
+                <span style={{ fontSize:10, padding:'1px 6px', borderRadius:20, background:'rgba(108,142,255,0.1)', color:'#6c8eff', fontWeight:600 }}>LIVE</span>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
+                {[
+                  { l:'Newsrooms', v: isSnap.organisations?.total ?? 0 },
+                  { l:'Investigations', v: isSnap.topics?.total ?? 0 },
+                  { l:'Scripts', v: isSnap.scripts?.total ?? 0 },
+                ].map(m => (
+                  <div key={m.l}>
+                    <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{m.v}</div>
+                    <div style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.l}</div>
+                  </div>
+                ))}
+              </div>
+              {isSnap.usage?.thisMonth && (
+                <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
+                  {isSnap.usage.thisMonth} AI calls this month
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Today's Agenda */}
       {todayEvents.length > 0 && (
