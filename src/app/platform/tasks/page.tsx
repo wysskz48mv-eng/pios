@@ -267,16 +267,19 @@ export default function TasksPage() {
 
   // Filter displayed tasks
   const visibleTasks = tasks.filter(t => {
-    if (statusFilter === 'open')   return ['todo','in_progress','blocked'].includes(t.status)
-    if (statusFilter === 'done')   return t.status === 'done'
-    if (statusFilter !== 'all')    return t.status === statusFilter
+    if (statusFilter === 'open')    return ['todo','in_progress','blocked'].includes(t.status)
+    if (statusFilter === 'done')    return t.status === 'done'
+    if (statusFilter === 'overdue') return t.due_date != null && t.due_date < today && t.status !== 'done'
+    if (statusFilter !== 'all')     return t.status === statusFilter
     return true
   })
 
   // Group by status for kanban
   const grouped = STATUSES.reduce((acc,s) => { acc[s] = visibleTasks.filter(t=>t.status===s); return acc }, {} as Record<string,any[]>)
-  const openCount = tasks.filter(t=>['todo','in_progress','blocked'].includes(t.status)).length
+  const openCount    = tasks.filter(t=>['todo','in_progress','blocked'].includes(t.status)).length
   const criticalCount = tasks.filter(t=>t.priority==='critical' && t.status!=='done').length
+  const today = new Date().toISOString().slice(0,10)
+  const overdueCount  = tasks.filter(t=>t.due_date && t.due_date < today && t.status!=='done').length
 
   return (
     <div className="fade-in">
@@ -334,10 +337,13 @@ export default function TasksPage() {
         <div style={{ width:'1px', height:20, background:'var(--pios-border)' }} />
         {/* Status filter */}
         <div style={{ display:'flex', gap:4 }}>
-          {[['open','Open'],['all','All'],['done','Done']].map(([v,l])=>(
+          {([['open','Open'],['overdue',`Overdue${overdueCount>0?' ('+overdueCount+')':''}`],['all','All'],['done','Done']] as [string,string][]).map(([v,l])=>(
             <button key={v} onClick={()=>setStatusFilter(v)} style={{
+              ...(v==='overdue' && overdueCount>0 ? { color: statusFilter===v ? '#ef4444' : '#f97316', borderColor:'rgba(239,68,68,0.4)' } : {}),
               padding:'4px 12px', borderRadius:20, fontSize:11, border:'1px solid var(--pios-border)', cursor:'pointer',
-              background: statusFilter===v?'var(--pios-surface)':'transparent', color:statusFilter===v?'var(--pios-text)':'var(--pios-muted)', fontWeight:statusFilter===v?600:400,
+              background: statusFilter===v?'var(--pios-surface)':'transparent',
+              color: v==='overdue'&&overdueCount>0 ? (statusFilter===v?'#ef4444':'#f97316') : (statusFilter===v?'var(--pios-text)':'var(--pios-muted)'),
+              fontWeight:statusFilter===v?600:400,
             }}>{l}</button>
           ))}
         </div>
