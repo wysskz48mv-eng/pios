@@ -1,5 +1,33 @@
 # PIOS Changelog
 
+## v1.5.0 — 2026-Q1 (Citation Guard Sprint)
+
+### New Features
+- **Citation Guard Library** (`src/lib/citation-guard.ts` — 260L) [commit f010c09] — Shared verification library for all PIOS AI academic outputs. 6-step pipeline:
+  - **Step 1:** CrossRef DOI existence check (REST API, 6s timeout)
+  - **Step 2:** Wayback Machine snapshot availability check
+  - **Step 3:** Fuzzy title/author metadata matching vs CrossRef record
+  - **Step 4:** Confidence scoring 0–100: +40 DOI exists, +30 title exact/+15 close/-20 mismatch, +15 author confirmed/+5 partial/-15 mismatch, +10 year match, +10 Wayback available, capped at 20 if no DOI/URL
+  - **Step 5:** HITL gate — flags when confidence <40 or metadata mismatch
+  - **Step 6:** `ProvenanceLabel`: `AI_VERIFIED` | `AI_UNVERIFIED` | `FABRICATED_RISK`
+  - `verifyCitations(citations[])` → `GuardReport` with summary counts
+  - `provenanceBadge(label)` → text/colour/bg for UI rendering
+
+- **Research Verify Route** (`/api/research/verify` — new) [commit f010c09] — `POST /api/research/verify` — batch citation verification endpoint. Max 30 citations per request. Returns full `GuardReport`.
+
+- **Research Search Prompt Upgrade** (`/api/research/search`) [commit f010c09] — System prompt upgraded: Claude now instructed NOT to fabricate DOIs, NOT to invent page/volume/issue numbers, use null when uncertain, set confidence 0–100 per result, flag `ai_generated: true` on all. After parsing: runs citation guard on DOI-bearing results, stamps `provenance_label`, `doi_verified`, `requires_hitl` onto each result. `guardSummary` returned alongside results.
+
+- **Literature APA Citation Guard** (`/api/literature`) [commit f010c09] — After generating APA citation: runs guard on the item's own DOI/URL. If CrossRef title mismatch: appends warning to `citation_apa` string. If `requires_hitl`: appends `[NEEDS MANUAL VERIFICATION]` to citation.
+
+- **Citation Guard UI** (`/platform/research` — +60L) [commit bc4cef0] — Provenance badges visible in Research Search and Literature Library:
+  - Search results: Guard banner above results showing verified/needs_review/fabricated_risk counts. Per-result badge (top-right): ✓ Verified (green) | ⚠ Unverified (amber) | ✗ Check manually (red)
+  - Literature Library: Guard badge shown above APA citation box after generation. CrossRef mismatch warning + HITL reason shown inline if flagged.
+
+### Platform Scale
+- 20 pages · **33 routes** (+1: /api/research/verify)
+
+---
+
 ## v1.4.0 — 2026-Q1
 
 ### New Features
