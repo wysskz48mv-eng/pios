@@ -1,5 +1,18 @@
 # PIOS Changelog
 
+## v1.4.0 — 2026-Q1
+
+### New Features
+- **Real Gmail Send** (`/api/email/send`) [commit e9a9f3c] — POST endpoint (152L) sends emails via Gmail API using the authenticated user's OAuth token. Retrieves and auto-refreshes Google access token from `user_profiles`. Builds RFC 2822 message (base64url encoded per Gmail API spec). Calls Gmail API `messages/send`. Handles `threadId` for replies within existing threads. Marks source `email_item` as 'actioned' after send. Returns specific error codes: `GOOGLE_NOT_CONNECTED`, `INSUFFICIENT_SCOPE`. Works with existing `gmail.modify` scope already requested in OAuth flow.
+- **Privacy Policy page** (`/privacy`) [commit a298d35] — Standalone Privacy Policy page accessible without authentication.
+- **Terms of Service page** (`/terms`) [commit a298d35] — Standalone Terms of Service page accessible without authentication.
+- **Middleware public paths expanded** [commit a298d35, c7b7e75] — `/privacy`, `/terms`, `/auth/login`, `/auth/signup`, `/auth/verify` added to public bypass list. `next.config` build settings corrected for production compatibility.
+
+### Platform Scale
+- 20 pages (+2: /privacy, /terms) · 31 routes (+1: /api/email/send)
+
+---
+
 ## v1.3.0 — 2026-Q1
 
 ### New Features
