@@ -63,7 +63,7 @@ function FeedItem({ item, showRelevance }: { item: any; showRelevance: boolean }
       </div>
       {expanded && (
         <div style={{ marginTop:10, paddingTop:10, borderTop:'1px solid var(--pios-border)' }}>
-          {item.summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.6, marginBottom:8 }}>{item.summary}</p>}
+          {item.summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.6, marginBottom:8 }}>{typeof item.summary === 'string' ? item.summary : String(item.summary ?? '')}</p>}
           {item.insight && (
             <div style={{ padding:'8px 12px', borderRadius:6, background:'rgba(108,142,255,0.08)', borderLeft:'2px solid #6c8eff', fontSize:12, color:'var(--pios-text)' }}>
               💡 {item.insight}

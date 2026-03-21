@@ -217,7 +217,7 @@ function SearchTab() {
                 </div>
                 {expanded.has(i) && (
                   <div style={{ borderTop: '1px solid var(--pios-border)', paddingTop: 10, marginTop: 8 }}>
-                    {r.abstract && <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 10 }}>{r.abstract}</p>}
+                    {r.abstract && <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 10 }}>{typeof r.abstract === 'string' ? r.abstract : String(r.abstract ?? '')}</p>}
                     {r.relevance_notes && (
                       <div style={{ padding: '8px 12px', borderRadius: 6, background: 'rgba(108,142,255,0.08)', fontSize: 12, color: 'var(--pios-text)', marginBottom: 10 }}>
                         🎓 <strong>Relevance to your DBA:</strong> {r.relevance_notes}
