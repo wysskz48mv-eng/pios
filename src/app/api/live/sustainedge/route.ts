@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // GET /api/live/sustainedge
 // Pulls live metrics from the SustainEdge Supabase project.
-// Uses the ACTUAL SE schema: organisations, projects, assets, obe_runs, agent_recommendations
+// Uses the ACTUAL SE schema: organisations, projects, maintainable_assets, obe_runs, agent_recommendations
 // PIOS v1.0 | Sustain International FZE Ltd
 
 export const runtime = 'nodejs'
@@ -28,7 +28,7 @@ export async function GET() {
       // SaaS tenants = organisations (not property tenants)
       se.from('organisations').select('id, name, plan, created_at', { count: 'exact', head: false }),
       se.from('projects').select('id, status, name', { count: 'exact', head: false }),
-      se.from('assets').select('id, status, replacement_cost_sar', { count: 'exact', head: false }),
+      se.from('maintainable_assets').select('id, status, replacement_cost_sar', { count: 'exact', head: false }),
       // OBE runs — most recent first
       se.from('obe_runs').select('id, created_at, total_budget_sar, status').order('created_at', { ascending: false }).limit(5),
       // Agent recommendations = agent activity log
