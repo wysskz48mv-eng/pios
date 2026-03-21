@@ -57,13 +57,31 @@ export default function EmailPage() {
   async function sendReply() {
     if (!replyText.trim() || !selected) return
     setReplying(true)
-    // For now, log and show confirmation — actual Gmail send requires Gmail.send scope
-    await supabase.from('email_items').update({ status:'actioned', updated_at:new Date().toISOString() }).eq('id',selected.id)
-    setSelected((p:any)=>({...p,status:'actioned'}))
-    setEmails(prev=>prev.map(e=>e.id===selected.id?{...e,status:'actioned'}:e))
-    setReplyText('')
+    try {
+      const res = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: selected.sender_email,
+          subject: `Re: ${selected.subject}`,
+          body: replyText,
+          email_item_id: selected.id,
+        }),
+      })
+      const d = await res.json()
+      if (d.sent) {
+        setSelected((p:any) => ({ ...p, status: 'actioned' }))
+        setEmails(prev => prev.map(e => e.id === selected.id ? { ...e, status: 'actioned' } : e))
+        setReplyText('')
+      } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
+        alert(`⚠ ${d.error}\n\nGo to Settings → Connect Google Account to grant Gmail access.`)
+      } else {
+        alert(`Send failed: ${d.error ?? 'Unknown error'}`)
+      }
+    } catch (err: any) {
+      alert(`Send failed: ${err.message}`)
+    }
     setReplying(false)
-    alert(`Reply drafted and email marked as actioned.\n\nTo: ${selected.sender_email}\nSubject: Re: ${selected.subject}\n\n${replyText}\n\n⚠ Note: Actual sending requires the Gmail send scope. Connect Gmail with full access to enable one-click sending.`)
   }
 
   async function archive(id: string) {
@@ -128,9 +146,24 @@ export default function EmailPage() {
             <textarea className="pios-input" placeholder="Message…" rows={5} value={compose.body} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
           </div>
           <div style={{ display:'flex',gap:8,alignItems:'center' }}>
-            <button onClick={()=>{ alert(`Compose ready to send:\n\nTo: ${compose.to}\nSubject: ${compose.subject}\n\n${compose.body}\n\n⚠ One-click send requires Gmail.send scope — connect Gmail with full access in Settings.`); setShowCompose(false) }} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>Send</button>
+            <button onClick={async()=>{
+              if (!compose.to.trim() || !compose.subject.trim() || !compose.body.trim()) return
+              const res = await fetch('/api/email/send', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ to: compose.to, subject: compose.subject, body: compose.body }),
+              })
+              const d = await res.json()
+              if (d.sent) {
+                setCompose({to:'',subject:'',body:''})
+                setShowCompose(false)
+                alert('✓ Email sent.')
+              } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
+                alert(`⚠ ${d.error}`)
+              } else {
+                alert(`Send failed: ${d.error ?? 'Unknown error'}`)
+              }
+            }} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>Send</button>
             <button onClick={()=>setShowCompose(false)} className="pios-btn pios-btn-ghost" style={{ fontSize:12 }}>Cancel</button>
-            <span style={{ fontSize:11,color:'var(--pios-dim)' }}>Opens your Gmail client to confirm before sending</span>
           </div>
         </div>
       )}
