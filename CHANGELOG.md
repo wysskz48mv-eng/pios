@@ -1,5 +1,27 @@
 # PIOS Changelog
 
+## v1.3.0 — 2026-Q1
+
+### New Features
+- **Admin Migration Runner** (`/platform/admin`) — owner-only admin panel for running all 7 PIOS database migrations:
+  - Status check: polls `/api/admin/migrate` to show which sentinel tables exist (applied/not-applied per migration)
+  - Per-migration controls: ▶ Run · ⎘ Copy SQL · Open SQL Editor buttons
+  - Expandable detail per migration: tables created, file name, result feedback
+  - Run all: executes all pending migrations in sequence
+  - Supabase dashboard quick links: SQL Editor, Table Editor, Auth, Storage, RLS, API
+  - Vercel environment variables checklist (required vs optional)
+  - Access restricted to owner `dmasuku2008@me.com`
+- **Admin Migrate API** (`/api/admin/migrate` — GET + POST, 213L) — GET checks sentinel tables; POST runs specified migration SQL, returns SQL text if manual execution needed
+- **Admin Migrate SQL API** (`/api/admin/migrate/sql` — 37L) — serves raw migration SQL for copy/paste into Supabase SQL Editor
+- **Signup/Onboarding flow** (`/auth/signup`, 195L) — new user registration with email/password, organisation name, role selection; email verification redirect
+- **Email verify page** (`/auth/verify`, 30L) — post-signup verification confirmation page
+- **Sidebar update** — Admin link added (⚙, red, position after AI Companion)
+
+### Platform Scale
+- 18 pages (+3: admin, signup, verify) · 30 routes (+2: admin/migrate, admin/migrate/sql)
+
+---
+
 ## v1.2.0 — 2026-Q1
 
 ### Bug Fixes
