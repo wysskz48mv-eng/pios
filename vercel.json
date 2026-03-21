@@ -1,0 +1,22 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/brief",
+      "schedule": "0 6 * * *"
+    }
+  ],
+  "functions": {
+    "src/app/api/cron/brief/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/brief/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/ai/sessions/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/research/search/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
