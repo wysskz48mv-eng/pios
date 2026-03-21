@@ -29,6 +29,8 @@ export default function ExpensesPage() {
   const [loading,  setLoading]  = useState(true)
   const [showAdd,  setShowAdd]  = useState(false)
   const [deleting, setDeleting] = useState<string|null>(null)
+  const [editing,  setEditing]  = useState<string|null>(null)
+  const [editForm, setEditForm] = useState<any>(null)
   const [taxYear,  setTaxYear]  = useState('all')
   const [domainFilter, setDomainFilter] = useState('all')
   const [form, setForm] = useState({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP', billable:false, client:'', notes:'' })
@@ -59,6 +61,29 @@ export default function ExpensesPage() {
     await supabase.from('expenses').delete().eq('id',id)
     setExpenses(p => p.filter(e => e.id !== id))
     setDeleting(null)
+  }
+
+  async function saveEdit() {
+    if (!editForm || !editing) return
+    await supabase.from('expenses').update({
+      description: editForm.description,
+      amount:      parseFloat(editForm.amount),
+      category:    editForm.category,
+      domain:      editForm.domain,
+      date:        editForm.date,
+      currency:    editForm.currency,
+      billable:    editForm.billable,
+      client:      editForm.client,
+      notes:       editForm.notes,
+      updated_at:  new Date().toISOString(),
+    }).eq('id', editing)
+    setExpenses(p => p.map(e => e.id === editing ? { ...e, ...editForm, amount: parseFloat(editForm.amount) } : e))
+    setEditing(null); setEditForm(null)
+  }
+
+  function startEdit(e: any) {
+    setEditing(e.id)
+    setEditForm({ description:e.description, amount:String(e.amount), category:e.category||'', domain:e.domain||'personal', date:e.date||'', currency:e.currency||'GBP', billable:!!e.billable, client:e.client||'', notes:e.notes||'' })
   }
 
   // Filter
@@ -218,8 +243,13 @@ export default function ExpensesPage() {
                 <tr key={e.id} style={{ borderBottom:'1px solid var(--pios-border)',background:i%2===0?'transparent':'rgba(255,255,255,0.01)' }}>
                   <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)',whiteSpace:'nowrap' as const }}>{e.date}</td>
                   <td style={{ padding:'10px 14px',fontSize:13 }}>
-                    {e.description}
-                    {e.billable&&<span style={{ marginLeft:6,fontSize:10,padding:'1px 6px',borderRadius:10,background:'rgba(34,197,94,0.1)',color:'#22c55e',fontWeight:600 }}>Billable{e.client?` · ${e.client}`:''}</span>}
+                    {editing === e.id ? (
+                      <input value={editForm.description} onChange={ev=>setEditForm((p:any)=>({...p,description:ev.target.value}))}
+                        className="pios-input" style={{ fontSize:12,padding:'4px 8px',width:'100%' }} autoFocus onKeyDown={ev=>{if(ev.key==='Enter')saveEdit();if(ev.key==='Escape'){setEditing(null);setEditForm(null)}}} />
+                    ) : (
+                      <span onClick={()=>startEdit(e)} style={{ cursor:'text' }} title="Click to edit">{e.description}</span>
+                    )}
+                    {!editing&&e.billable&&<span style={{ marginLeft:6,fontSize:10,padding:'1px 6px',borderRadius:10,background:'rgba(34,197,94,0.1)',color:'#22c55e',fontWeight:600 }}>Billable{e.client?` · ${e.client}`:''}</span>}
                   </td>
                   <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)' }}>{e.category?.replace('_',' ')||'—'}</td>
                   <td style={{ padding:'10px 14px' }}>
@@ -227,10 +257,20 @@ export default function ExpensesPage() {
                   </td>
                   <td style={{ padding:'10px 14px',fontSize:11,color:'var(--pios-dim)',maxWidth:200 }}><span style={{ overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'block' }}>{e.notes||'—'}</span></td>
                   <td style={{ padding:'10px 14px',fontSize:13,fontWeight:700,whiteSpace:'nowrap' as const }}>{e.currency} {parseFloat(e.amount).toFixed(2)}</td>
-                  <td style={{ padding:'10px 14px',textAlign:'right' as const }}>
-                    <button onClick={()=>del(e.id)} disabled={deleting===e.id} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(239,68,68,0.2)',background:'none',cursor:'pointer',color:'#ef4444' }}>
-                      {deleting===e.id?'…':'✕'}
-                    </button>
+                  <td style={{ padding:'10px 14px',textAlign:'right' as const,whiteSpace:'nowrap' as const }}>
+                    {editing === e.id ? (
+                      <div style={{ display:'flex',gap:4 }}>
+                        <button onClick={saveEdit} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(34,197,94,0.3)',background:'rgba(34,197,94,0.1)',cursor:'pointer',color:'#22c55e' }}>✓</button>
+                        <button onClick={()=>{setEditing(null);setEditForm(null)}} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid var(--pios-border)',background:'none',cursor:'pointer',color:'var(--pios-muted)' }}>✕</button>
+                      </div>
+                    ) : (
+                      <div style={{ display:'flex',gap:4 }}>
+                        <button onClick={()=>startEdit(e)} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid var(--pios-border)',background:'none',cursor:'pointer',color:'var(--pios-muted)' }}>✎</button>
+                        <button onClick={()=>del(e.id)} disabled={deleting===e.id} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(239,68,68,0.2)',background:'none',cursor:'pointer',color:'#ef4444' }}>
+                          {deleting===e.id?'…':'✕'}
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
