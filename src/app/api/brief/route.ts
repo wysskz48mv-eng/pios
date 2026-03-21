@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
+import { createNotification } from '@/lib/notifications'
 import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
 
 export const runtime = 'nodejs'
@@ -125,6 +126,16 @@ Maximum 300 words. Plain prose only. Never use bullet points or lists.`
         text:    morningBriefText(content, today, profile.full_name ?? 'there'),
       }).catch(() => {/* silent */})
     }
+
+    // Create in-app notification for new brief
+    await createNotification({
+      userId:    user.id,
+      title:     `Morning brief ready — ${new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'short'})}`,
+      body:      content.slice(0, 120) + (content.length > 120 ? '…' : ''),
+      type:      'ai',
+      domain:    'ai',
+      actionUrl: '/platform/dashboard',
+    })
 
     return NextResponse.json({ content, brief_date: today })
   } catch (err: any) {

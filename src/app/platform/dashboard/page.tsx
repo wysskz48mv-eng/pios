@@ -34,8 +34,7 @@ export default function DashboardPage() {
         .not('status', 'in', '("passed","failed")').order('deadline', { ascending: true }).limit(6),
       supabase.from('daily_briefs').select('content').eq('user_id', user.id)
         .eq('brief_date', today).maybeSingle(),
-      supabase.from('notifications').select('*').eq('user_id', user.id)
-        .eq('read', false).order('created_at', { ascending: false }).limit(5),
+      fetch('/api/notifications').then(r => r.ok ? r.json() : { notifications: [] }),
       supabase.from('tenants').select('plan,ai_credits_used,ai_credits_limit,name')
         .single(),
     ])
@@ -57,7 +56,7 @@ export default function DashboardPage() {
     setProjects(pR.data ?? [])
     setModules(mR.data ?? [])
     setBrief(bR.data?.content ?? null)
-    setNotifs(nR.data ?? [])
+    setNotifs((nR.notifications ?? []).filter((n: any) => !n.read))
     setTenant(tenR.data)
     setLoading(false)
   }, [])
@@ -209,7 +208,13 @@ export default function DashboardPage() {
 
       {/* Notifications strip — show if any unread */}
       {notifs.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Notifications ({notifs.length})</span>
+            <button onClick={async () => { await fetch('/api/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'mark_read' }) }); setNotifs([]) }}
+              style={{ fontSize: 11, color: 'var(--pios-muted)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Mark all read</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {notifs.map(n => (
             <div key={n.id} style={{
               display: 'flex', alignItems: 'center', gap: 6,
@@ -222,6 +227,7 @@ export default function DashboardPage() {
               {n.title}
             </div>
           ))}
+          </div>
         </div>
       )}
 

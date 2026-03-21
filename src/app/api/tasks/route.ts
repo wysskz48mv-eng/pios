@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createNotification } from '@/lib/notifications'
 import { callClaude } from '@/lib/ai/client'
 
 export const runtime = 'nodejs'
@@ -78,7 +79,15 @@ export async function PATCH(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { id, ...updates } = await request.json()
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-    if (updates.status === 'done' && !updates.completed_at) updates.completed_at = new Date().toISOString()
+    if (updates.status === 'done' && !updates.completed_at) {
+      updates.completed_at = new Date().toISOString()
+      // Notification on task completion
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: t } = await supabase.from('tasks').select('title,domain').eq('id', id).maybeSingle()
+        if (t) await createNotification({ userId: user.id, title: `✓ Task done: ${t.title}`, type: 'success', domain: t.domain, actionUrl: '/platform/tasks' })
+      }
+    }
     if (updates.status && updates.status !== 'done') updates.completed_at = null
     updates.updated_at = new Date().toISOString()
     const { data, error } = await supabase.from('tasks').update(updates).eq('id', id).eq('user_id', user.id).select().single()
