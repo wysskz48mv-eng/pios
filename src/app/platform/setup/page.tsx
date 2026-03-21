@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // /platform/setup — Environment setup guide for PIOS Phase 2
@@ -188,6 +188,16 @@ function CopyBtn({ text }: { text: string }) {
 
 export default function SetupGuidePage() {
   const [done, setDone] = useState<Set<string>>(new Set())
+  const [status, setStatus] = useState<any>(null)
+  const [statusLoading, setStatusLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/setup/status')
+      .then(r => r.json())
+      .then(d => { setStatus(d); setStatusLoading(false) })
+      .catch(() => setStatusLoading(false))
+  }, [])
+
   const toggle = (id: string) => setDone(prev => {
     const n = new Set(prev)
     n.has(id) ? n.delete(id) : n.add(id)
@@ -202,6 +212,34 @@ export default function SetupGuidePage() {
         <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#454d63', fontWeight: 600, marginBottom: 8 }}>PIOS · Phase 2</div>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Environment Setup Guide</h1>
         <p style={{ fontSize: 14, color: '#7a8299', margin: 0 }}>Complete these steps in Vercel to activate all PIOS Phase 2 features. Each step requires adding environment variables and redeploying.</p>
+      </div>
+
+      {/* Live status panel */}
+      <div style={{ background: '#111318', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '16px 20px', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: statusLoading ? 0 : 12 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#7a8299', letterSpacing: 0.5 }}>LIVE ENVIRONMENT STATUS</span>
+          {statusLoading
+            ? <span style={{ fontSize: 11, color: '#454d63' }}>Checking…</span>
+            : <span style={{ fontSize: 11, fontFamily: 'monospace', color: status?.ready ? '#22c55e' : '#f59e0b' }}>
+                {status?.score} configured · {status?.ready ? '✓ Required complete' : '⚠ Incomplete'}
+              </span>
+          }
+        </div>
+        {!statusLoading && status?.checks && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {Object.entries(status.checks).map(([key, check]: [string, any]) => (
+              <span key={key} style={{
+                fontSize: 11, padding: '3px 10px', borderRadius: 4,
+                fontFamily: 'monospace',
+                background: check.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                color: check.ok ? '#22c55e' : '#ef4444',
+                border: `1px solid ${check.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`,
+              }}>
+                {check.ok ? '✓' : '✗'} {check.label}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Progress */}

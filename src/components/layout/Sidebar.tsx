@@ -13,11 +13,12 @@ const NAV = [
   { href: '/platform/calendar',  icon: '📅', label: 'Calendar',       colour: '#22d3ee' },
   { href: '/platform/email',     icon: '✉',  label: 'Inbox',          colour: '#2dd4a0' },
   { href: '/platform/files',     icon: '🗂️', label: 'File Intel',     colour: '#f59e0b' },
-  { href: '/platform/payroll',   icon: '💳', label: 'Payroll',         colour: '#a78bfa' },
+  { href: '/platform/payroll',   icon: '💳', label: 'Payroll',        colour: '#a78bfa' },
   { href: '/platform/projects',  icon: '◈',  label: 'Projects',       colour: '#f59e0b' },
   { href: '/platform/command',   icon: '⬡',  label: 'Live Data',      colour: '#22c55e' },
   { href: '/platform/expenses',  icon: '£',  label: 'Expenses',       colour: '#e05a7a' },
   { href: '/platform/ai',        icon: '◉',  label: 'AI Companion',   colour: '#a78bfa' },
+  { href: '/platform/setup',     icon: '⚡',  label: 'Setup Guide',    colour: '#f59e0b' },
   { href: '/platform/admin',     icon: '⚙',  label: 'Admin',          colour: '#ef4444' },
   { href: '/platform/setup',     icon: '🔧', label: 'Setup Guide',     colour: '#f59e0b' },
 ]
@@ -74,7 +75,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
           <div>
             <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--pios-text)' }}>PIOS</div>
             <div style={{ fontSize: '10px', color: 'var(--pios-dim)', letterSpacing: '0.05em' }}>
-              v1.0 · {planLabel}
+              v2.0 · {planLabel}
             </div>
           </div>
         )}

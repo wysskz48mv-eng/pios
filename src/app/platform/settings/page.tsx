@@ -276,7 +276,7 @@ export default function SettingsPage() {
         {/* System info */}
         <Section title="System">
           {[
-            ['PIOS Version',    'v1.0.0'],
+            ['PIOS Version',    'v2.0.0'],
             ['AI Engine',       'claude-sonnet-4-6'],
             ['Database',        'Supabase PostgreSQL (EU West)'],
             ['Deployment',      'Vercel'],
@@ -288,7 +288,10 @@ export default function SettingsPage() {
               <span style={{ fontSize:12,fontFamily:'monospace',color:'var(--pios-text)' }}>{v}</span>
             </div>
           ))}
-          <button onClick={async()=>{const supabase=createClient();await supabase.auth.signOut();window.location.href='/auth/login'}} style={{ fontSize:12,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'#ef4444',marginTop:14,width:'100%' }}>
+          <Link href="/platform/setup" style={{ display:'block',fontSize:12,color:'#f59e0b',textDecoration:'none',marginTop:14,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(245,158,11,0.25)',background:'rgba(245,158,11,0.06)',textAlign:'center' as const }}>
+            ⚡ Phase 2 Setup Guide →
+          </Link>
+          <button onClick={async()=>{const supabase=createClient();await supabase.auth.signOut();window.location.href='/auth/login'}} style={{ fontSize:12,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'#ef4444',marginTop:8,width:'100%' }}>
             Sign out
           </button>
         </Section>
