@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)
   const [saved,   setSaved]   = useState(false)
-  const [form, setForm] = useState({ full_name:'', programme_name:'', university:'', timezone:'Europe/London', job_title:'', organisation:'' })
+  const [form, setForm] = useState({ full_name:'', programme_name:'', university:'', timezone:'Europe/London', job_title:'', organisation:'', billing_email:'' })
   const supabase = createClient()
 
   useEffect(() => {
@@ -59,6 +59,7 @@ export default function SettingsPage() {
       setFeedSettings(fR.settings)
       if (pR.data) setForm({
         full_name: pR.data.full_name ?? '',
+        billing_email: pR.data.billing_email ?? '',
         programme_name: pR.data.programme_name ?? '',
         university: pR.data.university ?? 'University of Portsmouth',
         timezone: pR.data.timezone ?? 'Europe/London',
@@ -121,7 +122,7 @@ export default function SettingsPage() {
           {editing ? (
             <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
               {[
-                ['full_name','Full name'],['job_title','Job title'],['organisation','Organisation'],
+                ['full_name','Full name'],['job_title','Job title'],['organisation','Organisation'],['billing_email','Email for daily brief'],
                 ['programme_name','Programme'],['university','University'],['timezone','Timezone'],
               ].map(([k,l]) => (
                 <div key={k}>
