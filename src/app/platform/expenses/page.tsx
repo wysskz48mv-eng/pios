@@ -94,6 +94,30 @@ export default function ExpensesPage() {
     setEditForm({ description:e.description, amount:String(e.amount), category:e.category||'', domain:e.domain||'personal', date:e.date||'', currency:e.currency||'GBP', billable:!!e.billable, client:e.client||'', notes:e.notes||'' })
   }
 
+  function exportCSV() {
+    if (!filtered.length) return
+    const headers = ['Date','Description','Category','Domain','Currency','Amount','Billable','Client','Notes']
+    const rows = filtered.map(e => [
+      e.date ?? '',
+      `"${(e.description ?? '').replace(/"/g,'""')}"`,
+      e.category ?? '',
+      e.domain ?? '',
+      e.currency ?? 'GBP',
+      parseFloat(e.amount).toFixed(2),
+      e.billable ? 'Yes' : 'No',
+      `"${(e.client ?? '').replace(/"/g,'""')}"`,
+      `"${(e.notes ?? '').replace(/"/g,'""')}"`,
+    ])
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `expenses-${taxYear === 'all' ? 'all' : taxYear}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // Filter
   const filtered = expenses.filter(e => {
     if (taxYear !== 'all' && getTaxYear(e.date) !== taxYear) return false
@@ -129,7 +153,10 @@ export default function ExpensesPage() {
           <h1 style={{ fontSize:22,fontWeight:700,marginBottom:4 }}>Expenses</h1>
           <p style={{ fontSize:13,color:'var(--pios-muted)' }}>Track, categorise, and reconcile for tax purposes</p>
         </div>
-        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add expense</button>
+        <div style={{ display:'flex', gap:8 }}>
+          <button onClick={exportCSV} className="pios-btn pios-btn-ghost" style={{ fontSize:12 }}>↓ Export CSV</button>
+          <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add expense</button>
+        </div>
       </div>
 
       {/* Stats */}
