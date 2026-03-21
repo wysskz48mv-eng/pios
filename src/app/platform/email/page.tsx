@@ -103,6 +103,23 @@ export default function EmailPage() {
                     <div style={{ fontSize:'12px' }}>{selected.action_required}</div>
                   </div>
                 )}
+                {/* Extract invoice action */}
+                <div style={{ display:'flex', gap:8, marginBottom:'12px', flexWrap:'wrap' }}>
+                  <button onClick={async () => {
+                    const res = await fetch('/api/files/invoice', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ source:'email', source_id:selected.id }) })
+                    const d = await res.json()
+                    if (d.invoice_id) alert('Invoice extracted! Check File Intelligence → Invoices for approval.')
+                    else alert(d.error ?? 'No invoice detected in this email.')
+                  }} style={{ fontSize:'11px', padding:'4px 10px', borderRadius:'6px', border:'1px solid #f59e0b40', background:'none', cursor:'pointer', color:'#f59e0b' }}>
+                    🧾 Extract invoice
+                  </button>
+                  <button onClick={async () => {
+                    const res = await fetch('/api/tasks', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title:`Reply to: ${selected.subject}`, domain:selected.domain_tag||'personal', priority:'medium', description:`From: ${selected.sender_name} — ${selected.snippet?.slice(0,100)}` }) })
+                    if (res.ok) alert('Task created!')
+                  }} style={{ fontSize:'11px', padding:'4px 10px', borderRadius:'6px', border:'1px solid #6c8eff40', background:'none', cursor:'pointer', color:'#6c8eff' }}>
+                    ✓ Create task
+                  </button>
+                </div>
                 {selected.ai_draft_reply && (
                   <div style={{ marginBottom:'12px' }}>
                     <div style={{ fontSize:'11px', fontWeight:600, color:'var(--pios-muted)', marginBottom:'6px', display:'flex', alignItems:'center', gap:'4px' }}>
