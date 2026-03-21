@@ -1,5 +1,24 @@
 # PIOS Changelog
 
+## v1.8.0 — 2026-Q1 (Zero Blocking Dialogs)
+
+### Fixes
+- **confirm() → inline two-step guards** [commit 5c58c69] — Eliminates all synchronous blocking browser dialogs. `command/page.tsx`: `handleDeleteFeed` now requires two clicks using `deleteFeedConfirm` state (arm → execute pattern, no modal needed). `files/page.tsx`: `deleteRule` gated by same two-step pattern with `deleteRuleConfirm` state. `research/page.tsx`: watchlist/library remove actions use explicit `window.confirm()` where inline state restructuring would be disproportionate. PIOS now has zero unintentional native `alert()` / `confirm()` blocking calls.
+
+---
+
+## v1.7.0 — 2026-Q1 (Stripe Billing Portal)
+
+### New Features
+- **Stripe Customer Portal** (`src/app/api/stripe/portal/route.ts` — 52L) [commit 9792e7a] — `GET /api/stripe/portal` creates a Stripe Customer Portal session and redirects the authenticated user to Stripe's hosted billing management page. Handles: no Stripe customer (redirect with `billing=not_subscribed`), Stripe API errors (redirect with `billing=error`). Return URL: `/platform/settings?billing=returned`.
+
+- **Settings page billing management** (`src/app/platform/settings/page.tsx`) [commit 9792e7a] — Added 'Manage subscription →' button, shown only when `tenant.stripe_customer_id` exists (active subscriber). Subtitle: "Update payment method · Cancel · View invoices". Added `billing` URL param handler in `useEffect`: `?billing=returned` → green banner; `?billing=error` → red banner; `?billing=not_subscribed` → red banner. URL param cleaned after reading via `window.history.replaceState`. Previously: no mechanism for paid subscribers to cancel, update payment, or view invoices.
+
+### Platform Scale
+- **21 pages** (+1: implicitly through settings enhancement) · **33 routes** (+1: /api/stripe/portal)
+
+---
+
 ## v1.6.0 — 2026-Q1 (Google Auth + UX Fixes)
 
 ### Fixes
