@@ -99,49 +99,54 @@ Return ONLY valid JSON:
     }
 
     // Save invoice
-    const { data: invoice } = await supabase.from('invoices').insert({
-      user_id: user.id,
-      file_item_id: fileId,
-      email_item_id: emailId,
-      invoice_number: extracted.invoice_number,
-      invoice_type: invoice_type ?? extracted.invoice_type ?? 'payable',
-      supplier_name: extracted.supplier_name,
-      supplier_email: extracted.supplier_email,
-      client_name: extracted.client_name,
-      currency: extracted.currency ?? 'GBP',
-      subtotal: extracted.subtotal,
-      tax_amount: extracted.tax_amount,
-      total_amount: extracted.total_amount,
-      amount_due: extracted.total_amount,
-      invoice_date: extracted.invoice_date,
-      due_date: extracted.due_date,
-      project_id: projectId,
-      company_entity: extracted.company_entity,
-      expense_category: extracted.expense_category,
-      vat_applicable: extracted.vat_applicable ?? false,
-      tax_year: extracted.tax_year,
-      status: 'pending',
-      ai_extracted: true,
-      ai_confidence: extracted.confidence,
-      raw_text: sourceText.slice(0, 2000),
-    }).select('id').single()
+  try {
+      const { data: invoice } = await supabase.from('invoices').insert({
+        user_id: user.id,
+        file_item_id: fileId,
+        email_item_id: emailId,
+        invoice_number: extracted.invoice_number,
+        invoice_type: invoice_type ?? extracted.invoice_type ?? 'payable',
+        supplier_name: extracted.supplier_name,
+        supplier_email: extracted.supplier_email,
+        client_name: extracted.client_name,
+        currency: extracted.currency ?? 'GBP',
+        subtotal: extracted.subtotal,
+        tax_amount: extracted.tax_amount,
+        total_amount: extracted.total_amount,
+        amount_due: extracted.total_amount,
+        invoice_date: extracted.invoice_date,
+        due_date: extracted.due_date,
+        project_id: projectId,
+        company_entity: extracted.company_entity,
+        expense_category: extracted.expense_category,
+        vat_applicable: extracted.vat_applicable ?? false,
+        tax_year: extracted.tax_year,
+        status: 'pending',
+        ai_extracted: true,
+        ai_confidence: extracted.confidence,
+        raw_text: sourceText.slice(0, 2000),
+      }).select('id').single()
 
-    // Update file item category if this is a file
-    if (fileId) {
-      await supabase.from('file_items').update({ ai_category: 'invoice', updated_at: new Date().toISOString() }).eq('id', fileId)
+      // Update file item category if this is a file
+      if (fileId) {
+        await supabase.from('file_items').update({ ai_category: 'invoice', updated_at: new Date().toISOString() }).eq('id', fileId)
+      }
+
+      return NextResponse.json({
+        invoice_id: invoice?.id,
+        extracted,
+        hitl_required: true,
+        hitl_message: 'Invoice extracted — requires your approval before processing payment or filing for tax purposes.',
+      })
+    } catch (err: any) {
+      console.error('/api/files/invoice:', err)
+      return NextResponse.json({ error: err.message ?? 'Extraction failed' }, { status: 500 })
     }
 
-    return NextResponse.json({
-      invoice_id: invoice?.id,
-      extracted,
-      hitl_required: true,
-      hitl_message: 'Invoice extracted — requires your approval before processing payment or filing for tax purposes.',
-    })
   } catch (err: any) {
-    console.error('/api/files/invoice:', err)
-    return NextResponse.json({ error: err.message ?? 'Extraction failed' }, { status: 500 })
-  }
-}
+    console.error('[PIOS] files/invoice POST:', err.message)
+    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+  }}
 
 export async function GET() {
   try {

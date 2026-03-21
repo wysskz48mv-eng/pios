@@ -79,37 +79,42 @@ Return ONLY valid JSON, no markdown:
     if (items.length === 0) return NextResponse.json({ error: 'No news items generated' }, { status: 500 })
 
     // Delete old unsaved news items older than 7 days
-    await supabase.from('fm_news_items')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('saved', false)
-      .lt('fetched_at', new Date(Date.now() - 7 * 86400000).toISOString())
+  try {
+      await supabase.from('fm_news_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('saved', false)
+        .lt('fetched_at', new Date(Date.now() - 7 * 86400000).toISOString())
 
-    // Insert fresh items
-    const inserts = items.map((item: any) => ({
-      user_id: user.id,
-      headline: item.headline,
-      summary: item.summary,
-      source: item.source,
-      source_url: item.source_url,
-      category: item.category ?? 'general',
-      relevance: item.relevance ?? 3,
-      fetched_at: new Date().toISOString(),
-    }))
+      // Insert fresh items
+      const inserts = items.map((item: any) => ({
+        user_id: user.id,
+        headline: item.headline,
+        summary: item.summary,
+        source: item.source,
+        source_url: item.source_url,
+        category: item.category ?? 'general',
+        relevance: item.relevance ?? 3,
+        fetched_at: new Date().toISOString(),
+      }))
 
-    await supabase.from('fm_news_items').insert(inserts)
+      await supabase.from('fm_news_items').insert(inserts)
 
-    return NextResponse.json({
-      items,
-      count: items.length,
-      generatedAt: new Date().toISOString(),
-      ai_disclaimer: 'AI-generated intelligence digest. Verify breaking news via primary sources before acting.',
-    })
+      return NextResponse.json({
+        items,
+        count: items.length,
+        generatedAt: new Date().toISOString(),
+        ai_disclaimer: 'AI-generated intelligence digest. Verify breaking news via primary sources before acting.',
+      })
+    } catch (err: any) {
+      console.error('/api/research/fm-news:', err)
+      return NextResponse.json({ error: err.message ?? 'News fetch failed' }, { status: 500 })
+    }
+
   } catch (err: any) {
-    console.error('/api/research/fm-news:', err)
-    return NextResponse.json({ error: err.message ?? 'News fetch failed' }, { status: 500 })
-  }
-}
+    console.error('[PIOS] research/fm-news POST:', err.message)
+    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+  }}
 
 export async function GET() {
   try {

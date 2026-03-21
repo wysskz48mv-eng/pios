@@ -54,17 +54,22 @@ Return ONLY valid JSON:
     }
 
     // Normal create
-    const { data, error } = await supabase.from('tasks').insert({
-      ...body,
-      user_id: user.id,
-      updated_at: new Date().toISOString(),
-    }).select().single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ task: data })
+  try {
+      const { data, error } = await supabase.from('tasks').insert({
+        ...body,
+        user_id: user.id,
+        updated_at: new Date().toISOString(),
+      }).select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      return NextResponse.json({ task: data })
+    } catch (err: any) {
+      return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    }
+
   } catch (err: any) {
+    console.error('[PIOS] tasks POST:', err.message)
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
-  }
-}
+  }}
 
 export async function PATCH(request: Request) {
   try {
