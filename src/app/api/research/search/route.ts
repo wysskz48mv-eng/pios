@@ -42,7 +42,13 @@ export async function POST(request: Request) {
 
     const system = `You are an academic research assistant helping Douglas Masuku, a DBA candidate at the University of Portsmouth researching AI-enabled forecasting in GCC (Gulf Cooperation Council) facilities management contexts. His theoretical framework uses Science and Technology Studies (STS) and Weick's sensemaking theory. His key topics: AI adoption in FM, predictive maintenance, service charge management, smart buildings GCC, digital twin FM.
 
-You will simulate an academic database search and return structured results. Generate realistic, academically accurate results that would plausibly appear in ${dbLabel[database] ?? database}. Include real author name patterns, realistic DOIs, genuine journal names, and accurate abstracts relevant to the query.
+IMPORTANT GROUNDING RULES — follow these strictly to prevent hallucination:
+1. Only suggest papers you have high confidence actually exist. If uncertain, set confidence below 60.
+2. Do NOT fabricate DOIs. Only include a DOI if you are highly confident it is real and accurate. Use null if uncertain.
+3. Do NOT fabricate specific page numbers, volume/issue numbers, or citation counts. Use null if uncertain.
+4. Set ai_generated: true on every result — these are AI suggestions requiring verification, not confirmed sources.
+5. Set confidence 0-100: use 80+ only for papers you are very confident exist with correct metadata.
+6. Lower confidence (40-60) for papers where you are less certain of exact details.
 
 CRITICAL: Return ONLY valid JSON, no markdown, no explanation. Schema:
 {
@@ -52,20 +58,24 @@ CRITICAL: Return ONLY valid JSON, no markdown, no explanation. Schema:
       "authors": ["Last, F.", "Last2, F2."],
       "year": 2023,
       "journal": "Journal name",
-      "volume": "12",
-      "issue": "3",
-      "pages": "245-267",
-      "doi": "10.1234/journal.2023.001",
+      "volume": null,
+      "issue": null,
+      "pages": null,
+      "doi": null,
       "abstract": "150-200 word abstract",
       "keywords": ["keyword1", "keyword2"],
-      "citations": 45,
+      "citations": null,
       "open_access": false,
-      "relevance_notes": "Why this is relevant to Douglas's research (1-2 sentences)"
+      "relevance_notes": "Why this is relevant to Douglas's research (1-2 sentences)",
+      "confidence": 75,
+      "ai_generated": true,
+      "verification_required": true
     }
   ],
   "total_found": 847,
   "search_strategy": "Brief note on search strategy and key terms that yielded results",
-  "ai_guidance": "2-3 sentences: which results to prioritise, what theoretical connections to look for, any gaps in the literature this search reveals"
+  "ai_guidance": "2-3 sentences: which results to prioritise, what theoretical connections to look for, any gaps in the literature this search reveals",
+  "grounding_note": "These results are AI-generated suggestions. Verify each paper exists using the DOI (if provided) or by searching the actual database before citing."
 }`
 
     const userPrompt = `Search query: "${query}"
@@ -100,6 +110,41 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
         notes: parsed.search_strategy,
       }).select('id').single()
 
+      // Run citation guard on DOI-bearing results (non-fatal)
+      let guardSummary = null
+      const toVerify = (parsed.results ?? []).filter((r: any) => r.doi)
+      if (toVerify.length > 0) {
+        try {
+          const { verifyCitations } = await import('@/lib/citation-guard')
+          const guardReport = await verifyCitations(toVerify.map((r: any) => ({
+            title: r.title, authors: r.authors ?? [], year: r.year,
+            journal: r.journal, doi: r.doi,
+          })))
+          // Stamp provenance onto each result
+          for (const r of (parsed.results ?? [])) {
+            const vr = guardReport.results.find((v: any) =>
+              v.input.doi === r.doi && r.doi
+            )
+            if (vr) {
+              r.provenance_label  = vr.provenance_label
+              r.doi_verified      = vr.doi_verified
+              r.confidence        = vr.confidence
+              r.crossref_title    = vr.crossref_title
+              r.requires_hitl     = vr.requires_hitl
+              r.hitl_reason       = vr.hitl_reason
+              r.verification_note = vr.verification_note
+            }
+          }
+          guardSummary = {
+            verified: guardReport.verified,
+            needs_review: guardReport.needs_review,
+            fabricated_risk: guardReport.fabricated_risk,
+            hitl_required: guardReport.hitl_required,
+            warning: guardReport.warning,
+          }
+        } catch { /* guard non-fatal */ }
+      }
+
       return NextResponse.json({
         results: parsed.results ?? [],
         totalFound: parsed.total_found ?? 0,
@@ -108,7 +153,8 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
         searchId: searchRecord?.id,
         database,
         query,
-        disclaimer: 'Results are AI-generated based on known literature patterns. Verify via your institutional Scopus/WoS access before citing. Use DOIs to locate actual papers.',
+        guardSummary,
+        disclaimer: 'AI-generated suggestions — verify each paper exists before citing. Papers marked ✓ AI-Verified have been cross-checked against CrossRef. Papers marked ✗ Verify manually were not found in CrossRef.',
       })
     } catch (err: any) {
       console.error('/api/research/search:', err)

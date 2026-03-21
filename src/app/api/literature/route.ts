@@ -121,6 +121,30 @@ Tags: ${item.tags?.join(', ') ?? 'none'}`
         return NextResponse.json({ error: 'AI summary parsing failed' }, { status: 500 })
       }
 
+      // Run citation guard on the item itself
+      let guardResult = null
+      if (item.doi || item.url) {
+        try {
+          const { verifyCitations } = await import('@/lib/citation-guard')
+          const report = await verifyCitations([{
+            title:   item.title,
+            authors: Array.isArray(item.authors) ? item.authors : [],
+            year:    item.year,
+            journal: item.journal,
+            doi:     item.doi,
+            url:     item.url,
+          }])
+          guardResult = report.results[0]
+          // Override AI-generated APA citation confidence with verified data
+          if (guardResult?.crossref_title && guardResult.title_match === 'mismatch') {
+            parsed.citation_apa += ` [⚠ Title mismatch — CrossRef records: "${guardResult.crossref_title}"]`
+          }
+          if (guardResult?.requires_hitl) {
+            parsed.citation_apa += ` [NEEDS MANUAL VERIFICATION]`
+          }
+        } catch { /* guard non-fatal */ }
+      }
+
       // Save back to DB
       await supabase.from('literature_items').update({
         ai_summary:   parsed.summary,
