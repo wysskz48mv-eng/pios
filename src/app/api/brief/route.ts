@@ -11,7 +11,7 @@ export async function POST() {
 
   const today = new Date().toISOString().slice(0, 10)
 
-  const [tasksR, modulesR, projectsR, notifsR, chaptersR] = await Promise.all([
+  const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR] = await Promise.all([
     supabase.from('tasks').select('title,domain,priority,due_date,status')
       .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
       .order('due_date', { ascending: true }).limit(10),
@@ -23,6 +23,15 @@ export async function POST() {
       .eq('user_id', user.id).eq('read', false).limit(5),
     supabase.from('thesis_chapters').select('title,chapter_num,status,word_count,target_words')
       .eq('user_id', user.id).order('chapter_num').limit(6),
+    supabase.from('fm_news_items').select('headline,category,relevance,summary')
+      .eq('user_id', user.id)
+      .gte('fetched_at', new Date(Date.now() - 86400000).toISOString())
+      .order('relevance', { ascending: false }).limit(5),
+    supabase.from('paper_calls').select('title,journal_name,deadline,relevance_score')
+      .eq('user_id', user.id).in('status', ['new','considering','planning'])
+      .gte('deadline', new Date().toISOString().slice(0,10))
+      .lte('deadline', new Date(Date.now() + 30*86400000).toISOString().slice(0,10))
+      .order('deadline').limit(3),
   ])
 
   const ctx = `
