@@ -7,13 +7,36 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: profile } = await supabase.from('user_profiles').select('google_access_token').eq('id',user.id).single()
-  if (!profile?.google_access_token) return NextResponse.json({ error: 'Gmail not connected', synced: 0 })
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('google_access_token, google_refresh_token, google_token_expiry')
+    .eq('id', user.id).single()
+
+  if (!profile?.google_access_token && !profile?.google_refresh_token) {
+    return NextResponse.json({ error: 'Gmail not connected — please sign in with Google', synced: 0 })
+  }
+
+  // Auto-refresh if token is expired or within 5-minute buffer
+  let accessToken = profile.google_access_token
+  if (profile.google_token_expiry) {
+    const expiry = new Date(profile.google_token_expiry)
+    if (expiry <= new Date(Date.now() + 5 * 60 * 1000) && profile.google_refresh_token) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const refreshRes = await fetch(`${appUrl}/api/auth/refresh-google`, { method: 'POST' })
+      if (refreshRes.ok) {
+        const { data: fresh } = await supabase.from('user_profiles')
+          .select('google_access_token').eq('id', user.id).single()
+        accessToken = fresh?.google_access_token ?? accessToken
+      }
+    }
+  }
+
+  if (!accessToken) return NextResponse.json({ error: 'No valid Gmail token. Please reconnect Google.', synced: 0 })
 
   try {
     const gmailRes = await fetch(
       'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=is:unread',
-      { headers: { Authorization: `Bearer ${profile.google_access_token}` } }
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     )
     if (!gmailRes.ok) return NextResponse.json({ error: 'Gmail fetch failed', synced: 0 })
     const { messages = [] } = await gmailRes.json()
@@ -21,7 +44,7 @@ export async function POST() {
     for (const msg of messages.slice(0, 10)) {
       const detailRes = await fetch(
         `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From`,
-        { headers: { Authorization: `Bearer ${profile.google_access_token}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       )
       if (!detailRes.ok) continue
       const detail = await detailRes.json()
