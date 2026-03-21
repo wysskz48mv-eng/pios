@@ -192,11 +192,23 @@ export default function SettingsPage() {
               </div>
             </div>
           ))}
-          {!profile?.google_email && (
-            <button onClick={async()=>{const supabase=createClient();await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:`${window.location.origin}/auth/callback`,scopes:'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file',queryParams:{access_type:'offline',prompt:'consent'}}})}} className="pios-btn pios-btn-primary" style={{ fontSize:12,marginTop:12,width:'100%' }}>
-              Connect Google Account
-            </button>
-          )}
+          <button
+            onClick={async()=>{
+              const supabase=createClient()
+              await supabase.auth.signInWithOAuth({
+                provider:'google',
+                options:{
+                  redirectTo:`${window.location.origin}/auth/callback`,
+                  scopes:'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file',
+                  queryParams:{access_type:'offline',prompt:'consent'},
+                }
+              })
+            }}
+            className="pios-btn pios-btn-primary"
+            style={{ fontSize:12, marginTop:12, width:'100%' }}
+          >
+            {profile?.google_email ? '↻ Reconnect Google (refresh scopes)' : 'Connect Google Account'}
+          </button>
         </Section>
 
         {/* News & Intelligence preferences */}
