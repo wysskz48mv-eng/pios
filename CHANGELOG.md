@@ -1,5 +1,17 @@
 # PIOS Changelog
 
+## v1.9.0 — 2026-Q1 (Morning Brief Cron + vercel.json)
+
+### New Features
+- **Morning Brief Cron** (`src/app/api/cron/brief/route.ts` — 116L) [commit 674b577] — `GET /api/cron/brief` runs daily at 06:00 UTC (08:00 Dubai / 07:00 London). Fetches all `user_profiles` (cap 50), skips users who already have today's brief, generates brief via Claude for remaining users using the same prompt as `POST /api/brief`, upserts to `daily_briefs` with `generated_by='cron'`. Requires `CRON_SECRET` env var (Bearer auth). Returns `{ok, date, skipped, generated, errors, results}`. Users who forget to trigger their brief manually now receive it automatically before their workday starts.
+
+- **`vercel.json`** [commit 674b577] — Vercel cron schedule `0 6 * * *` wired to `/api/cron/brief`. Function timeouts: `brief` 60s, `cron/brief` 300s (multi-user batch), `ai/**` 60s, `research/**` 60s, `live/**` 30s.
+
+### Platform Scale
+- **21 pages · 35 routes** (+1: /api/cron/brief)
+
+---
+
 ## v1.8.0 — 2026-Q1 (Zero Blocking Dialogs)
 
 ### Fixes
