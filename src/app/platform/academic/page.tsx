@@ -113,6 +113,15 @@ export default function AcademicPage() {
   const targetWords = chapters.reduce((s,c)=>s+(c.target_words||8000),0)
   const thesisPct   = targetWords>0?Math.round((totalWords/targetWords)*100):0
   const chapsDone   = chapters.filter(c=>['submitted','passed','draft_complete'].includes(c.status)).length
+  // Velocity: words needed ÷ days to nearest module deadline
+  const nearestDeadline = modules.map(m=>m.deadline).filter(Boolean).sort()[0]
+  const daysToDeadline  = nearestDeadline
+    ? Math.max(1, Math.round((new Date(nearestDeadline).getTime()-Date.now())/(86400000)))
+    : null
+  const wordsRemaining  = Math.max(0, targetWords - totalWords)
+  const wordsPerDay     = daysToDeadline && daysToDeadline > 0
+    ? Math.ceil(wordsRemaining / daysToDeadline)
+    : null
   const modsDone    = modules.filter(m=>['passed','complete'].includes(m.status)).length
 
   if (loading) return <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'60vh' }}><div style={{ width:20, height:20, border:'2px solid rgba(108,142,255,0.2)', borderTopColor:ACCENT, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} /></div>
@@ -141,6 +150,7 @@ export default function AcademicPage() {
           { label:'Chapters done', value:`${chapsDone}/${chapters.length}`, sub:'draft complete or submitted', colour:'#a78bfa' },
           { label:'Modules done', value:`${modsDone}/${modules.length}`, sub:'passed or complete', colour:'#2dd4a0' },
           { label:'Supervision', value:sessions.length, sub:'sessions logged', colour:'#f59e0b' },
+          { label:'Words/day needed', value: wordsPerDay ? wordsPerDay.toLocaleString() : '—', sub: daysToDeadline ? `${daysToDeadline} days to deadline` : 'no deadline set', colour: wordsPerDay && wordsPerDay > 500 ? '#ef4444' : wordsPerDay && wordsPerDay > 250 ? '#f59e0b' : '#22c55e' },
         ].map(s=>(
           <div key={s.label} className="pios-card-sm" style={{ padding:'14px 16px' }}>
             <div style={{ fontSize:22, fontWeight:800, color:s.colour, marginBottom:2, lineHeight:1 }}>{s.value}</div>
