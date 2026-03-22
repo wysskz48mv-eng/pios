@@ -1,0 +1,22 @@
+User-agent: *
+Disallow: /api/
+Disallow: /auth/
+Disallow: /platform/
+
+# Claude for Chrome — allow public endpoints and context API
+User-agent: ClaudeBot
+Allow: /llms.txt
+Allow: /api/claude-context
+Allow: /api/health
+Allow: /
+Disallow: /api/admin/
+Disallow: /api/stripe/
+Disallow: /api/auth/
+
+# Anthropic crawlers
+User-agent: anthropic-ai
+Allow: /llms.txt
+Allow: /api/claude-context
+Allow: /
+
+Sitemap: https://pios-wysskz48mv-engs-projects.vercel.app/sitemap.xml

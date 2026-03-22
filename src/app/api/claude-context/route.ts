@@ -1,0 +1,298 @@
+/**
+ * GET /api/claude-context
+ * Structured live context endpoint for Claude for Chrome.
+ *
+ * Returns a comprehensive snapshot of the user's current state
+ * across all PIOS domains — optimised for Claude to understand
+ * what needs attention without scraping the UI.
+ *
+ * Claude for Chrome uses this to:
+ *   - Know what tasks are urgent/overdue
+ *   - See today's calendar and meetings
+ *   - Check thesis progress
+ *   - Understand which emails need action
+ *   - Get cross-platform KPIs (VeritasEdge, InvestiScript)
+ *
+ * Auth: Supabase session cookie (shared with browser session)
+ * Rate: No strict limit but designed for periodic polling (not real-time)
+ *
+ * PIOS v2.2 | VeritasIQ Technologies Ltd
+ */
+import { NextResponse } from 'next/server'
+import { createClient }  from '@/lib/supabase/server'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+export async function GET() {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          authenticated: false,
+          message: 'Not signed in. Open PIOS and sign in first, then Claude for Chrome can access your context.',
+          sign_in_url: '/auth/login',
+        },
+        {
+          status: 401,
+          headers: { 'Cache-Control': 'no-store' },
+        }
+      )
+    }
+
+    const today     = new Date().toISOString().slice(0, 10)
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+    const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)
+    const weekEnd    = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().slice(0, 10)
+
+    // Parallel fetch all context data
+    const [
+      tasksRes,
+      calRes,
+      modulesRes,
+      chaptersRes,
+      emailRes,
+      briefRes,
+      expensesRes,
+      notifsRes,
+      meetingsRes,
+      profileRes,
+    ] = await Promise.all([
+      // Tasks — overdue + today + this week
+      supabase.from('tasks').select('id,title,domain,priority,status,due_date,source')
+        .eq('user_id', user.id)
+        .not('status', 'in', '(done,cancelled)')
+        .lte('due_date', weekEnd)
+        .order('due_date', { ascending: true })
+        .limit(30),
+
+      // Calendar — today's events
+      supabase.from('calendar_events').select('id,title,start_time,end_time,location,domain,google_meet_url,all_day')
+        .eq('user_id', user.id)
+        .gte('start_time', todayStart.toISOString())
+        .lte('start_time', todayEnd.toISOString())
+        .order('start_time'),
+
+      // Academic modules in progress
+      supabase.from('academic_modules').select('id,title,module_type,status,deadline,grade')
+        .eq('user_id', user.id)
+        .not('status', 'in', '(passed,failed)')
+        .order('deadline', { ascending: true })
+        .limit(10),
+
+      // Thesis chapters
+      supabase.from('thesis_chapters').select('id,chapter_num,title,status,word_count,target_words')
+        .eq('user_id', user.id)
+        .order('chapter_num'),
+
+      // Email — unread/action-required count per inbox
+      supabase.from('email_items').select('id,domain_tag,priority_score,action_required,inbox_label')
+        .eq('user_id', user.id)
+        .not('status', 'in', '(actioned,archived,ignored)')
+        .not('action_required', 'is', null)
+        .order('priority_score', { ascending: false })
+        .limit(10),
+
+      // Today's brief
+      supabase.from('daily_briefs').select('content,created_at')
+        .eq('user_id', user.id)
+        .eq('brief_date', today)
+        .maybeSingle(),
+
+      // Expenses — this month summary
+      supabase.from('expenses').select('amount,currency,category,domain,date')
+        .eq('user_id', user.id)
+        .gte('date', today.slice(0, 7) + '-01')
+        .limit(100),
+
+      // Notifications unread
+      supabase.from('notifications').select('id,title,type,domain,created_at')
+        .eq('user_id', user.id)
+        .eq('read', false)
+        .order('created_at', { ascending: false })
+        .limit(5),
+
+      // Recent meeting notes with pending action items
+      supabase.from('meeting_notes').select('id,title,meeting_date,domain,status,tasks_created,ai_action_items')
+        .eq('user_id', user.id)
+        .eq('status', 'processed')
+        .eq('tasks_created', false)
+        .order('meeting_date', { ascending: false })
+        .limit(5),
+
+      // User profile
+      supabase.from('user_profiles').select('full_name,university,programme_name,timezone')
+        .eq('id', user.id)
+        .single(),
+    ])
+
+    const tasks    = tasksRes.data    ?? []
+    const calendar = calRes.data      ?? []
+    const modules  = modulesRes.data  ?? []
+    const chapters = chaptersRes.data ?? []
+    const emails   = emailRes.data    ?? []
+    const brief    = briefRes.data
+    const expenses = expensesRes.data ?? []
+    const notifs   = notifsRes.data   ?? []
+    const meetings = meetingsRes.data ?? []
+    const profile  = profileRes.data
+
+    // ── Derived stats ─────────────────────────────────────────────────────────
+    const overdueTasks = tasks.filter(t => t.due_date && t.due_date < today)
+    const todayTasks   = tasks.filter(t => t.due_date === today)
+    const criticalTasks = tasks.filter(t => t.priority === 'critical')
+
+    const totalWords   = chapters.reduce((s: number, c: any) => s + (c.word_count ?? 0), 0)
+    const targetWords  = chapters.reduce((s: number, c: any) => s + (c.target_words ?? 8000), 0)
+    const thesisProgress = targetWords > 0 ? Math.round((totalWords / targetWords) * 100) : 0
+
+    const thisMonthSpend = expenses.reduce((s: number, e: any) => {
+      // Sum GBP-equivalent (simplified — full multi-currency conversion not done here)
+      const currencies: Record<string, number> = { GBP: 1, USD: 0.79, EUR: 0.86, AED: 0.21, SAR: 0.21 }
+      return s + (parseFloat(e.amount) || 0) * (currencies[e.currency] ?? 1)
+    }, 0)
+
+    const pendingMeetingActions = meetings.reduce((s: number, m: any) =>
+      s + ((m.ai_action_items as any[])?.length ?? 0), 0)
+
+    // ── Response ──────────────────────────────────────────────────────────────
+    return NextResponse.json(
+      {
+        // Identity
+        authenticated: true,
+        user: {
+          name:         profile?.full_name ?? user.email?.split('@')[0] ?? 'User',
+          email:        user.email,
+          university:   profile?.university ?? null,
+          programme:    profile?.programme_name ?? null,
+          timezone:     profile?.timezone ?? 'Europe/London',
+        },
+
+        // Today snapshot
+        today: {
+          date:              today,
+          day:               new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
+          has_brief:         !!brief,
+          brief_summary:     brief?.content ? brief.content.slice(0, 500) + (brief.content.length > 500 ? '…' : '') : null,
+          brief_url:         '/api/brief',
+        },
+
+        // Attention required — what Claude should surface first
+        attention: {
+          overdue_tasks:         overdueTasks.length,
+          critical_tasks:        criticalTasks.length,
+          emails_needing_action: emails.length,
+          unread_notifications:  notifs.length,
+          meetings_with_pending_actions: meetings.length,
+          pending_meeting_action_items:  pendingMeetingActions,
+        },
+
+        // Tasks
+        tasks: {
+          overdue: overdueTasks.slice(0, 10).map((t: any) => ({
+            id: t.id, title: t.title, domain: t.domain,
+            priority: t.priority, due_date: t.due_date,
+          })),
+          today: todayTasks.map((t: any) => ({
+            id: t.id, title: t.title, domain: t.domain, priority: t.priority,
+          })),
+          critical: criticalTasks.filter((t: any) => !t.due_date || t.due_date >= today).slice(0, 5).map((t: any) => ({
+            id: t.id, title: t.title, domain: t.domain, due_date: t.due_date,
+          })),
+          total_active: tasks.length,
+        },
+
+        // Calendar
+        calendar: {
+          today_events: calendar.map((e: any) => ({
+            id: e.id, title: e.title, domain: e.domain,
+            start: e.start_time, end: e.end_time,
+            location: e.location, has_meet_link: !!e.google_meet_url,
+          })),
+          event_count: calendar.length,
+        },
+
+        // Academic
+        academic: {
+          thesis: {
+            total_words:    totalWords,
+            target_words:   targetWords,
+            progress_pct:   thesisProgress,
+            chapters:       chapters.map((c: any) => ({
+              num: c.chapter_num, title: c.title, status: c.status,
+              words: c.word_count, target: c.target_words,
+            })),
+          },
+          active_modules: modules.slice(0, 5).map((m: any) => ({
+            title: m.title, type: m.module_type, status: m.status,
+            deadline: m.deadline,
+          })),
+        },
+
+        // Email
+        email: {
+          action_required: emails.map((e: any) => ({
+            subject: e.action_required, domain: e.domain_tag,
+            priority: e.priority_score, inbox: e.inbox_label,
+          })),
+          total_needing_action: emails.length,
+          sync_url: '/api/email/sync',
+        },
+
+        // Meetings with pending actions
+        meetings_pending: meetings.map((m: any) => ({
+          id: m.id, title: m.title, date: m.meeting_date, domain: m.domain,
+          action_item_count: (m.ai_action_items as any[])?.length ?? 0,
+          promote_url: `POST /api/meetings { action: 'promote_tasks', id: '${m.id}' }`,
+        })),
+
+        // Expenses
+        expenses: {
+          this_month_gbp_equiv: Math.round(thisMonthSpend),
+          entry_count:          expenses.length,
+          log_expense_url:      'POST /api/expenses { action: "create", description, amount, currency, category, domain, date }',
+          ai_categorise_url:    'POST /api/expenses { action: "ai_categorise", description, amount, currency }',
+        },
+
+        // Notifications
+        notifications: notifs.map((n: any) => ({
+          title: n.title, type: n.type, domain: n.domain, created: n.created_at,
+        })),
+
+        // Quick action guide for Claude
+        quick_actions: {
+          create_task:      'POST /api/tasks { title, domain, priority, due_date, description }',
+          sync_email:       'POST /api/email/sync',
+          log_expense:      'POST /api/expenses { action: "create", description, amount, currency, category, domain, date }',
+          create_meeting:   'POST /api/meetings { title, raw_transcript, auto_process: true, domain, meeting_type }',
+          get_brief:        'GET /api/brief',
+          mark_task_done:   'PATCH /api/tasks { id, status: "done" }',
+        },
+
+        // Metadata
+        _meta: {
+          generated_at:  new Date().toISOString(),
+          platform:      'PIOS v2.2',
+          llms_txt:      '/llms.txt',
+          docs:          'https://pios-wysskz48mv-engs-projects.vercel.app/platform/setup',
+        },
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, must-revalidate',
+          'Content-Type':  'application/json',
+          'X-PIOS-Version': '2.2',
+        },
+      }
+    )
+
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message ?? 'Internal server error', authenticated: false },
+      { status: 500 }
+    )
+  }
+}
