@@ -5,6 +5,11 @@ import { callClaude } from '@/lib/ai/client'
 
 export const runtime = 'nodejs'
 
+const VALID_STATUSES   = ['todo','in_progress','blocked','done','cancelled']
+const VALID_PRIORITIES = ['critical','high','medium','low']
+const VALID_DOMAINS    = ['academic','fm_consulting','saas','business','personal']
+const VALID_SOURCES    = ['manual','meeting_notes','email','ai','calendar','import']
+
 export async function GET(request: Request) {
   try {
     const supabase = createClient()
@@ -89,20 +94,39 @@ export async function PATCH(request: Request) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const { id, ...updates } = await request.json()
+
+    const body = await request.json()
+    const { id } = body
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-    if (updates.status === 'done' && !updates.completed_at) {
-      updates.completed_at = new Date().toISOString()
-      // Notification on task completion
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: t } = await supabase.from('tasks').select('title,domain').eq('id', id).maybeSingle()
-        if (t) await createNotification({ userId: user.id, title: `✓ Task done: ${t.title}`, type: 'success', domain: t.domain, actionUrl: '/platform/tasks' })
-      }
+
+    // Allowlist + validate
+    const ALLOWED = ['title','description','domain','priority','status','due_date',
+                     'duration_mins','notes','project_id','source','completed_at']
+    const safe: any = { updated_at: new Date().toISOString() }
+    for (const k of ALLOWED) { if (k in body) safe[k] = body[k] }
+
+    if (safe.status   && !VALID_STATUSES.includes(safe.status))
+      return NextResponse.json({ error: 'invalid status' }, { status: 400 })
+    if (safe.priority && !VALID_PRIORITIES.includes(safe.priority))
+      return NextResponse.json({ error: 'invalid priority' }, { status: 400 })
+    if (safe.domain   && !VALID_DOMAINS.includes(safe.domain))
+      return NextResponse.json({ error: 'invalid domain' }, { status: 400 })
+    if (safe.source   && !VALID_SOURCES.includes(safe.source))
+      return NextResponse.json({ error: 'invalid source' }, { status: 400 })
+
+    // Auto-set completed_at
+    if (safe.status === 'done' && !safe.completed_at) {
+      safe.completed_at = new Date().toISOString()
+      const { data: t } = await supabase.from('tasks').select('title,domain').eq('id', id).maybeSingle()
+      if (t) await createNotification({ userId: user.id, title: \`✓ Task done: \${t.title}\`, type: 'success', domain: t.domain, actionUrl: '/platform/tasks' })
     }
-    if (updates.status && updates.status !== 'done') updates.completed_at = null
-    updates.updated_at = new Date().toISOString()
-    const { data, error } = await supabase.from('tasks').update(updates).eq('id', id).eq('user_id', user.id).select().single()
+    if (safe.status && safe.status !== 'done') safe.completed_at = null
+
+    // Clamp duration
+    if (safe.duration_mins !== undefined) safe.duration_mins = Math.max(5, Math.min(480, parseInt(safe.duration_mins) || 30))
+
+    const { data, error } = await supabase.from('tasks')
+      .update(safe).eq('id', id).eq('user_id', user.id).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ task: data })
   } catch (err: any) {

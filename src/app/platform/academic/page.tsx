@@ -98,6 +98,20 @@ export default function AcademicPage() {
   const totalWords  = chapters.reduce((s,c)=>s+(c.word_count||0),0)
   const targetWords = chapters.reduce((s,c)=>s+(c.target_words||8000),0)
   const thesisPct   = targetWords>0?Math.round((totalWords/targetWords)*100):0
+  const [aiReview,      setAiReview]      = useState<any>(null)
+  const [aiReviewLoading, setAiReviewLoading] = useState(false)
+
+  async function runAIThesisReview() {
+    setAiReviewLoading(true); setAiReview(null)
+    const res = await fetch('/api/academic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ai_thesis_review', chapters, modules }),
+    })
+    const d = res.ok ? await res.json() : {}
+    if (d.review) setAiReview(d.review)
+    setAiReviewLoading(false)
+  }
   const chapsDone   = chapters.filter(c=>['submitted','passed','draft_complete'].includes(c.status)).length
   // Velocity: words needed ÷ days to nearest module deadline
   const nearestDeadline = modules.map(m=>m.deadline).filter(Boolean).sort()[0]
@@ -219,9 +233,48 @@ export default function AcademicPage() {
             <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>Thesis Chapters</div>
             <div style={{ fontSize:12, color:'var(--pios-muted)' }}>{totalWords.toLocaleString()} / {targetWords.toLocaleString()} words · {thesisPct}% complete</div>
           </div>
-          <span style={{ fontSize:11, color:ACCENT, fontWeight:600 }}>{chapsDone}/{chapters.length} complete</span>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:11, color:ACCENT, fontWeight:600 }}>{chapsDone}/{chapters.length} complete</span>
+            <button onClick={runAIThesisReview} disabled={aiReviewLoading || chapters.length===0}
+              style={{ fontSize:11, padding:'4px 12px', borderRadius:8, border:'1px dashed rgba(167,139,250,0.4)',
+                background:'rgba(167,139,250,0.06)', color:'#a78bfa', cursor:'pointer', whiteSpace:'nowrap' as const }}>
+              {aiReviewLoading ? '⟳ Reviewing…' : '✦ AI Review'}
+            </button>
+          </div>
         </div>
         <Bar value={totalWords} max={targetWords} />
+        {aiReview && (
+          <div style={{ margin:'12px 0 0', padding:'12px 14px', borderRadius:8,
+            background:'rgba(167,139,250,0.06)', borderLeft:'3px solid #a78bfa' }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'#a78bfa', marginBottom:6 }}>
+              ✦ AI Thesis Review
+              <span style={{ marginLeft:8, padding:'2px 8px', borderRadius:10, fontSize:10,
+                background: aiReview.pace_status==='on_track'?'rgba(34,197,94,0.15)':aiReview.pace_status==='behind'||aiReview.pace_status==='at_risk'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)',
+                color: aiReview.pace_status==='on_track'?'#22c55e':aiReview.pace_status==='behind'||aiReview.pace_status==='at_risk'?'#ef4444':'#f59e0b',
+              }}>{aiReview.pace_status?.replace('_',' ').toUpperCase()}</span>
+            </div>
+            <p style={{ fontSize:12, color:'var(--pios-text)', lineHeight:1.6, margin:'0 0 8px' }}>{aiReview.overall_assessment}</p>
+            <p style={{ fontSize:11, color:'var(--pios-muted)', margin:'0 0 6px' }}>{aiReview.pace_detail}</p>
+            {aiReview.risk && (
+              <p style={{ fontSize:11, color:'#f59e0b', margin:'0 0 6px' }}>⚠ {aiReview.risk}</p>
+            )}
+            {Array.isArray(aiReview.immediate_actions) && aiReview.immediate_actions.length > 0 && (
+              <div style={{ marginTop:8 }}>
+                <div style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', marginBottom:4 }}>IMMEDIATE ACTIONS</div>
+                {aiReview.immediate_actions.map((a:string, i:number) => (
+                  <div key={i} style={{ fontSize:11, color:'var(--pios-text)', padding:'3px 0',
+                    borderTop:'1px solid rgba(167,139,250,0.1)', display:'flex', gap:8 }}>
+                    <span style={{ color:'#a78bfa', minWidth:14 }}>{i+1}.</span>{a}
+                  </div>
+                ))}
+              </div>
+            )}
+            <button onClick={() => setAiReview(null)}
+              style={{ marginTop:8, fontSize:10, color:'var(--pios-dim)', background:'none', border:'none', cursor:'pointer' }}>
+              Dismiss
+            </button>
+          </div>
+        )}
         <div style={{ marginTop:16, display:'flex', flexDirection:'column', gap:8 }}>
           {chapters.length===0 ? (
             <p style={{ textAlign:'center', color:'var(--pios-dim)', fontSize:13, padding:'24px 0' }}>No chapters yet. Click <strong>+ Chapter</strong> to start tracking.</p>
