@@ -1,6 +1,6 @@
 # PIOS — Personal Intelligent Operating System
 # VeritasIQ Technologies Ltd | pios-wysskz48mv-engs-projects.vercel.app
-# llms.txt v2.2 — Claude for Chrome integration manifest
+# llms.txt v2.3 — Claude for Chrome integration manifest
 
 ## What is PIOS?
 
@@ -61,7 +61,9 @@ GET  /api/expenses?domain=&limit=     — List expenses with summary stats
 POST /api/meetings                    — Create meeting note: {title, raw_transcript, auto_process:true}
 GET  /api/meetings?domain=            — List meeting notes
 POST /api/meetings { action:'promote_tasks', id } — Promote action items to tasks
-GET  /api/academic                    — Academic modules, thesis chapters, supervision sessions
+GET  /api/academic                    — Academic modules, thesis chapters, supervision sessions,
+                                             weekly_snapshots (last 12), thesis_summary with
+                                             weekly_delta (words written this week vs last)
 POST /api/academic { action:'create_chapter'|'create_module'|'create_session'|'ai_thesis_review' }
 PATCH /api/academic { entity:'chapter'|'module'|'session', id, ...updates }
 GET  /api/profile                     — User profile + tenant plan + AI credit balance

@@ -20,24 +20,37 @@ export async function GET() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const [mods, chaps, sessions] = await Promise.all([
+    const [mods, chaps, sessions, snapshots] = await Promise.all([
       supabase.from('academic_modules').select('*').eq('user_id', user.id).order('sort_order'),
       supabase.from('thesis_chapters').select('*').eq('user_id', user.id).order('chapter_num'),
       supabase.from('supervision_sessions').select('*').eq('user_id', user.id).order('session_date', { ascending: false }).limit(20),
+      supabase.from('thesis_weekly_snapshots').select('week_start,total_words,chapter_count,captured_at')
+        .eq('user_id', user.id).order('week_start', { ascending: false }).limit(12),
     ])
     const chapters    = chaps.data ?? []
     const totalWords  = chapters.reduce((s, c) => s + (c.word_count  ?? 0), 0)
     const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
+    const snapshotData = snapshots.data ?? []
+    // Compute weekly word delta (this week vs last week snapshot)
+    const latestSnap   = snapshotData[0]
+    const prevSnap     = snapshotData[1]
+    const weeklyDelta  = (latestSnap && prevSnap)
+      ? Math.max(0, (latestSnap.total_words ?? 0) - (prevSnap.total_words ?? 0))
+      : null
+
     return NextResponse.json({
-      modules:  mods.data ?? [],
+      modules:   mods.data     ?? [],
       chapters,
-      sessions: sessions.data ?? [],
+      sessions:  sessions.data ?? [],
+      snapshots: snapshotData,
       thesis_summary: {
         total_words:   totalWords,
         target_words:  targetWords,
         pct_complete:  targetWords > 0 ? Math.round((totalWords / targetWords) * 100) : 0,
-        chapters_done: chapters.filter(c => ['submitted','passed','draft_complete'].includes(c.status)).length,
+        chapters_done:  chapters.filter(c => ['submitted','passed','draft_complete'].includes(c.status)).length,
         chapters_total: chapters.length,
+        weekly_delta:   weeklyDelta,
+        last_snapshot:  latestSnap ?? null,
       },
     })
   } catch (err: any) {

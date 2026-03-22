@@ -51,10 +51,12 @@ export default function AcademicPage() {
     setLoading(true)
     const res = await fetch('/api/academic')
     const d   = res.ok ? await res.json() : {}
-    const chapters = d.chapters ?? []
+    const chapters     = d.chapters ?? []
+    const weeklyDelta  = d.thesis_summary?.weekly_delta ?? null
     setModules(d.modules ?? [])
     setChapters(chapters)
     setSessions(d.sessions ?? [])
+    setWeeklyDelta(weeklyDelta)
     const wc:Record<string,number>={}, st:Record<string,string>={}
     for (const c of chapters) { wc[c.id]=c.word_count??0; st[c.id]=c.status??'not_started' }
     setEditWords(wc); setEditStatus(st)
@@ -100,6 +102,7 @@ export default function AcademicPage() {
   const targetWords = chapters.reduce((s,c)=>s+(c.target_words||8000),0)
   const thesisPct   = targetWords>0?Math.round((totalWords/targetWords)*100):0
   const [aiReview,      setAiReview]      = useState<any>(null)
+  const [weeklyDelta,   setWeeklyDelta]   = useState<number|null>(null)
   const [aiReviewLoading, setAiReviewLoading] = useState(false)
 
   async function runAIThesisReview() {
@@ -152,6 +155,7 @@ export default function AcademicPage() {
           { label:'Modules done', value:`${modsDone}/${modules.length}`, sub:'passed or complete', colour:'#2dd4a0' },
           { label:'Supervision', value:sessions.length, sub:'sessions logged', colour:'#f59e0b' },
           { label:'Words/day needed', value: wordsPerDay ? wordsPerDay.toLocaleString() : '—', sub: daysToDeadline ? `${daysToDeadline} days to deadline` : 'no deadline set', colour: wordsPerDay && wordsPerDay > 500 ? '#ef4444' : wordsPerDay && wordsPerDay > 250 ? '#f59e0b' : '#22c55e' },
+          { label:'Written this week', value: weeklyDelta !== null ? weeklyDelta.toLocaleString() : '—', sub: weeklyDelta !== null ? (weeklyDelta >= (wordsPerDay??0)*7 ? 'On pace ✓' : 'Below pace') : 'No snapshot yet', colour: weeklyDelta === null ? '#64748b' : weeklyDelta >= (wordsPerDay??0)*7 ? '#22c55e' : '#f59e0b' },
         ].map(s=>(
           <div key={s.label} className="pios-card-sm" style={{ padding:'14px 16px' }}>
             <div style={{ fontSize:22, fontWeight:800, color:s.colour, marginBottom:2, lineHeight:1 }}>{s.value}</div>
