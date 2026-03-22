@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AI Companion — persistent conversations, domain modes, tool shortcuts
@@ -48,8 +47,6 @@ export default function AiPage() {
   const [copying,       setCopying]      = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef  = useRef<HTMLTextAreaElement>(null)
-  const supabase  = createClient()
-
   // Load session list
   const loadSessions = useCallback(async () => {
     const res = await fetch('/api/ai/sessions')
