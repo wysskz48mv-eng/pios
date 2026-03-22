@@ -151,6 +151,42 @@ const STEPS: Step[] = [
     ],
   },
   {
+    id:        'microsoft',
+    title:     'Microsoft 365 / Outlook (Multi-Email)',
+    tag:       'Required for M365',
+    tagColour: '#0078D4',
+    items: [
+      {
+        label:    'Register app in Azure Portal',
+        note:     'Go to portal.azure.com → Microsoft Entra ID → App registrations → New registration. Name: PIOS. Supported account types: Accounts in any organizational directory and personal Microsoft accounts. Redirect URI (Web): https://pios-wysskz48mv-engs-projects.vercel.app/api/auth/callback/microsoft',
+        url:      'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
+        urlLabel: 'Open Azure App Registrations →',
+      },
+      {
+        label:    'Grant API permissions',
+        note:     'In your app registration → API permissions → Add permission → Microsoft Graph → Delegated: Mail.Read, Mail.Send, Calendars.Read, User.Read, offline_access. Then click "Grant admin consent".',
+      },
+      {
+        label:    'Add AZURE_CLIENT_ID',
+        key:      'AZURE_CLIENT_ID',
+        value:    '<Application (client) ID from Azure Portal overview>',
+        note:     'Found in your app registration overview page.',
+        url:      'https://vercel.com/wysskz48mv-eng/pios/settings/environment-variables',
+        urlLabel: 'Open Vercel Env Vars →',
+      },
+      {
+        label:    'Add AZURE_CLIENT_SECRET',
+        key:      'AZURE_CLIENT_SECRET',
+        value:    '<Client secret value — Certificates & secrets tab>',
+        note:     'Create in Azure Portal → App registration → Certificates & secrets → New client secret. Copy the Value (not the ID). Set expiry to 24 months.',
+      },
+      {
+        label:    'Redeploy after adding vars',
+        note:     'Vercel → PIOS → Deployments → Redeploy latest to activate Microsoft OAuth.',
+      },
+    ],
+  },
+  {
     id:        'domain',
     title:     'Custom Domain (Optional)',
     tag:       'Optional',

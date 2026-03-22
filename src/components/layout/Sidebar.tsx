@@ -11,6 +11,7 @@ const NAV = [
   { href: '/platform/research',  icon: '🔬', label: 'Research Hub',   colour: '#6c8eff' },
   { href: '/platform/tasks',     icon: '✓',  label: 'Tasks',          colour: '#a78bfa' },
   { href: '/platform/calendar',  icon: '📅', label: 'Calendar',       colour: '#22d3ee' },
+  { href: '/platform/meetings',  icon: '🗒️', label: 'Meetings',       colour: '#a78bfa' },
   { href: '/platform/email',     icon: '✉',  label: 'Inbox',          colour: '#2dd4a0' },
   { href: '/platform/files',     icon: '🗂️', label: 'File Intel',     colour: '#f59e0b' },
   { href: '/platform/payroll',   icon: '💳', label: 'Payroll',        colour: '#a78bfa' },
@@ -87,7 +88,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
           <div>
             <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--pios-text)' }}>PIOS</div>
             <div style={{ fontSize: '10px', color: 'var(--pios-dim)', letterSpacing: '0.05em' }}>
-              v2.0 · {planLabel}
+              v2.2 · {planLabel}
             </div>
           </div>
         )}

@@ -1,11 +1,275 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Settings — profile edit, plan, integrations, news feed prefs, system info
+// Settings — profile edit, plan, integrations, email accounts, news feed prefs
+// PIOS v2.2 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
+
+const CONTEXT_LABELS: Record<string, string> = {
+  personal:'Personal', academic:'Academic / University', work:'Work',
+  secondment:'Secondment', consulting:'FM Consulting', client:'Client', other:'Other',
+}
+const CONTEXT_COLOURS: Record<string, string> = {
+  personal:'#6c8eff', academic:'#a78bfa', work:'#22c55e',
+  secondment:'#f59e0b', consulting:'#0ECFB0', client:'#f97316', other:'#64748b',
+}
+const PROVIDER_LABELS: Record<string, string> = { google:'Gmail / Google', microsoft:'Microsoft 365 / Outlook', imap:'IMAP (App Password)' }
+const PROVIDER_COLOURS: Record<string, string> = { google:'#4285F4', microsoft:'#0078D4', imap:'#64748b' }
+
+function EmailAccountsSection() {
+  const [accounts, setAccounts]   = useState<any[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [showAdd, setShowAdd]     = useState(false)
+  const [addProvider, setAddProvider] = useState<'google'|'microsoft'|'imap'>('google')
+  const [addCtx, setAddCtx]       = useState('personal')
+  const [addLabel, setAddLabel]   = useState('')
+  const [imapForm, setImapForm]   = useState({ email:'', host:'outlook.office365.com', port:'993', username:'', password:'' })
+  const [saving, setSaving]       = useState(false)
+  const [error, setError]         = useState<string|null>(null)
+  const [syncing, setSyncing]     = useState<string|null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    const res = await fetch('/api/email/accounts')
+    if (res.ok) { const d = await res.json(); setAccounts(d.accounts ?? []) }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    load()
+    // Handle OAuth redirect success/error
+    const params = new URLSearchParams(window.location.search)
+    const connected = params.get('connected')
+    const err = params.get('error')
+    if (connected) { window.history.replaceState({}, '', window.location.pathname); load() }
+    if (err) { setError(decodeURIComponent(err)); window.history.replaceState({}, '', window.location.pathname) }
+  }, [load])
+
+  async function connectGoogle() {
+    const supabase = createClient()
+    if (accounts.length === 0) {
+      // Primary Google — use Supabase OAuth (sets session)
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
+          queryParams: { access_type: 'offline', prompt: 'consent' },
+        }
+      })
+    } else {
+      // Additional Google — route via accounts API (future: separate Google OAuth for additional accounts)
+      setError('To add a second Google account, use IMAP with an app password from myaccount.google.com → Security → App passwords.')
+    }
+  }
+
+  async function connectMicrosoft() {
+    const ctx = addCtx || 'personal'
+    const lbl = addLabel || CONTEXT_LABELS[ctx] || ''
+    window.location.href = `/api/auth/connect-microsoft?context=${ctx}&label=${encodeURIComponent(lbl)}`
+  }
+
+  async function addImap() {
+    if (!imapForm.email || !imapForm.password) { setError('Email and app password required'); return }
+    setSaving(true); setError(null)
+    const res = await fetch('/api/email/accounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider: 'imap',
+        email_address: imapForm.email,
+        context: addCtx,
+        label: addLabel || CONTEXT_LABELS[addCtx],
+        imap_host: imapForm.host,
+        imap_port: parseInt(imapForm.port),
+        imap_username: imapForm.username || imapForm.email,
+        imap_password: imapForm.password,
+      }),
+    })
+    const d = await res.json()
+    if (res.ok) { setShowAdd(false); setImapForm({ email:'', host:'outlook.office365.com', port:'993', username:'', password:'' }); await load() }
+    else setError(d.error ?? 'Failed to add account')
+    setSaving(false)
+  }
+
+  async function disconnect(id: string) {
+    await fetch(`/api/email/accounts?id=${id}`, { method: 'DELETE' })
+    await load()
+  }
+
+  async function setPrimary(id: string) {
+    await fetch('/api/email/accounts', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, is_primary: true }) })
+    await load()
+  }
+
+  async function toggleReceipts(id: string, current: boolean) {
+    await fetch('/api/email/accounts', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, receipt_scan_enabled: !current }) })
+    await load()
+  }
+
+  async function syncAccount(id: string) {
+    setSyncing(id)
+    await fetch('/api/email/sync', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ account_id: id }) })
+    setSyncing(null)
+    await load()
+  }
+
+  const inp: React.CSSProperties = { width:'100%', background:'var(--pios-surface2)', border:'1px solid var(--pios-border)', borderRadius:6, padding:'7px 10px', color:'var(--pios-text)', fontSize:12, marginBottom:8 }
+
+  return (
+    <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:12, padding:'20px 22px', marginBottom:20 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+        <div>
+          <div style={{ fontSize:14, fontWeight:700 }}>Email Accounts</div>
+          <div style={{ fontSize:11, color:'var(--pios-muted)', marginTop:2 }}>
+            Connect multiple inboxes — Gmail, Microsoft 365, university, work, secondment
+          </div>
+        </div>
+        <button onClick={() => { setShowAdd(!showAdd); setError(null) }}
+          className="pios-btn pios-btn-primary" style={{ fontSize:11 }}>
+          + Add inbox
+        </button>
+      </div>
+
+      {error && (
+        <div style={{ fontSize:11, color:'#ef4444', padding:'8px 12px', background:'rgba(239,68,68,0.08)', borderRadius:8, marginBottom:12, border:'1px solid rgba(239,68,68,0.2)' }}>
+          ⚠ {error}
+        </div>
+      )}
+
+      {/* Add account panel */}
+      {showAdd && (
+        <div style={{ background:'var(--pios-surface2)', border:'1px solid var(--pios-border)', borderRadius:10, padding:16, marginBottom:16 }}>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:10 }}>Add email account</div>
+
+          {/* Context */}
+          <label style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:4 }}>Context</label>
+          <select value={addCtx} onChange={e => setAddCtx(e.target.value)} style={{ ...inp, marginBottom:10 }}>
+            {Object.entries(CONTEXT_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+
+          <label style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:4 }}>Label (optional)</label>
+          <input placeholder={`e.g. "Portsmouth DBA" or "Sustain Work"`} value={addLabel} onChange={e => setAddLabel(e.target.value)} style={inp} />
+
+          {/* Provider tabs */}
+          <div style={{ display:'flex', gap:4, marginBottom:12, marginTop:4 }}>
+            {(['google','microsoft','imap'] as const).map(p => (
+              <button key={p} onClick={() => setAddProvider(p)} style={{
+                padding:'5px 12px', borderRadius:6, fontSize:11, fontWeight: addProvider===p ? 700 : 400,
+                border:`1px solid ${addProvider===p ? PROVIDER_COLOURS[p] : 'var(--pios-border)'}`,
+                background: addProvider===p ? PROVIDER_COLOURS[p]+'20' : 'transparent',
+                color: addProvider===p ? PROVIDER_COLOURS[p] : 'var(--pios-muted)', cursor:'pointer',
+              }}>{PROVIDER_LABELS[p]}</button>
+            ))}
+          </div>
+
+          {addProvider === 'google' && (
+            <div>
+              <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:10, lineHeight:1.6 }}>
+                Click below to connect your Google account via OAuth. Gmail, Calendar, and Drive access will be requested.
+                {accounts.length > 0 && <span style={{ color:'#f59e0b' }}> To add a second Google account, use IMAP + app password instead.</span>}
+              </div>
+              <button onClick={connectGoogle} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%' }}>
+                Connect Google Account →
+              </button>
+            </div>
+          )}
+
+          {addProvider === 'microsoft' && (
+            <div>
+              <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:10, lineHeight:1.6 }}>
+                Connects via Microsoft Entra ID OAuth. Works for personal Outlook, university M365, and work M365.
+                <span style={{ color:'#f59e0b' }}> If your institution blocks third-party apps, use IMAP + app password instead.</span>
+              </div>
+              <div style={{ fontSize:10, color:'var(--pios-dim)', padding:'8px 10px', background:'rgba(0,120,212,0.06)', borderRadius:6, marginBottom:10, lineHeight:1.5 }}>
+                <strong style={{ color:'#0078D4' }}>Institutional accounts (NHS, Gov, armed forces):</strong> Your IT team may block OAuth consent for external apps. If sign-in fails, use the IMAP option with an app-specific password generated in your M365 settings.
+              </div>
+              <button onClick={connectMicrosoft} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%', background:'#0078D4', borderColor:'#0078D4' }}>
+                Connect Microsoft / Outlook →
+              </button>
+            </div>
+          )}
+
+          {addProvider === 'imap' && (
+            <div>
+              <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:8, lineHeight:1.6 }}>
+                Use an app-specific password (not your main password). For Microsoft 365: account.microsoft.com → Security → App passwords. For Gmail: myaccount.google.com → Security → App passwords.
+              </div>
+              <input placeholder="Email address" value={imapForm.email} onChange={e => setImapForm(p=>({...p,email:e.target.value}))} style={inp} />
+              <input placeholder="IMAP host (e.g. outlook.office365.com)" value={imapForm.host} onChange={e => setImapForm(p=>({...p,host:e.target.value}))} style={inp} />
+              <div style={{ display:'grid', gridTemplateColumns:'120px 1fr', gap:8 }}>
+                <input placeholder="Port (993)" value={imapForm.port} onChange={e => setImapForm(p=>({...p,port:e.target.value}))} style={{ ...inp, marginBottom:0 }} />
+                <input placeholder="IMAP username (usually email)" value={imapForm.username} onChange={e => setImapForm(p=>({...p,username:e.target.value}))} style={{ ...inp, marginBottom:0 }} />
+              </div>
+              <div style={{ height:8 }} />
+              <input type="password" placeholder="App password (not your main password)" value={imapForm.password} onChange={e => setImapForm(p=>({...p,password:e.target.value}))} style={inp} />
+              <button onClick={addImap} disabled={saving} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%' }}>
+                {saving ? 'Adding…' : 'Add IMAP Account'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Account list */}
+      {loading ? (
+        <div style={{ textAlign:'center', padding:'20px 0', fontSize:12, color:'var(--pios-muted)' }}>Loading…</div>
+      ) : accounts.length === 0 ? (
+        <div style={{ textAlign:'center', padding:'20px 0', fontSize:12, color:'var(--pios-dim)' }}>
+          No email accounts connected yet. Add your first inbox above.
+        </div>
+      ) : (
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {accounts.map((acc: any) => (
+            <div key={acc.id} style={{ padding:'12px 14px', background:'var(--pios-surface2)', borderRadius:10, border:`1px solid var(--pios-border)` }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background: PROVIDER_COLOURS[acc.provider] ?? '#64748b', flexShrink:0 }} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                    <span style={{ fontSize:13, fontWeight:600 }}>{acc.email_address}</span>
+                    {acc.is_primary && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(201,168,76,0.15)', color:'#C9A84C', fontWeight:700 }}>PRIMARY</span>}
+                    <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: CONTEXT_COLOURS[acc.context]+'20', color: CONTEXT_COLOURS[acc.context], fontWeight:600 }}>
+                      {CONTEXT_LABELS[acc.context] ?? acc.context}
+                    </span>
+                    {acc.label && acc.label !== acc.email_address && (
+                      <span style={{ fontSize:10, color:'var(--pios-muted)' }}>{acc.label}</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--pios-dim)', marginTop:2 }}>
+                    {PROVIDER_LABELS[acc.provider]} · {acc.sync_enabled ? 'Sync on' : 'Sync off'}
+                    {acc.receipt_scan_enabled && ' · 📄 Receipt scan'}
+                    {acc.last_synced_at && ` · Last synced ${new Date(acc.last_synced_at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}`}
+                    {acc.last_sync_error && <span style={{ color:'#ef4444' }}> · ⚠ {acc.last_sync_error}</span>}
+                  </div>
+                </div>
+                <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                  {!acc.is_primary && (
+                    <button onClick={() => setPrimary(acc.id)} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'transparent', cursor:'pointer', color:'var(--pios-muted)' }}>
+                      Set primary
+                    </button>
+                  )}
+                  <button onClick={() => toggleReceipts(acc.id, acc.receipt_scan_enabled)} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:`1px solid ${acc.receipt_scan_enabled ? 'rgba(34,197,94,0.3)' : 'var(--pios-border)'}`, background: acc.receipt_scan_enabled ? 'rgba(34,197,94,0.08)' : 'transparent', cursor:'pointer', color: acc.receipt_scan_enabled ? '#22c55e' : 'var(--pios-muted)' }}>
+                    {acc.receipt_scan_enabled ? '📄 Receipts on' : 'Receipts off'}
+                  </button>
+                  <button onClick={() => syncAccount(acc.id)} disabled={syncing === acc.id} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'transparent', cursor:'pointer', color:'var(--pios-muted)' }}>
+                    {syncing === acc.id ? '⟳' : '↻ Sync'}
+                  </button>
+                  <button onClick={() => disconnect(acc.id)} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'transparent', cursor:'pointer', color:'#ef4444' }}>
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 const PLANS: Record<string,{name:string;price:number;credits:number}> = {
   student:      { name:'Student',      price:9,    credits:5000 },
@@ -205,13 +469,14 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        {/* Integrations */}
-        <Section title="Integrations">
+        {/* Email Accounts — multi-inbox manager */}
+        <EmailAccountsSection />
+
+        {/* Other Integrations */}
+        <Section title="Other Integrations">
           {[
-            { name:'Google (Gmail + Calendar + Drive)', connected:!!profile?.google_email, detail:profile?.google_email ?? 'Not connected', colour:'#4285F4', note:profile?.google_email?'Reconnect to grant Drive access if not yet granted':null },
             { name:'Intelligence Feeds', connected:true, detail:'Configure in Command Centre → Intelligence Feeds', colour:'#22c55e' },
             { name:'Zotero (Research Library)', connected:false, detail:'Add Zotero Key in Research Hub → Import & Connect', colour:'#CC2936' },
-            { name:'Railway (OBE + LIE Engines)', connected:false, detail:'See docs/runbooks/RAILWAY_DEPLOYMENT.md', colour:'#6c8eff' },
             { name:'Stripe (Billing)', connected:!!tenant?.stripe_customer_id, detail:'Managed automatically', colour:'#635BFF' },
           ].map(i => (
             <div key={i.name} style={{ padding:'10px 0',borderBottom:'1px solid var(--pios-border)' }}>
@@ -219,7 +484,6 @@ export default function SettingsPage() {
                 <div style={{ flex:1,minWidth:0 }}>
                   <div style={{ fontSize:13,fontWeight:500,marginBottom:2 }}>{i.name}</div>
                   <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{i.detail}</div>
-                  {i.note && <div style={{ fontSize:11,color:'#f59e0b',marginTop:2 }}>⚠ {i.note}</div>}
                 </div>
                 <span style={{ fontSize:11,padding:'3px 10px',borderRadius:20,background:i.connected?'rgba(34,197,94,0.1)':'rgba(255,255,255,0.05)',color:i.connected?'#22c55e':'var(--pios-dim)',flexShrink:0,marginLeft:12 }}>
                   {i.connected?'Connected':'Not connected'}
@@ -227,23 +491,6 @@ export default function SettingsPage() {
               </div>
             </div>
           ))}
-          <button
-            onClick={async()=>{
-              const supabase=createClient()
-              await supabase.auth.signInWithOAuth({
-                provider:'google',
-                options:{
-                  redirectTo:`${window.location.origin}/auth/callback`,
-                  scopes:'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file',
-                  queryParams:{access_type:'offline',prompt:'consent'},
-                }
-              })
-            }}
-            className="pios-btn pios-btn-primary"
-            style={{ fontSize:12, marginTop:12, width:'100%' }}
-          >
-            {profile?.google_email ? '↻ Reconnect Google (refresh scopes)' : 'Connect Google Account'}
-          </button>
         </Section>
 
         {/* News & Intelligence preferences */}

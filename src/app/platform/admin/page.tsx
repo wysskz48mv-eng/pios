@@ -14,6 +14,8 @@ const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
   '005': { file: '005_user_feed_config.sql',      tables: ['user_feed_topics','user_feed_settings'] },
   '006': { file: '006_filing_system.sql',         tables: ['file_spaces','file_items','invoices','filing_rules','drive_scans'] },
   '007': { file: '007_payroll_expenses.sql',      tables: ['staff_members','payroll_runs','payroll_lines','expense_claims','transfer_queue','payroll_chase_log'] },
+  '008': { file: '008_thesis_weekly_snapshots.sql', tables: ['thesis_weekly_snapshots'] },
+  '009': { file: '009_multi_email_meeting_notes.sql', tables: ['connected_email_accounts','meeting_notes','email_items(patched)'] },
 }
 
 const SUPABASE_URL = 'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new'
@@ -134,7 +136,7 @@ export default function AdminPage() {
           <div>
             <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>Database Migrations</div>
             <p style={{ fontSize:12, color:'var(--pios-muted)' }}>
-              Run these in order. Migrations 001–003 may already be applied. 004–007 add Research, Feeds, File Intelligence, and Payroll tables.
+              Run these in order. Migrations 001–003 may already be applied. 004–009 add Research, Feeds, File Intelligence, Payroll, Weekly Snapshots, and Multi-Email + Meeting Notes tables.
             </p>
           </div>
           <button
