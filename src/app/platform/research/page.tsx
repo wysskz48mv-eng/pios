@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { formatDate } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,15 +65,11 @@ function SearchTab() {
   const [meta,       setMeta]       = useState<any>(null)
   const [history,    setHistory]    = useState<any[]>([])
   const [expanded,   setExpanded]   = useState<Set<number>>(new Set())
-  const supabase = createClient()
-
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase.from('database_searches').select('query,database_name,result_count,created_at')
-        .eq('user_id', user.id).order('created_at', { ascending: false }).limit(8)
-        .then(({ data }) => setHistory(data ?? []))
-    })
+    fetch('/api/research/search')
+      .then(r => r.ok ? r.json() : {})
+      .then(d => setHistory(d.history ?? []))
+      .catch(() => {})
   }, [])
 
   async function search() {
@@ -622,20 +617,21 @@ function ImportTab() {
   async function manualImport() {
     if (!manualForm.title.trim()) return
     setImporting(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setImporting(false); return }
-    await supabase.from('literature_items').insert({
-      user_id: user.id,
-      title: manualForm.title,
-      authors: manualForm.authors.split(',').map(a => a.trim()).filter(Boolean),
-      year: parseInt(manualForm.year) || null,
-      journal: manualForm.journal || null,
-      doi: manualForm.doi || null,
-      url: manualForm.url || null,
-      source_type: manualForm.source_type,
-      notes: manualForm.notes || null,
-      tags: manualForm.tags.split(',').map(t => t.trim()).filter(Boolean),
-      read_status: 'unread',
+    await fetch('/api/literature', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create',
+        title:       manualForm.title,
+        authors:     manualForm.authors.split(',').map((a:string) => a.trim()).filter(Boolean),
+        year:        parseInt(manualForm.year) || null,
+        journal:     manualForm.journal || null,
+        doi:         manualForm.doi || null,
+        url:         manualForm.url || null,
+        source_type: manualForm.source_type,
+        notes:       manualForm.notes || null,
+        tags:        manualForm.tags.split(',').map((t:string) => t.trim()).filter(Boolean),
+      }),
     })
     setImportResult('✓ Added to your literature library')
     setManualForm({ title: '', authors: '', year: '', journal: '', doi: '', url: '', source_type: 'journal', notes: '', tags: '' })

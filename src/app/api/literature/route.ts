@@ -63,6 +63,30 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { action } = body
 
+    // ── Create item ──────────────────────────────────────────────────────────
+    if (action === 'create') {
+      const { title, authors, year, journal, doi, url, source_type, notes, tags } = body
+      if (!title?.trim()) return NextResponse.json({ error: 'title required' }, { status: 400 })
+      const { data: profile } = await supabase.from('user_profiles').select('tenant_id').eq('id', user.id).single()
+      const { data, error } = await supabase.from('literature_items').insert({
+        user_id:     user.id,
+        tenant_id:   profile?.tenant_id,
+        title:       title.trim(),
+        authors:     Array.isArray(authors) ? authors : [],
+        year:        year ? parseInt(year) : null,
+        journal:     journal  || null,
+        doi:         doi      || null,
+        url:         url      || null,
+        source_type: source_type || 'journal',
+        notes:       notes    || null,
+        tags:        Array.isArray(tags) ? tags : [],
+        read_status: 'unread',
+        updated_at:  new Date().toISOString(),
+      }).select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      return NextResponse.json({ item: data }, { status: 201 })
+    }
+
     // ── Update item ───────────────────────────────────────────────────────────
     if (action === 'update') {
       const { id, ...updates } = body

@@ -173,7 +173,7 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { data } = await supabase.from('database_searches').select('*')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
-    return NextResponse.json({ searches: data ?? [] })
+    return NextResponse.json({ searches: data ?? [], history: data ?? [] })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

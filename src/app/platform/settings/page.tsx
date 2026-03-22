@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -306,29 +305,24 @@ export default function SettingsPage() {
   const [saving,  setSaving]  = useState(false)
   const [saved,   setSaved]   = useState(false)
   const [form, setForm] = useState({ full_name:'', programme_name:'', university:'', timezone:'Europe/London', job_title:'', organisation:'', billing_email:'' })
-  const supabase = createClient()
-
   useEffect(() => {
     async function load() {
-      const { data:{ user:u } } = await supabase.auth.getUser()
-      setUser(u)
-      if (!u) { setLoading(false); return }
-      const [pR, tR, fR] = await Promise.all([
-        supabase.from('user_profiles').select('*').eq('id', u.id).single(),
-        supabase.from('tenants').select('*').limit(1).single(),
-        fetch('/api/feeds').then(r=>r.json()).catch(()=>({ settings:null })),
+      const [pR, fR] = await Promise.all([
+        fetch('/api/profile').then(r => r.ok ? r.json() : {}),
+        fetch('/api/feeds').then(r => r.json()).catch(() => ({ settings: null })),
       ])
-      setProfile(pR.data)
-      setTenant(tR.data)
+      setUser(pR.user ?? null)
+      setProfile(pR.profile ?? null)
+      setTenant(pR.tenant ?? null)
       setFeedSettings(fR.settings)
-      if (pR.data) setForm({
-        full_name: pR.data.full_name ?? '',
-        billing_email: pR.data.billing_email ?? '',
-        programme_name: pR.data.programme_name ?? '',
-        university: pR.data.university ?? '',
-        timezone: pR.data.timezone ?? 'Europe/London',
-        job_title: pR.data.job_title ?? '',
-        organisation: pR.data.organisation ?? '',
+      if (pR.profile) setForm({
+        full_name:      pR.profile.full_name      ?? '',
+        billing_email:  pR.profile.billing_email  ?? '',
+        programme_name: pR.profile.programme_name ?? '',
+        university:     pR.profile.university     ?? '',
+        timezone:       pR.profile.timezone       ?? 'Europe/London',
+        job_title:      pR.profile.job_title      ?? '',
+        organisation:   pR.profile.organisation   ?? '',
       })
       setLoading(false)
       // Handle Stripe portal return params
@@ -345,10 +339,16 @@ export default function SettingsPage() {
   }, [])
 
   async function saveProfile() {
-    if (!user) return
     setSaving(true)
-    await supabase.from('user_profiles').update({ ...form, updated_at: new Date().toISOString() }).eq('id', user.id)
-    setProfile((p:any) => ({ ...p, ...form }))
+    const res = await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    if (res.ok) {
+      const { profile } = await res.json()
+      setProfile(profile)
+    }
     setSaving(false); setEditing(false); setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }

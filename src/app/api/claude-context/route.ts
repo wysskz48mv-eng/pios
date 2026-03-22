@@ -60,6 +60,8 @@ export async function GET() {
       notifsRes,
       meetingsRes,
       profileRes,
+      accountsRes,
+      receiptsRes,
     ] = await Promise.all([
       // Tasks — overdue + today + this week
       supabase.from('tasks').select('id,title,domain,priority,status,due_date,source')
@@ -127,6 +129,21 @@ export async function GET() {
       supabase.from('user_profiles').select('full_name,university,programme_name,timezone')
         .eq('id', user.id)
         .single(),
+
+      // Connected email accounts
+      supabase.from('connected_email_accounts')
+        .select('id,provider,context,label,email_address,is_primary,last_synced_at')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('is_primary', { ascending: false }),
+
+      // Auto-captured receipts last 48h count
+      supabase.from('email_items')
+        .select('id,subject,sender_name,receipt_data,received_at', { count: 'exact' })
+        .eq('user_id', user.id)
+        .eq('is_receipt', true)
+        .gte('received_at', new Date(Date.now() - 48 * 3600000).toISOString())
+        .limit(10),
     ])
 
     const tasks    = tasksRes.data    ?? []
@@ -137,8 +154,11 @@ export async function GET() {
     const brief    = briefRes.data
     const expenses = expensesRes.data ?? []
     const notifs   = notifsRes.data   ?? []
-    const meetings = meetingsRes.data ?? []
-    const profile  = profileRes.data
+    const meetings  = meetingsRes.data  ?? []
+    const profile   = profileRes.data
+    const accounts  = accountsRes.data  ?? []
+    const receipts  = receiptsRes.data  ?? []
+    const receiptsCount = receiptsRes.count ?? 0
 
     // ── Derived stats ─────────────────────────────────────────────────────────
     const overdueTasks = tasks.filter(t => t.due_date && t.due_date < today)
@@ -188,6 +208,8 @@ export async function GET() {
           unread_notifications:  notifs.length,
           meetings_with_pending_actions: meetings.length,
           pending_meeting_action_items:  pendingMeetingActions,
+          email_accounts_connected:      accounts.length,
+          auto_captured_receipts_48h:    receiptsCount,
         },
 
         // Tasks
@@ -243,6 +265,22 @@ export async function GET() {
         },
 
         // Meetings with pending actions
+          email_accounts: accounts.map((a: any) => ({
+            provider:   a.provider,
+            context:    a.context,
+            label:      a.label ?? a.email_address,
+            is_primary: a.is_primary,
+            last_synced: a.last_synced_at,
+          })),
+
+          recent_receipts: receipts.slice(0, 5).map((r: any) => ({
+            subject:  r.subject,
+            vendor:   r.receipt_data?.vendor ?? r.sender_name,
+            amount:   r.receipt_data?.amount,
+            currency: r.receipt_data?.currency ?? 'GBP',
+            date:     r.received_at?.slice(0, 10),
+          })),
+
         meetings_pending: meetings.map((m: any) => ({
           id: m.id, title: m.title, date: m.meeting_date, domain: m.domain,
           action_item_count: (m.ai_action_items as any[])?.length ?? 0,
