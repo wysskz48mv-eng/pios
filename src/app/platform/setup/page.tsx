@@ -226,18 +226,53 @@ export default function SetupGuidePage() {
           }
         </div>
         {!statusLoading && status?.checks && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {Object.entries(status.checks).map(([key, check]: [string, any]) => (
-              <span key={key} style={{
-                fontSize: 11, padding: '3px 10px', borderRadius: 4,
-                fontFamily: 'monospace',
-                background: check.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
-                color: check.ok ? '#22c55e' : '#ef4444',
-                border: `1px solid ${check.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`,
-              }}>
-                {check.ok ? '✓' : '✗'} {check.label}
-              </span>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {/* Required checks */}
+            <div style={{ fontSize: 10, color: '#7a8299', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Required</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {Object.entries(status.checks).filter(([,c]: [string,any]) => c.required).map(([key, check]: [string, any]) => (
+                <span key={key} title={check.ok ? '' : (check.hint ?? '')} style={{
+                  fontSize: 11, padding: '3px 10px', borderRadius: 4, fontFamily: 'monospace', cursor: check.ok ? 'default' : 'help',
+                  background: check.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.12)',
+                  color: check.ok ? '#22c55e' : '#ef4444',
+                  border: `1px solid ${check.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.3)'}`,
+                }}>
+                  {check.ok ? '✓' : '✗'} {check.label}{!check.ok && check.hint ? ' ?' : ''}
+                </span>
+              ))}
+            </div>
+            {/* Optional checks */}
+            <div style={{ fontSize: 10, color: '#7a8299', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Optional</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {Object.entries(status.checks).filter(([,c]: [string,any]) => !c.required).map(([key, check]: [string, any]) => (
+                <span key={key} title={check.ok ? '' : (check.hint ?? '')} style={{
+                  fontSize: 11, padding: '3px 10px', borderRadius: 4, fontFamily: 'monospace', cursor: check.ok ? 'default' : 'help',
+                  background: check.ok ? 'rgba(34,197,94,0.06)' : 'rgba(245,158,11,0.08)',
+                  color: check.ok ? '#22c55e' : '#f59e0b',
+                  border: `1px solid ${check.ok ? 'rgba(34,197,94,0.15)' : 'rgba(245,158,11,0.2)'}`,
+                }}>
+                  {check.ok ? '✓' : '○'} {check.label}
+                </span>
+              ))}
+            </div>
+            {/* Stripe setup action */}
+            {status.checks.stripe_keys?.ok && !status.checks.stripe_price_ids?.ok && (
+              <div style={{ marginTop: 4, padding: '10px 14px', borderRadius: 8, background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)' }}>
+                <span style={{ fontSize: 12, color: '#a78bfa', fontWeight: 600 }}>Stripe keys set — run price setup: </span>
+                <button onClick={async () => {
+                  const r = await fetch('/api/stripe/setup', { method: 'POST' })
+                  const d = await r.json()
+                  if (d.success) {
+                    alert('Price IDs generated!\n\nAdd these to Vercel env vars then redeploy:\n\n' +
+                      d.env_vars.map((e: any) => `${e.key}=${e.value}`).join('\n'))
+                  } else {
+                    alert('Error: ' + (d.error ?? 'Unknown'))
+                  }
+                }} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 4, background: '#a78bfa', color: '#fff', border: 'none', cursor: 'pointer', marginLeft: 8 }}>
+                  POST /api/stripe/setup
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

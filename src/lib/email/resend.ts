@@ -34,7 +34,7 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
     return { ok: false, error: 'RESEND_API_KEY not configured' }
   }
 
-  const from = payload.from ?? process.env.RESEND_FROM_EMAIL ?? 'PIOS <pios@sustainintl.com>'
+  const from = payload.from ?? process.env.RESEND_FROM_EMAIL ?? 'PIOS <noreply@veritasiq.io>'
 
   try {
     const res = await fetch(RESEND_API, {
