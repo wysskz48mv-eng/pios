@@ -43,6 +43,7 @@ export default function AcademicPage() {
   const [showAddCh,  setShowAddCh]  = useState(false)
   const [showAddMod, setShowAddMod] = useState(false)
   const [showAddSes, setShowAddSes] = useState(false)
+  const [exportingThesis, setExportingThesis] = useState(false)
   const [chForm, setChForm] = useState({ chapter_num:'', title:'', status:'not_started', word_count:'0', target_words:'8000', notes:'' })
   const [modForm, setModForm] = useState({ title:'', module_type:'taught', status:'enrolled', deadline:'', credits:'' })
   const [sesForm, setSesForm] = useState({ supervisor:'Dr. Supervisor', session_date:new Date().toISOString().slice(0,10), format:'online', duration_mins:'60', notes:'', action_items:'' })
@@ -104,6 +105,25 @@ export default function AcademicPage() {
   const [aiReview,      setAiReview]      = useState<any>(null)
   const [weeklyDelta,   setWeeklyDelta]   = useState<number|null>(null)
   const [aiReviewLoading, setAiReviewLoading] = useState(false)
+
+  async function exportThesis(chapterId?: string) {
+    setExportingThesis(true)
+    try {
+      const r = await fetch('/api/academic/export', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapter_id: chapterId ?? null }),
+      })
+      if (r.ok) {
+        const blob = await r.blob()
+        const url  = URL.createObjectURL(blob)
+        const disp = r.headers.get('Content-Disposition') ?? ''
+        const name = disp.match(/filename="([^"]+)"/)?.[1] ?? 'thesis_export.md'
+        const a    = Object.assign(document.createElement('a'), { href: url, download: name })
+        a.click(); URL.revokeObjectURL(url)
+      }
+    } catch { /* non-fatal */ }
+    finally { setExportingThesis(false) }
+  }
 
   async function runAIThesisReview() {
     setAiReviewLoading(true); setAiReview(null)
@@ -240,6 +260,11 @@ export default function AcademicPage() {
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <span style={{ fontSize:11, color:ACCENT, fontWeight:600 }}>{chapsDone}/{chapters.length} complete</span>
+            <button onClick={() => exportThesis()} disabled={exportingThesis || chapters.length===0}
+              style={{ fontSize:11, padding:'4px 12px', borderRadius:8, border:'1px solid rgba(99,179,237,0.4)',
+                background:'rgba(99,179,237,0.06)', color:'#63b3ed', cursor:'pointer', whiteSpace:'nowrap' as const }}>
+              {exportingThesis ? '⟳ Exporting…' : '↓ Export MD'}
+            </button>
             <button onClick={runAIThesisReview} disabled={aiReviewLoading || chapters.length===0}
               style={{ fontSize:11, padding:'4px 12px', borderRadius:8, border:'1px dashed rgba(167,139,250,0.4)',
                 background:'rgba(167,139,250,0.06)', color:'#a78bfa', cursor:'pointer', whiteSpace:'nowrap' as const }}>
