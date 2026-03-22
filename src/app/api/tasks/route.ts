@@ -118,7 +118,7 @@ export async function PATCH(request: Request) {
     if (safe.status === 'done' && !safe.completed_at) {
       safe.completed_at = new Date().toISOString()
       const { data: t } = await supabase.from('tasks').select('title,domain').eq('id', id).maybeSingle()
-      if (t) await createNotification({ userId: user.id, title: \`✓ Task done: \${t.title}\`, type: 'success', domain: t.domain, actionUrl: '/platform/tasks' })
+      if (t) await createNotification({ userId: user.id, title: `✓ Task done: ${t.title}`, type: 'success', domain: t.domain, actionUrl: '/platform/tasks' })
     }
     if (safe.status && safe.status !== 'done') safe.completed_at = null
 

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Settings — profile edit, plan, integrations, email accounts, news feed prefs
@@ -308,7 +309,7 @@ export default function SettingsPage() {
   useEffect(() => {
     async function load() {
       const [pR, fR] = await Promise.all([
-        fetch('/api/profile').then(r => r.ok ? r.json() : {}),
+        fetch('/api/profile').then(r => r.ok ? r.json() : {}) as Promise<any>,
         fetch('/api/feeds').then(r => r.json()).catch(() => ({ settings: null })),
       ])
       setUser(pR.user ?? null)

@@ -164,6 +164,7 @@ export async function GET(req: NextRequest) {
         total_words:   totalWords,
         chapter_count: (thesisNow.data ?? []).length,
         captured_at:   new Date().toISOString(),
+      // @ts-ignore — supabase v2: .catch() absent from type defs
       }, { onConflict: 'user_id,week_start' }).catch(() => {}) // non-fatal
 
       const expList      = expenses.data ?? []
@@ -176,10 +177,7 @@ export async function GET(req: NextRequest) {
       let topInsight = ''
       try {
         const insightPrompt = `You are PIOS, a personal intelligence operating system. Write ONE short, specific, actionable sentence (max 25 words) as a weekly insight for ${profile.full_name?.split(' ')[0] ?? 'the user'} based on: tasks completed=${tasksDone.count ?? 0}, overdue=${tasksOverdue.count ?? 0}, thesis total words=${totalWords}, expenses this week=${expList.length}. Be encouraging but honest. No filler phrases.`
-        const resp = await callClaude([{ role: 'user', content: insightPrompt }], {
-          system: 'You are a concise, motivating weekly advisor. Output only the insight sentence — no quotes, no preamble.',
-          maxTokens: 60,
-        })
+        const resp = await callClaude([{ role: 'user', content: insightPrompt }], 'You are a concise, motivating weekly advisor. Output only the insight sentence — no quotes, no preamble.', 60)
         topInsight = resp.trim()
       } catch { /* non-blocking */ }
 

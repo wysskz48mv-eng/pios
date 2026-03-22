@@ -68,7 +68,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Public paths — headers only
-  if ([...PUBLIC_PATHS].some(p => pathname === p || pathname.startsWith(p + '/'))) {
+  if (Array.from(PUBLIC_PATHS).some(p => pathname === p || pathname.startsWith(p + '/'))) {
     return response
   }
 
@@ -88,11 +88,11 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() { return request.cookies.getAll() },
-        setAll(cs) {
-          cs.forEach(({ name, value }) => request.cookies.set(name, value))
+        setAll(cs: { name: string; value: string; options?: any }[]) {
+          cs.forEach(({ name, value }: { name: string; value: string; options?: any }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
           for (const [k, v] of Object.entries(SEC_HEADERS)) response.headers.set(k, v)
-          cs.forEach(({ name, value, options }) =>
+          cs.forEach(({ name, value, options }: { name: string; value: string; options?: any }) =>
             response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2]))
         },
       },

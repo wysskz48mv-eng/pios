@@ -25,12 +25,6 @@ function Bar({ pct, colour='#6c8eff' }: { pct:number; colour?:string }) {
   </div>
 }
 
-function Bar({ pct, colour='#6c8eff' }: { pct:number; colour?:string }) {
-  return <div style={{ height:4,background:'var(--pios-surface2)',borderRadius:2,overflow:'hidden' }}>
-    <div style={{ height:'100%',width:`${Math.min(100,pct)}%`,background:colour,borderRadius:2,transition:'width 0.4s' }} />
-  </div>
-}
-
 export default function ExpensesPage() {
   const [expenses,     setExpenses]     = useState<any[]>([])
   const [loading,      setLoading]      = useState(true)

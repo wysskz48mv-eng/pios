@@ -29,7 +29,7 @@ export default function DashboardPage() {
       fetch('/api/dashboard'),
       fetch('/api/notifications'),
     ])
-    const [d, nR] = await Promise.all([
+    const [d, nR]: [any, any] = await Promise.all([
       dashRes.ok ? dashRes.json() : {},
       notifsRes.ok ? notifsRes.json() : { notifications: [] },
     ])

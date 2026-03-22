@@ -58,6 +58,7 @@ export default function AcademicPage() {
     const wc:Record<string,number>={}, st:Record<string,string>={}
     for (const c of chapters) { wc[c.id]=c.word_count??0; st[c.id]=c.status??'not_started' }
     setEditWords(wc); setEditStatus(st)
+  }, [])
 
   useEffect(() => { load() }, [load])
 

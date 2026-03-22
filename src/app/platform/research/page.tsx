@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { formatDate } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Research Hub — Academic database search, journal watchlist, CFP tracker,
@@ -68,7 +69,7 @@ function SearchTab() {
   useEffect(() => {
     fetch('/api/research/search')
       .then(r => r.ok ? r.json() : {})
-      .then(d => setHistory(d.history ?? []))
+      .then((d: any) => setHistory(d.history ?? []))
       .catch(() => {})
   }, [])
 
