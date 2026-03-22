@@ -20,7 +20,9 @@ export default function EmailPage() {
   const [selected, setSelected] = useState<any>(null)
   const [loading,  setLoading]  = useState(true)
   const [syncing,  setSyncing]  = useState(false)
-  const [filter,   setFilter]   = useState('all')
+  const [filter,      setFilter]      = useState('all')
+  const [inboxFilter, setInboxFilter] = useState('all')
+  const [accounts,    setAccounts]    = useState<any[]>([])
   const [replyText, setReplyText] = useState('')
   const [replying,  setReplying]  = useState(false)
   const [showCompose, setShowCompose] = useState(false)
@@ -35,16 +37,21 @@ export default function EmailPage() {
     setLoading(true)
     const { data:{ user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
-    let q = supabase.from('email_items').select('*').eq('user_id',user.id).order('received_at',{ascending:false}).limit(50)
-    if (filter==='high') q = q.gte('priority_score',6)
-    else if (filter==='unread') q = q.eq('status','unprocessed')
-    else if (filter !== 'all') q = q.eq('domain_tag',filter)
-    const { data } = await q
-    setEmails(data??[])
+    const params = new URLSearchParams({ limit: '50' })
+    if (filter==='high')   params.set('min_priority','6')
+    else if (filter==='unread') params.set('status','unprocessed')
+    else if (filter !== 'all')  params.set('domain', filter)
+    if (inboxFilter !== 'all')  params.set('inbox_context', inboxFilter)
+    const res = await fetch(`/api/email/items?${params}`)
+    const d   = res.ok ? await res.json() : {}
+    setEmails(d.emails ?? d.items ?? [])
     setLoading(false)
   }, [filter])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    fetch('/api/email/accounts').then(r=>r.ok?r.json():null).then(d=>{ if(d) setAccounts(d.accounts??[]) }).catch(()=>{})
+  }, [])
 
   async function syncGmail() {
     setSyncing(true)
@@ -87,7 +94,7 @@ export default function EmailPage() {
 
   async function archive(id: string) {
     setArchiving(id)
-    await supabase.from('email_items').update({ status:'archived', updated_at:new Date().toISOString() }).eq('id',id)
+    await fetch('/api/email/items', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, status:'archived' }) })
     setEmails(prev=>prev.filter(e=>e.id!==id))
     if (selected?.id===id) setSelected(null)
     setArchiving(null)
@@ -171,6 +178,13 @@ export default function EmailPage() {
 
       {/* Filters */}
       <div style={{ display:'flex',gap:6,marginBottom:16,flexWrap:'wrap' as const }}>
+        {accounts.length > 1 && (
+          <div style={{ display:'flex',gap:4,flexWrap:'wrap' as const,marginBottom:6 }}>
+            {[['all','All inboxes'],...accounts.map((a:any)=>[a.context,a.label||a.display_name||a.email_address])].map(([v,l])=>(
+              <button key={v} onClick={()=>setInboxFilter(v)} style={{ padding:'3px 10px',borderRadius:20,fontSize:10,border:'none',cursor:'pointer',background:inboxFilter===v?'#6c8eff':'var(--pios-surface2)',color:inboxFilter===v?'#fff':'var(--pios-muted)',fontWeight:inboxFilter===v?600:400 }}>{l}</button>
+            ))}
+          </div>
+        )}
         {[['all','All'],['high','High priority'],['unread','Unread'],['academic','Academic'],['fm_consulting','FM'],['saas','SaaS'],['business','Business'],['personal','Personal']].map(([v,l])=>(
           <button key={v} onClick={()=>setFilter(v)} style={{ padding:'4px 12px',borderRadius:20,fontSize:11,border:'none',cursor:'pointer',background:filter===v?domainColour(v==='all'||v==='high'||v==='unread'?'personal':v):'var(--pios-surface2)',color:filter===v?'#0a0b0d':'var(--pios-muted)',fontWeight:filter===v?600:400 }}>{l}</button>
         ))}
@@ -207,7 +221,7 @@ export default function EmailPage() {
                     {e.action_required&&<div style={{ fontSize:11,color:'#6c8eff',marginTop:3 }}>⚡ {e.action_required}</div>}
                   </div>
                   <div style={{ textAlign:'right' as const,flexShrink:0 }}>
-                    {e.domain_tag&&<div style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:`${domainColour(e.domain_tag)}20`,color:domainColour(e.domain_tag),marginBottom:4 }}>{DOMAIN_LABELS[e.domain_tag]??e.domain_tag}</div>}
+                    {e.inbox_label&&<span style={{ fontSize:9,padding:'1px 5px',borderRadius:3,background:'rgba(108,142,255,0.12)',color:'#6c8eff',marginRight:4 }}>{e.inbox_label}</span>}{e.domain_tag&&<div style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:`${domainColour(e.domain_tag)}20`,color:domainColour(e.domain_tag),marginBottom:4,display:'inline-block' }}>{DOMAIN_LABELS[e.domain_tag]??e.domain_tag}</div>}
                     <div style={{ fontSize:10,color:'var(--pios-dim)' }}>{e.received_at?formatRelative(e.received_at):''}</div>
                   </div>
                 </div>

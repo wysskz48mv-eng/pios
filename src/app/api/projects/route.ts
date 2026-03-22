@@ -1,49 +1,133 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 
-export async function GET() {
+const VALID_DOMAINS   = ['academic','fm_consulting','saas','business','personal']
+const VALID_STATUSES  = ['active','on_hold','completed','cancelled']
+
+function domainColour(domain: string): string {
+  const colours: Record<string, string> = {
+    academic: '#6c8eff', fm_consulting: '#0ECFB0', saas: '#a78bfa',
+    business: '#f59e0b', personal: '#e05a7a',
+  }
+  return colours[domain] ?? '#6c8eff'
+}
+
+// ── GET ────────────────────────────────────────────────────────────────────────
+export async function GET(req: NextRequest) {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const { data } = await supabase.from('projects').select('*')
-      .eq('user_id', user.id).neq('status', 'cancelled').order('created_at', { ascending: false })
-    return NextResponse.json({ projects: data ?? [] })
+
+    const sp      = req.nextUrl.searchParams
+    const domain  = sp.get('domain')
+    const include = sp.get('include') // e.g. 'tasks'
+
+    const [projR, tasksR] = await Promise.all([
+      supabase.from('projects').select('*')
+        .eq('user_id', user.id).neq('status', 'cancelled')
+        .order('created_at', { ascending: false }),
+      include === 'tasks'
+        ? supabase.from('tasks').select('id,title,status,priority,due_date,project_id,domain')
+            .eq('user_id', user.id).neq('status', 'cancelled')
+        : Promise.resolve({ data: null }),
+    ])
+
+    let projects = projR.data ?? []
+    if (domain && domain !== 'all') {
+      projects = projects.filter((p: any) => p.domain === domain)
+    }
+
+    return NextResponse.json({ projects, tasks: tasksR.data ?? [] })
   } catch (err: any) {
-    console.error('/projects:', err)
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function POST(request: Request) {
+// ── POST ───────────────────────────────────────────────────────────────────────
+export async function POST(req: NextRequest) {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const body = await request.json()
-    const { data, error } = await supabase.from('projects').insert({ ...body, user_id: user.id }).select().single()
+
+    const body = await req.json()
+    const { title, domain = 'personal', status = 'active', description, deadline, progress } = body
+
+    if (!title?.trim()) return NextResponse.json({ error: 'title required' }, { status: 400 })
+    if (!VALID_DOMAINS.includes(domain))  return NextResponse.json({ error: 'invalid domain' }, { status: 400 })
+
+    const { data: profile } = await supabase.from('user_profiles').select('tenant_id').eq('id', user.id).single()
+
+    const { data, error } = await supabase.from('projects').insert({
+      user_id:     user.id,
+      tenant_id:   profile?.tenant_id,
+      title:       title.trim(),
+      domain,
+      status,
+      description: description ?? null,
+      deadline:    deadline    ?? null,
+      progress:    progress    ?? 0,
+      colour:      domainColour(domain),
+      updated_at:  new Date().toISOString(),
+    }).select().single()
+
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ project: data })
+    return NextResponse.json({ project: data }, { status: 201 })
   } catch (err: any) {
-    console.error('/projects:', err)
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function PATCH(request: Request) {
+// ── PATCH ──────────────────────────────────────────────────────────────────────
+export async function PATCH(req: NextRequest) {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const { id, ...updates } = await request.json()
-    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
-    const { data, error } = await supabase.from('projects').update(updates).eq('id', id).eq('user_id', user.id).select().single()
+
+    const { id, ...updates } = await req.json()
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+    const allowed = ['title','domain','status','description','deadline','progress','notes']
+    const safe: any = { updated_at: new Date().toISOString() }
+    for (const k of allowed) { if (k in updates) safe[k] = updates[k] }
+    if (safe.domain)  { safe.colour = domainColour(safe.domain) }
+    if (safe.status && !VALID_STATUSES.includes(safe.status))
+      return NextResponse.json({ error: 'invalid status' }, { status: 400 })
+    if (safe.domain && !VALID_DOMAINS.includes(safe.domain))
+      return NextResponse.json({ error: 'invalid domain' }, { status: 400 })
+    if (safe.progress !== undefined) safe.progress = Math.min(100, Math.max(0, parseInt(safe.progress) || 0))
+
+    const { data, error } = await supabase.from('projects')
+      .update(safe).eq('id', id).eq('user_id', user.id).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ project: data })
   } catch (err: any) {
-    console.error('/projects:', err)
+    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+  }
+}
+
+// ── DELETE ──────────────────────────────────────────────────────────────────────
+export async function DELETE(req: NextRequest) {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const id = req.nextUrl.searchParams.get('id')
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+    // Soft-delete: set status to cancelled
+    const { error } = await supabase.from('projects')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('id', id).eq('user_id', user.id)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ cancelled: true })
+  } catch (err: any) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { domainColour, domainLabel, formatRelative } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,39 +162,43 @@ export default function ProjectsPage() {
   const [domainFilter, setDomainFilter] = useState('all')
   const [selected, setSelected] = useState<any>(null)
   const [adding,   setAdding]   = useState(false)
-  const supabase = createClient()
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data:{ user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const [pR, tR] = await Promise.all([
-      supabase.from('projects').select('*').eq('user_id',user.id).order('created_at',{ascending:false}),
-      supabase.from('tasks').select('id,title,status,priority,due_date,project_id,domain').eq('user_id',user.id).neq('status','cancelled'),
-    ])
-    setProjects(pR.data??[])
-    setTasks(tR.data??[])
+    const res = await fetch('/api/projects?include=tasks')
+    const d   = res.ok ? await res.json() : {}
+    setProjects(d.projects ?? [])
+    setTasks(d.tasks ?? [])
     setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
 
   async function saveProject(id: string, data: any) {
-    const { data:{ user } } = await supabase.auth.getUser()
-    if (!user) return
     if (id) {
-      await supabase.from('projects').update({ ...data, colour:domainColour(data.domain??'personal'), updated_at:new Date().toISOString() }).eq('id',id)
-      setProjects(p=>p.map(pr=>pr.id===id?{...pr,...data}:pr))
-      if (selected?.id===id) setSelected((p:any)=>({...p,...data}))
+      const res = await fetch('/api/projects', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...data }),
+      })
+      if (res.ok) {
+        const { project } = await res.json()
+        setProjects(p => p.map(pr => pr.id === id ? project : pr))
+        if (selected?.id === id) setSelected(project)
+      }
     } else {
-      await supabase.from('projects').insert({ ...data, user_id:user.id, colour:domainColour(data.domain??'personal') })
+      await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
     }
     load()
   }
 
   async function deleteProject(id: string) {
-    await supabase.from('projects').update({ status:'cancelled', updated_at:new Date().toISOString() }).eq('id',id)
-    setProjects(p=>p.map(pr=>pr.id===id?{...pr,status:'cancelled'}:pr))
+    await fetch(`/api/projects?id=${id}`, { method: 'DELETE' })
+    setProjects(p => p.map(pr => pr.id === id ? { ...pr, status: 'cancelled' } : pr))
   }
 
   const visible = projects.filter(p => {
