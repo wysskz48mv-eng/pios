@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { formatRelative, priorityColour, domainColour, domainLabel } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -19,47 +18,34 @@ export default function DashboardPage() {
   const [pendingTransfers,setPendingTransfers]= useState<number>(0)
   const [seSnap, setSeSnap] = useState<any>(null)
   const [isSnap, setIsSnap] = useState<any>(null)
-  const supabase = createClient()
+  const [meetingActions, setMeetingActions] = useState<number>(0)
+  const [receipts48h,    setReceipts48h]    = useState<number>(0)
+  const [emailAccounts,  setEmailAccounts]  = useState<number>(0)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-
-    const today = new Date().toISOString().slice(0, 10)
-    const [tR, pR, mR, bR, nR, tenR] = await Promise.all([
-      supabase.from('tasks').select('*').eq('user_id', user.id)
-        .not('status', 'in', '("done","cancelled")').order('due_date', { ascending: true }).limit(8),
-      supabase.from('projects').select('*').eq('user_id', user.id)
-        .eq('status', 'active').order('created_at', { ascending: false }).limit(4),
-      supabase.from('academic_modules').select('*').eq('user_id', user.id)
-        .not('status', 'in', '("passed","failed")').order('deadline', { ascending: true }).limit(6),
-      supabase.from('daily_briefs').select('content').eq('user_id', user.id)
-        .eq('brief_date', today).maybeSingle(),
-      fetch('/api/notifications').then(r => r.ok ? r.json() : { notifications: [] }),
-      supabase.from('tenants').select('plan,ai_credits_used,ai_credits_limit,name')
-        .single(),
+    // Single aggregated fetch replaces 9 direct Supabase calls
+    const [dashRes, notifsRes] = await Promise.all([
+      fetch('/api/dashboard'),
+      fetch('/api/notifications'),
     ])
-    // Fetch today's calendar events
-    const todayStart = new Date(); todayStart.setHours(0,0,0,0)
-    const todayEnd   = new Date(); todayEnd.setHours(23,59,59,999)
-    const calRes = await supabase.from('calendar_events').select('id,title,start_time,end_time,location,domain,all_day,google_meet_url').eq('user_id', user.id).gte('start_time', todayStart.toISOString()).lte('start_time', todayEnd.toISOString()).order('start_time')
-    setTodayEvents(calRes.data ?? [])
-    // Fetch alert counts
-    const [invR, emlR, tsfR] = await Promise.all([
-      supabase.from('invoices').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'pending'),
-      supabase.from('email_items').select('id', { count: 'exact' }).eq('user_id', user.id).not('action_required', 'is', null).in('status', ['unprocessed','triaged']),
-      supabase.from('transfer_queue').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'queued'),
+    const [d, nR] = await Promise.all([
+      dashRes.ok ? dashRes.json() : {},
+      notifsRes.ok ? notifsRes.json() : { notifications: [] },
     ])
-    setPendingInvoices(invR.count ?? 0)
-    setActionEmails(emlR.count ?? 0)
-    setPendingTransfers(tsfR.count ?? 0)
-    setTasks(tR.data ?? [])
-    setProjects(pR.data ?? [])
-    setModules(mR.data ?? [])
-    setBrief(bR.data?.content ?? null)
+    setTasks([...(d.tasks?.overdue ?? []), ...(d.tasks?.due_today ?? []), ...(d.tasks?.upcoming ?? [])])
+    setProjects(d.projects ?? [])
+    setModules(d.modules ?? [])
+    setBrief(d.brief ?? null)
+    setTenant(d.tenant ?? null)
+    setTodayEvents(d.calendar?.today ?? [])
+    setPendingInvoices(d.counts?.pending_invoices  ?? 0)
+    setActionEmails(d.counts?.action_emails        ?? 0)
+    setPendingTransfers(d.counts?.queued_transfers ?? 0)
+    setMeetingActions(d.counts?.pending_meeting_actions ?? 0)
+    setReceipts48h(d.counts?.receipts_48h  ?? 0)
+    setEmailAccounts(d.counts?.email_accounts ?? 0)
     setNotifs((nR.notifications ?? []).filter((n: any) => !n.read))
-    setTenant(tenR.data)
     setLoading(false)
   }, [])
 
@@ -234,6 +220,22 @@ export default function DashboardPage() {
               <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #a78bfa', cursor:'pointer' }}>
                 <div style={{ fontSize:16, fontWeight:800, color:'#a78bfa', lineHeight:1, marginBottom:3 }}>{pendingTransfers}</div>
                 <div style={{ fontSize:11, color:'var(--pios-muted)' }}>transfer{pendingTransfers!==1?'s':''} queued for approval</div>
+              </div>
+            </Link>
+          )}
+          {meetingActions > 0 && (
+            <Link href="/platform/meetings" style={{ textDecoration:'none' }}>
+              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #22c55e', cursor:'pointer' }}>
+                <div style={{ fontSize:16, fontWeight:800, color:'#22c55e', lineHeight:1, marginBottom:3 }}>{meetingActions}</div>
+                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>meeting action item{meetingActions!==1?'s':''} to promote</div>
+              </div>
+            </Link>
+          )}
+          {receipts48h > 0 && (
+            <Link href="/platform/expenses" style={{ textDecoration:'none' }}>
+              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #0ECFB0', cursor:'pointer' }}>
+                <div style={{ fontSize:16, fontWeight:800, color:'#0ECFB0', lineHeight:1, marginBottom:3 }}>{receipts48h}</div>
+                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>receipt{receipts48h!==1?'s':''} auto-captured from email</div>
               </div>
             </Link>
           )}
