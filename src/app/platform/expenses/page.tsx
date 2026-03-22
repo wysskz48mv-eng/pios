@@ -1,10 +1,11 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { domainColour, domainLabel } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Expenses — tracking, tax year breakdown, category summary, delete
+// Server-side via /api/expenses (validation + AI categorise + CSV export)
+// PIOS v2.1 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CATEGORIES = ['travel','software','research','consulting','equipment','meals','accommodation','professional_fees','other']
@@ -24,68 +25,93 @@ function Bar({ pct, colour='#6c8eff' }: { pct:number; colour?:string }) {
   </div>
 }
 
+function Bar({ pct, colour='#6c8eff' }: { pct:number; colour?:string }) {
+  return <div style={{ height:4,background:'var(--pios-surface2)',borderRadius:2,overflow:'hidden' }}>
+    <div style={{ height:'100%',width:`${Math.min(100,pct)}%`,background:colour,borderRadius:2,transition:'width 0.4s' }} />
+  </div>
+}
+
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<any[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [showAdd,  setShowAdd]  = useState(false)
-  const [deleting, setDeleting] = useState<string|null>(null)
-  const [editing,  setEditing]  = useState<string|null>(null)
-  const [editForm, setEditForm] = useState<any>(null)
-  const [taxYear,  setTaxYear]  = useState('all')
+  const [expenses,     setExpenses]     = useState<any[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [saving,       setSaving]       = useState(false)
+  const [showAdd,      setShowAdd]      = useState(false)
+  const [deleting,     setDeleting]     = useState<string|null>(null)
+  const [editing,      setEditing]      = useState<string|null>(null)
+  const [editForm,     setEditForm]     = useState<any>(null)
+  const [taxYear,      setTaxYear]      = useState('all')
   const [domainFilter, setDomainFilter] = useState('all')
+  const [aiLoading,    setAiLoading]    = useState(false)
   const [form, setForm] = useState({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP', billable:false, client:'', notes:'' })
-  const supabase = createClient()
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data:{ user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const { data } = await supabase.from('expenses').select('*').eq('user_id',user.id).order('date',{ascending:false}).limit(200)
-    setExpenses(data ?? [])
+    const res = await fetch('/api/expenses?limit=200')
+    if (res.ok) {
+      const data = await res.json()
+      setExpenses(data.expenses ?? [])
+    }
     setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  async function add() {
-    if (!form.description.trim()||!form.amount) return
-    const { data:{ user } } = await supabase.auth.getUser()
-    if (!user) return
-    await supabase.from('expenses').insert({ ...form, amount:parseFloat(form.amount), user_id:user.id, updated_at:new Date().toISOString() })
-    // Notify on large expenses (>£500 / >€500 / >$500 / >SAR 2000)
-    const amt = parseFloat(form.amount)
-    const thresholds: Record<string,number> = { GBP:500, EUR:500, USD:500, AED:2000, SAR:2000, QAR:2000 }
-    const threshold = thresholds[form.currency] ?? 500
-    if (amt >= threshold) {
-      await fetch('/api/notifications', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'create', title:`Large expense: ${form.currency} ${amt.toFixed(0)} — ${form.description}`, type:'warning', domain:form.domain, action_url:'/platform/expenses' }) })
+  async function aiCategorise() {
+    if (!form.description.trim()) return
+    setAiLoading(true)
+    const res = await fetch('/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ai_categorise', description: form.description, amount: form.amount, currency: form.currency }),
+    })
+    if (res.ok) {
+      const { suggestion } = await res.json()
+      if (suggestion?.category) setForm(p => ({ ...p, category: suggestion.category, domain: suggestion.domain ?? p.domain, billable: suggestion.billable ?? p.billable }))
     }
-    setForm({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP', billable:false, client:'', notes:'' })
-    setShowAdd(false); load()
+    setAiLoading(false)
+  }
+
+  async function add() {
+    if (!form.description.trim() || !form.amount) return
+    setSaving(true)
+    const res = await fetch('/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', ...form }),
+    })
+    if (res.ok) {
+      // Notify on large expenses
+      const amt = parseFloat(form.amount)
+      const thresholds: Record<string,number> = { GBP:500, EUR:500, USD:500, AED:2000, SAR:2000 }
+      if (amt >= (thresholds[form.currency] ?? 500)) {
+        await fetch('/api/notifications', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'create', title:`Large expense: ${form.currency} ${amt.toFixed(0)} — ${form.description}`, type:'warning', domain:form.domain, action_url:'/platform/expenses' }) })
+      }
+      setForm({ description:'', amount:'', category:'', domain:'personal', date:new Date().toISOString().slice(0,10), currency:'GBP', billable:false, client:'', notes:'' })
+      setShowAdd(false)
+      load()
+    }
+    setSaving(false)
   }
 
   async function del(id: string) {
     setDeleting(id)
-    await supabase.from('expenses').delete().eq('id',id)
+    await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' })
     setExpenses(p => p.filter(e => e.id !== id))
     setDeleting(null)
   }
 
   async function saveEdit() {
     if (!editForm || !editing) return
-    await supabase.from('expenses').update({
-      description: editForm.description,
-      amount:      parseFloat(editForm.amount),
-      category:    editForm.category,
-      domain:      editForm.domain,
-      date:        editForm.date,
-      currency:    editForm.currency,
-      billable:    editForm.billable,
-      client:      editForm.client,
-      notes:       editForm.notes,
-      updated_at:  new Date().toISOString(),
-    }).eq('id', editing)
-    setExpenses(p => p.map(e => e.id === editing ? { ...e, ...editForm, amount: parseFloat(editForm.amount) } : e))
+    const res = await fetch('/api/expenses', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: editing, ...editForm }),
+    })
+    if (res.ok) {
+      const { expense } = await res.json()
+      setExpenses(p => p.map(e => e.id === editing ? expense : e))
+    }
     setEditing(null); setEditForm(null)
   }
 
@@ -94,22 +120,14 @@ export default function ExpensesPage() {
     setEditForm({ description:e.description, amount:String(e.amount), category:e.category||'', domain:e.domain||'personal', date:e.date||'', currency:e.currency||'GBP', billable:!!e.billable, client:e.client||'', notes:e.notes||'' })
   }
 
-  function exportCSV() {
-    if (!filtered.length) return
-    const headers = ['Date','Description','Category','Domain','Currency','Amount','Billable','Client','Notes']
-    const rows = filtered.map(e => [
-      e.date ?? '',
-      `"${(e.description ?? '').replace(/"/g,'""')}"`,
-      e.category ?? '',
-      e.domain ?? '',
-      e.currency ?? 'GBP',
-      parseFloat(e.amount).toFixed(2),
-      e.billable ? 'Yes' : 'No',
-      `"${(e.client ?? '').replace(/"/g,'""')}"`,
-      `"${(e.notes ?? '').replace(/"/g,'""')}"`,
-    ])
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
+  async function exportCSV() {
+    const res = await fetch('/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'export_csv' }),
+    })
+    if (!res.ok) return
+    const blob = await res.blob()
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
@@ -201,7 +219,10 @@ export default function ExpensesPage() {
             </label>
           </div>
           <div style={{ display:'flex',gap:8 }}>
-            <button className="pios-btn pios-btn-primary" onClick={add} style={{ fontSize:12 }}>Add expense</button>
+            <button className="pios-btn pios-btn-primary" onClick={add} disabled={saving} style={{ fontSize:12 }}>{saving ? 'Saving…' : 'Add expense'}</button>
+            <button className="pios-btn pios-btn-ghost" onClick={aiCategorise} disabled={aiLoading||!form.description.trim()} style={{ fontSize:12 }}>
+              {aiLoading ? '…' : '✦ AI categorise'}
+            </button>
             <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
