@@ -222,7 +222,9 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
 export default function TasksPage() {
   const [tasks,      setTasks]      = useState<any[]>([])
   const [loading,    setLoading]    = useState(true)
-  const [domainFilter, setDomainFilter] = useState('all')
+  const [domainFilter,  setDomainFilter]  = useState('all')
+  const [sourceFilter,  setSourceFilter]  = useState('all')
+  const [overdueOnly,   setOverdueOnly]   = useState(false)
   const [statusFilter, setStatusFilter] = useState('open')
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [showAI,     setShowAI]     = useState(false)
@@ -234,11 +236,13 @@ export default function TasksPage() {
     setLoading(true)
     const params = new URLSearchParams()
     if (domainFilter !== 'all') params.set('domain', domainFilter)
+    if (sourceFilter !== 'all') params.set('source', sourceFilter)
+    if (overdueOnly)            params.set('overdue', '1')
     const res = await fetch(`/api/tasks?${params}`)
     const data = await res.json()
     setTasks(data.tasks ?? [])
     setLoading(false)
-  }, [domainFilter])
+  }, [domainFilter, sourceFilter, overdueOnly])
 
   useEffect(() => { load() }, [load])
 
@@ -333,6 +337,21 @@ export default function TasksPage() {
               color: domainFilter===d ? '#0a0b0d' : 'var(--pios-muted)', fontWeight: domainFilter===d?600:400,
             }}>{d==='all'?'All':domainLabel(d)}</button>
           ))}
+        </div>
+        {/* Source filter */}
+        <div style={{ display:'flex', gap:4, flexWrap:'wrap' as const, marginTop:4 }}>
+          {([['all','All sources'],['manual','Manual'],['meeting_notes','Meetings'],['email','Email'],['ai','AI']] as [string,string][]).map(([v,l]) => (
+            <button key={v} onClick={() => setSourceFilter(v)} style={{
+              fontSize:10, padding:'3px 10px', borderRadius:20, border:'none', cursor:'pointer',
+              background: sourceFilter===v ? 'rgba(34,197,94,0.15)' : 'var(--pios-surface2)',
+              color: sourceFilter===v ? '#22c55e' : 'var(--pios-muted)', fontWeight: sourceFilter===v?600:400,
+            }}>{l}</button>
+          ))}
+          <button onClick={() => setOverdueOnly(v => !v)} style={{
+            fontSize:10, padding:'3px 10px', borderRadius:20, border:'none', cursor:'pointer',
+            background: overdueOnly ? 'rgba(239,68,68,0.15)' : 'var(--pios-surface2)',
+            color: overdueOnly ? '#ef4444' : 'var(--pios-muted)', fontWeight: overdueOnly?600:400,
+          }}>⚠ Overdue</button>
         </div>
         <div style={{ width:'1px', height:20, background:'var(--pios-border)' }} />
         {/* Status filter */}
