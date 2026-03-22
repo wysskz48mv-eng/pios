@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { domainColour, domainLabel } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,6 +51,22 @@ export default function MeetingsPage() {
     raw_transcript:'', raw_notes:'', auto_process:true,
   }
   const [form, setForm] = useState(EMPTY_FORM)
+
+  // Prefill from calendar deep-link (?prefill=title&date=YYYY-MM-DD)
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    const prefill = searchParams.get('prefill')
+    const date    = searchParams.get('date')
+    if (prefill || date) {
+      setForm(p => ({
+        ...p,
+        title:        prefill ? decodeURIComponent(prefill) : p.title,
+        meeting_date: date ?? p.meeting_date,
+      }))
+      setShowNew(true)
+    }
+  }, [searchParams])
+
 
   const load = useCallback(async () => {
     setLoading(true)

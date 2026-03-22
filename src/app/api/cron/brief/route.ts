@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     const uid = profile.id
     try {
       // Gather full context for this user
-      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR] = await Promise.all([
+      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR] = await Promise.all([
         admin.from('tasks').select('title,domain,priority,due_date,status')
           .eq('user_id', uid).not('status', 'in', '("done","cancelled")')
           .order('due_date', { ascending: true }).limit(15),
@@ -83,6 +83,19 @@ export async function GET(req: NextRequest) {
           .order('date', { ascending: false }).limit(4),
         admin.from('transfer_queue').select('description,amount_gbp,status')
           .eq('user_id', uid).eq('status', 'queued').limit(3),
+        // Recent meetings + pending action items
+        admin.from('meeting_notes').select('title,meeting_date,meeting_type,domain,status,ai_summary,tasks_created')
+          .eq('user_id', uid)
+          .gte('meeting_date', new Date(Date.now() - 2 * 86400000).toISOString().slice(0,10))
+          .order('meeting_date', { ascending: false }).limit(5),
+        admin.from('meeting_notes').select('title,meeting_date,ai_action_items')
+          .eq('user_id', uid).eq('status', 'processed').eq('tasks_created', false)
+          .order('meeting_date', { ascending: false }).limit(3),
+        // Auto-captured receipts (last 48h)
+        admin.from('email_items').select('subject,sender_name,receipt_data,received_at')
+          .eq('user_id', uid).eq('is_receipt', true)
+          .gte('received_at', new Date(Date.now() - 48 * 3600000).toISOString())
+          .order('received_at', { ascending: false }).limit(5),
       ])
 
       const tasks     = tasksR.data ?? []
@@ -148,9 +161,33 @@ export async function GET(req: NextRequest) {
         (cfpR.data ?? []).length > 0
           ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: any) => `- "${c.title}" — ${c.deadline}`).join('\n')
           : '',
+        (meetingsR.data ?? []).length > 0
+          ? `RECENT MEETINGS (${meetingsR.data?.length}):\n` +
+            (meetingsR.data ?? []).map((m: any) =>
+              `- [${m.meeting_type?.toUpperCase()}] ${m.title} (${m.meeting_date})${m.ai_summary ? ': ' + m.ai_summary.slice(0, 100) + '...' : ''}${m.tasks_created ? ' [tasks created]' : ''}`
+            ).join('\n')
+          : '',
+
+        (pendingActionsR.data ?? []).length > 0
+          ? `MEETING ACTIONS AWAITING PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
+            (pendingActionsR.data ?? []).flatMap((m: any) =>
+              ((m.ai_action_items ?? []) as any[]).slice(0,3).map((a: any) =>
+                `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${m.title}"`
+              )
+            ).join('\n')
+          : '',
+
+        (receiptsR.data ?? []).length > 0
+          ? `AUTO-CAPTURED RECEIPTS (last 48h — ${receiptsR.data?.length}):\n` +
+            (receiptsR.data ?? []).map((r: any) => {
+              const rd = r.receipt_data
+              return rd ? `- ${rd.vendor ?? r.sender_name}: ${rd.currency ?? 'GBP'} ${rd.amount ?? '?'}` : `- ${r.subject}`
+            }).join('\n')
+          : '',
+
       ].filter(Boolean).join('\n\n')
 
-      const system = `You are PIOS, a personal AI operating system for a PhD/DBA student and entrepreneur. Generate a personalised morning brief. Be direct. Lead with overdue tasks if any. Flag thesis pace risk. Spot cross-domain conflicts. Name 2-3 items needing personal action today. Max 250 words. Plain prose, no bullet points.`
+      const system = `You are PIOS, a personal AI operating system for a DBA student and multi-domain entrepreneur. Generate a personalised morning brief. Be direct. Lead with overdue tasks if any. Flag thesis pace risk. If meeting action items are awaiting task promotion, name them and direct to /platform/meetings. If auto-captured receipts are present, prompt review. Spot cross-domain conflicts. Name 2-3 items needing personal action today. Max 300 words. Plain prose, no bullet points.`
 
       const content = await callClaude(
         [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}` }],

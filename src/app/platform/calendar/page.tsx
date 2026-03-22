@@ -108,6 +108,15 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
                 )}
               </div>
             )}
+            {/* Meeting notes deep-link — shown for past events */}
+            {event.id && new Date(event.start_time) < new Date() && (
+              <a
+                href={`/platform/meetings?prefill=${encodeURIComponent(event.title ?? '')}&date=${(event.start_time ?? '').slice(0,10)}`}
+                style={{ display:'block',width:'100%',padding:'8px',borderRadius:8,border:'1px dashed rgba(34,197,94,0.3)',background:'none',cursor:'pointer',color:'#22c55e',fontSize:12,textAlign:'center' as const,textDecoration:'none',marginTop:4 }}
+              >
+                🗒️ Add meeting notes → extract action items
+              </a>
+            )}
             <div style={{ display:'flex',gap:8,marginTop:4 }}>
               <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(true)} style={{ flex:1,fontSize:12 }}>✎ Edit</button>
               {event.source!=='google'&&<button onClick={()=>{onDelete(event.id);onClose()}} style={{ padding:'8px 14px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'#ef4444',fontSize:12 }}>Delete</button>}

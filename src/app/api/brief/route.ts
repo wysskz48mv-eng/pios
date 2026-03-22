@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Gather all context in parallel
-    const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR, expensesR, payrollR] = await Promise.all([
+    const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR] = await Promise.all([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
         .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
         .order('due_date', { ascending: true }).limit(15),
@@ -73,6 +73,20 @@ export async function POST(req: NextRequest) {
         .order('date', { ascending: false }).limit(5),
       supabase.from('transfer_queue').select('description,amount_gbp,status')
         .eq('user_id', user.id).eq('status', 'queued').limit(3),
+      // Meetings from last 2 days + today
+      supabase.from('meeting_notes').select('title,meeting_date,meeting_type,domain,status,ai_summary,tasks_created')
+        .eq('user_id', user.id)
+        .gte('meeting_date', new Date(Date.now() - 2 * 86400000).toISOString().slice(0,10))
+        .order('meeting_date', { ascending: false }).limit(5),
+      // Processed meetings with action items not yet promoted to tasks
+      supabase.from('meeting_notes').select('title,meeting_date,ai_action_items')
+        .eq('user_id', user.id).eq('status', 'processed').eq('tasks_created', false)
+        .order('meeting_date', { ascending: false }).limit(3),
+      // Auto-captured receipts/invoices from email (last 48h)
+      supabase.from('email_items').select('subject,sender_name,receipt_data,received_at')
+        .eq('user_id', user.id).eq('is_receipt', true)
+        .gte('received_at', new Date(Date.now() - 48 * 3600000).toISOString())
+        .order('received_at', { ascending: false }).limit(5),
     ])
 
     const tasks     = tasksR.data ?? []
@@ -139,6 +153,34 @@ export async function POST(req: NextRequest) {
       (cfpR.data ?? []).length > 0
         ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: any) => `- "${c.title}" (${c.journal_name ?? 'journal'}) — ${c.deadline}`).join('\n')
         : '',
+
+      // Meetings context (Otter.ai integration)
+      (meetingsR.data ?? []).length > 0
+        ? `RECENT MEETINGS (${meetingsR.data?.length}):\n` +
+          (meetingsR.data ?? []).map((m: any) =>
+            `- [${m.meeting_type.toUpperCase()}] ${m.title} (${m.meeting_date}) — ${m.status}${m.ai_summary ? ': ' + m.ai_summary.slice(0, 120) + '…' : ''}${m.tasks_created ? ' [tasks created]' : ''}`
+          ).join('\n')
+        : '',
+
+      (pendingActionsR.data ?? []).length > 0
+        ? `MEETING ACTION ITEMS AWAITING TASK PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
+          (pendingActionsR.data ?? []).flatMap((m: any) =>
+            ((m.ai_action_items ?? []) as any[]).slice(0,3).map((a: any) =>
+              `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${m.title}" (${m.meeting_date}). Go to /platform/meetings to promote.`
+            )
+          ).join('\n')
+        : '',
+
+      // Auto-captured receipts (WellyBox integration)
+      (receiptsR.data ?? []).length > 0
+        ? `AUTO-CAPTURED RECEIPTS/INVOICES (last 48h — ${receiptsR.data?.length}):\n` +
+          (receiptsR.data ?? []).map((r: any) => {
+            const rd = r.receipt_data
+            return rd
+              ? `- ${rd.vendor ?? r.sender_name ?? 'Unknown'}: ${rd.currency ?? 'GBP'} ${rd.amount ?? '?'} — ${r.subject} (${rd.date ?? 'today'})`
+              : `- ${r.subject} from ${r.sender_name}`
+          }).join('\n')
+        : '',
     ].filter(Boolean).join('\n\n')
 
     // Live platform metrics (non-blocking)
@@ -173,10 +215,12 @@ Generate his morning brief. Be direct and action-oriented. No pleasantries.
 Rules:
 - If overdue tasks exist, lead with them — they are the #1 priority
 - Flag if thesis writing pace is dangerously behind
+- If meeting action items are awaiting task promotion, call them out explicitly — direct to /platform/meetings
+- If auto-captured receipts/invoices are present, mention total and suggest reviewing Expenses
 - Identify cross-domain conflicts (academic vs business deadlines)
-- Name the 2–3 items requiring his personal decision or action today
+- Name the 2-3 items requiring his personal decision or action today
 - Close with one actionable FM/platform signal if present
-- Max 300 words. Plain prose, no bullet points, no lists.`
+- Max 350 words. Plain prose, no bullet points, no lists.`
 
     const content = await callClaude(
       [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${liveCtx ? '\n\nPLATFORM STATUS:' + liveCtx : ''}` }],
