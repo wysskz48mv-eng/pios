@@ -121,11 +121,13 @@ export async function GET(req: NextRequest) {
           .select('word_count')
           .eq('user_id', uid),
 
-        // Thesis chapters — word counts as of start of week (no history table;
-        //   we compute delta as: all updates this week vs total now)
-        //   Approximation: use tasks updated_at as proxy — skipped; just use total now
-        //   and a 0 delta so we never mislead. A future sprint can add thesis_snapshots.
-        Promise.resolve({ data: null }),
+        // Previous week snapshot (for word delta)
+        admin.from('thesis_weekly_snapshots')
+          .select('total_words')
+          .eq('user_id', uid)
+          .lt('week_start', win.from.slice(0, 10))
+          .order('week_start', { ascending: false })
+          .limit(1),
 
         // Expenses logged this week
         admin.from('expenses')
@@ -151,8 +153,18 @@ export async function GET(req: NextRequest) {
       ])
 
       const totalWords   = (thesisNow.data ?? []).reduce((s: number, c: any) => s + (c.word_count ?? 0), 0)
-      // Word delta: we don't have a snapshot table yet — show total only
-      const wordsWritten = 0  // TODO: thesis_weekly_snapshots table (future sprint)
+      const prevWords    = (thesisPrev.data?.[0] as any)?.total_words ?? null
+      const wordsWritten = prevWords !== null ? Math.max(0, totalWords - prevWords) : 0
+
+      // Capture this week's snapshot (upsert — idempotent)
+      const weekStart = win.from.slice(0, 10)
+      await admin.from('thesis_weekly_snapshots').upsert({
+        user_id:       uid,
+        week_start:    weekStart,
+        total_words:   totalWords,
+        chapter_count: (thesisNow.data ?? []).length,
+        captured_at:   new Date().toISOString(),
+      }, { onConflict: 'user_id,week_start' }).catch(() => {}) // non-fatal
 
       const expList      = expenses.data ?? []
       const expTotal     = expList.reduce((s: number, e: any) => s + (e.amount ?? 0), 0)
