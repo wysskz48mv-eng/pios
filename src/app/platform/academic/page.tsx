@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { formatRelative, formatDate } from '@/lib/utils'
 
 const ACCENT   = '#6c8eff'
@@ -47,40 +46,31 @@ export default function AcademicPage() {
   const [chForm, setChForm] = useState({ chapter_num:'', title:'', status:'not_started', word_count:'0', target_words:'8000', notes:'' })
   const [modForm, setModForm] = useState({ title:'', module_type:'taught', status:'enrolled', deadline:'', credits:'' })
   const [sesForm, setSesForm] = useState({ supervisor:'Dr. Supervisor', session_date:new Date().toISOString().slice(0,10), format:'online', duration_mins:'60', notes:'', action_items:'' })
-  const supabase = createClient()
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data:{ user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    const [mR,cR,sR] = await Promise.all([
-      supabase.from('academic_modules').select('*').eq('user_id',user.id).order('sort_order'),
-      supabase.from('thesis_chapters').select('*').eq('user_id',user.id).order('chapter_num'),
-      supabase.from('supervision_sessions').select('*').eq('user_id',user.id).order('session_date',{ascending:false}).limit(10),
-    ])
-    setModules(mR.data??[])
-    setChapters(cR.data??[])
-    setSessions(sR.data??[])
+    const res = await fetch('/api/academic')
+    const d   = res.ok ? await res.json() : {}
+    const chapters = d.chapters ?? []
+    setModules(d.modules ?? [])
+    setChapters(chapters)
+    setSessions(d.sessions ?? [])
     const wc:Record<string,number>={}, st:Record<string,string>={}
-    for (const c of (cR.data??[])) { wc[c.id]=c.word_count??0; st[c.id]=c.status??'not_started' }
+    for (const c of chapters) { wc[c.id]=c.word_count??0; st[c.id]=c.status??'not_started' }
     setEditWords(wc); setEditStatus(st)
-    setLoading(false)
-  }, [])
 
   useEffect(() => { load() }, [load])
 
   async function saveChapter(id:string) {
     setSaving(true)
-    await supabase.from('thesis_chapters').update({ word_count:editWords[id]??0, status:editStatus[id], updated_at:new Date().toISOString() }).eq('id',id)
+    await fetch('/api/academic', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entity:'chapter', id, word_count: editWords[id]??0, status: editStatus[id] }) })
     setEditingId(null); setSaving(false); load()
   }
 
   async function addChapter() {
     if (!chForm.title.trim()||!chForm.chapter_num) return
     setSaving(true)
-    const { data:{ user } } = await supabase.auth.getUser()
-    if (!user) { setSaving(false); return }
-    await supabase.from('thesis_chapters').insert({ user_id:user.id, chapter_num:parseInt(chForm.chapter_num), title:chForm.title, status:chForm.status, word_count:parseInt(chForm.word_count)||0, target_words:parseInt(chForm.target_words)||8000, notes:chForm.notes })
+    await fetch('/api/academic', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'create_chapter', chapter_num:chForm.chapter_num, title:chForm.title, status:chForm.status, word_count:chForm.word_count||0, target_words:chForm.target_words||8000, notes:chForm.notes }) })
     setChForm({ chapter_num:'', title:'', status:'not_started', word_count:'0', target_words:'8000', notes:'' })
     setShowAddCh(false); setSaving(false); load()
   }
@@ -88,23 +78,19 @@ export default function AcademicPage() {
   async function addModule() {
     if (!modForm.title.trim()) return
     setSaving(true)
-    const { data:{ user } } = await supabase.auth.getUser()
-    if (!user) { setSaving(false); return }
-    await supabase.from('academic_modules').insert({ user_id:user.id, title:modForm.title, module_type:modForm.module_type, status:modForm.status, deadline:modForm.deadline||null, credits:parseInt(modForm.credits)||null, sort_order:modules.length })
+    await fetch('/api/academic', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'create_module', title:modForm.title, module_type:modForm.module_type, status:modForm.status, deadline:modForm.deadline||null, credits:modForm.credits||null }) })
     setModForm({ title:'', module_type:'taught', status:'enrolled', deadline:'', credits:'' })
     setShowAddMod(false); setSaving(false); load()
   }
 
   async function updateModuleStatus(id:string, status:string) {
-    await supabase.from('academic_modules').update({ status, updated_at:new Date().toISOString() }).eq('id',id); load()
+    await fetch('/api/academic', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entity:'module', id, status }) }); load()
   }
 
   async function addSession() {
     if (!sesForm.notes.trim()) return
     setSaving(true)
-    const { data:{ user } } = await supabase.auth.getUser()
-    if (!user) { setSaving(false); return }
-    await supabase.from('supervision_sessions').insert({ user_id:user.id, supervisor:sesForm.supervisor, session_date:sesForm.session_date, format:sesForm.format, duration_mins:parseInt(sesForm.duration_mins)||60, notes:sesForm.notes, action_items:sesForm.action_items?sesForm.action_items.split('\n').filter(Boolean):[] })
+    await fetch('/api/academic', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'create_session', supervisor:sesForm.supervisor, session_date:sesForm.session_date, format:sesForm.format, duration_mins:sesForm.duration_mins||60, notes:sesForm.notes, action_items:sesForm.action_items||'' }) })
     setSesForm({ supervisor:'Dr. Supervisor', session_date:new Date().toISOString().slice(0,10), format:'online', duration_mins:'60', notes:'', action_items:'' })
     setShowAddSes(false); setSaving(false); load()
   }
