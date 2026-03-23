@@ -17,6 +17,8 @@ const FILES: Record<string, string> = {
   '007': 'supabase/migrations/007_payroll_expenses.sql',
   '008': 'supabase/migrations/008_thesis_weekly_snapshots.sql',
   '009': 'supabase/migrations/009_multi_email_meeting_notes.sql',
+  '010': 'supabase/migrations/010_dba_milestones.sql',
+  '011': 'supabase/migrations/011_learning_journeys.sql',
 }
 
 export async function GET(request: Request) {

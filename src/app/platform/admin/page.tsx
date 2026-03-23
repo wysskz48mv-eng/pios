@@ -16,6 +16,8 @@ const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
   '007': { file: '007_payroll_expenses.sql',      tables: ['staff_members','payroll_runs','payroll_lines','expense_claims','transfer_queue','payroll_chase_log'] },
   '008': { file: '008_thesis_weekly_snapshots.sql', tables: ['thesis_weekly_snapshots'] },
   '009': { file: '009_multi_email_meeting_notes.sql', tables: ['connected_email_accounts','meeting_notes','email_items(patched)'] },
+  '010': { file: '010_dba_milestones.sql',        tables: ['dba_milestones','dba_milestone_updates'] },
+  '011': { file: '011_learning_journeys.sql',     tables: ['learning_journeys','learning_journey_steps','cpd_logs'] },
 }
 
 const SUPABASE_URL = 'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new'
