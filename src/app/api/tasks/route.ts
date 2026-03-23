@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createNotification } from '@/lib/notifications'
 import { callClaude } from '@/lib/ai/client'
+import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
 export const runtime = 'nodejs'
 

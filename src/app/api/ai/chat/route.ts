@@ -132,8 +132,8 @@ DOUGLAS'S PROFILE:
 - DBA candidate, University of Portsmouth (AI-enabled forecasting in GCC FM contexts; STS + sensemaking theory)
 - FM consultant — Qiddiya RFP QPMO-410-CT-07922 active, KSP reference deployment SAR 229.6M annual SC budget
 - SaaS founder:
-    · VeritasEdge™ v5.8 — service charge platform for GCC master communities (live at app.veritasedge.com)
-    · InvestiScript v3 — AI investigative journalism platform (live at investiscript.vercel.app)
+    · VeritasEdge™ v6.0 — service charge platform for GCC master communities (live at app.veritasedge.io)
+    · InvestiScript™ v3.5 — AI investigative journalism platform (live at app.investiscript.ai)
     · PIOS v2.2 — this personal AI operating system (live at pios-*.vercel.app)
 - Key IP: HDCA™ (patent pending), VE-CAFX™ climate adjustment factors, VE-PMF™ methodology, VE-BENCH™ benchmarking
 - Working with Claude as primary technical implementer — non-technical founder

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }               from '@/lib/supabase/server'
 import { callClaude, AIMessage }      from '@/lib/ai/client'
+import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'

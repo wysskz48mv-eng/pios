@@ -18,6 +18,7 @@ const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
   '009': { file: '009_multi_email_meeting_notes.sql', tables: ['connected_email_accounts','meeting_notes','email_items(patched)'] },
   '010': { file: '010_dba_milestones.sql',        tables: ['dba_milestones'] },
   '011': { file: '011_learning_journeys.sql',     tables: ['learning_journeys','learning_journey_steps','cpd_logs','programme_milestones'] },
+  '012': { file: '012_learning_hub_v2.sql',       tables: ['learning_journeys(patched)','cpd_bodies'] },
 }
 
 const SUPABASE_URL = 'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new'

@@ -114,7 +114,7 @@ const STEPS: Step[] = [
         label:    '',
         key:      'RESEND_FROM_EMAIL',
         value:    'PIOS <info@sustain-intl.com>',
-        note:     'Must match a verified domain in Resend. Use veritasiq.co.uk or any domain you own.',
+        note:     'Must match a verified domain in Resend. Use sustain-intl.com or any domain you own.',
         url:      'https://vercel.com/wysskz48mv-eng/pios/settings/environment-variables',
         urlLabel: 'Open Vercel Env Vars →',
       },

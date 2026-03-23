@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
 import { createNotification } from '@/lib/notifications'
 import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
+import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60

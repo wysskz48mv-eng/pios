@@ -19,6 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@supabase/supabase-js'
 import { callClaude }                from '@/lib/ai/client'
+import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 import {
   sendEmail,
   weeklyDigestHtml,
