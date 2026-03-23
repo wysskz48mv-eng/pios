@@ -89,6 +89,9 @@ export default function LearningWizardPage() {
           <div style={{ fontSize:32, marginBottom:8 }}>&#127891;</div>
           <h1 style={{ fontSize:22, fontWeight:800, color:C.text, margin:0 }}>Set up your learning journey</h1>
           <p style={{ fontSize:13, color:C.sub, marginTop:6 }}>PIOS configures itself around you — takes 2 minutes</p>
+          <button onClick={() => router.push('/platform/learning')} style={{ marginTop:10, background:'none', border:'none', fontSize:12, color:C.muted, cursor:'pointer', textDecoration:'underline' }}>
+            Skip for now →
+          </button>
         </div>
 
         {/* Steps */}

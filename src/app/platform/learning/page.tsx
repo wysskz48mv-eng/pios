@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   GraduationCap, Award, Target, Clock, CheckCircle2,
@@ -24,7 +23,6 @@ function fmt(d: string|null) {
 }
 
 export default function LearningHubPage() {
-  const router  = useRouter()
   const [data,    setData]    = useState<any>(null)
   const [cpdData, setCpdData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -47,12 +45,8 @@ export default function LearningHubPage() {
 
   useEffect(() => { load() }, [])
 
-  // If wizard not completed, redirect
-  useEffect(() => {
-    if (data && !loading && data.profile?.wizard_completed === false) {
-      router.push('/platform/learning/wizard')
-    }
-  }, [data, loading, router])
+  // wizard_completed=false: show inline prompt, don't hard redirect
+  const showWizardPrompt = data && !loading && data.profile?.wizard_completed === false
 
   async function markDone(id: string) {
     setMarking(id)
@@ -156,9 +150,19 @@ export default function LearningHubPage() {
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="divide-y">
             {ms.length === 0 ? (
-              <div className="p-8 text-center space-y-3">
-                <p className="text-sm font-medium">No milestones yet</p>
-                <Link href="/platform/learning/wizard" className="text-xs text-purple-600 hover:underline">Run setup wizard →</Link>
+              <div className="p-10 text-center space-y-4">
+                <div className="text-4xl">🎓</div>
+                <p className="text-base font-semibold">Set up your learning journey</p>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                  PIOS tracks your academic milestones, CPD hours, and thesis progress — configured around your programme in 2 minutes.
+                </p>
+                <Link
+                  href="/platform/learning/wizard"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white"
+                  style={{ background: 'linear-gradient(135deg, #8B5CF6, #6366F1)' }}
+                >
+                  Start setup wizard →
+                </Link>
               </div>
             ) : ms.map(m => {
               const sc = STATUS_COLORS[m.status] ?? STATUS_COLORS.upcoming
