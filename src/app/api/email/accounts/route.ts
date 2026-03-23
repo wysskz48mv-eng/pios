@@ -58,7 +58,7 @@ export async function GET() {
     }))
 
     return NextResponse.json({ accounts, count: accounts.length })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ account: data }, { status: 201 })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -218,7 +218,7 @@ export async function PATCH(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ account: data })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -271,7 +271,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     return NextResponse.json({ disconnected: true })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }

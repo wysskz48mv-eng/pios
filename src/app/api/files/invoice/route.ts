@@ -139,12 +139,12 @@ Return ONLY valid JSON:
         hitl_required: true,
         hitl_message: 'Invoice extracted — requires your approval before processing payment or filing for tax purposes.',
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('/api/files/invoice:', err)
       return NextResponse.json({ error: err.message ?? 'Extraction failed' }, { status: 500 })
     }
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[PIOS] files/invoice POST:', err.message)
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }}
@@ -159,7 +159,7 @@ export async function GET() {
       .select('*').eq('user_id', user.id)
       .order('invoice_date', { ascending: false }).limit(50)
     return NextResponse.json({ invoices: data ?? [] })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

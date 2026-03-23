@@ -76,7 +76,7 @@ const MIGRATIONS: Record<string, {
   },
 }
 
-async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {
+async function checkTableExists(supabase: unknown, tableName: string): Promise<boolean> {
   try {
     const { error } = await supabase.from(tableName).select('id').limit(1)
     return !error || !error.message.includes('does not exist')
@@ -101,7 +101,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ status, migrations: Object.keys(MIGRATIONS).length })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
           } else {
             results.push({ id, name: m.name, status: 'applied' })
           }
-        } catch (e: any) {
+        } catch (e: unknown) {
           results.push({ id, name: m.name, status: 'error', reason: e.message })
         }
       }
@@ -177,7 +177,7 @@ export async function POST(request: Request) {
       const { error } = await supabase.rpc('exec_sql', { sql_text: sql.slice(0, 65535) })
       if (!error) executed = true
       else execError = error.message
-    } catch (e: any) {
+    } catch (e: unknown) {
       execError = e.message
     }
 
@@ -207,7 +207,7 @@ export async function POST(request: Request) {
         '4. Return here and click "Verify" to confirm the table was created',
       ],
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Migration failed' }, { status: 500 })
   }
 }

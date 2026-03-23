@@ -86,7 +86,7 @@ function FeedItem({ item, showRelevance }: { item: any; showRelevance: boolean }
 function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
   feed: any; showRelevance: boolean;
   onRefresh: (id: string) => void;
-  onEdit: (feed: any) => void;
+  onEdit: (feed: unknown) => void;
   onDelete: (id: string) => void;
 }) {
   const [fetching, setFetching]   = useState(false)
@@ -156,7 +156,7 @@ function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
 // ── Add / Edit feed modal ─────────────────────────────────────────────────────
 const DEFAULT_FORM = { label:'', description:'', emoji:'📰', topic:'', keywords:'', sources:'', exclude_terms:'', category:'industry', layout:'cards', refresh_freq:'daily', max_items:8, is_active:true }
 
-function FeedFormModal({ feed, onSave, onClose }: { feed: any|null; onSave: (data: any) => void; onClose: () => void }) {
+function FeedFormModal({ feed, onSave, onClose }: { feed: any|null; onSave: (data: unknown) => void; onClose: () => void }) {
   const [form, setForm] = useState(feed ? {
     ...feed,
     keywords: (feed.keywords ?? []).join(', '),
@@ -165,7 +165,7 @@ function FeedFormModal({ feed, onSave, onClose }: { feed: any|null; onSave: (dat
   } : DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
 
-  function f(k: string, v: any) { setForm((p: any) => ({ ...p, [k]: v })) }
+  function f(k: string, v: unknown) { setForm((p: unknown) => ({ ...p, [k]: v })) }
 
   async function save() {
     if (!form.label.trim() || !form.topic.trim()) return
@@ -297,12 +297,12 @@ export default function CommandPage() {
 
   useEffect(() => { loadPlatforms(); loadFeeds() }, [loadPlatforms, loadFeeds])
 
-  async function handleAddFeed(data: any) {
+  async function handleAddFeed(data: unknown) {
     await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'add', topic: data }) })
     loadFeeds()
   }
 
-  async function handleEditFeed(data: any) {
+  async function handleEditFeed(data: unknown) {
     await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'update', id: editingFeed.id, ...data }) })
     loadFeeds()
   }
@@ -319,7 +319,7 @@ export default function CommandPage() {
     loadFeeds()
   }
 
-  async function updateFeedSetting(key: string, value: any) {
+  async function updateFeedSetting(key: string, value: unknown) {
     const next = { ...feedSettings, [key]: value }
     setFeedSettings(next)
     await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'settings', ...next }) })

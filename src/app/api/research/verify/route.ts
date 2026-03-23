@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     const report = await verifyCitations(citations)
     return NextResponse.json(report)
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('/api/research/verify:', err)
     return NextResponse.json({ error: err.message ?? 'Verification failed' }, { status: 500 })
   }

@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
       count: expenses.length,
       summary: { byCategory, byDomain, byCurrency, byTaxYear },
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ expense: data }, { status: 201 })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -229,7 +229,7 @@ export async function PATCH(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ expense: data })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -253,7 +253,7 @@ export async function DELETE(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ deleted: true })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }

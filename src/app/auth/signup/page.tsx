@@ -66,7 +66,7 @@ export default function SignupPage() {
       })
       if (signUpError) { setError(signUpError.message); setLoading(false); return }
       router.push('/auth/verify?email=' + encodeURIComponent(form.email))
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message ?? 'Sign up failed. Please try again.')
       setLoading(false)
     }

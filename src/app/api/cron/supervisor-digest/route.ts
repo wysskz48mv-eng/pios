@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
         html,
       })
       sent.push(`${supervisorEmail} (${students.length} students)`)
-    } catch (e: any) {
+    } catch (e: unknown) {
       errs.push(`${supervisorEmail}: ${String(e.message)}`)
     }
   }

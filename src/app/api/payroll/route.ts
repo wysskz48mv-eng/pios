@@ -73,7 +73,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ error: 'Unknown type' }, { status: 400 })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
@@ -90,9 +90,9 @@ export async function POST(request: Request) {
     // Create payroll run
     if (action === 'create_run') {
       const { pay_period, pay_date, company_entity, currency, notes, lines, expected_by } = body
-      const totalGross = lines?.reduce((s: number, l: any) => s + (parseFloat(l.gross_pay) || 0), 0) ?? 0
-      const totalNet   = lines?.reduce((s: number, l: any) => s + (parseFloat(l.net_pay) || 0), 0) ?? 0
-      const totalTax   = lines?.reduce((s: number, l: any) => s + (parseFloat(l.tax_deduction) || 0) + (parseFloat(l.ni_deduction) || 0), 0) ?? 0
+      const totalGross = lines?.reduce((s: number, l: unknown) => s + (parseFloat(l.gross_pay) || 0), 0) ?? 0
+      const totalNet   = lines?.reduce((s: number, l: unknown) => s + (parseFloat(l.net_pay) || 0), 0) ?? 0
+      const totalTax   = lines?.reduce((s: number, l: unknown) => s + (parseFloat(l.tax_deduction) || 0) + (parseFloat(l.ni_deduction) || 0), 0) ?? 0
 
       const { data: run } = await supabase.from('payroll_runs').insert({
         user_id: user.id, pay_period, pay_date, status: 'pending_approval',
@@ -218,7 +218,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

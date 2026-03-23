@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       .order('updated_at', { ascending: false })
       .limit(30)
     return NextResponse.json({ sessions: data ?? [] })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       const { id, messages } = body
       if (!messages?.length) return NextResponse.json({ title: 'New conversation' })
       // Generate a short title from the first user message
-      const firstUser = messages.find((m: any) => m.role === 'user')?.content ?? ''
+      const firstUser = messages.find((m: unknown) => m.role === 'user')?.content ?? ''
       const raw = await callClaude(
         [{ role: 'user', content: `Generate a 4-6 word title for a conversation that starts with: "${firstUser.slice(0, 200)}". Return only the title, no quotes.` }],
         'Return only a short title. No quotes, no punctuation at the end.',
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

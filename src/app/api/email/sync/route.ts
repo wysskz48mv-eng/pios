@@ -13,7 +13,7 @@ export const maxDuration = 60
 
 const DOMAINS = ['academic','fm_consulting','saas','business','personal']
 
-async function refreshGoogleToken(supabase: any, account: any): Promise<string | null> {
+async function refreshGoogleToken(supabase: unknown, account: unknown): Promise<string | null> {
   if (!account.google_refresh_token) return null
   try {
     const res = await fetch('https://oauth2.googleapis.com/token', {
@@ -36,7 +36,7 @@ async function refreshGoogleToken(supabase: any, account: any): Promise<string |
   } catch { return null }
 }
 
-async function refreshMicrosoftToken(supabase: any, account: any): Promise<string | null> {
+async function refreshMicrosoftToken(supabase: unknown, account: unknown): Promise<string | null> {
   if (!account.ms_refresh_token) return null
   try {
     const res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
@@ -60,7 +60,7 @@ async function refreshMicrosoftToken(supabase: any, account: any): Promise<strin
   } catch { return null }
 }
 
-async function getValidToken(supabase: any, account: any): Promise<string | null> {
+async function getValidToken(supabase: unknown, account: unknown): Promise<string | null> {
   const buf = 5 * 60 * 1000
   if (account.provider === 'google') {
     const exp = account.google_token_expiry ? new Date(account.google_token_expiry) : null
@@ -106,7 +106,7 @@ Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","prio
   }
 }
 
-async function autoCreateExpense(supabase: any, userId: string, rd: any, domain: string, subject: string) {
+async function autoCreateExpense(supabase: unknown, userId: string, rd: unknown, domain: string, subject: string) {
   if (!rd?.amount || parseFloat(rd.amount) <= 0) return
   const desc = `${rd.vendor ?? 'Unknown'} — auto from email`
   const date = rd.date ?? new Date().toISOString().slice(0, 10)
@@ -122,7 +122,7 @@ async function autoCreateExpense(supabase: any, userId: string, rd: any, domain:
   })
 }
 
-async function syncGmail(supabase: any, userId: string, account: any, token: string, max: number) {
+async function syncGmail(supabase: unknown, userId: string, account: unknown, token: string, max: number) {
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=is:unread+-category:promotions`,
     { headers: { Authorization: `Bearer ${token}` } }
@@ -160,7 +160,7 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
   return { synced, receipts }
 }
 
-async function syncMicrosoft(supabase: any, userId: string, account: any, token: string, max: number) {
+async function syncMicrosoft(supabase: unknown, userId: string, account: unknown, token: string, max: number) {
   const url = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=${max}&$filter=isRead eq false&$select=id,subject,from,receivedDateTime,bodyPreview,conversationId`
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
   if (!res.ok) { const e = await res.text(); return { synced: 0, receipts: 0, error: `Graph ${res.status}: ${e.slice(0,100)}` } }
@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
     const r = await syncGmail(supabase, user.id, legacyAcc, token, max)
     return NextResponse.json({ ...r, accounts_synced: 1 })
   }
-  const results = await Promise.allSettled(accounts.map(async (acc: any) => {
+  const results = await Promise.allSettled(accounts.map(async (acc: unknown) => {
     const token = await getValidToken(supabase, acc)
     if (!token) { await supabase.from('connected_email_accounts').update({ last_sync_error: 'Token expired — reconnect' }).eq('id', acc.id); return { account_id: acc.id, email: acc.email_address, synced: 0, receipts: 0, error: 'Token expired' } }
     const r = acc.provider === 'google' ? await syncGmail(supabase, user.id, acc, token, max) :
@@ -223,8 +223,8 @@ export async function POST(req: NextRequest) {
   }))
   const detail = results.map(r => r.status === 'fulfilled' ? r.value : { error: String((r as Record<string, unknown>).reason) })
   return NextResponse.json({
-    synced:          detail.reduce((s: number, r: any) => s + (r.synced   ?? 0), 0),
-    receipts:        detail.reduce((s: number, r: any) => s + (r.receipts ?? 0), 0),
+    synced:          detail.reduce((s: number, r: unknown) => s + (r.synced   ?? 0), 0),
+    receipts:        detail.reduce((s: number, r: unknown) => s + (r.receipts ?? 0), 0),
     accounts_synced: accounts.length,
     detail,
   })

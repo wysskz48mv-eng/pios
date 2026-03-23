@@ -75,9 +75,9 @@ Return ONLY valid JSON or null if this is not a payroll email:
 
       if (!extracted?.is_payroll || !extracted?.lines?.length) continue
 
-      const totalGross = extracted.lines.reduce((s: number, l: any) => s + (l.gross_pay || 0), 0)
-      const totalNet   = extracted.lines.reduce((s: number, l: any) => s + (l.net_pay || 0), 0)
-      const totalTax   = extracted.lines.reduce((s: number, l: any) => s + (l.tax_deduction || 0) + (l.ni_deduction || 0), 0)
+      const totalGross = extracted.lines.reduce((s: number, l: unknown) => s + (l.gross_pay || 0), 0)
+      const totalNet   = extracted.lines.reduce((s: number, l: unknown) => s + (l.net_pay || 0), 0)
+      const totalTax   = extracted.lines.reduce((s: number, l: unknown) => s + (l.tax_deduction || 0) + (l.ni_deduction || 0), 0)
 
       const { data: run } = await supabase.from('payroll_runs').insert({
         user_id: user.id,
@@ -115,7 +115,7 @@ Return ONLY valid JSON or null if this is not a payroll email:
     }
 
     return NextResponse.json({ detected: false, message: 'Payroll emails found but no extractable pay data. Review manually.' })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('/api/payroll/detect:', err)
     return NextResponse.json({ error: err.message ?? 'Detection failed' }, { status: 500 })
   }

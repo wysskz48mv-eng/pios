@@ -106,7 +106,7 @@ export async function POST() {
       }
 
       results[plan.key] = { productId, priceId, status }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`[stripe/setup] Failed for ${plan.key}:`, err.message)
       return NextResponse.json({ error: `Failed on ${plan.key}: ${err.message}` }, { status: 500 })
     }

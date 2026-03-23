@@ -54,7 +54,7 @@ export default function LearningHubPage() {
       method:'PATCH', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ status:'passed' }),
     })
-    setData((prev: any) => ({
+    setData((prev: unknown) => ({
       ...prev,
       milestones: prev?.milestones?.map((m: Record<string, unknown>) =>
         m.id === id ? { ...m, status:'passed', completed_date: new Date().toISOString().slice(0,10) } : m

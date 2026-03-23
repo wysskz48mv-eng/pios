@@ -15,7 +15,7 @@ export const maxDuration = 30
 // POST { action:'ai_brief', id }    — generate pre-meeting AI brief
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
+async function getGoogleToken(supabase: unknown, userId: string): Promise<string | null> {
   const { data: profile } = await supabase.from('user_profiles')
     .select('google_access_token, google_refresh_token, google_token_expiry')
     .eq('id', userId).single()
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
       google_connected: !!profile?.google_access_token,
       google_email: profile?.google_email ?? null,
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
@@ -217,7 +217,7 @@ Include: what the meeting is about, key things to cover or prepare, any relevant
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('/api/calendar:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

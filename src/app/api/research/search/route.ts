@@ -123,7 +123,7 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
           })))
           // Stamp provenance onto each result
           for (const r of (parsed.results ?? [])) {
-            const vr = guardReport.results.find((v: any) =>
+            const vr = guardReport.results.find((v: unknown) =>
               v.input.doi === r.doi && r.doi
             )
             if (vr) {
@@ -157,12 +157,12 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
         guardSummary,
         disclaimer: 'AI-generated suggestions — verify each paper exists before citing. Papers marked ✓ AI-Verified have been cross-checked against CrossRef. Papers marked ✗ Verify manually were not found in CrossRef.',
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('/api/research/search:', err)
       return NextResponse.json({ error: err.message ?? 'Search failed' }, { status: 500 })
     }
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[PIOS] research/search POST:', err.message)
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }}
@@ -175,7 +175,7 @@ export async function GET(request: Request) {
     const { data } = await supabase.from('database_searches').select('*')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
     return NextResponse.json({ searches: data ?? [], history: data ?? [] })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

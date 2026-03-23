@@ -107,12 +107,12 @@ Return ONLY valid JSON, no markdown:
         generatedAt: new Date().toISOString(),
         ai_disclaimer: 'AI-generated intelligence digest. Verify breaking news via primary sources before acting.',
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('/api/research/fm-news:', err)
       return NextResponse.json({ error: err.message ?? 'News fetch failed' }, { status: 500 })
     }
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[PIOS] research/fm-news POST:', err.message)
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }}
@@ -130,7 +130,7 @@ export async function GET() {
       .limit(30)
 
     return NextResponse.json({ items: data ?? [], count: data?.length ?? 0 })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

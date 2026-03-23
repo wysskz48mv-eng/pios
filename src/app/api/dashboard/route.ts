@@ -109,8 +109,8 @@ export async function GET() {
     const overdueTasks  = tasks.filter((t: Record<string, unknown>) => t.due_date && t.due_date < today)
     const dueTodayTasks = tasks.filter((t: Record<string, unknown>) => t.due_date === today)
     const upcomingTasks = tasks.filter((t: Record<string, unknown>) => !t.due_date || t.due_date > today)
-    const totalWords    = chapters.reduce((s: number, c: any) => s + (c.word_count   ?? 0), 0)
-    const targetWords   = chapters.reduce((s: number, c: any) => s + (c.target_words ?? 8000), 0)
+    const totalWords    = chapters.reduce((s: number, c: unknown) => s + (c.word_count   ?? 0), 0)
+    const targetWords   = chapters.reduce((s: number, c: unknown) => s + (c.target_words ?? 8000), 0)
     const pendingMeetingActions = meetings.filter((m: Record<string, unknown>) => m.status === 'processed' && !m.tasks_created).length
     const tenantData = tenantR.status === 'fulfilled' ? (tenantR.value?.data ?? null) : null
     const briefContent = briefR.status === 'fulfilled' ? ((briefR.value?.data as any)?.content ?? null) : null
@@ -141,7 +141,7 @@ export async function GET() {
       },
     })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }

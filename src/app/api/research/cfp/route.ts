@@ -91,7 +91,7 @@ Return ONLY valid JSON:
       generatedAt: new Date().toISOString(),
       disclaimer: 'AI-generated CFP digest. Verify deadlines and submission details at the journal website before submitting.',
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('/api/research/cfp:', err)
     return NextResponse.json({ error: err.message ?? 'CFP fetch failed' }, { status: 500 })
   }
@@ -110,7 +110,7 @@ export async function GET() {
       .order('deadline', { ascending: true })
 
     return NextResponse.json({ calls: data ?? [] })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

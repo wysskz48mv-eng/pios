@@ -76,7 +76,7 @@ export default function LearningWizardPage() {
       const d = await r.json()
       if (!d.ok) throw new Error(d.error ?? 'Setup failed')
       router.push('/platform/learning')
-    } catch(e: any) { setError(e.message) }
+    } catch(e: unknown) { setError(e.message) }
     finally { setSaving(false) }
   }
 

@@ -153,7 +153,7 @@ export async function GET(req: NextRequest) {
           .limit(3),
       ])
 
-      const totalWords   = (thesisNow.data ?? []).reduce((s: number, c: any) => s + (c.word_count ?? 0), 0)
+      const totalWords   = (thesisNow.data ?? []).reduce((s: number, c: unknown) => s + (c.word_count ?? 0), 0)
       const prevWords    = (thesisPrev.data?.[0] as any)?.total_words ?? null
       const wordsWritten = prevWords !== null ? Math.max(0, totalWords - prevWords) : 0
 
@@ -169,7 +169,7 @@ export async function GET(req: NextRequest) {
       }, { onConflict: 'user_id,week_start' }).catch(() => {}) // non-fatal
 
       const expList      = expenses.data ?? []
-      const expTotal     = expList.reduce((s: number, e: any) => s + (e.amount ?? 0), 0)
+      const expTotal     = expList.reduce((s: number, e: unknown) => s + (e.amount ?? 0), 0)
       const expCurrency  = expList[0]?.currency ?? 'GBP'
 
       const headlines    = (fmNews.data ?? []).map((r: Record<string, unknown>) => String(r.headline ?? ''))
@@ -213,7 +213,7 @@ export async function GET(req: NextRequest) {
         console.warn(`[cron/weekly] ✗ ${profile.full_name ?? uid}: ${result.error}`)
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       failed++
       console.error(`[cron/weekly] ✗✗ ${uid}:`, err.message)
     }

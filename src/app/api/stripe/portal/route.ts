@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.redirect(session.url)
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[PIOS] stripe/portal:', err)
     return NextResponse.redirect(
       new URL('/platform/settings?billing=error', request.url)

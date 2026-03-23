@@ -64,7 +64,7 @@ function RunsTab() {
 
   useEffect(() => { loadRuns() }, [loadRuns])
 
-  async function selectRun(run: any) {
+  async function selectRun(run: unknown) {
     setSelectedRun(run); setLinesLoading(true); setRemitPreview(null)
     const res = await fetch(`/api/payroll?type=lines&run_id=${run.id}`)
     const d = await res.json()
@@ -81,7 +81,7 @@ function RunsTab() {
 
   async function approveRun(runId: string) {
     await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'approve_run', run_id:runId }) })
-    loadRuns(); if (selectedRun?.id === runId) setSelectedRun((p: any) => p ? {...p, status:'approved'} : p)
+    loadRuns(); if (selectedRun?.id === runId) setSelectedRun((p: unknown) => p ? {...p, status:'approved'} : p)
   }
 
   async function previewRemit() {
@@ -217,7 +217,7 @@ function RunsTab() {
                       <div style={{ padding:'10px 14px', borderRadius:8, background:'rgba(167,139,250,0.08)', marginBottom:10, fontSize:12 }}>
                         <strong>{remitPreview.remittances?.length} remittance drafts ready.</strong> Review the notifications below, then confirm to queue all transfers.
                       </div>
-                      {remitPreview.remittances?.slice(0,2).map((r: any, i: number) => (
+                      {remitPreview.remittances?.slice(0,2).map((r: unknown, i: number) => (
                         <div key={i} style={{ padding:'10px', borderRadius:6, background:'var(--pios-surface2)', marginBottom:8, fontSize:11 }}>
                           <div style={{ fontWeight:600, marginBottom:4 }}>To: {r.staff_name}</div>
                           <div style={{ color:'var(--pios-muted)', lineHeight:1.5 }}>{r.notification.body?.slice(0,200)}…</div>
@@ -578,7 +578,7 @@ function ChaseTab() {
       </div>
 
       {chaseResult && (
-        <div className="pios-card" style={{ marginBottom:16, borderLeft:`3px solid ${chaseResult.chase_needed?(levelColour as any)[chaseResult.chase_level]??'#f59e0b':'#22c55e'}` }}>
+        <div className="pios-card" style={{ marginBottom:16, borderLeft:`3px solid ${chaseResult.chase_needed?(levelColour as Record<string,unknown>)[chaseResult.chase_level]??'#f59e0b':'#22c55e'}` }}>
           {!chaseResult.chase_needed ? (
             <div style={{ fontSize:13, color:'#22c55e' }}>✓ {chaseResult.message}</div>
           ) : chaseResult.already_sent ? (
@@ -586,7 +586,7 @@ function ChaseTab() {
           ) : (
             <>
               <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:10 }}>
-                <Badge label={chaseResult.chase_level} colour={(levelColour as any)[chaseResult.chase_level]??'#f59e0b'} />
+                <Badge label={chaseResult.chase_level} colour={(levelColour as Record<string,unknown>)[chaseResult.chase_level]??'#f59e0b'} />
                 <span style={{ fontSize:13, fontWeight:600 }}>{chaseResult.days_overdue} days overdue</span>
               </div>
               {chaseResult.draft && (
@@ -610,7 +610,7 @@ function ChaseTab() {
           <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
             {log.map(l => (
               <div key={l.id} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10 }}>
-                <Badge label={l.chase_level} colour={(levelColour as any)[l.chase_level]??'#f59e0b'} />
+                <Badge label={l.chase_level} colour={(levelColour as Record<string,unknown>)[l.chase_level]??'#f59e0b'} />
                 <span style={{ fontSize:12, flex:1 }}>Payroll {l.days_overdue}d overdue — expected {l.expected_date}</span>
                 <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{new Date(l.sent_at).toLocaleDateString('en-GB')}</span>
               </div>

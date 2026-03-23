@@ -165,8 +165,8 @@ export async function POST(req: NextRequest) {
 
       (pendingActionsR.data ?? []).length > 0
         ? `MEETING ACTION ITEMS AWAITING TASK PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
-          (pendingActionsR.data ?? []).flatMap((m: any) =>
-            ((m.ai_action_items ?? []) as any[]).slice(0,3).map((a: Record<string, unknown>) =>
+          (pendingActionsR.data ?? []).flatMap((m: unknown) =>
+            ((m.ai_action_items ?? []) as unknown[]).slice(0,3).map((a: Record<string, unknown>) =>
               `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${m.title}" (${m.meeting_date}). Go to /platform/meetings to promote.`
             )
           ).join('\n')
@@ -262,7 +262,7 @@ Rules:
 
     return NextResponse.json({ content, brief_date: today, cached: false, refreshed: force })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Brief generation error:', err)
     return NextResponse.json({ error: err.message ?? 'Brief generation failed' }, { status: 500 })
   }

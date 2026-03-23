@@ -111,7 +111,7 @@ export default function OnboardingPage() {
       }).eq('id', user.id)
       if (e) throw e
       setStep(2)
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError(e.message ?? 'Failed to save profile')
     } finally {
       setSaving(false)

@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
 
     const actionItems: any[] = meeting.ai_action_items ?? []
     const toPromote = selected_items
-      ? actionItems.filter((_: any, i: number) => selected_items.includes(i))
+      ? actionItems.filter((_: unknown, i: number) => selected_items.includes(i))
       : actionItems
 
     if (toPromote.length === 0)
@@ -233,7 +233,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 // ── AI Processing ──────────────────────────────────────────────────────────────
-async function processMeetingNotes(supabase: any, meeting: any, userId: string) {
+async function processMeetingNotes(supabase: unknown, meeting: unknown, userId: string) {
   const content = meeting.raw_transcript || meeting.raw_notes || ''
   if (!content.trim()) return meeting
 
@@ -293,7 +293,7 @@ Return ONLY valid JSON — no preamble, no markdown:
 
     return updated ?? { ...meeting, ...updates }
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     await supabase.from('meeting_notes').update({
       status: 'processed',
       ai_summary: 'AI processing failed — review transcript manually.',

@@ -143,12 +143,12 @@ Staff count: unknown (accountant has the details)`
         hitl_required: true,
         hitl_message: `${chaseLevel.charAt(0).toUpperCase() + chaseLevel.slice(1)} chase email drafted. Review and send manually — PIOS will not send emails without your explicit approval.`,
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('/api/payroll/chase:', err)
       return NextResponse.json({ error: err.message ?? 'Chase check failed' }, { status: 500 })
     }
 
-  } catch (persistErr: any) {
+  } catch (persistErr: unknown) {
     console.error('[PIOS] payroll/chase:', persistErr)
     return NextResponse.json({ error: persistErr.message ?? 'DB error' }, { status: 500 })
   }}
@@ -163,7 +163,7 @@ export async function GET() {
       .select('*').eq('user_id', user.id)
       .order('sent_at', { ascending: false }).limit(20)
     return NextResponse.json({ log: data ?? [] })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

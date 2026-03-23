@@ -174,7 +174,7 @@ export default function ProjectsPage() {
 
   useEffect(() => { load() }, [load])
 
-  async function saveProject(id: string, data: any) {
+  async function saveProject(id: string, data: unknown) {
     if (id) {
       const res = await fetch('/api/projects', {
         method: 'PATCH',

@@ -69,7 +69,7 @@ function SearchTab() {
   useEffect(() => {
     fetch('/api/research/search')
       .then(r => r.ok ? r.json() : {})
-      .then((d: any) => setHistory(d.history ?? []))
+      .then((d: unknown) => setHistory(d.history ?? []))
       .catch(() => {})
   }, [])
 
@@ -289,7 +289,7 @@ function JournalsTab() {
 
   useEffect(() => { load() }, [load])
 
-  async function getGuidelines(j: any) {
+  async function getGuidelines(j: unknown) {
     setSelected(j); setGuidelines(null); setGuideLoading(true)
     const res = await fetch('/api/research/journals', {
       method: 'POST',
@@ -502,7 +502,7 @@ function CFPTab() {
     setLoading(false)
   }
 
-  async function saveCFP(cfp: any) {
+  async function saveCFP(cfp: unknown) {
     setSavingId(cfp.title)
     await fetch('/api/research/cfp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'save', cfp }) })
     const res = await fetch('/api/research/cfp')
@@ -764,10 +764,10 @@ function LibraryTab() {
 
   useEffect(() => { load() }, [load])
 
-  async function updateItem(id: string, updates: any) {
+  async function updateItem(id: string, updates: unknown) {
     await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id, ...updates }) })
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
-    if (selected?.id === id) setSelected((p: any) => ({ ...p, ...updates }))
+    if (selected?.id === id) setSelected((p: unknown) => ({ ...p, ...updates }))
   }
 
   async function generateSummary(id: string) {
@@ -777,7 +777,7 @@ function LibraryTab() {
     if (d.summary) {
       const updates = { ai_summary: d.summary, citation_apa: d.citation_apa, themes: d.suggested_themes ?? [], relevance: d.suggested_relevance_score, _guard: d.guard ?? null }
       setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
-      if (selected?.id === id) setSelected((p: any) => ({ ...p, ...updates }))
+      if (selected?.id === id) setSelected((p: unknown) => ({ ...p, ...updates }))
     }
     setAiLoading(null)
   }

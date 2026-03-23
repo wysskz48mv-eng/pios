@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     if (!existsSync(filePath)) return NextResponse.json({ error: 'File not found' }, { status: 404 })
     const sql = readFileSync(filePath, 'utf8')
     return NextResponse.json({ id, sql, length: sql.length })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

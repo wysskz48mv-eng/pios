@@ -325,7 +325,7 @@ export default function MeetingsPage() {
                     )}
                   </div>
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
-                    {actionItems.map((item: any, i: number) => (
+                    {actionItems.map((item: unknown, i: number) => (
                       <label key={i} style={{
                         display:'flex', alignItems:'flex-start', gap:8, padding:'10px 12px',
                         background:'var(--pios-surface2)', borderRadius:8, cursor:'pointer',
@@ -357,7 +357,7 @@ export default function MeetingsPage() {
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>Decisions ({decisions.length})</div>
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:5 }}>
-                    {decisions.map((d: any, i: number) => (
+                    {decisions.map((d: unknown, i: number) => (
                       <div key={i} style={{ padding:'8px 12px', background:'rgba(34,197,94,0.06)', border:'1px solid rgba(34,197,94,0.15)', borderRadius:8 }}>
                         <div style={{ fontSize:12 }}>✓ {d.decision}</div>
                         {(d.owner || d.date) && (
@@ -376,7 +376,7 @@ export default function MeetingsPage() {
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>Follow-ups ({followUps.length})</div>
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:5 }}>
-                    {followUps.map((f: any, i: number) => (
+                    {followUps.map((f: unknown, i: number) => (
                       <div key={i} style={{ padding:'8px 12px', background:'rgba(245,158,11,0.06)', border:'1px solid rgba(245,158,11,0.15)', borderRadius:8 }}>
                         <div style={{ fontSize:12 }}>⟳ {f.topic}</div>
                         {f.context && <div style={{ fontSize:10, color:'var(--pios-muted)', marginTop:2 }}>{f.context}</div>}
@@ -392,7 +392,7 @@ export default function MeetingsPage() {
                 <div style={{ marginBottom:16 }}>
                   <div style={{ fontSize:12, fontWeight:700, marginBottom:8 }}>Risks ({risks.length})</div>
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:5 }}>
-                    {risks.map((r: any, i: number) => (
+                    {risks.map((r: unknown, i: number) => (
                       <div key={i} style={{ padding:'8px 12px', background:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.15)', borderRadius:8 }}>
                         <div style={{ fontSize:12 }}>
                           <span style={{ color: r.severity==='high'?'#ef4444':r.severity==='medium'?'#f97316':'#eab308', fontWeight:600, marginRight:4 }}>

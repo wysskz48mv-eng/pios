@@ -43,7 +43,7 @@ export async function GET() {
       profile: profileR.data ?? null,
       tenant:  tenantR.data  ?? null,
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -82,7 +82,7 @@ export async function PATCH(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ profile: data })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }

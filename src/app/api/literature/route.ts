@@ -50,7 +50,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ items: all, stats })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
@@ -210,7 +210,7 @@ Tags: ${item.tags?.join(', ') ?? 'none'}`
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('/api/literature:', err)
     return NextResponse.json({ error: err.message ?? 'Request failed' }, { status: 500 })
   }

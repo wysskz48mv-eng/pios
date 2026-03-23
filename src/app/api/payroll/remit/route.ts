@@ -139,12 +139,12 @@ Company: ${run.company_entity ?? 'VeritasIQ Technologies Ltd'}`
         hitl_required: true,
         hitl_message: `${remittances.length} bank transfers queued for your approval. Go to Transfer Queue to approve each payment. Transfers are NOT sent until you explicitly approve them.`,
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('/api/payroll/remit:', err)
       return NextResponse.json({ error: err.message ?? 'Remittance failed' }, { status: 500 })
     }
 
-  } catch (persistErr: any) {
+  } catch (persistErr: unknown) {
     console.error('[PIOS] payroll/remit:', persistErr)
     return NextResponse.json({ error: persistErr.message ?? 'DB error' }, { status: 500 })
   }}

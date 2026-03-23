@@ -151,7 +151,7 @@ ${liveCtx}${briefSection}${domainSection}`
     const reply = await callClaude(messages, system, 1200)
     return NextResponse.json({ reply })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('AI chat error:', err)
     return NextResponse.json({ error: err.message ?? 'AI unavailable. Please try again.' }, { status: 500 })
   }

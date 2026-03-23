@@ -109,7 +109,7 @@ export default function ExpensesPage() {
     setEditing(null); setEditForm(null)
   }
 
-  function startEdit(e: any) {
+  function startEdit(e: unknown) {
     setEditing(e.id)
     setEditForm({ description:e.description, amount:String(e.amount), category:e.category||'', domain:e.domain||'personal', date:e.date||'', currency:e.currency||'GBP', billable:!!e.billable, client:e.client||'', notes:e.notes||'' })
   }

@@ -179,7 +179,7 @@ async function runPg(sql: string): Promise<{ ok: boolean; result?: string; err?:
     } finally {
       await client.end()
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { ok: false, err: e.message?.substring(0, 400) ?? String(e) }
   }
 }

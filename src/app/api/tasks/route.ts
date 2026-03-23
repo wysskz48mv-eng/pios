@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     if (status && status !== 'all') q = q.eq('status', status)
     const { data } = await q
     return NextResponse.json({ tasks: data ?? [] })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -81,11 +81,11 @@ Return ONLY valid JSON:
       }).select().single()
       if (error) return NextResponse.json({ error: error.message }, { status: 400 })
       return NextResponse.json({ task: data })
-    } catch (err: any) {
+    } catch (err: unknown) {
       return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
     }
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[PIOS] tasks POST:', err.message)
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }}
@@ -130,7 +130,7 @@ export async function PATCH(request: Request) {
       .update(safe).eq('id', id).eq('user_id', user.id).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ task: data })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -145,7 +145,7 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
     await supabase.from('tasks').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', id).eq('user_id', user.id)
     return NextResponse.json({ cancelled: true })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }

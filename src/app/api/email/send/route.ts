@@ -17,7 +17,7 @@ export const runtime = 'nodejs'
 // }
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
+async function getGoogleToken(supabase: unknown, userId: string): Promise<string | null> {
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('google_access_token, google_refresh_token, google_token_expiry, google_email')
@@ -145,7 +145,7 @@ export async function POST(request: Request) {
       to,
       subject,
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('/api/email/send:', err)
     return NextResponse.json({ error: err.message ?? 'Send failed' }, { status: 500 })
   }

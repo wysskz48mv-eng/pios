@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'AI parse failed', raw: clean.slice(0, 300) }, { status: 500 })
     }
     return NextResponse.json({ ok: true, literature_count: (items ?? []).length, analysis: parsed })
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json({ error: String(e.message) }, { status: 500 })
   }
 }

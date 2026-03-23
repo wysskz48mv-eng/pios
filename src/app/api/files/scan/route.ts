@@ -15,7 +15,7 @@ export const maxDuration = 60
 // body: { folder_id?: string, max_files?: number, apply_rules?: boolean }
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
+async function getGoogleToken(supabase: unknown, userId: string): Promise<string | null> {
   const { data: profile } = await supabase.from('user_profiles')
     .select('google_access_token, google_refresh_token, google_token_expiry')
     .eq('id', userId).single()
@@ -230,7 +230,7 @@ export async function POST(request: Request) {
       invoicesFound,
       items: items ?? [],
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('/api/files/scan:', err)
     return NextResponse.json({ error: err.message ?? 'Scan failed' }, { status: 500 })
   }
@@ -261,7 +261,7 @@ export async function GET(request: Request) {
       .select('*').eq('user_id', user.id)
       .order('started_at', { ascending: false }).limit(5)
     return NextResponse.json({ scans: data ?? [] })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

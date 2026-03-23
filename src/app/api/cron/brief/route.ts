@@ -171,8 +171,8 @@ export async function GET(req: NextRequest) {
 
         (pendingActionsR.data ?? []).length > 0
           ? `MEETING ACTIONS AWAITING PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
-            (pendingActionsR.data ?? []).flatMap((m: any) =>
-              ((m.ai_action_items ?? []) as any[]).slice(0,3).map((a: Record<string, unknown>) =>
+            (pendingActionsR.data ?? []).flatMap((m: unknown) =>
+              ((m.ai_action_items ?? []) as unknown[]).slice(0,3).map((a: Record<string, unknown>) =>
                 `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${m.title}"`
               )
             ).join('\n')
@@ -243,7 +243,7 @@ export async function GET(req: NextRequest) {
       }
 
       generated++
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`[cron/brief] Failed for user ${uid}:`, err.message)
       failed++
     }

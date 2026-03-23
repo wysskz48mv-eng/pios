@@ -86,7 +86,7 @@ export default function EmailPage() {
       } else {
         setBanner({msg:`Send failed: ${d.error ?? 'Unknown error'}`, ok:false})
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBanner({msg:`Send failed: ${err.message}`, ok:false})
     }
     setReplying(false)

@@ -55,7 +55,7 @@ export async function GET() {
           url: c.html_url,
         })),
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       results[key] = { label, connected: false, error: err.message }
     }
   }))

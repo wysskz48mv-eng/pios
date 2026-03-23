@@ -354,7 +354,7 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 3000)
   }
 
-  async function updateFeedSetting(key: string, value: any) {
+  async function updateFeedSetting(key: string, value: unknown) {
     const next = { ...(feedSettings??{}), [key]: value }
     setFeedSettings(next)
     await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'settings', ...next }) })
@@ -508,7 +508,7 @@ export default function SettingsPage() {
                 { key:'show_relevance', label:'Show AI relevance scores on feed items', type:'checkbox' },
               ].map(opt=>(
                 <label key={opt.key} style={{ display:'flex',alignItems:'center',gap:10,cursor:'pointer',fontSize:13 }}>
-                  <input type="checkbox" checked={!!(feedSettings as any)[opt.key]} onChange={e=>updateFeedSetting(opt.key, e.target.checked)} />
+                  <input type="checkbox" checked={!!(feedSettings as Record<string,unknown>)[opt.key]} onChange={e=>updateFeedSetting(opt.key, e.target.checked)} />
                   {opt.label}
                 </label>
               ))}

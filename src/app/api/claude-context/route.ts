@@ -165,18 +165,18 @@ export async function GET() {
     const todayTasks   = tasks.filter(t => t.due_date === today)
     const criticalTasks = tasks.filter(t => t.priority === 'critical')
 
-    const totalWords   = chapters.reduce((s: number, c: any) => s + (c.word_count ?? 0), 0)
-    const targetWords  = chapters.reduce((s: number, c: any) => s + (c.target_words ?? 8000), 0)
+    const totalWords   = chapters.reduce((s: number, c: unknown) => s + (c.word_count ?? 0), 0)
+    const targetWords  = chapters.reduce((s: number, c: unknown) => s + (c.target_words ?? 8000), 0)
     const thesisProgress = targetWords > 0 ? Math.round((totalWords / targetWords) * 100) : 0
 
-    const thisMonthSpend = expenses.reduce((s: number, e: any) => {
+    const thisMonthSpend = expenses.reduce((s: number, e: unknown) => {
       // Sum GBP-equivalent (simplified — full multi-currency conversion not done here)
       const currencies: Record<string, number> = { GBP: 1, USD: 0.79, EUR: 0.86, AED: 0.21, SAR: 0.21 }
       return s + (parseFloat(e.amount) || 0) * (currencies[e.currency] ?? 1)
     }, 0)
 
-    const pendingMeetingActions = meetings.reduce((s: number, m: any) =>
-      s + ((m.ai_action_items as any[])?.length ?? 0), 0)
+    const pendingMeetingActions = meetings.reduce((s: number, m: unknown) =>
+      s + ((m.ai_action_items as unknown[])?.length ?? 0), 0)
 
     // ── Response ──────────────────────────────────────────────────────────────
     return NextResponse.json(
@@ -283,7 +283,7 @@ export async function GET() {
 
         meetings_pending: meetings.map((m: Record<string, unknown>) => ({
           id: m.id, title: m.title, date: m.meeting_date, domain: m.domain,
-          action_item_count: (m.ai_action_items as any[])?.length ?? 0,
+          action_item_count: (m.ai_action_items as unknown[])?.length ?? 0,
           promote_url: `POST /api/meetings { action: 'promote_tasks', id: '${m.id}' }`,
         })),
 
@@ -327,7 +327,7 @@ export async function GET() {
       }
     )
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
       { error: err.message ?? 'Internal server error', authenticated: false },
       { status: 500 }

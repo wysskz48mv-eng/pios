@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       metadata: { user_id: user.id, plan },
     })
     return NextResponse.redirect(session.url!)
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[PIOS] stripe/checkout:', err)
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }

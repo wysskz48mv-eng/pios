@@ -161,7 +161,7 @@ Return only JSON array: [{"title":"...","summary":"one sentence","relevance":1-1
           } catch { /* skip this topic */ }
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`[cron/feeds] Failed for user ${uid}:`, err.message)
       failed++
     }

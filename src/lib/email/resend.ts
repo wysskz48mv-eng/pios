@@ -59,7 +59,7 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
       return { ok: false, error: data?.message ?? `HTTP ${res.status}` }
     }
     return { ok: true, id: data.id }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[resend] Fetch error:', err.message)
     return { ok: false, error: err.message }
   }

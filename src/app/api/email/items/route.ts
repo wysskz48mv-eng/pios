@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       count: emails.length,
       summary: { unread, receipts, high_priority: highPri, action_required: actionRequired },
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest) {
       .update(safe).eq('id', id).eq('user_id', user.id).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ email: data })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
@@ -94,7 +94,7 @@ export async function DELETE(req: NextRequest) {
       .eq('id', id).eq('user_id', user.id)
 
     return NextResponse.json({ ignored: true })
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
   }
 }
