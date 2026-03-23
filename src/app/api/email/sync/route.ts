@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
               { synced: 0, receipts: 0, error: 'IMAP coming soon' }
     return { account_id: acc.id, email: acc.email_address, ...r }
   }))
-  const detail = results.map(r => r.status === 'fulfilled' ? r.value : { error: String((r as any).reason) })
+  const detail = results.map(r => r.status === 'fulfilled' ? r.value : { error: String((r as Record<string, unknown>).reason) })
   return NextResponse.json({
     synced:          detail.reduce((s: number, r: any) => s + (r.synced   ?? 0), 0),
     receipts:        detail.reduce((s: number, r: any) => s + (r.receipts ?? 0), 0),

@@ -64,7 +64,7 @@ Return ONLY valid JSON — an array of exactly 8 objects:
       prompt, 800
     )
 
-    let items: any[] = []
+    let items: unknown[]$1
     try {
       const cleaned = raw.replace(/```json|```/g, '').trim()
       items = JSON.parse(cleaned)
@@ -90,7 +90,7 @@ Return ONLY valid JSON — an array of exactly 8 objects:
       .eq('user_id', userId)
       .lt('fetched_at', new Date(Date.now() - 24 * 3600000).toISOString())
 
-    await (admin as any).from('fm_news_items').insert(inserts)
+    await (admin as Record<string, unknown>).from('fm_news_items').insert(inserts)
     return inserts.length
   } catch { return 0 }
 }

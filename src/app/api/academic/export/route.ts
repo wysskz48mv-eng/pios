@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     .eq('user_id', user.id)
     .order('chapter_num')
 
-  if (chapter_id) q = (q as any).eq('id', chapter_id)
+  if (chapter_id) q = (q as Record<string, unknown>).eq('id', chapter_id)
 
   const { data: chapters, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

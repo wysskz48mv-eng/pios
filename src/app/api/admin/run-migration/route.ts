@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
   const id: string = body.migration ?? '012'
 
   if (id === 'all') {
-    const results: any[] = []
+    const results: unknown[]$1
     for (const [key, m] of Object.entries(MIGRATIONS)) {
       const r = await runPg(m.sql)
       results.push({ id: key, name: m.name, ok: r.ok, err: r.err })

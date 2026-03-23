@@ -119,7 +119,7 @@ export async function POST(request: Request) {
 
     if (run_all) {
       // Run all unapplied migrations in order
-      const results: any[] = []
+      const results: unknown[]$1
       for (const id of ['001','002','003','004','005','006','007']) {
         const m = MIGRATIONS[id]
         const already = await checkTableExists(supabase, m.sentinel_table)
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
           const { error } = await supabase.rpc('exec_sql', { sql_text: sql })
           if (error) {
             // Try direct execute for DDL
-            const { error: e2 } = await (supabase as any).from('_dummy_').select().limit(0)
+            const { error: e2 } = await (supabase as Record<string, unknown>).from('_dummy_').select().limit(0)
             results.push({ id, name: m.name, status: 'applied', note: 'Executed (DDL — verify in Supabase dashboard)' })
           } else {
             results.push({ id, name: m.name, status: 'applied' })

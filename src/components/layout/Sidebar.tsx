@@ -15,6 +15,8 @@ const NAV = [
   { href: '/platform/meetings',  icon: '🗒️', label: 'Meetings',       colour: '#a78bfa' },
   { href: '/platform/email',     icon: '✉',  label: 'Inbox',          colour: '#2dd4a0' },
   { href: '/platform/files',     icon: '🗂️', label: 'File Intel',     colour: '#f59e0b' },
+  { href: '/platform/documents',  icon: '📄', label: 'Documents',       colour: '#8B5CF6' },
+  { href: '/platform/intelligence',icon: '📡',label: 'Intelligence',     colour: '#22d3ee' },
   { href: '/platform/payroll',   icon: '💳', label: 'Payroll',        colour: '#a78bfa' },
   { href: '/platform/projects',  icon: '◈',  label: 'Projects',       colour: '#f59e0b' },
   { href: '/platform/command',   icon: '⬡',  label: 'Live Data',      colour: '#22c55e' },
@@ -113,7 +115,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
               }}>
                 <span style={{
                   fontSize: '16px', lineHeight: 1, flexShrink: 0,
-                  color: active ? ((item as any).colour || 'var(--ai)') : 'inherit',
+                  color: active ? ((item as Record<string, unknown>).colour || 'var(--ai)') : 'inherit',
                 }}>{item.icon}</span>
                 {!collapsed && (
                   <span style={{ fontSize: '13px', fontWeight: active ? 600 : 400 }}>

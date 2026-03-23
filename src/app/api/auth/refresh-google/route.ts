@@ -61,7 +61,7 @@ export async function POST() {
     }).eq('id', user.id)
 
     return NextResponse.json({ refreshed: true, expires_at: newExpiry })
-  } catch (e) {
+  } catch (e: unknown) {
     return NextResponse.json({ error: 'Token refresh failed' }, { status: 500 })
   }
 }

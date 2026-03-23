@@ -205,8 +205,8 @@ export async function GET(req: NextRequest) {
       }, { onConflict: 'user_id,brief_date' })
 
       // Email delivery
-      const userEmail = (profile as any).billing_email ?? (profile as any).google_email
-      const userName  = (profile as any).full_name ?? 'there'
+      const userEmail = (profile as Record<string, unknown>).billing_email ?? (profile as Record<string, unknown>).google_email
+      const userName  = (profile as Record<string, unknown>).full_name ?? 'there'
       if (userEmail) {
         await sendEmail({
           to:      userEmail,
