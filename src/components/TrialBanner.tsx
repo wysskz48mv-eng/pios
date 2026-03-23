@@ -61,7 +61,7 @@ export function TrialBanner({ trialEndsAt, planStatus }: TrialBannerProps) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-        <Link href="/platform/settings?tab=billing" style={{
+        <Link href="/platform/settings#billing" style={{
           padding: '5px 14px',
           borderRadius: 20,
           background: accent,

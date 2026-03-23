@@ -417,6 +417,7 @@ export default function SettingsPage() {
         </Section>
 
         {/* Plan & Credits */}
+        <div id="billing" />
         <Section title="Plan & AI Credits">
           <div style={{ marginBottom:16 }}>
             <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:10 }}>

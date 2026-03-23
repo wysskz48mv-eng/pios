@@ -141,7 +141,7 @@ export default function OnboardingPage() {
   }
 
   async function skipToCheckout() {
-    // Mark onboarded, redirect to dashboard
+    // Mark onboarded — always go to dashboard (trial flow, no Stripe redirect)
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -149,12 +149,7 @@ export default function OnboardingPage() {
         await supabase.from('user_profiles').update({ onboarded: true }).eq('id', user.id)
       }
     } catch { /* silent */ }
-    // Route to Stripe checkout if non-free plan selected
-    if (selectedPlan !== 'student_free') {
-      window.location.href = `/api/stripe/checkout?plan=${selectedPlan}`
-    } else {
-      router.push('/platform/dashboard')
-    }
+    router.push('/platform/dashboard')
   }
 
   async function goToDashboard() {
