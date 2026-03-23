@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
+import { checkPromptSafety, auditLog, IP_HEADERS } from '@/lib/security-middleware'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60
@@ -32,6 +33,16 @@ export async function POST(request: Request) {
 
     const { messages, domainContext } = await request.json()
     if (!messages?.length) return NextResponse.json({ error: 'No messages' }, { status: 400 })
+
+    // IS-POL-008 SSDLC — Prompt injection defence
+    const lastMsg = [...messages].reverse().find((m: {role:string}) => m.role === 'user')
+    const userText = typeof lastMsg?.content === 'string' ? lastMsg.content : ''
+    if (userText) {
+      const safety = checkPromptSafety(userText)
+      if (!safety.safe) {
+        return NextResponse.json({ error: 'Request blocked by security policy.' }, { status: 400, headers: IP_HEADERS })
+      }
+    }
 
     const today = new Date().toISOString().slice(0, 10)
 
