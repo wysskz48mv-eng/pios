@@ -257,9 +257,32 @@ export default function OnboardingPage() {
         {/* ─── STEP 2: Plan ───────────────────────────────────────────── */}
         {step === 2 && (
           <div>
+            {/* Trial CTA banner */}
+            <div style={{
+              background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.25)',
+              borderRadius: 12, padding: '20px 24px', marginBottom: 24, textAlign: 'center' as const,
+            }}>
+              <div style={{ fontSize: 22, marginBottom: 6 }}>🎉</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+                Start your 3-day free trial
+              </div>
+              <div style={{ fontSize: 13, color: '#7a8299', marginBottom: 16, lineHeight: 1.6 }}>
+                Full access to all features. No credit card required. Cancel any time.
+              </div>
+              <button
+                onClick={() => { choosePlan('individual') }}
+                style={{
+                  padding: '12px 32px', borderRadius: 8,
+                  background: 'linear-gradient(135deg, #a78bfa, #6c8eff)',
+                  border: 'none', color: '#fff', fontWeight: 700, fontSize: 14,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >Start free trial →</button>
+            </div>
+
             <div style={{ textAlign: 'center' as const, marginBottom: 28 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>Choose your plan</h2>
-              <p style={{ fontSize: 13, color: '#7a8299', margin: 0 }}>Start with Individual — you can upgrade any time.</p>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.4)', margin: '0 0 6px' }}>Or choose a paid plan</h2>
+              <p style={{ fontSize: 13, color: '#7a8299', margin: 0 }}>Billed monthly. Upgrade or cancel any time.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
               {PLANS.map(plan => (

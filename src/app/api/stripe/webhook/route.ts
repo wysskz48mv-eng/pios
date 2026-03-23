@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server'
 import { stripe }         from '@/lib/stripe/client'
 import { createServiceClient } from '@/lib/supabase/server'
-import { Resend } from 'resend'
 
 export const runtime = 'nodejs'
 
-const resend  = new Resend(process.env.RESEND_API_KEY ?? '')
+function getResend() {
+  const key = process.env.RESEND_API_KEY
+  if (!key) return null
+  const { Resend: R } = require('resend')
+  return new R(key)
+}
+
 const FROM    = process.env.FROM_EMAIL ?? 'noreply@pios.app'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.app'
 
@@ -51,7 +56,7 @@ export async function POST(request: Request) {
       // Welcome email
       const email = session.customer_details?.email
       if (email) {
-        await resend.emails.send({
+        await getResend()?.emails.send({
           from: `PIOS <${FROM}>`,
           to:   email,
           subject: `Welcome to PIOS ${plan.charAt(0).toUpperCase() + plan.slice(1)}!`,
@@ -105,7 +110,7 @@ export async function POST(request: Request) {
 
     const email = invoice.customer_email
     if (email) {
-      await resend.emails.send({
+      await getResend()?.emails.send({
         from: `PIOS <${FROM}>`,
         to:   email,
         subject: 'PIOS — Payment failed, please update your card',
@@ -130,7 +135,7 @@ export async function POST(request: Request) {
       const customer: any = await stripe.customers.retrieve(sub.customer as string)
       const email = customer?.email
       if (email) {
-        await resend.emails.send({
+        await getResend()?.emails.send({
           from: `PIOS <${FROM}>`,
           to:   email,
           subject: 'Your PIOS trial ends in 3 days',

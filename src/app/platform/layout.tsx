@@ -9,13 +9,13 @@ export default async function PlatformLayout({ children }: { children: React.Rea
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('full_name, avatar_url, role, programme_name, google_email')
+    .select('full_name, avatar_url, role, programme_name, google_email, tenant_id')
     .eq('id', user.id)
     .single()
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('plan, ai_credits_used, ai_credits_limit')
+    .select('plan, plan_status, subscription_status, ai_credits_used, ai_credits_limit, trial_ends_at, stripe_subscription_id')
     .eq('id', (profile as any)?.tenant_id ?? '')
     .single()
 

@@ -22,10 +22,15 @@ export async function GET(request: Request) {
 
       if (!profile) {
         // New user — create tenant + profile
+        const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
         const { data: tenant } = await supabase.from('tenants').insert({
           name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'My PIOS',
           slug: data.user.id.substring(0, 8),
           plan: 'individual',
+          plan_status: 'trialing',
+          subscription_status: 'trialing',
+          trial_ends_at: trialEndsAt,
+          ai_credits_limit: 5000,
         }).select().single()
 
         if (tenant) {

@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { AiChat } from './AiChat'
+import { TrialBanner } from '@/components/TrialBanner'
+import { TrialExpiredGate } from '@/components/TrialExpiredGate'
 
 interface PlatformShellProps {
   children: React.ReactNode
@@ -12,22 +14,42 @@ interface PlatformShellProps {
 export function PlatformShell({ children, userProfile, tenant }: PlatformShellProps) {
   const [chatOpen, setChatOpen] = useState(false)
 
+  const planStatus  = tenant?.plan_status ?? tenant?.subscription_status ?? 'active'
+  const trialEndsAt = tenant?.trial_ends_at ?? null
+  const isTrialing  = planStatus === 'trialing'
+  const isExpired   = planStatus === 'canceled' && !tenant?.stripe_subscription_id
+
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <Sidebar userProfile={userProfile} tenant={tenant} />
 
-      <main style={{ flex: 1, overflowY: 'auto', background: 'var(--pios-bg)' }}>
-        {/* Top bar */}
+      <main style={{ flex: 1, overflowY: 'auto', background: 'var(--pios-bg)', display: 'flex', flexDirection: 'column' }}>
+
+        {isTrialing && (
+          <TrialBanner trialEndsAt={trialEndsAt} planStatus={planStatus} />
+        )}
+
         <div style={{
           position: 'sticky', top: 0, zIndex: 10,
           background: 'rgba(10,11,13,0.85)', backdropFilter: 'blur(8px)',
           borderBottom: '1px solid var(--pios-border)',
           padding: '0 24px', height: '52px',
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px',
+          flexShrink: 0,
         }}>
           {tenant && (
             <div style={{ fontSize: '11px', color: 'var(--pios-dim)' }}>
               {(tenant.ai_credits_used || 0).toLocaleString()} / {(tenant.ai_credits_limit || 15000).toLocaleString()} AI credits
+            </div>
+          )}
+          {isTrialing && (
+            <div style={{
+              fontSize: '11px', color: '#a78bfa',
+              background: 'rgba(167,139,250,0.1)',
+              border: '1px solid rgba(167,139,250,0.2)',
+              padding: '3px 10px', borderRadius: 12,
+            }}>
+              Trial
             </div>
           )}
           <button onClick={() => setChatOpen(!chatOpen)} style={{
@@ -46,10 +68,14 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
           </button>
         </div>
 
-        <div style={{ padding: '28px 28px 60px' }}>
+        <div style={{ padding: '28px 28px 60px', flex: 1 }}>
           {children}
         </div>
       </main>
+
+      {isExpired && (
+        <TrialExpiredGate userName={userProfile?.full_name} />
+      )}
 
       {chatOpen && <AiChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />}
     </div>

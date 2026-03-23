@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 /**
  * GET /api/stripe/portal
  * Redirects an existing PIOS subscriber to the Stripe Customer Portal
