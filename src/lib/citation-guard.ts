@@ -10,7 +10,7 @@
  *   Step 6: Structured output with explicit provenance labels
  *
  * Used in: literature API, research/search API, academic module AI summaries
- * PIOS v1.0 | Sustain International FZE Ltd
+ * PIOS v1.0 | VeritasIQ Technologies Ltd
  */
 
 export interface CitationInput {
@@ -78,7 +78,7 @@ async function checkCrossRef(doi: string): Promise<{
   try {
     const clean = doi.replace(/^https?:\/\/doi\.org\//i, '').trim()
     const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(clean)}`, {
-      headers: { 'User-Agent': 'PIOS-CitationGuard/1.0 (mailto:d.masuku@sustain-intl.com)' },
+      headers: { 'User-Agent': 'PIOS-CitationGuard/1.0 (mailto:d.masuku@veritasiq.co.uk)' },
       signal: AbortSignal.timeout(6000),
     })
     if (!res.ok) return { found: false }

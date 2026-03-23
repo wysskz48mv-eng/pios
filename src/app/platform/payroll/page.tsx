@@ -454,7 +454,7 @@ function StaffTab() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
-  const [form, setForm]       = useState({ full_name:'', email:'', role:'', company_entity:'Sustain International FZE Ltd', employment_type:'employee', salary_currency:'GBP', monthly_salary:'', bank_account:'', payment_method:'bank_transfer' })
+  const [form, setForm]       = useState({ full_name:'', email:'', role:'', company_entity:'VeritasIQ Technologies Ltd', employment_type:'employee', salary_currency:'GBP', monthly_salary:'', bank_account:'', payment_method:'bank_transfer' })
 
   const load = () => {
     setLoading(true)
@@ -466,7 +466,7 @@ function StaffTab() {
     if (!form.full_name.trim() || !form.email.trim()) return
     setSaving(true)
     await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'add_staff', staff: { ...form, monthly_salary: parseFloat(form.monthly_salary)||null } }) })
-    setForm({ full_name:'', email:'', role:'', company_entity:'Sustain International FZE Ltd', employment_type:'employee', salary_currency:'GBP', monthly_salary:'', bank_account:'', payment_method:'bank_transfer' })
+    setForm({ full_name:'', email:'', role:'', company_entity:'VeritasIQ Technologies Ltd', employment_type:'employee', salary_currency:'GBP', monthly_salary:'', bank_account:'', payment_method:'bank_transfer' })
     setShowAdd(false); setSaving(false); load()
   }
 
@@ -485,7 +485,7 @@ function StaffTab() {
             <input className="pios-input" placeholder="Email *" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} />
             <input className="pios-input" placeholder="Role / job title" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))} />
             <select className="pios-input" value={form.company_entity} onChange={e=>setForm(p=>({...p,company_entity:e.target.value}))}>
-              {['Sustain International FZE Ltd','Sustain International UK Ltd','VeritasIQ Technologies Ltd'].map(e=><option key={e} value={e}>{e}</option>)}
+              {['VeritasIQ Technologies Ltd','Sustain International UK Ltd'].map(e=><option key={e} value={e}>{e}</option>)}
             </select>
             <select className="pios-input" value={form.employment_type} onChange={e=>setForm(p=>({...p,employment_type:e.target.value}))}>
               {['employee','contractor','consultant','director'].map(t=><option key={t} value={t}>{t}</option>)}
@@ -525,7 +525,7 @@ function StaffTab() {
               </div>
               <div style={{ textAlign:'right' as const }}>
                 <div style={{ fontSize:13, fontWeight:700 }}>{s.salary_currency} {parseFloat(s.monthly_salary??0).toFixed(0)}/mo</div>
-                <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{s.company_entity?.replace('Sustain International ','').replace(' Ltd','')}</div>
+                <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{s.company_entity?.replace('VeritasIQ Technologies Ltd','VIQ').replace('Sustain International UK Ltd','SI UK')}</div>
               </div>
             </div>
           ))}

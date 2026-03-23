@@ -25,7 +25,7 @@ export const maxDuration = 60
  *   - Imminent CFP deadlines
  *   - Live VeritasEdge / InvestiScript metrics
  *
- * PIOS v2.0 | Sustain International FZE Ltd
+ * PIOS v2.0 | VeritasIQ Technologies Ltd
  */
 export async function POST(req: NextRequest) {
   try {
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
     try {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       const [seRes, isRes, ghRes] = await Promise.allSettled([
-        fetch(`${appUrl}/api/live/sustainedge`).then(r => r.json()),
+        fetch(`${appUrl}/api/live/veritasedge`).then(r => r.json()),
         fetch(`${appUrl}/api/live/investiscript`).then(r => r.json()),
         fetch(`${appUrl}/api/live/github`).then(r => r.json()),
       ])
@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
       }
     } catch { /* never block */ }
 
-    const system = `You are the PIOS AI Companion for Douglas Masuku — founder CEO of Sustain International FZE Ltd, DBA candidate at University of Portsmouth, FM consultant building VeritasEdge™ (service charge SaaS), InvestiScript (investigative journalism AI), and PIOS.
+    const system = `You are the PIOS AI Companion for Douglas Masuku — founder CEO of VeritasIQ Technologies Ltd, DBA candidate at University of Portsmouth, FM consultant building VeritasEdge™ (service charge SaaS), InvestiScript (investigative journalism AI), and PIOS.
 
 Generate his morning brief. Be direct and action-oriented. No pleasantries.
 

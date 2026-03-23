@@ -10,7 +10,7 @@ calendar, email triage, expense tracking, payroll, and meeting notes into a sing
 Claude-powered platform.
 
 Primary user: Douglas Masuku — DBA candidate (University of Portsmouth), Group CEO of
-Sustain International FZE Ltd, FM consultant, SaaS founder (VeritasEdge™, InvestiScript).
+VeritasIQ Technologies Ltd, FM consultant, SaaS founder (VeritasEdge™, InvestiScript).
 
 ## Key capabilities Claude can help with
 

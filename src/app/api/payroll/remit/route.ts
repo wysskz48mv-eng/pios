@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     // Generate remittance content for each staff member
     const system = `You are generating a professional payslip/remittance notification email for a staff member.
-The company is Sustain International FZE Ltd (or its subsidiary as specified).
+The company is VeritasIQ Technologies Ltd (or its subsidiary as specified).
 The email should be professional, clear, and concise. Include all financial figures provided.
 Return ONLY valid JSON:
 {
@@ -64,7 +64,7 @@ Tax/NI deductions: ${run.currency} ${(parseFloat(line.tax_deduction ?? 0) + pars
 Pension: ${run.currency} ${parseFloat(line.pension ?? 0).toFixed(2)}
 Other deductions: ${run.currency} ${parseFloat(line.other_deductions ?? 0).toFixed(2)}
 Net pay: ${run.currency} ${parseFloat(line.net_pay).toFixed(2)}
-Company: ${run.company_entity ?? 'Sustain International FZE Ltd'}`
+Company: ${run.company_entity ?? 'VeritasIQ Technologies Ltd'}`
 
       let notification = { subject: `Pay Advice — ${month}`, body: `Dear ${line.staff_name},\n\nPlease find your pay advice for ${month}.\n\nNet Pay: ${run.currency} ${parseFloat(line.net_pay).toFixed(2)}\n\nRegards,\nDouglas Masuku` }
 

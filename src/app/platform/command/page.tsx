@@ -276,7 +276,7 @@ export default function CommandPage() {
   const loadPlatforms = useCallback(async () => {
     setLoading(true)
     const [seR, isR, ghR] = await Promise.all([
-      fetch('/api/live/sustainedge').then(r=>r.json()).catch(()=>({ connected:false })),
+      fetch('/api/live/veritasedge').then(r=>r.json()).catch(()=>({ connected:false })),
       fetch('/api/live/investiscript').then(r=>r.json()).catch(()=>({ connected:false })),
       fetch('/api/live/github').then(r=>r.json()).catch(()=>({ connected:false })),
     ])

@@ -7,7 +7,7 @@ Required under: GDPR Article 35 | DIFC PDPL Article 20
 
 ## 1. Description of processing
 
-SustainEdge processes personal data of:
+VeritasEdge™ processes personal data of:
 - **Platform user (single user):** name, contact details, annual tasks, emails, academic records, financial data
 - **Platform users:** email, name, role (Finance Manager, Board Member, FM Consultant)
 - **AI usage:** prompt content sent to Anthropic API for budget/lifecycle analysis
@@ -58,4 +58,4 @@ through HITL governance, RLS isolation, and GDPR mechanisms. This DPIA should be
 annually or when significant changes to processing are made.
 
 **DPO / Owner:** Douglas Masuku, CEO, VeritasIQ Technologies Ltd  
-d.masuku@sustain-intl.com
+d.masuku@veritasiq.co.uk

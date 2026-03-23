@@ -15,7 +15,7 @@
  *   - FM news (last 24h)
  *   - CFP deadlines (next 30 days)
  *
- * PIOS v2.0 | Sustain International FZE Ltd
+ * PIOS v2.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'

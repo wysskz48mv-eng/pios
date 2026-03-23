@@ -2,7 +2,7 @@
  * GET  /api/notifications  — fetch unread notifications for current user
  * POST /api/notifications  — { action:'mark_read', ids?:string[] } mark as read
  *
- * PIOS v2.0 | Sustain International FZE Ltd
+ * PIOS v2.0 | VeritasIQ Technologies Ltd
  */
 export const dynamic = 'force-dynamic'
 

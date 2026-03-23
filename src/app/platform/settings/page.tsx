@@ -530,7 +530,7 @@ export default function SettingsPage() {
             ['AI Engine',       'claude-sonnet-4-6'],
             ['Database',        'Supabase PostgreSQL (EU West)'],
             ['Deployment',      'Vercel'],
-            ['Owner',           'Sustain International FZE Ltd'],
+            ['Owner',           'VeritasIQ Technologies Ltd'],
             ['Migrations run',  '001–007'],
           ].map(([l,v])=>(
             <div key={l} style={{ display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--pios-border)' }}>

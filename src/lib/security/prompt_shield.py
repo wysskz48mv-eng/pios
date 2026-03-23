@@ -5,7 +5,7 @@ Protects system prompts, editorial logic, and AI agent instructions
 from extraction via adversarial user inputs.
 
 CLASSIFICATION: RESTRICTED — PROPRIETARY SOURCE CODE
-COPYRIGHT: Sustain International FZE Ltd. All rights reserved.
+COPYRIGHT: VeritasIQ Technologies Ltd. All rights reserved.
 """
 
 from __future__ import annotations

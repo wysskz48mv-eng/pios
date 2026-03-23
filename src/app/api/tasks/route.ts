@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     // AI prioritise action
     if (body.action === 'ai_prioritise') {
       const { tasks } = body
-      const system = `You are PIOS AI helping Douglas Masuku, Group CEO of Sustain International FZE Ltd and DBA candidate at University of Portsmouth. Analyse his task list and return a prioritised order with reasoning.
+      const system = `You are PIOS AI helping Douglas Masuku, Group CEO of VeritasIQ Technologies Ltd and DBA candidate at University of Portsmouth. Analyse his task list and return a prioritised order with reasoning.
 
 Return ONLY valid JSON:
 {

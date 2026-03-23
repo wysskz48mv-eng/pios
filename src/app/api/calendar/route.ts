@@ -35,8 +35,8 @@ async function getGoogleToken(supabase: any, userId: string): Promise<string | n
 function classifyDomain(title: string, description: string): string {
   const text = (title + ' ' + (description ?? '')).toLowerCase()
   if (text.match(/dba|thesis|university|supervision|portsmouth|academic|lecture|study/)) return 'academic'
-  if (text.match(/qiddiya|ksp|king salman|fm|facilities|sustainedge|consultancy|client|proposal|site visit/)) return 'fm_consulting'
-  if (text.match(/investiscript|sustainedge|pios|sprint|deployment|product|saas|dev/)) return 'saas'
+  if (text.match(/qiddiya|ksp|king salman|fm|facilities|veritasedge|consultancy|client|proposal|site visit/)) return 'fm_consulting'
+  if (text.match(/investiscript|veritasedge|pios|sprint|deployment|product|saas|dev/)) return 'saas'
   if (text.match(/sustain international|veritasiq|board|company|legal|compliance|payroll|accountant|bank/)) return 'business'
   return 'personal'
 }
@@ -201,7 +201,7 @@ export async function POST(request: Request) {
 
       const context = `Open tasks: ${tasksR.data?.map(t => `${t.title} [${t.priority}]`).join(', ') ?? 'none'}\nActive projects: ${projectsR.data?.map(p => `${p.title} ${p.progress}%`).join(', ') ?? 'none'}`
 
-      const system = `You are PIOS AI generating a pre-meeting brief for Douglas Masuku, Group CEO of Sustain International FZE Ltd and DBA candidate.
+      const system = `You are PIOS AI generating a pre-meeting brief for Douglas Masuku, Group CEO of VeritasIQ Technologies Ltd and DBA candidate.
 Generate a concise, actionable meeting brief. Plain prose, 3 short paragraphs max. No lists.
 Include: what the meeting is about, key things to cover or prepare, any relevant cross-domain context from his current work.`
 

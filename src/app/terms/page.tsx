@@ -21,7 +21,7 @@ export default function TermsPage() {
             title: '1. Acceptance',
             body: `By creating a PIOS account, you agree to these Terms of Service and our Privacy Policy. If you do not agree, do not use PIOS.
 
-PIOS is operated by Sustain International FZE Ltd ("we", "us", "our"), registered in the UAE Free Zone.`
+PIOS is operated by VeritasIQ Technologies Ltd ("we", "us", "our"), registered in the UAE Free Zone.`
           },
           {
             title: '2. Service description',
@@ -74,13 +74,13 @@ Stripe handles all payment processing. Your card details are never stored on our
           },
           {
             title: '8. Intellectual property',
-            body: `PIOS, the NemoClaw methodology references, and all platform content are the intellectual property of Sustain International FZE Ltd and its subsidiaries. You retain ownership of content you create within PIOS (your tasks, notes, files, etc.).
+            body: `PIOS, the NemoClaw methodology references, and all platform content are the intellectual property of VeritasIQ Technologies Ltd and its subsidiaries. You retain ownership of content you create within PIOS (your tasks, notes, files, etc.).
 
 You grant us a limited licence to store, process, and display your content solely for the purpose of providing the service.`
           },
           {
             title: '9. Limitation of liability',
-            body: `To the maximum extent permitted by law, Sustain International FZE Ltd shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of PIOS.
+            body: `To the maximum extent permitted by law, VeritasIQ Technologies Ltd shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of PIOS.
 
 Our total liability to you for any claim shall not exceed the amount you paid us in the 12 months prior to the claim.`
           },
@@ -94,9 +94,9 @@ Our total liability to you for any claim shall not exceed the amount you paid us
           },
           {
             title: '12. Contact',
-            body: `Sustain International FZE Ltd
+            body: `VeritasIQ Technologies Ltd
 Fujairah Creative City Free Zone, UAE
-Email: d.masuku@sustain-intl.com`
+Email: d.masuku@veritasiq.co.uk`
           },
         ].map(section => (
           <div key={section.title} style={{ marginBottom:28 }}>

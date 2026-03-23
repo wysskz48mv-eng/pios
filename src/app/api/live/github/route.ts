@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
 // GET /api/live/github
-// Pulls recent commits from SustainEdge and InvestiScript repos
+// Pulls recent commits from VeritasEdge™ and InvestiScript repos
 // Uses PAT stored as GITHUB_PAT env var
 
 export const runtime = 'nodejs'
 
 const REPOS = [
-  { key: 'sustainedge',  repo: 'wysskz48mv-eng/sustainedge',   label: 'VeritasEdge™' },
+  { key: 'veritasedge',  repo: 'wysskz48mv-eng/sustainedge',   label: 'VeritasEdge™' }  // GitHub repo slug unchanged,
   { key: 'investiscript', repo: 'wysskz48mv-eng/investiscript', label: 'InvestiScript' },
   { key: 'pios',          repo: 'wysskz48mv-eng/pios',          label: 'PIOS' },
 ]

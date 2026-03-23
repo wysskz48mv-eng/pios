@@ -100,4 +100,4 @@ Supabase project: `vfvfulbcaurqkygjrrhh` (EU West)
 
 ---
 
-*PIOS v1.0 · VeritasIQ Technologies Ltd · Sustain International FZE Ltd*
+*PIOS v1.0 · VeritasIQ Technologies Ltd · VeritasIQ Technologies Ltd*

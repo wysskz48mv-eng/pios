@@ -19,16 +19,16 @@ export default function PrivacyPage() {
 
         <div style={{ background:'rgba(167,139,250,0.05)', border:'1px solid rgba(167,139,250,0.15)', borderRadius:12, padding:'16px 20px', marginBottom:32 }}>
           <p style={{ fontSize:13, color:'#94a3b8', lineHeight:1.75, margin:0 }}>
-            <strong style={{ color:'#a78bfa' }}>Summary:</strong> PIOS is a personal productivity platform operated by Sustain International FZE Ltd. Your data is stored in the EU (Ireland), never sold, never used for advertising. You can export or delete your data at any time.
+            <strong style={{ color:'#a78bfa' }}>Summary:</strong> PIOS is a personal productivity platform operated by VeritasIQ Technologies Ltd. Your data is stored in the EU (Ireland), never sold, never used for advertising. You can export or delete your data at any time.
           </p>
         </div>
 
         {[
           {
             title: '1. Who we are',
-            body: `PIOS ("Personal Intelligent Operating System") is operated by Sustain International FZE Ltd, a company registered in the UAE (Free Zone). Our registered address is Fujairah Creative City Free Zone, UAE.
+            body: `PIOS ("Personal Intelligent Operating System") is operated by VeritasIQ Technologies Ltd, a company registered in the UAE (Free Zone). Our registered address is Fujairah Creative City Free Zone, UAE.
 
-For data protection enquiries: d.masuku@sustain-intl.com`
+For data protection enquiries: d.masuku@veritasiq.co.uk`
           },
           {
             title: '2. What data we collect',
@@ -81,7 +81,7 @@ Each provider operates under their own privacy policy and data processing agreem
 • Export: export your data in JSON format (available on request)
 • Withdraw consent: disconnect Google integrations at any time via Settings → Integrations
 
-To exercise any of these rights, contact us at d.masuku@sustain-intl.com or use the in-app Settings controls.`
+To exercise any of these rights, contact us at d.masuku@veritasiq.co.uk or use the in-app Settings controls.`
           },
           {
             title: '7. Data retention',
@@ -106,9 +106,9 @@ We do not use analytics cookies, advertising cookies, or any third-party trackin
           },
           {
             title: '11. Contact',
-            body: `Sustain International FZE Ltd
+            body: `VeritasIQ Technologies Ltd
 Fujairah Creative City Free Zone, UAE
-Email: d.masuku@sustain-intl.com`
+Email: d.masuku@veritasiq.co.uk`
           },
         ].map(section => (
           <div key={section.title} style={{ marginBottom:28 }}>

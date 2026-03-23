@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
   // Fetch cross-platform live snapshots (non-blocking, runs once)
   useEffect(() => {
-    fetch('/api/live/sustainedge').then(r => r.ok ? r.json() : null)
+    fetch('/api/live/veritasedge').then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.connected && d?.snapshot) setSeSnap(d.snapshot) })
       .catch(() => {})
     fetch('/api/live/investiscript').then(r => r.ok ? r.json() : null)

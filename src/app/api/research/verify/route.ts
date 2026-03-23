@@ -6,7 +6,7 @@
  * Body: { citations: CitationInput[] }
  * Returns: GuardReport
  *
- * PIOS v1.0 | Sustain International FZE Ltd
+ * PIOS v1.0 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'

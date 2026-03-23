@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     }
 
     // Generate chase email draft
-    const system = `You are drafting a professional payroll chase email on behalf of Douglas Masuku, Group CEO of Sustain International FZE Ltd.
+    const system = `You are drafting a professional payroll chase email on behalf of Douglas Masuku, Group CEO of VeritasIQ Technologies Ltd.
 The tone must be professional but appropriately firm based on the chase level.
 Chase levels:
 - reminder: polite reminder, assume oversight, friendly
@@ -104,7 +104,7 @@ To: ${accountant_name}${accountant_email ? ` <${accountant_email}>` : ''}
 Month: ${month}
 Days overdue: ${daysOverdue}
 Expected date: ${payrollDueDate}
-From: Douglas Masuku, Group CEO, Sustain International FZE Ltd
+From: Douglas Masuku, Group CEO, VeritasIQ Technologies Ltd
 Staff count: unknown (accountant has the details)`
 
     const raw = await callClaude(

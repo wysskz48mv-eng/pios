@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 // /platform/setup — Environment setup guide for PIOS Phase 2
 // Covers: CRON_SECRET, Google OAuth, Resend, Live Data vars
 // Owner: dmasuku2008@me.com
-// PIOS v2.0 | Sustain International FZE Ltd
+// PIOS v2.0 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface Step {
@@ -113,8 +113,8 @@ const STEPS: Step[] = [
       {
         label:    '',
         key:      'RESEND_FROM_EMAIL',
-        value:    'PIOS <pios@sustainintl.com>',
-        note:     'Must match a verified domain in Resend. Use sustainintl.com or any domain you own.',
+        value:    'PIOS <pios@veritasiq.co.uk>',
+        note:     'Must match a verified domain in Resend. Use veritasiq.co.uk or any domain you own.',
         url:      'https://vercel.com/wysskz48mv-eng/pios/settings/environment-variables',
         urlLabel: 'Open Vercel Env Vars →',
       },
@@ -194,14 +194,14 @@ const STEPS: Step[] = [
     items: [
       {
         label:    'Add domain in Vercel',
-        note:     'Vercel → PIOS project → Settings → Domains → Add domain. Suggested: pios.sustainintl.com',
+        note:     'Vercel → PIOS project → Settings → Domains → Add domain. Suggested: pios.veritasiq.co.uk',
         url:      'https://vercel.com/wysskz48mv-eng/pios/settings/domains',
         urlLabel: 'Open Vercel Domains →',
       },
       {
         label:    'Update NEXT_PUBLIC_APP_URL',
         key:      'NEXT_PUBLIC_APP_URL',
-        value:    'https://pios.sustainintl.com',
+        value:    'https://pios.veritasiq.co.uk',
         note:     'Update this env var to your custom domain after it is live.',
       },
     ],

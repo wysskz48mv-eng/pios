@@ -3,7 +3,7 @@
  * Creates in-app notifications for key PIOS events.
  * Called server-side from API routes after significant actions.
  *
- * PIOS v2.0 | Sustain International FZE Ltd
+ * PIOS v2.0 | VeritasIQ Technologies Ltd
  */
 import { createClient } from '@/lib/supabase/server'
 
