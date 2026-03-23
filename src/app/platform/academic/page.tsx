@@ -345,6 +345,10 @@ export default function AcademicPage() {
         </div>
       </div>
 
+
+      {/* DBA Programme Milestones */}
+      <MilestonesSection />
+
       {/* Modules + Sessions */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
         <div className="pios-card">
@@ -397,6 +401,141 @@ export default function AcademicPage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── DBA Milestones Section ───────────────────────────────────────────────────
+const MILESTONE_STATUS_COLOURS: Record<string, string> = {
+  upcoming:    '#60a5fa',
+  in_progress: '#f59e0b',
+  submitted:   '#a78bfa',
+  passed:      '#34d399',
+  failed:      '#f87171',
+  deferred:    '#94a3b8',
+  waived:      '#94a3b8',
+  skipped:     '#64748b',
+}
+
+const DBA_MILESTONES_TEMPLATE = [
+  { title: 'Programme Registration', milestone_type: 'registration',     category: 'administrative' },
+  { title: 'Ethics Approval',         milestone_type: 'ethics_approval',  category: 'academic'       },
+  { title: 'Literature Review',       milestone_type: 'literature_review',category: 'research'       },
+  { title: 'Research Proposal',       milestone_type: 'research_proposal',category: 'academic'       },
+  { title: 'Upgrade Review',          milestone_type: 'upgrade',          category: 'academic'       },
+  { title: 'Data Collection',         milestone_type: 'data_collection',  category: 'research'       },
+  { title: 'Analysis Complete',       milestone_type: 'analysis',         category: 'research'       },
+  { title: 'Thesis Submission',       milestone_type: 'thesis_submission',category: 'academic'       },
+  { title: 'Viva Voce',               milestone_type: 'viva',             category: 'academic'       },
+  { title: 'Award Conferred',         milestone_type: 'award',            category: 'academic'       },
+]
+
+function MilestonesSection() {
+  const [milestones, setMilestones] = useState<any[]>([])
+  const [summary,    setSummary]    = useState<any>(null)
+  const [loading,    setLoading]    = useState(true)
+  const [seeding,    setSeeding]    = useState(false)
+  const [saving,     setSaving]     = useState<string|null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const r = await fetch('/api/milestones', { credentials: 'include' })
+      const d = await r.json()
+      if (d.ok) { setMilestones(d.milestones); setSummary(d.summary) }
+    } catch { /* silent — table may not exist until M011 runs */ }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const seedMilestones = async () => {
+    setSeeding(true)
+    try {
+      await Promise.all(DBA_MILESTONES_TEMPLATE.map(m =>
+        fetch('/api/milestones', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(m),
+        })
+      ))
+      await load()
+    } catch { /* silent */ }
+    setSeeding(false)
+  }
+
+  const updateStatus = async (id: string, status: string) => {
+    setSaving(id)
+    try {
+      await fetch('/api/milestones', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id, status }),
+      })
+      setMilestones(prev => prev.map(m => m.id === id ? { ...m, status } : m))
+    } catch { /* silent */ }
+    setSaving(null)
+  }
+
+  if (loading) return null
+
+  return (
+    <div className="pios-card">
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:700 }}>DBA Programme Milestones</div>
+          {summary && (
+            <div style={{ fontSize:11, color:'var(--pios-dim)', marginTop:2 }}>
+              {summary.completed}/{summary.total} complete
+              {summary.overdue > 0 && <span style={{ color:'#f87171', marginLeft:6 }}>· {summary.overdue} overdue</span>}
+              {summary.next && <span style={{ color:'var(--pios-muted)', marginLeft:6 }}>· next: {summary.next.title}</span>}
+            </div>
+          )}
+        </div>
+        {milestones.length === 0 && (
+          <button onClick={seedMilestones} disabled={seeding}
+            style={{ fontSize:11, padding:'5px 12px', borderRadius:8, border:'1px solid var(--pios-border)', background:'var(--pios-surface2)', color:'var(--pios-muted)', cursor:'pointer' }}>
+            {seeding ? 'Seeding…' : 'Seed DBA milestones'}
+          </button>
+        )}
+      </div>
+
+      {milestones.length === 0 ? (
+        <p style={{ color:'var(--pios-dim)', fontSize:12, textAlign:'center', padding:'16px 0' }}>
+          No milestones yet. Run migration 011, then click "Seed DBA milestones".
+        </p>
+      ) : (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8 }}>
+          {milestones.map(m => (
+            <div key={m.id} style={{
+              padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)',
+              borderLeft:`3px solid ${MILESTONE_STATUS_COLOURS[m.status]??'var(--pios-border)'}`,
+              opacity: ['waived','skipped'].includes(m.status) ? 0.5 : 1,
+            }}>
+              <div style={{ fontSize:11, fontWeight:600, marginBottom:4, lineHeight:1.3 }}>{m.title}</div>
+              <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                <select
+                  value={m.status}
+                  disabled={saving === m.id}
+                  onChange={e => updateStatus(m.id, e.target.value)}
+                  style={{ fontSize:9, padding:'2px 5px', borderRadius:8, border:'none',
+                    background:(MILESTONE_STATUS_COLOURS[m.status]??'#64748b')+'22',
+                    color:MILESTONE_STATUS_COLOURS[m.status]??'var(--pios-dim)',
+                    fontWeight:700, cursor:'pointer', outline:'none', textTransform:'uppercase', letterSpacing:'0.04em' }}>
+                  {['upcoming','in_progress','submitted','passed','failed','deferred','waived'].map(s =>
+                    <option key={s} value={s}>{s.replace(/_/g,' ')}</option>
+                  )}
+                </select>
+                {m.target_date && (
+                  <span style={{ fontSize:9, color: m.is_overdue ? '#f87171' : 'var(--pios-dim)' }}>
+                    {m.is_overdue ? '⚠ ' : ''}{m.days_until !== null ? (m.days_until < 0 ? `${Math.abs(m.days_until)}d overdue` : `${m.days_until}d`) : ''}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
