@@ -1,6 +1,6 @@
 # PIOS v1.0 — Personal Intelligence Operating System
 
-**VeritasIQ Technologies Ltd** · `pios-wysskz48mv-engs-projects.vercel.app`
+**VeritasIQ Technologies Ltd** · `pios.sustain-intl.com`
 
 A personal AI operating system for multi-domain executives: surfaces cross-domain conflicts
 (academic deadlines vs. business commitments), generates daily intelligence briefs, and
@@ -54,7 +54,7 @@ STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_STUDENT=
 STRIPE_PRICE_INDIVIDUAL=
 STRIPE_PRICE_PROFESSIONAL=
-NEXT_PUBLIC_APP_URL=https://pios-wysskz48mv-engs-projects.vercel.app
+NEXT_PUBLIC_APP_URL=https://pios.sustain-intl.com
 RESEND_API_KEY=
 GOOGLE_CLIENT_ID=         # For Gmail OAuth
 GOOGLE_CLIENT_SECRET=

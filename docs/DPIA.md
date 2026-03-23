@@ -58,4 +58,4 @@ through HITL governance, RLS isolation, and GDPR mechanisms. This DPIA should be
 annually or when significant changes to processing are made.
 
 **DPO / Owner:** Douglas Masuku, CEO, VeritasIQ Technologies Ltd  
-d.masuku@veritasiq.co.uk
+info@sustain-intl.com

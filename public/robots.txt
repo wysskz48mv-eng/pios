@@ -19,4 +19,4 @@ Allow: /llms.txt
 Allow: /api/claude-context
 Allow: /
 
-Sitemap: https://pios-wysskz48mv-engs-projects.vercel.app/sitemap.xml
+Sitemap: https://pios.sustain-intl.com/sitemap.xml

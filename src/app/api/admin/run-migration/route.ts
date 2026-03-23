@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/run-migration
  * Applies PIOS migrations 008–012 via direct pg connection.
- * Auth: owner email (dmasuku2008@me.com) session.
+ * Auth: owner email (info@sustain-intl.com) session.
  * PIOS v2.2 | Sprint 28 | VeritasIQ Technologies Ltd
  */
 export const runtime = 'nodejs'
@@ -11,7 +11,7 @@ export const maxDuration = 60
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const OWNER_EMAIL = 'dmasuku2008@me.com'
+const OWNER_EMAIL = 'info@sustain-intl.com'
 
 const MIGRATIONS: Record<string, { name: string; sql: string; sentinel: string }> = {
   '008': {

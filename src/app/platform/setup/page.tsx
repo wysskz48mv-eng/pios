@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 // ─────────────────────────────────────────────────────────────────────────────
 // /platform/setup — Environment setup guide for PIOS Phase 2
 // Covers: CRON_SECRET, Google OAuth, Resend, Live Data vars
-// Owner: dmasuku2008@me.com
+// Owner: info@sustain-intl.com
 // PIOS v2.2 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -113,7 +113,7 @@ const STEPS: Step[] = [
       {
         label:    '',
         key:      'RESEND_FROM_EMAIL',
-        value:    'PIOS <pios@veritasiq.co.uk>',
+        value:    'PIOS <info@sustain-intl.com>',
         note:     'Must match a verified domain in Resend. Use veritasiq.co.uk or any domain you own.',
         url:      'https://vercel.com/wysskz48mv-eng/pios/settings/environment-variables',
         urlLabel: 'Open Vercel Env Vars →',
@@ -158,7 +158,7 @@ const STEPS: Step[] = [
     items: [
       {
         label:    'Register app in Azure Portal',
-        note:     'Go to portal.azure.com → Microsoft Entra ID → App registrations → New registration. Name: PIOS. Supported account types: Accounts in any organizational directory and personal Microsoft accounts. Redirect URI (Web): https://pios-wysskz48mv-engs-projects.vercel.app/api/auth/callback/microsoft',
+        note:     'Go to portal.azure.com → Microsoft Entra ID → App registrations → New registration. Name: PIOS. Supported account types: Accounts in any organizational directory and personal Microsoft accounts. Redirect URI (Web): https://pios.sustain-intl.com/api/auth/callback/microsoft',
         url:      'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
         urlLabel: 'Open Azure App Registrations →',
       },
@@ -194,14 +194,14 @@ const STEPS: Step[] = [
     items: [
       {
         label:    'Add domain in Vercel',
-        note:     'Vercel → PIOS project → Settings → Domains → Add domain. Suggested: pios.veritasiq.co.uk',
+        note:     'Vercel → PIOS project → Settings → Domains → Add domain. Suggested: pios.sustain-intl.com',
         url:      'https://vercel.com/wysskz48mv-eng/pios/settings/domains',
         urlLabel: 'Open Vercel Domains →',
       },
       {
         label:    'Update NEXT_PUBLIC_APP_URL',
         key:      'NEXT_PUBLIC_APP_URL',
-        value:    'https://pios.veritasiq.co.uk',
+        value:    'https://pios.sustain-intl.com',
         note:     'Update this env var to your custom domain after it is live.',
       },
     ],

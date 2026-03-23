@@ -11,7 +11,7 @@ import { Resend }                     from 'resend'
 export const dynamic     = 'force-dynamic'
 export const maxDuration = 30
 
-const FROM = process.env.FROM_EMAIL ?? 'noreply@pios.app'
+const FROM = process.env.FROM_EMAIL ?? 'noreply@sustain-intl.com'
 
 function wrap(body: string): string {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>

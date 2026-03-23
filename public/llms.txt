@@ -1,5 +1,5 @@
 # PIOS — Personal Intelligent Operating System
-# VeritasIQ Technologies Ltd | pios-wysskz48mv-engs-projects.vercel.app
+# VeritasIQ Technologies Ltd | pios.sustain-intl.com
 # llms.txt v2.3 — Claude for Chrome integration manifest
 
 ## What is PIOS?

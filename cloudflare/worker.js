@@ -8,7 +8,7 @@
  *   1. Cloudflare Dashboard → Workers & Pages → Create Application → Create Worker
  *   2. Paste this entire script
  *   3. Deploy
- *   4. Set route: *.veritasedge.com/*, *.investiscript.vercel.app/*, *.pios.vercel.app/*
+ *   4. Set route: *.veritasedge.com/*, *.investiscript.vercel.app/*, *.pios.sustain-intl.com/*
  *      OR set as zone-wide worker if custom domains are configured
  *
  * ALSO: Create WAF Custom Rules in Cloudflare Dashboard:
@@ -24,7 +24,7 @@ const ALLOWED_ORIGINS = [
   "https://www.veritasedge.com",
   "https://app.veritasedge.com",
   "https://investiscript.vercel.app",
-  "https://pios-wysskz48mv-engs-projects.vercel.app",
+  "https://pios.sustain-intl.com",
   // Add custom domains when configured
 ];
 

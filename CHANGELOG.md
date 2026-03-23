@@ -100,7 +100,7 @@
   - Run all: executes all pending migrations in sequence
   - Supabase dashboard quick links: SQL Editor, Table Editor, Auth, Storage, RLS, API
   - Vercel environment variables checklist (required vs optional)
-  - Access restricted to owner `dmasuku2008@me.com`
+  - Access restricted to owner `info@sustain-intl.com`
 - **Admin Migrate API** (`/api/admin/migrate` — GET + POST, 213L) — GET checks sentinel tables; POST runs specified migration SQL, returns SQL text if manual execution needed
 - **Admin Migrate SQL API** (`/api/admin/migrate/sql` — 37L) — serves raw migration SQL for copy/paste into Supabase SQL Editor
 - **Signup/Onboarding flow** (`/auth/signup`, 195L) — new user registration with email/password, organisation name, role selection; email verification redirect

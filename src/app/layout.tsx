@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PIOS — Personal Intelligent Operating System',
     description: 'The AI operating system for multi-domain professionals.',
-    url: 'https://pios.vercel.app',
+    url: 'https://pios.sustain-intl.com',
     siteName: 'PIOS',
   },
 }

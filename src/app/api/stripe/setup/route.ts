@@ -3,7 +3,7 @@
  * One-time route: creates PIOS products + prices in Stripe and
  * returns the price IDs to add as Vercel env vars.
  *
- * Only callable by the owner (dmasuku2008@me.com).
+ * Only callable by the owner (info@sustain-intl.com).
  * Safe to run multiple times — looks up existing products by metadata
  * before creating, so it won't duplicate.
  *
@@ -47,7 +47,7 @@ export async function POST() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (user.email !== 'dmasuku2008@me.com') {
+  if (user.email !== 'info@sustain-intl.com') {
     return NextResponse.json({ error: 'Owner only' }, { status: 403 })
   }
 
