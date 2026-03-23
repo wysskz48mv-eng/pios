@@ -148,17 +148,17 @@ export async function POST(req: NextRequest) {
         : '',
 
       (fmNewsR.data ?? []).length > 0
-        ? `FM INTELLIGENCE (last 24h):\n` + (fmNewsR.data ?? []).map((n: any) => `- [${(n.category ?? '').toUpperCase()}] ${n.headline}`).join('\n')
+        ? `FM INTELLIGENCE (last 24h):\n` + (fmNewsR.data ?? []).map((n: Record<string, unknown>) => `- [${(n.category ?? '').toUpperCase()}] ${n.headline}`).join('\n')
         : 'FM INTELLIGENCE: no fresh signals',
 
       (cfpR.data ?? []).length > 0
-        ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: any) => `- "${c.title}" (${c.journal_name ?? 'journal'}) — ${c.deadline}`).join('\n')
+        ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: Record<string, unknown>) => `- "${c.title}" (${c.journal_name ?? 'journal'}) — ${c.deadline}`).join('\n')
         : '',
 
       // Meetings context (Otter.ai integration)
       (meetingsR.data ?? []).length > 0
         ? `RECENT MEETINGS (${meetingsR.data?.length}):\n` +
-          (meetingsR.data ?? []).map((m: any) =>
+          (meetingsR.data ?? []).map((m: Record<string, unknown>) =>
             `- [${m.meeting_type.toUpperCase()}] ${m.title} (${m.meeting_date}) — ${m.status}${m.ai_summary ? ': ' + m.ai_summary.slice(0, 120) + '…' : ''}${m.tasks_created ? ' [tasks created]' : ''}`
           ).join('\n')
         : '',
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
       (pendingActionsR.data ?? []).length > 0
         ? `MEETING ACTION ITEMS AWAITING TASK PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
           (pendingActionsR.data ?? []).flatMap((m: any) =>
-            ((m.ai_action_items ?? []) as any[]).slice(0,3).map((a: any) =>
+            ((m.ai_action_items ?? []) as any[]).slice(0,3).map((a: Record<string, unknown>) =>
               `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${m.title}" (${m.meeting_date}). Go to /platform/meetings to promote.`
             )
           ).join('\n')
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
       // Auto-captured receipts (WellyBox integration)
       (receiptsR.data ?? []).length > 0
         ? `AUTO-CAPTURED RECEIPTS/INVOICES (last 48h — ${receiptsR.data?.length}):\n` +
-          (receiptsR.data ?? []).map((r: any) => {
+          (receiptsR.data ?? []).map((r: Record<string, unknown>) => {
             const rd = r.receipt_data
             return rd
               ? `- ${rd.vendor ?? r.sender_name ?? 'Unknown'}: ${rd.currency ?? 'GBP'} ${rd.amount ?? '?'} — ${r.subject} (${rd.date ?? 'today'})`

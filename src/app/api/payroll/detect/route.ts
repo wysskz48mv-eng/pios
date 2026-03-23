@@ -96,7 +96,7 @@ Return ONLY valid JSON or null if this is not a payroll email:
 
       if (run) {
         await supabase.from('payroll_lines').insert(
-          extracted.lines.map((l: any) => ({ ...l, payroll_run_id: run.id, user_id: user.id }))
+          extracted.lines.map((l: Record<string, unknown>) => ({ ...l, payroll_run_id: run.id, user_id: user.id }))
         )
       }
 

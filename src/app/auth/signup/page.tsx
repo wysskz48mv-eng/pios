@@ -167,7 +167,7 @@ export default function SignupPage() {
               ].map(field => (
                 <div key={field.key}>
                   <div style={{ fontSize:11, color:'#64748b', marginBottom:6 }}>{field.label}</div>
-                  <input placeholder={field.placeholder} value={(form as any)[field.key]} onChange={e=>f(field.key,e.target.value)} />
+                  <input placeholder={field.placeholder} value={(form as Record<string, unknown>)[field.key]} onChange={e=>f(field.key,e.target.value)} />
                 </div>
               ))}
               <div style={{ display:'flex', gap:8, marginTop:4 }}>

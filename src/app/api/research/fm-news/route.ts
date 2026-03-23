@@ -88,7 +88,7 @@ Return ONLY valid JSON, no markdown:
         .lt('fetched_at', new Date(Date.now() - 7 * 86400000).toISOString())
 
       // Insert fresh items
-      const inserts = items.map((item: any) => ({
+      const inserts = items.map((item: Record<string, unknown>) => ({
         user_id: user.id,
         headline: item.headline,
         summary: item.summary,

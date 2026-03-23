@@ -47,7 +47,7 @@ export async function GET() {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
     // Mask sensitive fields — never return tokens
-    const accounts = (data ?? []).map((a: any) => ({
+    const accounts = (data ?? []).map((a: Record<string, unknown>) => ({
       ...a,
       // Indicate token presence without exposing value
       has_token: a.provider === 'google'

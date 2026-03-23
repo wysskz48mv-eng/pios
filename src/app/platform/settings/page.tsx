@@ -20,7 +20,7 @@ const PROVIDER_LABELS: Record<string, string> = { google:'Gmail / Google', micro
 const PROVIDER_COLOURS: Record<string, string> = { google:'#4285F4', microsoft:'#0078D4', imap:'#64748b' }
 
 function EmailAccountsSection() {
-  const [accounts, setAccounts]   = useState<any[]>([])
+  const [accounts, setAccounts]   = useState<unknown[]>([])
   const [loading, setLoading]     = useState(true)
   const [showAdd, setShowAdd]     = useState(false)
   const [addProvider, setAddProvider] = useState<'google'|'microsoft'|'imap'>('google')
@@ -223,7 +223,7 @@ function EmailAccountsSection() {
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-          {accounts.map((acc: any) => (
+          {accounts.map((acc: Record<string, unknown>) => (
             <div key={acc.id} style={{ padding:'12px 14px', background:'var(--pios-surface2)', borderRadius:10, border:`1px solid var(--pios-border)` }}>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <div style={{ width:8, height:8, borderRadius:'50%', background: PROVIDER_COLOURS[acc.provider] ?? '#64748b', flexShrink:0 }} />
@@ -296,10 +296,10 @@ function Row({ label, value, colour }: { label:string; value:string; colour?:str
 }
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [tenant,  setTenant]  = useState<any>(null)
-  const [user,    setUser]    = useState<any>(null)
-  const [feedSettings,   setFeedSettings]   = useState<any>(null)
+  const [profile, setProfile] = useState<unknown>(null)
+  const [tenant,  setTenant]  = useState<unknown>(null)
+  const [user,    setUser]    = useState<unknown>(null)
+  const [feedSettings,   setFeedSettings]   = useState<unknown>(null)
   const [billingNotice,  setBillingNotice]  = useState<{msg:string,ok:boolean}|null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -392,7 +392,7 @@ export default function SettingsPage() {
               ].map(([k,l]) => (
                 <div key={k}>
                   <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>{l}</div>
-                  <input className="pios-input" value={(form as any)[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
+                  <input className="pios-input" value={(form as Record<string, unknown>)[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
                 </div>
               ))}
               <div style={{ display:'flex',gap:8,marginTop:4 }}>

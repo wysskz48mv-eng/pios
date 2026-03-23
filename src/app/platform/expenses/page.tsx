@@ -26,13 +26,13 @@ function Bar({ pct, colour='#6c8eff' }: { pct:number; colour?:string }) {
 }
 
 export default function ExpensesPage() {
-  const [expenses,     setExpenses]     = useState<any[]>([])
+  const [expenses,     setExpenses]     = useState<unknown[]>([])
   const [loading,      setLoading]      = useState(true)
   const [saving,       setSaving]       = useState(false)
   const [showAdd,      setShowAdd]      = useState(false)
   const [deleting,     setDeleting]     = useState<string|null>(null)
   const [editing,      setEditing]      = useState<string|null>(null)
-  const [editForm,     setEditForm]     = useState<any>(null)
+  const [editForm,     setEditForm]     = useState<unknown>(null)
   const [taxYear,      setTaxYear]      = useState('all')
   const [domainFilter, setDomainFilter] = useState('all')
   const [aiLoading,    setAiLoading]    = useState(false)

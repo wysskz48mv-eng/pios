@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
   // Strip raw_transcript from list view (large field — fetch on demand)
-  const meetings = (data ?? []).map((m: any) => {
+  const meetings = (data ?? []).map((m: Record<string, unknown>) => {
     const { raw_transcript, ...rest } = m
     return { ...rest, has_transcript: !!raw_transcript }
   })

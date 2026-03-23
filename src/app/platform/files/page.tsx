@@ -58,7 +58,7 @@ function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; al
 
 // ── Structure tab ─────────────────────────────────────────────────────────────
 function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:any[]; onScan:(folder:string)=>void; scanning:boolean; scanResult:any; stats:any }) {
-  const [selectedSpace, setSelectedSpace] = useState<any>(null)
+  const [selectedSpace, setSelectedSpace] = useState<unknown>(null)
   const [showAddSpace, setShowAddSpace] = useState(false)
   const [newSpace, setNewSpace] = useState({ name:'', space_type:'folder', icon:'📁', colour:'#6c8eff' })
   const roots = spaces.filter(s => !s.parent_id)
@@ -156,7 +156,7 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
 
 // ── Files tab ─────────────────────────────────────────────────────────────────
 function FilesTab({ spaces }: { spaces:any[] }) {
-  const [items, setItems]     = useState<any[]>([])
+  const [items, setItems]     = useState<unknown[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('all')
   const [extracting, setExtracting] = useState<string|null>(null)
@@ -239,7 +239,7 @@ function FilesTab({ spaces }: { spaces:any[] }) {
 
 // ── Invoices tab ──────────────────────────────────────────────────────────────
 function InvoicesTab() {
-  const [invoices, setInvoices] = useState<any[]>([])
+  const [invoices, setInvoices] = useState<unknown[]>([])
   const [loading, setLoading]   = useState(true)
   const [filter, setFilter]     = useState('all')
   const [updating, setUpdating] = useState<string|null>(null)
@@ -339,7 +339,7 @@ function InvoicesTab() {
 
 // ── Rules tab ─────────────────────────────────────────────────────────────────
 function RulesTab({ spaces }: { spaces:any[] }) {
-  const [rules, setRules]     = useState<any[]>([])
+  const [rules, setRules]     = useState<unknown[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -445,10 +445,10 @@ function RulesTab({ spaces }: { spaces:any[] }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function FilesPage() {
   const [tab, setTab]           = useState<Tab>('structure')
-  const [spaces, setSpaces]     = useState<any[]>([])
-  const [stats, setStats]       = useState<any>(null)
+  const [spaces, setSpaces]     = useState<unknown[]>([])
+  const [stats, setStats]       = useState<unknown>(null)
   const [scanning, setScanning] = useState(false)
-  const [scanResult, setScanResult] = useState<any>(null)
+  const [scanResult, setScanResult] = useState<unknown>(null)
 
   useEffect(() => {
     fetch('/api/files?type=spaces').then(r=>r.json()).then(d=>setSpaces(d.spaces??[]))

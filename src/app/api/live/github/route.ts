@@ -47,7 +47,7 @@ export async function GET() {
         head: commits[0]?.sha?.slice(0, 7) ?? null,
         defaultBranch: repoData.default_branch ?? 'main',
         openIssues: repoData.open_issues_count ?? 0,
-        commits: commits.map((c: any) => ({
+        commits: commits.map((c: Record<string, unknown>) => ({
           sha: c.sha?.slice(0, 7),
           message: c.commit?.message?.split('\n')[0] ?? '',
           author: c.commit?.author?.name ?? '',

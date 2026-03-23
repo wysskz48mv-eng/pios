@@ -61,10 +61,10 @@ function SearchTab() {
   const [yearTo,     setYearTo]     = useState('')
   const [maxResults, setMaxResults] = useState(10)
   const [loading,    setLoading]    = useState(false)
-  const [results,    setResults]    = useState<any[]>([])
-  const [guardSummary, setGuardSummary] = useState<any>(null)
-  const [meta,       setMeta]       = useState<any>(null)
-  const [history,    setHistory]    = useState<any[]>([])
+  const [results,    setResults]    = useState<unknown[]>([])
+  const [guardSummary, setGuardSummary] = useState<unknown>(null)
+  const [meta,       setMeta]       = useState<unknown>(null)
+  const [history,    setHistory]    = useState<unknown[]>([])
   const [expanded,   setExpanded]   = useState<Set<number>>(new Set())
   useEffect(() => {
     fetch('/api/research/search')
@@ -269,10 +269,10 @@ function SearchTab() {
 
 // ── JOURNAL WATCHLIST TAB ─────────────────────────────────────────────────────
 function JournalsTab() {
-  const [journals, setJournals] = useState<any[]>([])
+  const [journals, setJournals] = useState<unknown[]>([])
   const [loading, setLoading]   = useState(true)
-  const [selected, setSelected] = useState<any>(null)
-  const [guidelines, setGuidelines] = useState<any>(null)
+  const [selected, setSelected] = useState<unknown>(null)
+  const [guidelines, setGuidelines] = useState<unknown>(null)
   const [guideLoading, setGuideLoading] = useState(false)
   const [showAdd, setShowAdd]   = useState(false)
   const [addForm, setAddForm]   = useState({ journal_name: '', publisher: '', impact_factor: '', quartile: 'Q2', subject_area: '', submission_url: '', guidelines_url: '', priority: 'medium' })
@@ -485,8 +485,8 @@ function JournalsTab() {
 
 // ── CALLS FOR PAPERS TAB ──────────────────────────────────────────────────────
 function CFPTab() {
-  const [saved,    setSaved]    = useState<any[]>([])
-  const [live,     setLive]     = useState<any[]>([])
+  const [saved,    setSaved]    = useState<unknown[]>([])
+  const [live,     setLive]     = useState<unknown[]>([])
   const [loading,  setLoading]  = useState(false)
   const [savingId, setSavingId] = useState<string | null>(null)
 
@@ -736,11 +736,11 @@ function ImportTab() {
 // ── LITERATURE LIBRARY TAB ────────────────────────────────────────────────────
 function LibraryTab() {
   const supabase = createClient()
-  const [items,    setItems]    = useState<any[]>([])
+  const [items,    setItems]    = useState<unknown[]>([])
   const [deleteItemConfirm, setDeleteItemConfirm] = useState<string|null>(null)
-  const [stats,    setStats]    = useState<any>(null)
+  const [stats,    setStats]    = useState<unknown>(null)
   const [loading,  setLoading]  = useState(true)
-  const [selected, setSelected] = useState<any>(null)
+  const [selected, setSelected] = useState<unknown>(null)
   const [filter,   setFilter]   = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [search,   setSearch]   = useState('')

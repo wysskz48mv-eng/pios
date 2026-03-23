@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     // Compute days_until for each milestone
     const now = new Date()
-    const enriched = (data ?? []).map((m: any) => ({
+    const enriched = (data ?? []).map((m: Record<string, unknown>) => ({
       ...m,
       days_until:  m.target_date
         ? Math.ceil((new Date(m.target_date).getTime() - now.getTime()) / 86400000)

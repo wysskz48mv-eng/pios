@@ -172,7 +172,7 @@ export async function GET(req: NextRequest) {
       const expTotal     = expList.reduce((s: number, e: any) => s + (e.amount ?? 0), 0)
       const expCurrency  = expList[0]?.currency ?? 'GBP'
 
-      const headlines    = (fmNews.data ?? []).map((r: any) => String(r.headline ?? ''))
+      const headlines    = (fmNews.data ?? []).map((r: Record<string, unknown>) => String(r.headline ?? ''))
 
       // ── AI insight (non-blocking, skip on error) ─────────────────────────
       let topInsight = ''

@@ -32,9 +32,9 @@ function Bar({ value, max, colour = ACCENT }: { value:number; max:number; colour
 }
 
 export default function AcademicPage() {
-  const [modules,  setModules]  = useState<any[]>([])
-  const [chapters, setChapters] = useState<any[]>([])
-  const [sessions, setSessions] = useState<any[]>([])
+  const [modules,  setModules]  = useState<unknown[]>([])
+  const [chapters, setChapters] = useState<unknown[]>([])
+  const [sessions, setSessions] = useState<unknown[]>([])
   const [loading,  setLoading]  = useState(true)
   const [editingId,  setEditingId]   = useState<string|null>(null)
   const [editWords,  setEditWords]   = useState<Record<string,number>>({})
@@ -102,7 +102,7 @@ export default function AcademicPage() {
   const totalWords  = chapters.reduce((s,c)=>s+(c.word_count||0),0)
   const targetWords = chapters.reduce((s,c)=>s+(c.target_words||8000),0)
   const thesisPct   = targetWords>0?Math.round((totalWords/targetWords)*100):0
-  const [aiReview,      setAiReview]      = useState<any>(null)
+  const [aiReview,      setAiReview]      = useState<unknown>(null)
   const [weeklyDelta,   setWeeklyDelta]   = useState<number|null>(null)
   const [aiReviewLoading, setAiReviewLoading] = useState(false)
 
@@ -431,8 +431,8 @@ const DBA_MILESTONES_TEMPLATE = [
 ]
 
 function MilestonesSection() {
-  const [milestones, setMilestones] = useState<any[]>([])
-  const [summary,    setSummary]    = useState<any>(null)
+  const [milestones, setMilestones] = useState<unknown[]>([])
+  const [summary,    setSummary]    = useState<unknown>(null)
   const [loading,    setLoading]    = useState(true)
   const [seeding,    setSeeding]    = useState(false)
   const [saving,     setSaving]     = useState<string|null>(null)

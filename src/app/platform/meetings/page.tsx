@@ -35,9 +35,9 @@ function PriorityDot({ p }: { p: string }) {
 }
 
 export default function MeetingsPage() {
-  const [meetings,   setMeetings]   = useState<any[]>([])
+  const [meetings,   setMeetings]   = useState<unknown[]>([])
   const [loading,    setLoading]    = useState(true)
-  const [selected,   setSelected]   = useState<any>(null)
+  const [selected,   setSelected]   = useState<unknown>(null)
   const [showNew,    setShowNew]    = useState(false)
   const [saving,     setSaving]     = useState(false)
   const [processing, setProcessing] = useState(false)

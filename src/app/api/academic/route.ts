@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     if (action === 'ai_thesis_review') {
       const { chapters, modules, programme_name, university, expected_graduation } = body
-      const chapterSummary = (chapters ?? []).map((c: any) =>
+      const chapterSummary = (chapters ?? []).map((c: Record<string, unknown>) =>
         `Ch${c.chapter_num} "${c.title}": ${c.word_count ?? 0}/${c.target_words ?? 8000} words [${c.status}]`
       ).join('\n')
       const system = `${PIOS_SYSTEM}\nYou are reviewing Douglas's DBA thesis at ${university ?? 'University of Portsmouth'}.\nReturn ONLY valid JSON:\n{"overall_assessment":"string","pace_status":"on_track|at_risk|behind|ahead","pace_detail":"string","chapter_flags":[{"chapter_num":1,"flag":"behind|on_track|ahead","note":"string"}],"immediate_actions":["string"],"risk":"string"}`

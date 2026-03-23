@@ -23,8 +23,8 @@ function fmt(d: string|null) {
 }
 
 export default function LearningHubPage() {
-  const [data,    setData]    = useState<any>(null)
-  const [cpdData, setCpdData] = useState<any>(null)
+  const [data,    setData]    = useState<unknown>(null)
+  const [cpdData, setCpdData] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
   const [tab,     setTab]     = useState<'milestones'|'cpd'|'activities'>('milestones')
   const [marking, setMarking] = useState<string|null>(null)
@@ -56,7 +56,7 @@ export default function LearningHubPage() {
     })
     setData((prev: any) => ({
       ...prev,
-      milestones: prev?.milestones?.map((m: any) =>
+      milestones: prev?.milestones?.map((m: Record<string, unknown>) =>
         m.id === id ? { ...m, status:'passed', completed_date: new Date().toISOString().slice(0,10) } : m
       ),
     }))
@@ -278,7 +278,7 @@ export default function LearningHubPage() {
           <div className="rounded-xl border bg-card overflow-hidden">
             {(cpdData?.activities ?? []).length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">No CPD activities logged yet this year.</p>
-            ) : (cpdData?.activities ?? []).map((a: any) => (
+            ) : (cpdData?.activities ?? []).map((a: Record<string, unknown>) => (
               <div key={a.id} className="px-4 py-3 border-b last:border-0 flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">{a.title}</p>

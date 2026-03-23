@@ -87,7 +87,7 @@ async function checkCrossRef(doi: string): Promise<{
     return {
       found:   true,
       title:   w.title?.[0],
-      authors: w.author?.slice(0,4).map((a: any) => `${a.family ?? ''}, ${(a.given ?? '')[0] ?? ''}.`.trim()) ?? [],
+      authors: w.author?.slice(0,4).map((a: Record<string, unknown>) => `${a.family ?? ''}, ${(a.given ?? '')[0] ?? ''}.`.trim()) ?? [],
       year:    w.published?.['date-parts']?.[0]?.[0],
       journal: w['container-title']?.[0],
     }

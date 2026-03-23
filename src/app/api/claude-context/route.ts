@@ -214,14 +214,14 @@ export async function GET() {
 
         // Tasks
         tasks: {
-          overdue: overdueTasks.slice(0, 10).map((t: any) => ({
+          overdue: overdueTasks.slice(0, 10).map((t: Record<string, unknown>) => ({
             id: t.id, title: t.title, domain: t.domain,
             priority: t.priority, due_date: t.due_date,
           })),
-          today: todayTasks.map((t: any) => ({
+          today: todayTasks.map((t: Record<string, unknown>) => ({
             id: t.id, title: t.title, domain: t.domain, priority: t.priority,
           })),
-          critical: criticalTasks.filter((t: any) => !t.due_date || t.due_date >= today).slice(0, 5).map((t: any) => ({
+          critical: criticalTasks.filter((t: Record<string, unknown>) => !t.due_date || t.due_date >= today).slice(0, 5).map((t: Record<string, unknown>) => ({
             id: t.id, title: t.title, domain: t.domain, due_date: t.due_date,
           })),
           total_active: tasks.length,
@@ -229,7 +229,7 @@ export async function GET() {
 
         // Calendar
         calendar: {
-          today_events: calendar.map((e: any) => ({
+          today_events: calendar.map((e: Record<string, unknown>) => ({
             id: e.id, title: e.title, domain: e.domain,
             start: e.start_time, end: e.end_time,
             location: e.location, has_meet_link: !!e.google_meet_url,
@@ -243,12 +243,12 @@ export async function GET() {
             total_words:    totalWords,
             target_words:   targetWords,
             progress_pct:   thesisProgress,
-            chapters:       chapters.map((c: any) => ({
+            chapters:       chapters.map((c: Record<string, unknown>) => ({
               num: c.chapter_num, title: c.title, status: c.status,
               words: c.word_count, target: c.target_words,
             })),
           },
-          active_modules: modules.slice(0, 5).map((m: any) => ({
+          active_modules: modules.slice(0, 5).map((m: Record<string, unknown>) => ({
             title: m.title, type: m.module_type, status: m.status,
             deadline: m.deadline,
           })),
@@ -256,7 +256,7 @@ export async function GET() {
 
         // Email
         email: {
-          action_required: emails.map((e: any) => ({
+          action_required: emails.map((e: Record<string, unknown>) => ({
             subject: e.action_required, domain: e.domain_tag,
             priority: e.priority_score, inbox: e.inbox_label,
           })),
@@ -265,7 +265,7 @@ export async function GET() {
         },
 
         // Meetings with pending actions
-          email_accounts: accounts.map((a: any) => ({
+          email_accounts: accounts.map((a: Record<string, unknown>) => ({
             provider:   a.provider,
             context:    a.context,
             label:      a.label ?? a.email_address,
@@ -273,7 +273,7 @@ export async function GET() {
             last_synced: a.last_synced_at,
           })),
 
-          recent_receipts: receipts.slice(0, 5).map((r: any) => ({
+          recent_receipts: receipts.slice(0, 5).map((r: Record<string, unknown>) => ({
             subject:  r.subject,
             vendor:   r.receipt_data?.vendor ?? r.sender_name,
             amount:   r.receipt_data?.amount,
@@ -281,7 +281,7 @@ export async function GET() {
             date:     r.received_at?.slice(0, 10),
           })),
 
-        meetings_pending: meetings.map((m: any) => ({
+        meetings_pending: meetings.map((m: Record<string, unknown>) => ({
           id: m.id, title: m.title, date: m.meeting_date, domain: m.domain,
           action_item_count: (m.ai_action_items as any[])?.length ?? 0,
           promote_url: `POST /api/meetings { action: 'promote_tasks', id: '${m.id}' }`,
@@ -296,7 +296,7 @@ export async function GET() {
         },
 
         // Notifications
-        notifications: notifs.map((n: any) => ({
+        notifications: notifs.map((n: Record<string, unknown>) => ({
           title: n.title, type: n.type, domain: n.domain, created: n.created_at,
         })),
 

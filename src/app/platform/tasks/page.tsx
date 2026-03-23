@@ -138,7 +138,7 @@ function TaskDrawer({ task, onClose, onSave, onDelete }: { task:any; onClose:()=
 // ── AI Prioritise panel ────────────────────────────────────────────────────────
 function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }) {
   const [loading, setLoading] = useState(true)
-  const [result, setResult]   = useState<any>(null)
+  const [result, setResult]   = useState<unknown>(null)
 
   useEffect(() => {
     const openTasks = tasks.filter(t => t.status !== 'done')
@@ -220,13 +220,13 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function TasksPage() {
-  const [tasks,      setTasks]      = useState<any[]>([])
+  const [tasks,      setTasks]      = useState<unknown[]>([])
   const [loading,    setLoading]    = useState(true)
   const [domainFilter,  setDomainFilter]  = useState('all')
   const [sourceFilter,  setSourceFilter]  = useState('all')
   const [overdueOnly,   setOverdueOnly]   = useState(false)
   const [statusFilter, setStatusFilter] = useState('open')
-  const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [selectedTask, setSelectedTask] = useState<unknown>(null)
   const [showAI,     setShowAI]     = useState(false)
   const [showAdd,    setShowAdd]    = useState(false)
   const [saving,     setSaving]     = useState(false)

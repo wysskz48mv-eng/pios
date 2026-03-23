@@ -106,12 +106,12 @@ export async function GET() {
     const accounts = val<any[]>(accountsR) ?? []
     const calendar = val<any[]>(calR)      ?? []
 
-    const overdueTasks  = tasks.filter((t: any) => t.due_date && t.due_date < today)
-    const dueTodayTasks = tasks.filter((t: any) => t.due_date === today)
-    const upcomingTasks = tasks.filter((t: any) => !t.due_date || t.due_date > today)
+    const overdueTasks  = tasks.filter((t: Record<string, unknown>) => t.due_date && t.due_date < today)
+    const dueTodayTasks = tasks.filter((t: Record<string, unknown>) => t.due_date === today)
+    const upcomingTasks = tasks.filter((t: Record<string, unknown>) => !t.due_date || t.due_date > today)
     const totalWords    = chapters.reduce((s: number, c: any) => s + (c.word_count   ?? 0), 0)
     const targetWords   = chapters.reduce((s: number, c: any) => s + (c.target_words ?? 8000), 0)
-    const pendingMeetingActions = meetings.filter((m: any) => m.status === 'processed' && !m.tasks_created).length
+    const pendingMeetingActions = meetings.filter((m: Record<string, unknown>) => m.status === 'processed' && !m.tasks_created).length
     const tenantData = tenantR.status === 'fulfilled' ? (tenantR.value?.data ?? null) : null
     const briefContent = briefR.status === 'fulfilled' ? ((briefR.value?.data as any)?.content ?? null) : null
 
@@ -137,7 +137,7 @@ export async function GET() {
         total_words:   totalWords,
         target_words:  targetWords,
         pct_complete:  targetWords > 0 ? Math.round(totalWords / targetWords * 100) : 0,
-        chapters_done: chapters.filter((c: any) => ['submitted','passed','draft_complete'].includes(c.status)).length,
+        chapters_done: chapters.filter((c: Record<string, unknown>) => ['submitted','passed','draft_complete'].includes(c.status)).length,
       },
     })
 

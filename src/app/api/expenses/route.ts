@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
 
     // Filter by tax year client-side (derived field)
     if (taxYear && taxYear !== 'all') {
-      expenses = expenses.filter((e: any) => getTaxYear(e.date) === taxYear)
+      expenses = expenses.filter((e: Record<string, unknown>) => getTaxYear(e.date) === taxYear)
     }
 
     // ── Summary stats ─────────────────────────────────────────────────────────
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
 
       const rows = data ?? []
       const header = ['date', 'description', 'amount', 'currency', 'category', 'domain', 'billable', 'client', 'notes', 'tax_year'].join(',')
-      const lines  = rows.map((e: any) => [
+      const lines  = rows.map((e: Record<string, unknown>) => [
         e.date ?? '',
         `"${(e.description ?? '').replace(/"/g, '""')}"`,
         e.amount ?? 0,

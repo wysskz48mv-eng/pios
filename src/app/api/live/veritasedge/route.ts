@@ -57,7 +57,7 @@ export async function GET() {
       return acc
     }, {})
 
-    const recentAgents = agents.filter((r: any) => r.created_at >= sevenDaysAgo).length
+    const recentAgents = agents.filter((r: Record<string, unknown>) => r.created_at >= sevenDaysAgo).length
 
     // Plan breakdown
     const planBreakdown = orgs.reduce((acc: Record<string, number>, o: any) => {
@@ -70,18 +70,18 @@ export async function GET() {
       snapshot: {
         tenants: {
           total: orgsR.count ?? 0,
-          list:  orgs.slice(0, 5).map((o: any) => ({ name: o.name, plan: o.plan })),
+          list:  orgs.slice(0, 5).map((o: Record<string, unknown>) => ({ name: o.name, plan: o.plan })),
           byPlan: planBreakdown,
         },
         projects: {
           total:  projectsR.count ?? 0,
-          active: (projectsR.data ?? []).filter((p: any) => p.status === 'active').length,
-          list:   (projectsR.data ?? []).slice(0, 3).map((p: any) => p.name),
+          active: (projectsR.data ?? []).filter((p: Record<string, unknown>) => p.status === 'active').length,
+          list:   (projectsR.data ?? []).slice(0, 3).map((p: Record<string, unknown>) => p.name),
         },
         assets: {
           total:        assetsR.count ?? 0,
           totalValueSAR: totalAssetValue,
-          active:       assets.filter((a: any) => a.status === 'operational').length,
+          active:       assets.filter((a: Record<string, unknown>) => a.status === 'operational').length,
         },
         obe: latestOBE ? {
           lastRun:       latestOBE.created_at,
@@ -95,7 +95,7 @@ export async function GET() {
         },
         allocations: {
           total:   allocR.count ?? 0,
-          pending: (allocR.data ?? []).filter((a: any) => a.jcv_status === 'pending').length,
+          pending: (allocR.data ?? []).filter((a: Record<string, unknown>) => a.jcv_status === 'pending').length,
         },
         pulledAt: new Date().toISOString(),
       },

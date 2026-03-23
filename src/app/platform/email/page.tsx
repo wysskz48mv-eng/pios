@@ -16,13 +16,13 @@ function priorityColor(score: number) {
 }
 
 export default function EmailPage() {
-  const [emails,   setEmails]   = useState<any[]>([])
-  const [selected, setSelected] = useState<any>(null)
+  const [emails,   setEmails]   = useState<unknown[]>([])
+  const [selected, setSelected] = useState<unknown>(null)
   const [loading,  setLoading]  = useState(true)
   const [syncing,  setSyncing]  = useState(false)
   const [filter,      setFilter]      = useState('all')
   const [inboxFilter, setInboxFilter] = useState('all')
-  const [accounts,    setAccounts]    = useState<any[]>([])
+  const [accounts,    setAccounts]    = useState<unknown[]>([])
   const [replyText, setReplyText] = useState('')
   const [replying,  setReplying]  = useState(false)
   const [showCompose, setShowCompose] = useState(false)

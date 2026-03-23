@@ -224,7 +224,7 @@ function CopyBtn({ text }: { text: string }) {
 
 export default function SetupGuidePage() {
   const [done, setDone] = useState<Set<string>>(new Set())
-  const [status, setStatus] = useState<any>(null)
+  const [status, setStatus] = useState<unknown>(null)
   const [statusLoading, setStatusLoading] = useState(true)
 
   useEffect(() => {
@@ -300,7 +300,7 @@ export default function SetupGuidePage() {
                   const d = await r.json()
                   if (d.success) {
                     alert('Price IDs generated!\n\nAdd these to Vercel env vars then redeploy:\n\n' +
-                      d.env_vars.map((e: any) => `${e.key}=${e.value}`).join('\n'))
+                      d.env_vars.map((e: Record<string, unknown>) => `${e.key}=${e.value}`).join('\n'))
                   } else {
                     alert('Error: ' + (d.error ?? 'Unknown'))
                   }

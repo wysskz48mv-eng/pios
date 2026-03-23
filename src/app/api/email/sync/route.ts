@@ -138,7 +138,7 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
     if (!dr.ok) continue
     const d = await dr.json()
     const h: Record<string, string> = {}
-    d.payload?.headers?.forEach((x: any) => { h[x.name] = x.value })
+    d.payload?.headers?.forEach((x: Record<string, unknown>) => { h[x.name] = x.value })
     const subject = h.Subject ?? '(no subject)', from = h.From ?? '', snippet = d.snippet ?? ''
     const t = await triageEmail(subject, from, snippet, account.context, account.ai_domain_override, account.receipt_scan_enabled, account.receipt_keywords ?? [])
     if (t.is_receipt) { receipts++; await autoCreateExpense(supabase, userId, t.receipt_data, t.domain, subject) }

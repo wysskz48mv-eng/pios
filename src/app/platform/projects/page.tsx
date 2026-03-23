@@ -155,12 +155,12 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<any[]>([])
-  const [tasks,    setTasks]    = useState<any[]>([])
+  const [projects, setProjects] = useState<unknown[]>([])
+  const [tasks,    setTasks]    = useState<unknown[]>([])
   const [loading,  setLoading]  = useState(true)
   const [filter,   setFilter]   = useState<'active'|'all'|'completed'>('active')
   const [domainFilter, setDomainFilter] = useState('all')
-  const [selected, setSelected] = useState<any>(null)
+  const [selected, setSelected] = useState<unknown>(null)
   const [adding,   setAdding]   = useState(false)
 
   const load = useCallback(async () => {

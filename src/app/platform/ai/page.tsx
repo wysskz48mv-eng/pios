@@ -36,7 +36,7 @@ function TimeAgo({ iso }: { iso: string }) {
 }
 
 export default function AiPage() {
-  const [sessions,      setSessions]     = useState<any[]>([])
+  const [sessions,      setSessions]     = useState<unknown[]>([])
   const [activeId,      setActiveId]     = useState<string | null>(null)
   const [messages,      setMessages]     = useState<Message[]>([])
   const [input,         setInput]        = useState('')

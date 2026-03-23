@@ -144,7 +144,7 @@ export async function POST(request: Request) {
           end_time: endTime,
           all_day: allDay,
           location: item.location ?? null,
-          attendees: item.attendees?.map((a: any) => ({ email: a.email, name: a.displayName })) ?? [],
+          attendees: item.attendees?.map((a: Record<string, unknown>) => ({ email: a.email, name: a.displayName })) ?? [],
           google_meet_url: item.hangoutLink ?? null,
           source: 'google',
           updated_at: new Date().toISOString(),
@@ -206,7 +206,7 @@ export async function POST(request: Request) {
 Generate a concise, actionable meeting brief. Plain prose, 3 short paragraphs max. No lists.
 Include: what the meeting is about, key things to cover or prepare, any relevant cross-domain context from his current work.`
 
-      const attendeeList = Array.isArray(event.attendees) ? event.attendees.map((a: any) => a.email ?? a.name).join(', ') : ''
+      const attendeeList = Array.isArray(event.attendees) ? event.attendees.map((a: Record<string, unknown>) => a.email ?? a.name).join(', ') : ''
       const brief = await callClaude([{
         role: 'user',
         content: `Meeting: ${event.title}\nTime: ${new Date(event.start_time).toLocaleString('en-GB')}\nLocation: ${event.location ?? 'Not specified'}\nAttendees: ${attendeeList || 'Not listed'}\nDescription: ${event.description ?? 'None'}\n\nContext:\n${context}`

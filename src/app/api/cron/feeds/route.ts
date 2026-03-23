@@ -73,7 +73,7 @@ Return ONLY valid JSON — an array of exactly 8 objects:
 
     if (!items.length) return 0
 
-    const inserts = items.map((item: any) => ({
+    const inserts = items.map((item: Record<string, unknown>) => ({
       user_id:    userId,
       headline:   item.headline ?? '',
       summary:    item.summary ?? '',

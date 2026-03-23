@@ -43,15 +43,15 @@ const HITL_BANNER = (
 
 // ── Payroll runs tab ──────────────────────────────────────────────────────────
 function RunsTab() {
-  const [runs, setRuns]           = useState<any[]>([])
+  const [runs, setRuns]           = useState<unknown[]>([])
   const [loading, setLoading]     = useState(true)
   const [detecting, setDetecting] = useState(false)
-  const [detectResult, setDetectResult] = useState<any>(null)
-  const [selectedRun, setSelectedRun]   = useState<any>(null)
-  const [lines, setLines]         = useState<any[]>([])
+  const [detectResult, setDetectResult] = useState<unknown>(null)
+  const [selectedRun, setSelectedRun]   = useState<unknown>(null)
+  const [lines, setLines]         = useState<unknown[]>([])
   const [linesLoading, setLinesLoading] = useState(false)
   const [remitting, setRemitting] = useState(false)
-  const [remitPreview, setRemitPreview] = useState<any>(null)
+  const [remitPreview, setRemitPreview] = useState<unknown>(null)
   const [banner, setBanner] = useState<{msg:string;ok:boolean}|null>(null)
 
   const loadRuns = useCallback(async () => {
@@ -243,7 +243,7 @@ function RunsTab() {
 
 // ── Transfer queue tab ────────────────────────────────────────────────────────
 function TransfersTab() {
-  const [transfers, setTransfers] = useState<any[]>([])
+  const [transfers, setTransfers] = useState<unknown[]>([])
   const [loading, setLoading]     = useState(true)
   const [filter, setFilter]       = useState('queued')
   const [actioning, setActioning] = useState<string|null>(null)
@@ -338,7 +338,7 @@ function TransfersTab() {
 
 // ── Expense claims tab ────────────────────────────────────────────────────────
 function ClaimsTab() {
-  const [claims, setClaims]   = useState<any[]>([])
+  const [claims, setClaims]   = useState<unknown[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('submitted')
   const [actioning, setActioning] = useState<string|null>(null)
@@ -450,7 +450,7 @@ function ClaimsTab() {
 
 // ── Staff tab ─────────────────────────────────────────────────────────────────
 function StaffTab() {
-  const [staff, setStaff]     = useState<any[]>([])
+  const [staff, setStaff]     = useState<unknown[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -538,8 +538,8 @@ function StaffTab() {
 // ── Chase tab ─────────────────────────────────────────────────────────────────
 function ChaseTab() {
   const [checking, setChecking]   = useState(false)
-  const [chaseResult, setChaseResult] = useState<any>(null)
-  const [log, setLog]             = useState<any[]>([])
+  const [chaseResult, setChaseResult] = useState<unknown>(null)
+  const [log, setLog]             = useState<unknown[]>([])
   const [accountantEmail, setAccountantEmail] = useState('')
   const [expectedDate, setExpectedDate] = useState('')
 

@@ -45,12 +45,12 @@ export async function GET() {
     const usage  = usageR.data  ?? []
 
     // Org breakdowns
-    const trialing       = orgs.filter((o: any) => o.planStatus === 'trialing').length
-    const activeOrgs     = orgs.filter((o: any) => o.planStatus === 'active').length
-    const expiredTrials  = orgs.filter((o: any) => {
+    const trialing       = orgs.filter((o: Record<string, unknown>) => o.planStatus === 'trialing').length
+    const activeOrgs     = orgs.filter((o: Record<string, unknown>) => o.planStatus === 'active').length
+    const expiredTrials  = orgs.filter((o: Record<string, unknown>) => {
       return o.planStatus === 'trialing' && o.trialEndsAt && new Date(o.trialEndsAt) <= now
     }).length
-    const activeTrial    = orgs.filter((o: any) => {
+    const activeTrial    = orgs.filter((o: Record<string, unknown>) => {
       return o.planStatus === 'trialing' && o.trialEndsAt && new Date(o.trialEndsAt) > now
     }).length
     const planBreakdown  = orgs.reduce((acc: Record<string, number>, o: any) => {
@@ -59,9 +59,9 @@ export async function GET() {
     }, {})
 
     // Recency
-    const recentOrgs   = orgs.filter((o: any)   => o.createdAt > thirtyDaysAgo).length
-    const recentUsers  = users.filter((u: any)  => u.createdAt > thirtyDaysAgo).length
-    const recentTopics = topics.filter((t: any) => t.createdAt > sevenDaysAgo).length
+    const recentOrgs   = orgs.filter((o: Record<string, unknown>) => o.createdAt > thirtyDaysAgo).length
+    const recentUsers  = users.filter((u: Record<string, unknown>) => u.createdAt > thirtyDaysAgo).length
+    const recentTopics = topics.filter((t: Record<string, unknown>) => t.createdAt > sevenDaysAgo).length
 
     // Usage
     const totalInputTokens  = usage.reduce((s: number, r: any) => s + (Number(r.inputTokens)  || 0), 0)

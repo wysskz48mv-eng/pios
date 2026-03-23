@@ -90,7 +90,7 @@ function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   const [fetching, setFetching]   = useState(false)
-  const [items, setItems]         = useState<any[]>(feed.cached_items ?? [])
+  const [items, setItems]         = useState<unknown[]>(feed.cached_items ?? [])
   const accentColor = CATEGORY_COLOURS[feed.category] ?? '#94a3b8'
 
   async function refresh() {
@@ -260,16 +260,16 @@ function FeedFormModal({ feed, onSave, onClose }: { feed: any|null; onSave: (dat
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function CommandPage() {
-  const [se, setSe]             = useState<any>(null)
-  const [is_, setIs]            = useState<any>(null)
-  const [gh, setGh]             = useState<any>(null)
-  const [feeds, setFeeds]       = useState<any[]>([])
-  const [feedSettings, setFeedSettings] = useState<any>({ command_layout:'grid', brief_include_feeds:true, show_relevance:true })
+  const [se, setSe]             = useState<unknown>(null)
+  const [is_, setIs]            = useState<unknown>(null)
+  const [gh, setGh]             = useState<unknown>(null)
+  const [feeds, setFeeds]       = useState<unknown[]>([])
+  const [feedSettings, setFeedSettings] = useState<unknown>({ command_layout:'grid', brief_include_feeds:true, show_relevance:true })
   const [loading, setLoading]   = useState(true)
   const [feedsLoading,       setFeedsLoading]       = useState(true)
   const [deleteFeedConfirm, setDeleteFeedConfirm] = useState<string|null>(null)
   const [lastRefresh, setLastRefresh]   = useState<Date|null>(null)
-  const [editingFeed, setEditingFeed]   = useState<any|null>(null)
+  const [editingFeed, setEditingFeed]   = useState<unknown|null>(null)
   const [showAddFeed, setShowAddFeed]   = useState(false)
   const [activeTab, setActiveTab]       = useState<'platforms'|'feeds'>('platforms')
 
@@ -431,7 +431,7 @@ export default function CommandPage() {
                     </div>
                   </div>
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:10 }}>
-                    {(repo.commits ?? []).map((c: any) => (
+                    {(repo.commits ?? []).map((c: Record<string, unknown>) => (
                       <div key={c.sha} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
                         <code style={{ fontSize:10, color:'#a78bfa', flexShrink:0, marginTop:2 }}>{c.sha}</code>
                         <div style={{ flex:1, minWidth:0 }}>

@@ -62,7 +62,7 @@ Return ONLY valid JSON:
   "blocked_risks": ["Any tasks that might block others if not done soon"]
 }`
       const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-      const taskList = tasks.map((t: any) => `ID:${t.id} | ${t.title} | ${t.domain} | ${t.priority} | due:${t.due_date ?? 'none'} | status:${t.status}`).join('\n')
+      const taskList = tasks.map((t: Record<string, unknown>) => `ID:${t.id} | ${t.title} | ${t.domain} | ${t.priority} | due:${t.due_date ?? 'none'} | status:${t.status}`).join('\n')
       const raw = await callClaude(
         [{ role: 'user', content: `Today is ${today}. Here are my tasks:\n${taskList}\n\nPrioritise these for today.` }],
         system, 1200

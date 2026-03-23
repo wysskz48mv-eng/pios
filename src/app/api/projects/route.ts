@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     let projects = projR.data ?? []
     if (domain && domain !== 'all') {
-      projects = projects.filter((p: any) => p.domain === domain)
+      projects = projects.filter((p: Record<string, unknown>) => p.domain === domain)
     }
 
     return NextResponse.json({ projects, tasks: tasksR.data ?? [] })

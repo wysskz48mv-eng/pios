@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
       if (run && lines?.length) {
         await supabase.from('payroll_lines').insert(
-          lines.map((l: any) => ({ ...l, payroll_run_id: run.id, user_id: user.id }))
+          lines.map((l: Record<string, unknown>) => ({ ...l, payroll_run_id: run.id, user_id: user.id }))
         )
       }
       return NextResponse.json({ created: true, id: run?.id })
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
 
       if (lines?.length) {
         await supabase.from('transfer_queue').insert(
-          lines.map((l: any) => ({
+          lines.map((l: Record<string, unknown>) => ({
             user_id: user.id,
             transfer_type: 'payroll',
             payroll_line_id: l.id,

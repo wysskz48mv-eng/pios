@@ -113,11 +113,11 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
 
       // Run citation guard on DOI-bearing results (non-fatal)
       let guardSummary = null
-      const toVerify = (parsed.results ?? []).filter((r: any) => r.doi)
+      const toVerify = (parsed.results ?? []).filter((r: Record<string, unknown>) => r.doi)
       if (toVerify.length > 0) {
         try {
           const { verifyCitations } = await import('@/lib/citation-guard')
-          const guardReport = await verifyCitations(toVerify.map((r: any) => ({
+          const guardReport = await verifyCitations(toVerify.map((r: Record<string, unknown>) => ({
             title: r.title, authors: r.authors ?? [], year: r.year,
             journal: r.journal, doi: r.doi,
           })))
