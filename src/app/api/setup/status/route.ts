@@ -1,10 +1,10 @@
 /**
  * GET /api/setup/status
  * Returns live env-var check across all PIOS integrations.
- * Matches the PIOS v2.0.1 Vercel Environment Variables Checklist.
+ * Matches the PIOS v2.2.1 Vercel Environment Variables Checklist.
  * Owner-scoped — returns 401 for non-admin users.
  *
- * PIOS v2.0.1 | VeritasIQ Technologies Ltd
+ * PIOS v2.2.1 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'

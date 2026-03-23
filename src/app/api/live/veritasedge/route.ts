@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 // GET /api/live/veritasedge
 // Pulls live metrics from the VeritasEdge™ Supabase project.
 // Uses the ACTUAL SE schema: organisations, projects, maintainable_assets, obe_runs, agent_recommendations
-// PIOS v1.0 | VeritasIQ Technologies Ltd
+// PIOS v2.2 | VeritasIQ Technologies Ltd
 
 export const runtime = 'nodejs'
 

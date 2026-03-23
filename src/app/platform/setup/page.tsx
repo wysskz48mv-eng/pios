@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 // /platform/setup — Environment setup guide for PIOS Phase 2
 // Covers: CRON_SECRET, Google OAuth, Resend, Live Data vars
 // Owner: dmasuku2008@me.com
-// PIOS v2.0 | VeritasIQ Technologies Ltd
+// PIOS v2.2 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface Step {

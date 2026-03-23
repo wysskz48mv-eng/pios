@@ -10,7 +10,7 @@ export default function NotFound() {
           style={{ display:'inline-block',padding:'0.625rem 1.25rem',background:'#6366f1',color:'#fff',borderRadius:'0.5rem',fontWeight:500,fontSize:'0.875rem',textDecoration:'none' }}>
           Back to Dashboard →
         </Link>
-        <p style={{ marginTop:'2rem',fontSize:'0.75rem',color:'#555' }}>PIOS v1.0 · VeritasIQ Technologies Ltd</p>
+        <p style={{ marginTop:'2rem',fontSize:'0.75rem',color:'#555' }}>PIOS v2.2 · VeritasIQ Technologies Ltd</p>
       </div>
     </div>
   )

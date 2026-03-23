@@ -14,7 +14,7 @@ export default function PrivacyPage() {
 
         <div style={{ marginBottom:32 }}>
           <h1 style={{ fontSize:28, fontWeight:700, marginBottom:8, color:'#f1f5f9' }}>Privacy Policy</h1>
-          <p style={{ fontSize:13, color:'#64748b' }}>Effective: {EFFECTIVE} · PIOS v1.0</p>
+          <p style={{ fontSize:13, color:'#64748b' }}>Effective: {EFFECTIVE} · PIOS v2.2</p>
         </div>
 
         <div style={{ background:'rgba(167,139,250,0.05)', border:'1px solid rgba(167,139,250,0.15)', borderRadius:12, padding:'16px 20px', marginBottom:32 }}>

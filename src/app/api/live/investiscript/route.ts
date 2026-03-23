@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 // GET /api/live/investiscript
 // Pulls live metrics from the InvestiScript Supabase project.
 // Uses the ACTUAL IS schema: Organisation, User, Topic, Script, UsageRecord
-// PIOS v1.0 | VeritasIQ Technologies Ltd
+// PIOS v2.2 | VeritasIQ Technologies Ltd
 
 export const runtime = 'nodejs'
 

@@ -25,7 +25,7 @@ export const maxDuration = 60
  *   - Imminent CFP deadlines
  *   - Live VeritasEdge / InvestiScript metrics
  *
- * PIOS v2.0 | VeritasIQ Technologies Ltd
+ * PIOS v2.2 | VeritasIQ Technologies Ltd
  */
 export async function POST(req: NextRequest) {
   try {

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 // Step 1: Complete profile (name, role, organisation, DBA/academic context)
 // Step 2: Choose plan (Student / Individual / Professional)
 // Step 3: Connect Gmail (optional but recommended)
-// PIOS v2.0 | VeritasIQ Technologies Ltd
+// PIOS v2.2 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PLANS = [

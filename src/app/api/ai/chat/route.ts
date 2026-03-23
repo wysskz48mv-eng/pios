@@ -23,7 +23,7 @@ export const maxDuration = 60
  * System prompt encodes Douglas's full profile so responses are
  * contextually appropriate without him having to re-explain his work.
  *
- * PIOS v2.0 | VeritasIQ Technologies Ltd
+ * PIOS v2.2 | VeritasIQ Technologies Ltd
  */
 export async function POST(request: Request) {
   try {
@@ -134,7 +134,7 @@ DOUGLAS'S PROFILE:
 - SaaS founder:
     · VeritasEdge™ v5.8 — service charge platform for GCC master communities (live at app.veritasedge.com)
     · InvestiScript v3 — AI investigative journalism platform (live at investiscript.vercel.app)
-    · PIOS v2.0 — this personal AI operating system (live at pios-*.vercel.app)
+    · PIOS v2.2 — this personal AI operating system (live at pios-*.vercel.app)
 - Key IP: HDCA™ (patent pending), VE-CAFX™ climate adjustment factors, VE-PMF™ methodology, VE-BENCH™ benchmarking
 - Working with Claude as primary technical implementer — non-technical founder
 

@@ -10,7 +10,7 @@
  * All operations scoped to auth.uid() — server enforces ownership.
  * RLS on `expenses` table provides defence-in-depth.
  *
- * PIOS v2.1 | VeritasIQ Technologies Ltd
+ * PIOS v2.2 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'

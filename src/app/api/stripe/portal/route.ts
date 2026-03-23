@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
  * GET /api/stripe/portal
  * Redirects an existing PIOS subscriber to the Stripe Customer Portal
  * to manage their subscription, update payment method, or cancel.
- * PIOS v1.0 | VeritasIQ Technologies Ltd
+ * PIOS v2.2 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
