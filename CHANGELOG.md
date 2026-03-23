@@ -1,3 +1,18 @@
+## [v2.2.1] — 2026-03-23 · Documents + Intelligence + TypeScript
+
+### New Pages
+- /platform/documents: Document Intelligence Hub — AI analysis, tag extraction, summaries
+- /platform/intelligence: FM & Research Intelligence Feed — categorised, filterable
+
+### Navigation
+- Sidebar: Documents (📄) and Intelligence (📡) added
+
+### TypeScript
+- 13+ as any removed, catch blocks typed
+- Domain: pios.sustain-intl.com, info@sustain-intl.com throughout
+
+---
+
 # PIOS Changelog
 
 ## v2.0.0 — 2026-Q1 (Expenses inline edit + Admin env checklist)
