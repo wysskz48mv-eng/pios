@@ -37,8 +37,8 @@ function TabBtn({ active, onClick, children }: { active:boolean; onClick:()=>voi
 // ── Folder tree ───────────────────────────────────────────────────────────────
 function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; all:any[]; depth?:number; onSelect:(s: unknown)=>void; selected:any }) {
   const [open, setOpen] = useState(depth < 1)
-  const children = all.filter((s: Record<string,unknown>) => (s as Record<string,unknown>).parent_id === (space as Record<string,unknown>).id)
-  const isSelected = selected?.id === (space as Record<string,unknown>).id
+  const children = all.filter((s: Record<string,unknown>) => (s as Record<string,unknown>).parent_id === space.id)
+  const isSelected = selected?.id === space.id
   return (
     <div>
       <div onClick={() => { setOpen(!open); onSelect(space) }} style={{
@@ -156,7 +156,7 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
 
 // ── Files tab ─────────────────────────────────────────────────────────────────
 function FilesTab({ spaces }: { spaces:any[] }) {
-  const [items, setItems]     = useState<Record<string,unknown>[]>([])
+  const [items, setItems]     = useState<FileItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('all')
   const [extracting, setExtracting] = useState<string|null>(null)
@@ -239,7 +239,7 @@ function FilesTab({ spaces }: { spaces:any[] }) {
 
 // ── Invoices tab ──────────────────────────────────────────────────────────────
 function InvoicesTab() {
-  const [invoices, setInvoices] = useState<Record<string,unknown>[]>([])
+  const [invoices, setInvoices] = useState<FileItem[]>([])
   const [loading, setLoading]   = useState(true)
   const [filter, setFilter]     = useState('all')
   const [updating, setUpdating] = useState<string|null>(null)
@@ -339,7 +339,7 @@ function InvoicesTab() {
 
 // ── Rules tab ─────────────────────────────────────────────────────────────────
 function RulesTab({ spaces }: { spaces:any[] }) {
-  const [rules, setRules]     = useState<Record<string,unknown>[]>([])
+  const [rules, setRules]     = useState<FileItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -420,19 +420,19 @@ function RulesTab({ spaces }: { spaces:any[] }) {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {rules.map(rule => (
-            <div key={(rule as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'var(--pios-dim)', minWidth:24, textAlign:'center' as const }}>{(rule as Record<string,unknown>).priority}</div>
+            <div key={rule.id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--pios-dim)', minWidth:24, textAlign:'center' as const }}>{rule.priority}</div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{String(rule.name ?? "")}</div>
                 <div style={{ fontSize:12, color:'var(--pios-muted)' }}>
-                  {triggerLabels[(rule as Record<string,unknown>).trigger_type]} <strong>"{String(rule.trigger_value ?? "")}"</strong> ({(rule as Record<string,unknown>).trigger_match}) → {actionLabels[(rule as Record<string,unknown>).action_type]}
-                  {(rule as Record<string,unknown>).action_value && <> <strong>"{String(rule.action_value ?? "")}"</strong></>}
+                  {triggerLabels[rule.trigger_type]} <strong>"{String(rule.trigger_value ?? "")}"</strong> ({rule.trigger_match}) → {actionLabels[rule.action_type]}
+                  {rule.action_value && <> <strong>"{String(rule.action_value ?? "")}"</strong></>}
                 </div>
               </div>
               <div style={{ display:'flex', gap:8, flexShrink:0, alignItems:'center' }}>
-                {(rule as Record<string,unknown>).times_fired > 0 && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>Fired {(rule as Record<string,unknown>).times_fired}×</span>}
-                <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:(rule as Record<string,unknown>).is_active?'#22c55e20':'rgba(255,255,255,0.05)', color:(rule as Record<string,unknown>).is_active?'#22c55e':'var(--pios-dim)', fontWeight:600 }}>{(rule as Record<string,unknown>).is_active?'Active':'Off'}</span>
-                <button onClick={()=>deleteRule((rule as Record<string,unknown>).id)} style={{ fontSize:11, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', cursor:'pointer', color:'#ef4444' }}>Delete</button>
+                {Number(rule.times_fired ?? 0) > 0 && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>Fired {Number(rule.times_fired ?? 0)}×</span>}
+                <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:rule.is_active?'#22c55e20':'rgba(255,255,255,0.05)', color:rule.is_active?'#22c55e':'var(--pios-dim)', fontWeight:600 }}>{rule.is_active?'Active':'Off'}</span>
+                <button onClick={()=>deleteRule(rule.id)} style={{ fontSize:11, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', cursor:'pointer', color:'#ef4444' }}>Delete</button>
               </div>
             </div>
           ))}
@@ -443,6 +443,27 @@ function RulesTab({ spaces }: { spaces:any[] }) {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
+
+type FileItem = {
+  id: string; name: string; size?: number; type?: string
+  mime_type?: string; created_at?: string; updated_at?: string
+  space_id?: string; space_name?: string; space_type?: string
+  path?: string; url?: string; status?: string
+  [key: string]: unknown
+}
+
+type FileSpace = {
+  id: string; name: string; space_type?: string
+  icon?: string; colour?: string; file_count?: number
+}
+
+type FileRule = {
+  id: string; name?: string; trigger_type?: string; trigger_value?: string
+  trigger_match?: string; action_type?: string; action_value?: string
+  priority?: number; is_active?: boolean; times_fired?: number
+  [key: string]: unknown
+}
+
 export default function FilesPage() {
   const [tab, setTab]           = useState<Tab>('structure')
   const [spaces, setSpaces]     = useState<Record<string,unknown>[]>([])

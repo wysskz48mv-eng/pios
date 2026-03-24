@@ -34,10 +34,23 @@ function PriorityDot({ p }: { p: string }) {
   return <span style={{ display:'inline-block', width:7, height:7, borderRadius:'50%', background:c, marginRight:5 }} />
 }
 
+type Meeting = {
+  id: string; title: string; meeting_date?: string; meeting_type?: string
+  domain?: string; platform?: string; duration_mins?: number
+  attendees?: string; summary?: string; action_items?: string
+  decisions?: string; sentiment?: string; next_steps?: string
+  status?: string; tasks_created?: boolean; ai_processed_at?: string
+  ai_summary?: string; raw_transcript?: string; raw_notes?: string
+  ai_action_items?: string[]; ai_decisions?: string[]
+  ai_follow_ups?: string[]; ai_risks?: string[]
+  [key: string]: unknown
+}
+
+
 export default function MeetingsPage() {
-  const [meetings,   setMeetings]   = useState<Record<string,unknown>[]>([])
+  const [meetings,   setMeetings]   = useState<Meeting[]>([])
   const [loading,    setLoading]    = useState(true)
-  const [selected,   setSelected]   = useState<Record<string,unknown>|null>(null)
+  const [selected,   setSelected]   = useState<Meeting|null>(null)
   const [showNew,    setShowNew]    = useState(false)
   const [saving,     setSaving]     = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -72,7 +85,7 @@ export default function MeetingsPage() {
     setLoading(true)
     const qs = filter !== 'all' ? `?domain=${filter}` : ''
     const res = await fetch(`/api/meetings${qs}`)
-    if (res.ok) { const d = await res.json(); setMeetings(d.meetings ?? []) }
+    if (res.ok) { const d = await res.json() as Record<string,unknown>; setMeetings(((d as Record<string,unknown>).meetings ?? []) as Meeting[]) }
     setLoading(false)
   }, [filter])
 
@@ -126,7 +139,7 @@ export default function MeetingsPage() {
       const { tasks_created } = await res.json()
       await load()
       const updated = meetings.find((m: Record<string,unknown>) => (m as Record<string,unknown>).id === id)
-      if (updated) setSelected({ ...selected, tasks_created: true })
+      if (updated && selected) setSelected({ ...selected, tasks_created: true } as Meeting)
       alert(`✓ ${tasks_created} task${tasks_created !== 1 ? 's' : ''} created in your task list.`)
     }
     setPromoting(false)
@@ -142,12 +155,12 @@ export default function MeetingsPage() {
     width:'100%', background:'var(--pios-surface2)', border:'1px solid var(--pios-border)',
     borderRadius:6, padding:'7px 10px', color:'var(--pios-text)', fontSize:13, marginBottom:10,
   }
-  const sel: React.CSSProperties = { ...(inp as Record<string,unknown>) }
+  const sel: React.CSSProperties = { ...inp }
 
-  const actionItems: unknown[] = selected?.ai_action_items ?? []
-  const decisions:   any[] = selected?.ai_decisions    ?? []
-  const followUps:   any[] = selected?.ai_follow_ups   ?? []
-  const risks:       any[] = selected?.ai_risks        ?? []
+  const actionItems: string[] = (selected?.ai_action_items ?? []) as string[]
+  const decisions:   string[] = (selected?.ai_decisions ?? []) as string[]
+  const followUps:   string[] = (selected?.ai_follow_ups ?? []) as string[]
+  const risks:       string[] = (selected?.ai_risks ?? []) as string[]
 
   return (
     <div className="fade-in" style={{ color:'var(--pios-text)', height:'calc(100vh - 80px)', display:'flex', flexDirection:'column' as const }}>
@@ -233,7 +246,7 @@ export default function MeetingsPage() {
               </p>
             ) : meetings.map(m => (
               <div key={(m as Record<string,unknown>).id as string}
-                onClick={() => { setSelected(m); setSelectedItems([]) }}
+                onClick={() => { setSelected(m as Meeting); setSelectedItems([]) }}
                 style={{
                   padding:'10px 12px', borderRadius:8, cursor:'pointer',
                   background: selected?.id===m.id ? 'var(--pios-surface)' : 'var(--pios-surface2)',
@@ -242,11 +255,11 @@ export default function MeetingsPage() {
                 <div style={{ fontSize:12, fontWeight:600, marginBottom:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{String(m.title ?? "")}</div>
                 <div style={{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap' as const }}>
                   <span style={{ fontSize:10, color:'var(--pios-muted)' }}>{String(m.meeting_date ?? "")}</span>
-                  <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: domainColour(m.domain)+'20', color: domainColour(m.domain), fontWeight:600 }}>
-                    {domainLabel(m.domain)}
+                  <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: domainColour(String(m.domain ?? ''))+'20', color: domainColour(String(m.domain ?? '')), fontWeight:600 }}>
+                    {domainLabel(String(m.domain ?? ''))}
                   </span>
                   {m.status === 'processed' && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(34,197,94,0.12)', color:'#22c55e', fontWeight:600 }}>AI done</span>}
-                  {m.tasks_created && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(167,139,250,0.12)', color:ACCENT, fontWeight:600 }}>Tasks ✓</span>}
+                  {Boolean(m.tasks_created) && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(167,139,250,0.12)', color:ACCENT, fontWeight:600 }}>Tasks ✓</span>}
                 </div>
               </div>
             ))}
@@ -271,19 +284,19 @@ export default function MeetingsPage() {
                   <h2 style={{ fontSize:16, fontWeight:700, marginBottom:4 }}>{String(selected.title ?? "")}</h2>
                   <div style={{ display:'flex', gap:8, flexWrap:'wrap' as const }}>
                     <span style={{ fontSize:11, color:'var(--pios-muted)' }}>{String(selected.meeting_date ?? "")}</span>
-                    {selected.duration_mins && <span style={{ fontSize:11, color:'var(--pios-muted)' }}>{String(selected.duration_mins ?? "")} mins</span>}
-                    <Badge label={TYPE_LABELS[selected.meeting_type] ?? selected.meeting_type} colour={ACCENT} />
-                    <Badge label={domainLabel(selected.domain)} colour={domainColour(selected.domain)} />
-                    {selected.platform && <Badge label={String(selected.platform ?? "")} colour='#64748b' />}
+                    {Boolean(selected.duration_mins) && <span style={{ fontSize:11, color:'var(--pios-muted)' }}>{String(selected.duration_mins ?? "")} mins</span>}
+                    <Badge label={TYPE_LABELS[(selected.meeting_type ?? '') as keyof typeof TYPE_LABELS] ?? String(selected.meeting_type ?? '')} colour={ACCENT} />
+                    <Badge label={domainLabel(selected.domain ?? '')} colour={domainColour(selected.domain ?? '')} />
+                    {Boolean(selected.platform) && <Badge label={String(selected.platform ?? "")} colour='#64748b' />}
                   </div>
                   {(selected.attendees ?? []).length > 0 && (
                     <div style={{ fontSize:11, color:'var(--pios-muted)', marginTop:4 }}>
-                      👥 {selected.attendees.join(', ')}
+                      👥 {String(selected.attendees ?? '').split(',').map((s: string) => s.trim()).filter(Boolean).join(', ')}
                     </div>
                   )}
                 </div>
                 <div style={{ display:'flex', gap:6, flexShrink:0 }}>
-                  {!selected.ai_processed_at && (selected.raw_transcript || selected.raw_notes) && (
+                  {!selected.ai_processed_at && (selected?.raw_transcript || selected?.raw_notes) && (
                     <button onClick={() => processNotes(selected.id)} disabled={processing}
                       style={{ padding:'6px 12px', borderRadius:8, border:'none', background:ACCENT, color:'#fff', cursor:'pointer', fontSize:11, fontWeight:600 }}>
                       {processing ? '✦ Processing…' : '✦ Extract with AI'}
@@ -300,7 +313,7 @@ export default function MeetingsPage() {
               {selected.ai_summary && (
                 <div style={{ padding:'12px 14px', background:'rgba(167,139,250,0.08)', border:'1px solid rgba(167,139,250,0.2)', borderRadius:10, marginBottom:16, fontSize:12, lineHeight:1.7, color:'var(--pios-text)' }}>
                   <div style={{ fontSize:10, fontWeight:700, color:ACCENT, marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>✦ AI Summary</div>
-                  {selected.ai_summary}
+                  {String(selected.ai_summary ?? "")}
                 </div>
               )}
 
@@ -338,12 +351,12 @@ export default function MeetingsPage() {
                         )}
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:12, fontWeight:500 }}>
-                            <PriorityDot p={(item as Record<string,unknown>).priority ?? 'medium'} />{(item as Record<string,unknown>).action ?? (item as Record<string,unknown>).description}
+                            <PriorityDot p='medium' />{String(item) ?? String(item)}
                           </div>
                           <div style={{ display:'flex', gap:8, marginTop:3 }}>
-                            {(item as Record<string,unknown>).owner && <span style={{ fontSize:10, color:'var(--pios-muted)' }}>→ {String((item as Record<string,unknown>).owner ?? "")}</span>}
-                            {(item as Record<string,unknown>).due_date && <span style={{ fontSize:10, color:'var(--pios-muted)' }}>Due: {String((item as Record<string,unknown>).due_date ?? "")}</span>}
-                            {(item as Record<string,unknown>).domain && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: domainColour((item as Record<string,unknown>).domain)+'15', color: domainColour((item as Record<string,unknown>).domain) }}>{domainLabel((item as Record<string,unknown>).domain)}</span>}
+                            {false && <span style={{ fontSize:10, color:'var(--pios-muted)' }}>→ {String(String(item) ?? "")}</span>}
+                            {String(item) && <span style={{ fontSize:10, color:'var(--pios-muted)' }}>Due: {String(String(item) ?? "")}</span>}
+                            {false && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: domainColour(String(item))+'15', color: domainColour(String(item)) }}>{domainLabel(String(item))}</span>}
                           </div>
                         </div>
                       </label>
@@ -359,10 +372,10 @@ export default function MeetingsPage() {
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:5 }}>
                     {decisions.map((d: unknown, i: number) => (
                       <div key={i} style={{ padding:'8px 12px', background:'rgba(34,197,94,0.06)', border:'1px solid rgba(34,197,94,0.15)', borderRadius:8 }}>
-                        <div style={{ fontSize:12 }}>✓ {d.decision}</div>
-                        {(d.owner || d.date) && (
+                        <div style={{ fontSize:12 }}>✓ {String(d)}</div>
+                        {Boolean(d) && (
                           <div style={{ fontSize:10, color:'var(--pios-muted)', marginTop:2 }}>
-                            {d.owner && `Owner: ${d.owner}`}{d.owner && d.date && ' · '}{d.date && `By: ${d.date}`}
+                            {String(d) && ` · By: ${String(d)}`}
                           </div>
                         )}
                       </div>
@@ -378,9 +391,9 @@ export default function MeetingsPage() {
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:5 }}>
                     {followUps.map((f: unknown, i: number) => (
                       <div key={i} style={{ padding:'8px 12px', background:'rgba(245,158,11,0.06)', border:'1px solid rgba(245,158,11,0.15)', borderRadius:8 }}>
-                        <div style={{ fontSize:12 }}>⟳ {f.topic}</div>
-                        {f.context && <div style={{ fontSize:10, color:'var(--pios-muted)', marginTop:2 }}>{f.context}</div>}
-                        {f.by_when && <div style={{ fontSize:10, color:'#f59e0b', marginTop:2 }}>By: {f.by_when}</div>}
+                        <div style={{ fontSize:12 }}>⟳ {String(f)}</div>
+                        
+                        
                       </div>
                     ))}
                   </div>
@@ -395,12 +408,12 @@ export default function MeetingsPage() {
                     {risks.map((r: unknown, i: number) => (
                       <div key={i} style={{ padding:'8px 12px', background:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.15)', borderRadius:8 }}>
                         <div style={{ fontSize:12 }}>
-                          <span style={{ color: r.severity==='high'?'#ef4444':r.severity==='medium'?'#f97316':'#eab308', fontWeight:600, marginRight:4 }}>
-                            [{r.severity?.toUpperCase()}]
+                          <span style={{ color: '#eab308', fontWeight:600, marginRight:4 }}>
+                            []
                           </span>
-                          {r.risk}
+                          {String(r)}
                         </div>
-                        {r.mitigation && <div style={{ fontSize:10, color:'var(--pios-muted)', marginTop:2 }}>↳ {r.mitigation}</div>}
+                        
                       </div>
                     ))}
                   </div>
@@ -411,7 +424,7 @@ export default function MeetingsPage() {
               {!selected.ai_processed_at && (
                 <div style={{ textAlign:'center' as const, padding:'30px 0', color:'var(--pios-dim)' }}>
                   <p style={{ fontSize:12, marginBottom:8 }}>No AI extraction yet.</p>
-                  {(selected.raw_transcript || selected.raw_notes)
+                  {(selected?.raw_transcript || selected?.raw_notes)
                     ? <button onClick={() => processNotes(selected.id)} disabled={processing}
                         style={{ padding:'8px 16px', borderRadius:8, border:'none', background:ACCENT, color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600 }}>
                         {processing ? '✦ Processing…' : '✦ Extract with AI'}

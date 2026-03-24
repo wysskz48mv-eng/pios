@@ -25,8 +25,17 @@ function Bar({ pct, colour='#6c8eff' }: { pct:number; colour?:string }) {
   </div>
 }
 
+
+type Expense = {
+  id: string; description?: string; amount: number | string
+  category?: string; currency?: string; date?: string
+  domain?: string; billable?: boolean; client?: string
+  notes?: string; vendor?: string; status?: string
+  [key: string]: unknown
+}
+
 export default function ExpensesPage() {
-  const [expenses,     setExpenses]     = useState<Record<string,unknown>[]>([])
+  const [expenses,     setExpenses]     = useState<Expense[]>([])
   const [loading,      setLoading]      = useState(true)
   const [saving,       setSaving]       = useState(false)
   const [showAdd,      setShowAdd]      = useState(false)
@@ -91,7 +100,7 @@ export default function ExpensesPage() {
   async function del(id: string) {
     setDeleting(id)
     await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' })
-    setExpenses(p => p.filter((e: Record<string,unknown>) => (e as Record<string,unknown>).id !== id))
+    setExpenses(p => p.filter((e: Record<string,unknown>) => e.id !== id))
     setDeleting(null)
   }
 
@@ -104,14 +113,14 @@ export default function ExpensesPage() {
     })
     if (res.ok) {
       const { expense } = await res.json()
-      setExpenses(p => p.map((e: Record<string,unknown>) => (e as Record<string,unknown>).id === editing ? expense : e))
+      setExpenses(p => p.map((e: Record<string,unknown>) => e.id === editing ? expense : e))
     }
     setEditing(null); setEditForm(null)
   }
 
   function startEdit(e: unknown) {
-    setEditing((e as Record<string,unknown>).id)
-    setEditForm({ description:(e as Record<string,unknown>).description, amount:String((e as Record<string,unknown>).amount), category:(e as Record<string,unknown>).category||'', domain:(e as Record<string,unknown>).domain||'personal', date:(e as Record<string,unknown>).date||'', currency:(e as Record<string,unknown>).currency||'GBP', billable:!!(e as Record<string,unknown>).billable, client:(e as Record<string,unknown>).client||'', notes:(e as Record<string,unknown>).notes||'' })
+    setEditing(e.id)
+    setEditForm({ description:e.description, amount:String(e.amount), category:e.category||'', domain:e.domain||'personal', date:e.date||'', currency:e.currency||'GBP', billable:!!e.billable, client:e.client||'', notes:e.notes||'' })
   }
 
   async function exportCSV() {
@@ -132,28 +141,28 @@ export default function ExpensesPage() {
 
   // Filter
   const filtered = expenses.filter(e => {
-    if (taxYear !== 'all' && getTaxYear((e as Record<string,unknown>).date) !== taxYear) return false
-    if (domainFilter !== 'all' && (e as Record<string,unknown>).domain !== domainFilter) return false
+    if (taxYear !== 'all' && getTaxYear(e.date) !== taxYear) return false
+    if (domainFilter !== 'all' && e.domain !== domainFilter) return false
     return true
   })
 
   // Tax years available
-  const taxYears = Array.from(new Set(expenses.map(e => getTaxYear((e as Record<string,unknown>).date)))).sort().reverse()
+  const taxYears = Array.from(new Set(expenses.map(e => getTaxYear(e.date)))).sort().reverse()
 
   // Summaries
-  const total      = filtered.reduce((s,e)=>s+(parseFloat((e as Record<string,unknown>).amount)||0),0)
-  const thisMonth  = filtered.filter(e=>(e as Record<string,unknown>).date?.startsWith(new Date().toISOString().slice(0,7))).reduce((s,e)=>s+(parseFloat((e as Record<string,unknown>).amount)||0),0)
-  const billable   = filtered.filter(e=>(e as Record<string,unknown>).billable).reduce((s,e)=>s+(parseFloat((e as Record<string,unknown>).amount)||0),0)
+  const total      = filtered.reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
+  const thisMonth  = filtered.filter(e=>e.date?.startsWith(new Date().toISOString().slice(0,7))).reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
+  const billable   = filtered.filter(e=>e.billable).reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
 
   // By category
   const byCat: Record<string,number> = {}
-  filtered.forEach(e => { const c=(e as Record<string,unknown>).category||'other'; byCat[c]=(byCat[c]||0)+(parseFloat((e as Record<string,unknown>).amount)||0) })
+  filtered.forEach(e => { const c=e.category||'other'; byCat[c]=(byCat[c]||0)+(parseFloat(e.amount)||0) })
   const catEntries = Object.entries(byCat).sort((a,b)=>b[1]-a[1 as string])
   const maxCat = catEntries[0]?.[1] ?? 1
 
   // By domain
   const byDomain: Record<string,number> = {}
-  filtered.forEach(e => { byDomain[(e as Record<string,unknown>).domain]=(byDomain[(e as Record<string,unknown>).domain]||0)+(parseFloat((e as Record<string,unknown>).amount)||0) })
+  filtered.forEach(e => { byDomain[e.domain]=(byDomain[e.domain]||0)+(parseFloat(e.amount)||0) })
 
   const currency = filtered[0]?.currency ?? 'GBP'
   const fmt = (n:number) => `${currency} ${n.toFixed(2)}`
@@ -290,25 +299,25 @@ export default function ExpensesPage() {
             </thead>
             <tbody>
               {filtered.map((e,i)=>(
-                <tr key={(e as Record<string,unknown>).id as string} style={{ borderBottom:'1px solid var(--pios-border)',background:i%2===0?'transparent':'rgba(255,255,255,0.01)' }}>
-                  <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)',whiteSpace:'nowrap' as const }}>{(e as Record<string,unknown>).date}</td>
+                <tr key={e.id as string} style={{ borderBottom:'1px solid var(--pios-border)',background:i%2===0?'transparent':'rgba(255,255,255,0.01)' }}>
+                  <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)',whiteSpace:'nowrap' as const }}>{String(e.date ?? "")}</td>
                   <td style={{ padding:'10px 14px',fontSize:13 }}>
-                    {editing === (e as Record<string,unknown>).id ? (
+                    {editing === e.id ? (
                       <input value={editForm.description} onChange={ev=>setEditForm((p: unknown)=>({...p,description:ev.target.value}))}
                         className="pios-input" style={{ fontSize:12,padding:'4px 8px',width:'100%' }} autoFocus onKeyDown={ev=>{if(ev.key==='Enter')saveEdit();if(ev.key==='Escape'){setEditing(null);setEditForm(null)}}} />
                     ) : (
-                      <span onClick={()=>startEdit(e)} style={{ cursor:'text' }} title="Click to edit">{(e as Record<string,unknown>).description}</span>
+                      <span onClick={()=>startEdit(e)} style={{ cursor:'text' }} title="Click to edit">{String(e.description ?? "")}</span>
                     )}
-                    {!editing&&(e as Record<string,unknown>).billable&&<span style={{ marginLeft:6,fontSize:10,padding:'1px 6px',borderRadius:10,background:'rgba(34,197,94,0.1)',color:'#22c55e',fontWeight:600 }}>Billable{(e as Record<string,unknown>).client?` · ${(e as Record<string,unknown>).client}`:''}</span>}
+                    {!editing&&e.billable&&<span style={{ marginLeft:6,fontSize:10,padding:'1px 6px',borderRadius:10,background:'rgba(34,197,94,0.1)',color:'#22c55e',fontWeight:600 }}>Billable{e.client?` · ${String(e.client ?? "")}`:''}</span>}
                   </td>
-                  <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)' }}>{(e as Record<string,unknown>).category?.replace('_',' ')||'—'}</td>
+                  <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)' }}>{e.category?.replace('_',' ')||'—'}</td>
                   <td style={{ padding:'10px 14px' }}>
-                    <span style={{ fontSize:10,padding:'2px 8px',borderRadius:20,background:`${domainColour((e as Record<string,unknown>).domain)}20`,color:domainColour((e as Record<string,unknown>).domain) }}>{domainLabel((e as Record<string,unknown>).domain)}</span>
+                    <span style={{ fontSize:10,padding:'2px 8px',borderRadius:20,background:`${domainColour(e.domain)}20`,color:domainColour(e.domain) }}>{domainLabel(e.domain)}</span>
                   </td>
-                  <td style={{ padding:'10px 14px',fontSize:11,color:'var(--pios-dim)',maxWidth:200 }}><span style={{ overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'block' }}>{(e as Record<string,unknown>).notes||'—'}</span></td>
-                  <td style={{ padding:'10px 14px',fontSize:13,fontWeight:700,whiteSpace:'nowrap' as const }}>{(e as Record<string,unknown>).currency} {parseFloat((e as Record<string,unknown>).amount).toFixed(2)}</td>
+                  <td style={{ padding:'10px 14px',fontSize:11,color:'var(--pios-dim)',maxWidth:200 }}><span style={{ overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'block' }}>{e.notes||'—'}</span></td>
+                  <td style={{ padding:'10px 14px',fontSize:13,fontWeight:700,whiteSpace:'nowrap' as const }}>{String(e.currency ?? "")} {parseFloat(e.amount).toFixed(2)}</td>
                   <td style={{ padding:'10px 14px',textAlign:'right' as const,whiteSpace:'nowrap' as const }}>
-                    {editing === (e as Record<string,unknown>).id ? (
+                    {editing === e.id ? (
                       <div style={{ display:'flex',gap:4 }}>
                         <button onClick={saveEdit} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(34,197,94,0.3)',background:'rgba(34,197,94,0.1)',cursor:'pointer',color:'#22c55e' }}>✓</button>
                         <button onClick={()=>{setEditing(null);setEditForm(null)}} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid var(--pios-border)',background:'none',cursor:'pointer',color:'var(--pios-muted)' }}>✕</button>
@@ -316,8 +325,8 @@ export default function ExpensesPage() {
                     ) : (
                       <div style={{ display:'flex',gap:4 }}>
                         <button onClick={()=>startEdit(e)} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid var(--pios-border)',background:'none',cursor:'pointer',color:'var(--pios-muted)' }}>✎</button>
-                        <button onClick={()=>del((e as Record<string,unknown>).id)} disabled={deleting===(e as Record<string,unknown>).id} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(239,68,68,0.2)',background:'none',cursor:'pointer',color:'#ef4444' }}>
-                          {deleting===(e as Record<string,unknown>).id?'…':'✕'}
+                        <button onClick={()=>del(e.id)} disabled={deleting===e.id} style={{ fontSize:11,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(239,68,68,0.2)',background:'none',cursor:'pointer',color:'#ef4444' }}>
+                          {deleting===e.id?'…':'✕'}
                         </button>
                       </div>
                     )}
