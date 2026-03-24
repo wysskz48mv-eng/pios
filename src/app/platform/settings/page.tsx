@@ -502,7 +502,7 @@ export default function SettingsPage() {
                 ['full_name','Full name'],['job_title','Job title'],['organisation','Organisation'],['billing_email','Email for daily brief'],
                 ['programme_name','Programme'],['university','University'],['timezone','Timezone'],
               ].map(([k,l]) => (
-                <div key={k}>
+                <div key={String(k ?? "")}>
                   <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>{l}</div>
                   <input className="pios-input" value={String((form as Record<string, unknown>)[k] ?? "")} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
                 </div>

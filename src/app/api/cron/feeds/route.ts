@@ -162,7 +162,7 @@ Return only JSON array: [{"title":"...","summary":"one sentence","relevance":1-1
         }
       }
     } catch (err: unknown) {
-      console.error(`[cron/feeds] Failed for user ${uid}:`, err.message)
+      console.error(`[cron/feeds] Failed for user ${uid}:`, (err as any).message)
       failed++
     }
   }

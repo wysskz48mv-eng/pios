@@ -143,7 +143,7 @@ export default function ConsultingPage() {
             <h1 className="text-xl font-bold">Consulting Strategist</h1>
             <span className="text-xs bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full font-medium">CSA™</span>
           </div>
-          <p className="text-sm text-muted-foreground">Proprietary framework engine — 7 analytical models, zero third-party IP</p>
+          <p className="text-sm text-muted-foreground">Proprietary framework engine — 15 analytical models, zero third-party IP</p>
         </div>
         <button onClick={() => setShowEngModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg text-sm font-medium hover:bg-violet-500/20">

@@ -25,7 +25,7 @@ const SHORTCUTS = [
   { label:'Draft a client email',             prompt:'Help me draft a professional email to a client. Tell me who the client is and what you need to communicate.' },
   { label:'FM market signal',                 prompt:'What is the most important FM industry development I should be paying attention to right now?' },
   { label:'Executive OS brief',             prompt:'Generate my executive operating brief — OKR pulse, open decisions, stakeholder alerts, and one strategic focus for this week.' },
-  { label:'Apply a consulting framework',    prompt:'I have a business challenge I need to think through. Which PIOS consulting framework (POM™, OAE™, SDL™, CVDM™, CPA™, SCE™, AAM™) is most appropriate and why?' },
+  { label:'Apply a consulting framework',    prompt:'I have a business challenge I need to think through. Which PIOS consulting framework (POM™, OAE™, SDL™, CVDM™, CPA™, SCE™, AAM™, UMS™, VFO™, CFE™, ADF™, GSM™, SPA™, RTE™, IML™) is most appropriate and why?' },
   { label:'Structure a decision',            prompt:'I have an important decision to make. Help me structure it using the Decision Architecture approach — options map, constraints, and a clear recommendation.' },
   { label:'Time sovereignty audit',          prompt:'Review my current time allocation and flag where busyness might be replacing strategy. What should I protect or cut?' },
   { label:'Summarise this week',              prompt:'Give me a summary of what I have accomplished this week and what is outstanding.' },

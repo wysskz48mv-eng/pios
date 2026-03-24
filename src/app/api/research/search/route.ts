@@ -124,7 +124,7 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
           // Stamp provenance onto each result
           for (const r of (parsed.results ?? [])) {
             const vr = guardReport.results.find((v: unknown) =>
-              v.input.doi === r.doi && r.doi
+              (v as any).input.doi === r.doi && r.doi
             )
             if (vr) {
               r.provenance_label  = vr.provenance_label

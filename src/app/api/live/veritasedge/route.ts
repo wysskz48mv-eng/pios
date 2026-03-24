@@ -44,15 +44,15 @@ export async function GET() {
 
     // Asset portfolio value
     const totalAssetValue = assets.reduce(
-      (sum: number, a: unknown) => sum + (Number(a.replacement_cost_sar) || 0), 0
+      (sum: number, a: unknown) => sum + (Number((a as any).replacement_cost_sar) || 0), 0
     )
 
     // OBE: most recent complete run
-    const latestOBE = obeRuns.find((r: unknown) => r.status === 'complete') ?? obeRuns[0] ?? null
+    const latestOBE = obeRuns.find((r: unknown) => (r as any).status === 'complete') ?? obeRuns[0] ?? null
 
     // Agent activity breakdown
     const agentByType = agents.reduce((acc: Record<string, number>, r: unknown) => {
-      const t = r.recommendation_type ?? 'unknown'
+      const t = (r as any).recommendation_type ?? 'unknown'
       acc[t] = (acc[t] || 0) + 1
       return acc
     }, {})
@@ -61,7 +61,7 @@ export async function GET() {
 
     // Plan breakdown
     const planBreakdown = orgs.reduce((acc: Record<string, number>, o: unknown) => {
-      acc[o.plan ?? 'unknown'] = (acc[o.plan ?? 'unknown'] || 0) + 1
+      acc[(o as any).plan ?? 'unknown'] = (acc[(o as any).plan ?? 'unknown'] || 0) + 1
       return acc
     }, {})
 

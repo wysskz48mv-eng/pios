@@ -89,6 +89,101 @@ Deliver:
 4. REDESIGN RECOMMENDATIONS — the 3-5 changes to decision rights that would most improve speed and clarity
 5. IMPLEMENTATION — how to communicate and embed the new model without triggering resistance`,
   },
+
+  UMS: {
+    name: 'Uncontested Market Scout™',
+    desc: 'Identify whitespace opportunities by mapping value curves vs competitors',
+    prompt: `Apply the Uncontested Market Scout™ (UMS) to this situation.
+Structure your analysis as:
+1. CURRENT BATTLEGROUND — map the factors that competitors currently compete on (x-axis) and the relative offering level (y-axis) for the client vs top 3 competitors
+2. HIDDEN ASSUMPTIONS — what industry conventions are being taken for granted that could be eliminated or reduced?
+3. VALUE CURVE GAPS — which factors could be raised above industry standard, and which new factors could be created that buyers would value but nobody currently offers?
+4. WHITESPACE OPPORTUNITY — describe the uncontested market space in one clear paragraph
+5. MOVE SEQUENCE — three prioritised actions to shift from the red ocean to the uncontested space`,
+  },
+  VFO: {
+    name: 'Value Flow Optimiser™',
+    desc: 'Eliminate waste and unlock flow by mapping value-adding vs non-value-adding steps',
+    prompt: `Apply the Value Flow Optimiser™ (VFO) to this situation.
+Structure your analysis as:
+1. VALUE STREAM MAP — list every step in the process from customer request to delivered outcome
+2. WASTE CLASSIFICATION — for each step, categorise as: Value-Adding (customer would pay for it), Required Non-Value-Adding (compliance, regulatory), or Pure Waste (can be eliminated)
+3. FLOW BLOCKERS — identify the top 3 bottlenecks creating delays, queues, or rework
+4. QUICK WINS — what can be eliminated or simplified in the next 30 days with minimal disruption?
+5. FUTURE STATE — describe the redesigned process and quantify the improvement (time, cost, quality)`,
+  },
+  CFE: {
+    name: 'Constraint & Flow Engine™',
+    desc: 'Find and resolve the single biggest constraint limiting system throughput',
+    prompt: `Apply the Constraint & Flow Engine™ (CFE) to this situation.
+Structure your analysis as:
+1. IDENTIFY THE CONSTRAINT — what is the single weakest link in this system? Where does work pile up, slow down, or fail most often?
+2. EXPLOIT THE CONSTRAINT — how can you get maximum output from the constraint without investment? What changes to policy, scheduling, or focus would help?
+3. SUBORDINATE EVERYTHING ELSE — what should every other part of the system do differently to support the constraint rather than create more pressure on it?
+4. ELEVATE THE CONSTRAINT — if exploitation and subordination are insufficient, what investment or structural change is needed?
+5. REPEAT — once the constraint is resolved, where does the bottleneck move next? Map the cascade.`,
+  },
+  ADF: {
+    name: 'Adaptive Delivery Framework™',
+    desc: 'Sprint-based execution layer — structure, cadence, and delivery for any project',
+    prompt: `Apply the Adaptive Delivery Framework™ (ADF) to this situation.
+Structure your analysis as:
+1. DELIVERY ARCHITECTURE — break the work into logical sprints (2-week cycles recommended). What should each sprint deliver, and in what sequence?
+2. MINIMUM VIABLE DELIVERY — what is the smallest complete thing that could be delivered first to generate feedback and prove value?
+3. DEPENDENCY MAP — what are the key dependencies between workstreams? Where could sequencing errors cause rework?
+4. RISK PER SPRINT — for each sprint, what is the single biggest execution risk and how should it be mitigated?
+5. GOVERNANCE CADENCE — what decisions need to be made, by whom, and when, across the delivery lifecycle?
+6. SUCCESS METRICS — how will you know each sprint has delivered what was intended?`,
+  },
+  GSM: {
+    name: 'Geo-Strategic Monitor™',
+    desc: 'Scan geopolitical, regulatory, and macro signals for strategic implications',
+    prompt: `Apply the Geo-Strategic Monitor™ (GSM) to this situation.
+Analyse the operating environment across six dimensions:
+1. POLITICAL & REGULATORY — government direction, policy changes, compliance requirements, licensing risk, political stability
+2. ECONOMIC — GDP trajectory, inflation, interest rates, sector-specific economics, capital availability, currency risk
+3. SOCIAL & DEMOGRAPHIC — population shifts, workforce trends, consumer behaviour changes, cultural factors
+4. TECHNOLOGICAL — emerging technologies, digitisation pace, AI adoption, automation risk, platform shifts
+5. ENVIRONMENTAL — climate-related risk, sustainability regulation, ESG investor pressure, physical risk to operations
+6. STRATEGIC IMPLICATIONS — rank the top 3 opportunities and top 3 threats arising from this analysis, with a specific recommended response to each`,
+  },
+  SPA: {
+    name: 'Stakeholder Power Atlas™',
+    desc: 'Map stakeholder influence and interests to design optimal engagement strategies',
+    prompt: `Apply the Stakeholder Power Atlas™ (SPA) to this situation.
+Deliver:
+1. STAKEHOLDER IDENTIFICATION — list all relevant stakeholders (individuals and groups) affected by or able to affect the outcome
+2. POWER-INTEREST MAPPING — plot each stakeholder on two axes: Power to affect the outcome (High/Low) and Interest in the outcome (High/Low)
+3. QUADRANT ANALYSIS:
+   - High Power / High Interest: Manage closely — what does each one need to see, hear, or receive?
+   - High Power / Low Interest: Keep satisfied — what would make them a blocker?
+   - Low Power / High Interest: Keep informed — how do they amplify or undermine the narrative?
+   - Low Power / Low Interest: Monitor — who in this group could shift quadrant?
+4. COALITION STRATEGY — which stakeholders should be brought together, and which must be kept separate?
+5. ENGAGEMENT PLAN — for each High Power stakeholder, the specific next action and desired outcome`,
+  },
+  RTE: {
+    name: 'Risk-Tiered Escalation™',
+    desc: 'Classify risks by probability × impact and route to the correct decision tier',
+    prompt: `Apply the Risk-Tiered Escalation™ (RTE) framework to this situation.
+Structure your analysis as:
+1. RISK INVENTORY — identify all material risks across: strategic, operational, financial, legal/regulatory, reputational, and people dimensions
+2. RISK SCORING — for each risk, estimate: Probability (1-5), Impact (1-5), and Velocity (how fast it could materialise: Slow/Medium/Fast)
+3. RISK MATRIX — classify each risk as: Critical (score 16-25, immediate escalation), High (9-15, senior management ownership), Medium (4-8, management monitoring), Low (1-3, operational tracking)
+4. ESCALATION ROUTING — map each Critical and High risk to the correct decision-maker and the action trigger that requires escalation
+5. MITIGATION PRIORITY — the top 5 risk mitigation actions, ranked by risk-reduction-per-effort, with owner and deadline`,
+  },
+  IML: {
+    name: 'Institutional Memory Layer™',
+    desc: 'Extract, codify, and activate pattern intelligence from past engagements',
+    prompt: `Apply the Institutional Memory Layer™ (IML) to this situation.
+Structure your analysis as:
+1. PATTERN RECOGNITION — what does this situation have in common with past cases, decisions, or engagements? Identify recurring structural patterns (client type, challenge type, sector, failure mode).
+2. PRECEDENT ANALYSIS — what worked in analogous situations? What failed and why?
+3. KNOWLEDGE GAPS — what do we not know about this situation that previous experience suggests we should investigate before acting?
+4. APPLICABLE INSIGHTS — pull the 3 most relevant lessons from the pattern library that should directly inform the recommended approach
+5. KNOWLEDGE CAPTURE — what new insight from this situation should be codified for future reference? Describe the pattern in a single reusable sentence.`,
+  },
 }
 
 export async function GET(req: NextRequest) {

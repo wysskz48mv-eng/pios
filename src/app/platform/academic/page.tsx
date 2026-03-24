@@ -399,7 +399,7 @@ export default function AcademicPage() {
                       {m.deadline&&<span style={{ fontSize:10, color:'var(--pios-dim)' }}>· {formatRelative(m.deadline)}</span>}
                     </div>
                   </div>
-                  <select value={String(m.status ?? "")} onChange={e=>updateModuleStatus(m.id,e.target.value)} style={{ fontSize:10, padding:'2px 6px', borderRadius:12, border:'none', cursor:'pointer', background:(STATUS_COLOURS[m.status]??'var(--pios-dim)')+'20', color:STATUS_COLOURS[m.status]??'var(--pios-dim)', fontWeight:600, outline:'none', flexShrink:0 }}>
+                  <select value={String(m.status ?? "")} onChange={e=>updateModuleStatus(m.id,e.target.value)} style={{ fontSize:10, padding:'2px 6px', borderRadius:12, border:'none', cursor:'pointer', background:(STATUS_(COLOURS as any)[String(m.status ?? '')]??'var(--pios-dim)')+'20', color:STATUS_(COLOURS as any)[String(m.status ?? '')]??'var(--pios-dim)', fontWeight:600, outline:'none', flexShrink:0 }}>
                     {['enrolled','in_progress','submitted','passed','failed','complete'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
                   </select>
                 </div>
@@ -476,7 +476,7 @@ function MilestonesSection() {
     try {
       const r = await fetch('/api/milestones', { credentials: 'include' })
       const d = await r.json()
-      if (d.ok) { setMilestones(((d as Record<string,unknown>).milestones ?? []) as MilestoneRecord[]); setSummary((d as Record<string,unknown>).summary as Record<string,unknown>[]) }
+      if (d.ok) { setMilestones(((d as any).milestones ?? []) as MilestoneRecord[]) }
     } catch { /* silent — table may not exist until M011 runs */ }
     setLoading(false)
   }, [])
@@ -543,7 +543,7 @@ function MilestonesSection() {
           {milestones.map(m => (
             <div key={m.id as string} style={{
               padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)',
-              borderLeft:`3px solid ${MILESTONE_STATUS_COLOURS[m.status]??'var(--pios-border)'}`,
+              borderLeft:`3px solid ${MILESTONE_STATUS_(COLOURS as any)[String(m.status ?? '')]??'var(--pios-border)'}`,
               opacity: ['waived','skipped'].includes(m.status) ? 0.5 : 1,
             }}>
               <div style={{ fontSize:11, fontWeight:600, marginBottom:4, lineHeight:1.3 }}>{String(m.title ?? "")}</div>
@@ -553,8 +553,8 @@ function MilestonesSection() {
                   disabled={saving === m.id}
                   onChange={e => updateStatus(m.id, e.target.value)}
                   style={{ fontSize:9, padding:'2px 5px', borderRadius:8, border:'none',
-                    background:(MILESTONE_STATUS_COLOURS[m.status]??'#64748b')+'22',
-                    color:MILESTONE_STATUS_COLOURS[m.status]??'var(--pios-dim)',
+                    background:(MILESTONE_STATUS_(COLOURS as any)[String(m.status ?? '')]??'#64748b')+'22',
+                    color:MILESTONE_STATUS_(COLOURS as any)[String(m.status ?? '')]??'var(--pios-dim)',
                     fontWeight:700, cursor:'pointer', outline:'none', textTransform:'uppercase', letterSpacing:'0.04em' }}>
                   {['upcoming','in_progress','submitted','passed','failed','deferred','waived'].map(s =>
                     <option key={s} value={s}>{s.replace(/_/g,' ')}</option>

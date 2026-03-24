@@ -327,7 +327,7 @@ export default function SetupGuidePage() {
 
       {/* Steps */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {STEPS.map((step) => {
+        {STEPS.map((step: any) => {
           const isDone = done.has(step.id)
           return (
             <div key={step.id} style={{
