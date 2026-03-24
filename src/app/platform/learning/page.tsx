@@ -28,12 +28,13 @@ type LearningProfile = {
   supervisor?: string; university?: string; start_date?: string
   expected_completion?: string; wizard_completed?: boolean
   research_area?: string; student_id?: string
+  cpd_body?: string; persona?: string
 }
 
 type LearningMilestone = {
   id: string; title?: string; status?: string; target_date?: string
   deadline?: string; category?: string; is_overdue?: boolean
-  days_until?: number | null
+  days_until?: number | null; completed_date?: string
 }
 
 type LearningActivity = {
@@ -65,6 +66,7 @@ type CpdActivity = {
   id: string; title?: string; activity_type?: string; provider?: string
   completion_date?: string; hours_total?: number; hours_verifiable?: number
   cpd_body?: string; evidence_url?: string; notes?: string; status?: string
+  hours_non_verifiable?: number
 }
 
 export default function LearningHubPage() {
@@ -99,9 +101,9 @@ export default function LearningHubPage() {
       method:'PATCH', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ status:'passed' }),
     })
-    setData((prev: unknown) => ({
+    setData((prev: LearningData | null) => ({
       ...prev,
-      milestones: prev?.milestones?.map((m: Record<string, unknown>) =>
+      milestones: (prev?.milestones ?? []).map((m: LearningMilestone) =>
         m.id === id ? { ...m, status:'passed', completed_date: new Date().toISOString().slice(0,10) } : m
       ),
     }))
@@ -160,12 +162,12 @@ export default function LearningHubPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label:'Progress',      value:`${summary?.pct ?? 0}%`,        sub:`${summary?.passed ?? 0}/${summary?.total ?? 0} done`, icon:Target,       color:'#8B5CF6' },
-          { label:'Overdue',       value:String(summary?.overdue ?? 0),  sub:'need attention',                                      icon:AlertTriangle, color:summary?.overdue > 0 ? '#ef4444' : '#6b7280' },
+          { label:'Overdue',       value:String(summary?.overdue ?? 0),  sub:'need attention',   icon:AlertTriangle, color:Number(summary?.overdue ?? 0) > 0 ? '#ef4444' : '#6b7280' },
           ...(isCpd ? [
             { label:'CPD hours',   value:`${cpdSum?.totalHours ?? 0}h`,  sub:`of ${cpdSum?.target ?? 0}h target (${cpdSum?.pct ?? 0}%)`, icon:Clock, color:'#F59E0B' },
             { label:'Verifiable',  value:`${cpdSum?.verifiable ?? 0}h`,  sub:`of ${cpdSum?.verifiableTarget ?? 0}h required`,       icon:Award,        color:'#10b981' },
           ] : [
-            { label:'Next due',    value: summary?.nextDue?.target_date ? fmt(summary.nextDue.target_date).split(' ').slice(0,2).join(' ') : 'None', sub: summary?.nextDue?.title?.slice(0,18) ?? '—', icon:Clock, color:'#0EA5E9' },
+            { label:'Next due',    value: summary?.nextDue ? fmt(String(summary.nextDue)).split(' ').slice(0,2).join(' ') : 'None', sub: summary?.next?.title?.slice(0,18) ?? '—', icon:Clock, color:'#0EA5E9' },
             { label:'Completed',   value:String(summary?.passed ?? 0),   sub:'milestones passed',                                   icon:CheckCircle2,  color:'#10b981' },
           ]),
         ].map(k => (
@@ -226,7 +228,7 @@ export default function LearningHubPage() {
                     </div>
                     {Boolean(m.target_date) && (
                       <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
-                        {(m.status ?? '')==='passed' ? `Completed ${fmt(m.completed_date)}` : `Due ${fmt(m.target_date)}`}
+                        {(m.status ?? '')==='passed' ? `Completed ${fmt(m.completed_date ?? null)}` : `Due ${fmt(m.target_date ?? null)}`}
                       </p>
                     )}
                   </div>
@@ -252,10 +254,10 @@ export default function LearningHubPage() {
             <div className="rounded-xl border bg-card p-4 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="font-medium">CPD {new Date().getFullYear()} progress</span>
-                <span className="text-muted-foreground">{cpdSum.totalHours}h / {cpdSum.target}h ({cpdSum.pct}%)</span>
+                <span className="text-muted-foreground">{cpdSum.totalHours}h / {cpdSum.target}h ({(cpdSum?.pct ?? 0)}%)</span>
               </div>
               <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width:`${Math.min(cpdSum.pct,100)}%`, background: cpdSum.pct>=100 ? '#10b981' : cpdSum.onTrack ? '#F59E0B' : '#ef4444' }} />
+                <div className="h-full rounded-full transition-all" style={{ width:`${Math.min(Number(cpdSum?.pct ?? 0), 100)}%`, background: (cpdSum?.pct ?? 0)>=100 ? '#10b981' : cpdSum.onTrack ? '#F59E0B' : '#ef4444' }} />
               </div>
               <div className="flex gap-4 text-xs text-muted-foreground">
                 <span>Verifiable: {cpdSum.verifiable}h / {cpdSum.verifiableTarget}h</span>

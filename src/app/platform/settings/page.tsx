@@ -20,7 +20,7 @@ const PROVIDER_LABELS: Record<string, string> = { google:'Gmail / Google', micro
 const PROVIDER_COLOURS: Record<string, string> = { google:'#4285F4', microsoft:'#0078D4', imap:'#64748b' }
 
 function EmailAccountsSection() {
-  const [accounts, setAccounts]   = useState<Record<string,unknown>[]>([])
+  const [accounts, setAccounts]   = useState<EmailAccount[]>([])
   const [loading, setLoading]     = useState(true)
   const [showAdd, setShowAdd]     = useState(false)
   const [addProvider, setAddProvider] = useState<'google'|'microsoft'|'imap'>('google')
@@ -34,7 +34,7 @@ function EmailAccountsSection() {
   const load = useCallback(async () => {
     setLoading(true)
     const res = await fetch('/api/email/accounts')
-    if (res.ok) { const d = await res.json(); setAccounts(d.accounts ?? []) }
+    if (res.ok) { const d = await res.json(); setAccounts((d.accounts ?? []) as ConnectedAccount[]) }
     setLoading(false)
   }, [])
 
@@ -226,38 +226,38 @@ function EmailAccountsSection() {
           {accounts.map((acc: Record<string, unknown>) => (
             <div key={(acc as Record<string,unknown>).id as string} style={{ padding:'12px 14px', background:'var(--pios-surface2)', borderRadius:10, border:`1px solid var(--pios-border)` }}>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background: PROVIDER_COLOURS[acc.provider] ?? '#64748b', flexShrink:0 }} />
+                <div style={{ width:8, height:8, borderRadius:'50%', background: (PROVIDER_COLOURS as Record<string,string>)[String(acc.provider ?? '')] ?? '#64748b', flexShrink:0 }} />
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
-                    <span style={{ fontSize:13, fontWeight:600 }}>{acc.email_address}</span>
-                    {acc.is_primary && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(201,168,76,0.15)', color:'#C9A84C', fontWeight:700 }}>PRIMARY</span>}
-                    <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: CONTEXT_COLOURS[acc.context]+'20', color: CONTEXT_COLOURS[acc.context], fontWeight:600 }}>
-                      {CONTEXT_LABELS[acc.context] ?? acc.context}
+                    <span style={{ fontSize:13, fontWeight:600 }}>{String(acc.email_address ?? "")}</span>
+                    {Boolean(acc.is_primary) && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(201,168,76,0.15)', color:'#C9A84C', fontWeight:700 }}>PRIMARY</span>}
+                    <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: (CONTEXT_COLOURS as Record<string,string>)[String(acc.context ?? '')]+'20', color: (CONTEXT_COLOURS as Record<string,string>)[String(acc.context ?? '')], fontWeight:600 }}>
+                      {(CONTEXT_LABELS as Record<string,string>)[String(acc.context ?? '')] ?? acc.context}
                     </span>
-                    {acc.label && acc.label !== acc.email_address && (
-                      <span style={{ fontSize:10, color:'var(--pios-muted)' }}>{acc.label}</span>
+                    {Boolean(acc.label) && acc.label !== acc.email_address && (
+                      <span style={{ fontSize:10, color:'var(--pios-muted)' }}>{String(acc.label ?? "")}</span>
                     )}
                   </div>
                   <div style={{ fontSize:10, color:'var(--pios-dim)', marginTop:2 }}>
-                    {PROVIDER_LABELS[acc.provider]} · {acc.sync_enabled ? 'Sync on' : 'Sync off'}
-                    {acc.receipt_scan_enabled && ' · 📄 Receipt scan'}
-                    {acc.last_synced_at && ` · Last synced ${new Date(acc.last_synced_at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}`}
-                    {acc.last_sync_error && <span style={{ color:'#ef4444' }}> · ⚠ {acc.last_sync_error}</span>}
+                    {(PROVIDER_LABELS as Record<string,string>)[String(acc.provider ?? '')]} · {acc.sync_enabled ? 'Sync on' : 'Sync off'}
+                    {Boolean(acc.receipt_scan_enabled) && ' · 📄 Receipt scan'}
+                    {Boolean(acc.last_synced_at) && ` · Last synced ${new Date(String(acc.last_synced_at ?? "")).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}`}
+                    {Boolean(acc.last_sync_error) && <span style={{ color:'#ef4444' }}> · ⚠ {String(acc.last_sync_error ?? "")}</span>}
                   </div>
                 </div>
                 <div style={{ display:'flex', gap:4, flexShrink:0 }}>
                   {!acc.is_primary && (
-                    <button onClick={() => setPrimary(acc.id)} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'transparent', cursor:'pointer', color:'var(--pios-muted)' }}>
+                    <button onClick={() => setPrimary(String(acc.id ?? ""))} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'transparent', cursor:'pointer', color:'var(--pios-muted)' }}>
                       Set primary
                     </button>
                   )}
-                  <button onClick={() => toggleReceipts(acc.id, acc.receipt_scan_enabled)} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:`1px solid ${acc.receipt_scan_enabled ? 'rgba(34,197,94,0.3)' : 'var(--pios-border)'}`, background: acc.receipt_scan_enabled ? 'rgba(34,197,94,0.08)' : 'transparent', cursor:'pointer', color: acc.receipt_scan_enabled ? '#22c55e' : 'var(--pios-muted)' }}>
+                  <button onClick={() => toggleReceipts(String(acc.id ?? ""), Boolean(acc.receipt_scan_enabled))} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:`1px solid ${acc.receipt_scan_enabled ? 'rgba(34,197,94,0.3)' : 'var(--pios-border)'}`, background: acc.receipt_scan_enabled ? 'rgba(34,197,94,0.08)' : 'transparent', cursor:'pointer', color: acc.receipt_scan_enabled ? '#22c55e' : 'var(--pios-muted)' }}>
                     {acc.receipt_scan_enabled ? '📄 Receipts on' : 'Receipts off'}
                   </button>
-                  <button onClick={() => syncAccount(acc.id)} disabled={syncing === acc.id} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'transparent', cursor:'pointer', color:'var(--pios-muted)' }}>
+                  <button onClick={() => syncAccount(String(acc.id ?? ""))} disabled={syncing === acc.id} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'transparent', cursor:'pointer', color:'var(--pios-muted)' }}>
                     {syncing === acc.id ? '⟳' : '↻ Sync'}
                   </button>
-                  <button onClick={() => disconnect(acc.id)} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'transparent', cursor:'pointer', color:'#ef4444' }}>
+                  <button onClick={() => disconnect(String(acc.id ?? ""))} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'transparent', cursor:'pointer', color:'#ef4444' }}>
                     Remove
                   </button>
                 </div>
@@ -358,8 +358,54 @@ function PersonaSection() {
   )
 }
 
+
+type EmailAccount = {
+  id: string; email?: string; provider?: string; name?: string
+  connected?: boolean; last_synced?: string; display_name?: string
+  email_address?: string; is_primary?: boolean; context?: string
+  label?: string; sync_enabled?: boolean; last_synced_at?: string
+  last_sync_error?: string
+  receipt_scan_enabled?: boolean
+}
+
+// ProfileRecord defined above
+
+// TenantRecord → TenantSettings above
+
+// UserRecord → ProfileRecord above
+
+// FeedSettings → FeedSettings above
+
+
+type ProfileRecord = {
+  id?: string; full_name?: string; email?: string; avatar_url?: string
+  programme_name?: string; university?: string; supervisor?: string
+  timezone?: string; job_title?: string; organisation?: string
+  research_area?: string; student_id?: string; persona?: string
+  cpd_body?: string; start_date?: string; expected_completion?: string
+  [key: string]: unknown
+}
+
+type TenantSettings = {
+  id?: string; name?: string; plan?: string; subscription_status?: string
+  billing_email?: string; trial_ends_at?: string; company_name?: string
+  logo_url?: string; primary_colour?: string; domain?: string
+  [key: string]: unknown
+}
+
+type FeedSettings = {
+  command_layout?: string; brief_include_feeds?: boolean
+  show_relevance?: boolean; brief_time?: string; brief_feed_count?: number
+  [key: string]: unknown
+}
+
+type ConnectedAccount = {
+  id: string; provider: string; email?: string; display_name?: string
+  connected?: boolean; scope?: string; last_synced?: string
+}
+
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<Record<string,unknown>|null>(null)
+  const [profile, setProfile] = useState<ProfileRecord|null>(null)
   const [tenant,  setTenant]  = useState<Record<string,unknown>|null>(null)
   const [user,    setUser]    = useState<Record<string,unknown>|null>(null)
   const [feedSettings,   setFeedSettings]   = useState<Record<string,unknown>|null>(null)
@@ -375,18 +421,18 @@ export default function SettingsPage() {
         fetch('/api/profile').then(r => r.ok ? r.json() : {}) as Promise<unknown>,
         fetch('/api/feeds').then(r => r.json()).catch(() => ({ settings: null })),
       ])
-      setUser(pR.user ?? null)
-      setProfile(pR.profile ?? null)
-      setTenant(pR.tenant ?? null)
+      setUser(((pR as Record<string,unknown>).user ?? null) as UserRecord | null)
+      setProfile(((pR as Record<string,unknown>).profile ?? null) as ProfileRecord | null)
+      setTenant(((pR as Record<string,unknown>).tenant ?? null) as TenantRecord | null)
       setFeedSettings(fR.settings)
-      if (pR.profile) setForm({
-        full_name:      pR.profile.full_name      ?? '',
-        billing_email:  pR.profile.billing_email  ?? '',
-        programme_name: pR.profile.programme_name ?? '',
-        university:     pR.profile.university     ?? '',
-        timezone:       pR.profile.timezone       ?? 'Europe/London',
-        job_title:      pR.profile.job_title      ?? '',
-        organisation:   pR.profile.organisation   ?? '',
+      if ((pR as Record<string,unknown>).profile) setForm({
+        full_name:      ((pR as Record<string,unknown>).profile as ProfileRecord)?.full_name ?? '',
+        billing_email:  ((pR as Record<string,unknown>).profile as ProfileRecord)?.billing_email ?? '',
+        programme_name: ((pR as Record<string,unknown>).profile as ProfileRecord)?.programme_name ?? '',
+        university:     ((pR as Record<string,unknown>).profile as ProfileRecord)?.university ?? '',
+        timezone:       ((pR as Record<string,unknown>).profile as ProfileRecord)?.timezone       ?? 'Europe/London',
+        job_title:      ((pR as Record<string,unknown>).profile as ProfileRecord)?.job_title      ?? '',
+        organisation:   ((pR as Record<string,unknown>).profile as ProfileRecord)?.organisation   ?? '',
       })
       setLoading(false)
       // Handle Stripe portal return params
@@ -430,10 +476,10 @@ export default function SettingsPage() {
   )
 
   const plan = tenant?.plan ?? 'individual'
-  const planInfo = PLANS[plan] ?? PLANS.individual
-  const creditsUsed = tenant?.ai_credits_used ?? 0
-  const creditsLimit = tenant?.ai_credits_limit ?? planInfo.credits
-  const creditsPct = Math.min(100, (creditsUsed / creditsLimit) * 100)
+  const planInfo = ((PLANS as Record<string,unknown>)[String(plan ?? '')] ?? (PLANS as Record<string,unknown>).individual) as Record<string,unknown>
+  const creditsUsed: number = Number(tenant?.ai_credits_used ?? 0)
+  const creditsLimit: number = Number(tenant?.ai_credits_limit ?? planInfo.credits ?? 0)
+  const creditsPct = Math.min(100, (Number(creditsUsed ?? 0) / Number(creditsLimit ?? 1)) * 100)
 
   return (
     <div className="fade-in">
@@ -457,7 +503,7 @@ export default function SettingsPage() {
               ].map(([k,l]) => (
                 <div key={k}>
                   <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>{l}</div>
-                  <input className="pios-input" value={(form as Record<string, unknown>)[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
+                  <input className="pios-input" value={String((form as Record<string, unknown>)[k] ?? "")} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
                 </div>
               ))}
               <div style={{ display:'flex',gap:8,marginTop:4 }}>
@@ -468,7 +514,7 @@ export default function SettingsPage() {
           ) : (
             <div>
               {[
-                ['Name',     profile?.full_name ?? user?.email?.split('@')[0] ?? '—'],
+                ['Name',     String(profile?.full_name ?? user?.email ?? '').split('@')[0] || '—'],
                 ['Email',    user?.email ?? '—'],
                 ['Role',     profile?.job_title ?? '—'],
                 ['Organisation', profile?.organisation ?? '—'],
@@ -510,7 +556,7 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
-          {tenant?.stripe_customer_id && (
+          {Boolean(tenant?.stripe_customer_id) && (
             <div style={{ marginTop:14, display:'flex', gap:8, flexWrap:'wrap' as const }}>
               <Link
                 href="/api/stripe/portal"
