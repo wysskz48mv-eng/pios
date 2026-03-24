@@ -34,6 +34,9 @@ export async function GET() {
 
   // §02 Google OAuth
   const googleVarsOk = envSet('GOOGLE_CLIENT_ID') && envSet('GOOGLE_CLIENT_SECRET')
+
+  // §02b Microsoft 365 OAuth
+  const azureVarsOk = envSet('AZURE_CLIENT_ID') && envSet('AZURE_CLIENT_SECRET')
   let googleTokenOk  = false
   try {
     const { data: profile } = await supabase
@@ -86,6 +89,9 @@ export async function GET() {
     se_live_data:         { ok: seDataOk,        label: 'SUPABASE_SE_SERVICE_KEY (VeritasEdge™)', required: false, section: '06', hint: 'Supabase project oxqqzxvuksgzeeyhufhp → service_role' },
     is_live_data:         { ok: isDataOk,        label: 'SUPABASE_IS_SERVICE_KEY (InvestiScript)', required: false, section: '06', hint: 'Supabase project dexsdwqkunnmhxcwayda → service_role' },
     github_pat:           { ok: githubOk,        label: 'GITHUB_PAT (expires May 16 2026)',  required: false, section: '06', hint: 'Use PAT ghp_gQaz1BKZvy… — rotate before May 16 2026' },
+    // §02b Microsoft 365 / Azure OAuth
+    azure_client_id:     { ok: envSet('AZURE_CLIENT_ID'),     label: 'AZURE_CLIENT_ID',     required: false, section: '02', hint: 'Azure Portal → App registrations → Overview → Application (client) ID' },
+    azure_client_secret: { ok: envSet('AZURE_CLIENT_SECRET'), label: 'AZURE_CLIENT_SECRET', required: false, section: '02', hint: 'Azure Portal → App registrations → Certificates & secrets → New client secret' },
     // §07 App + AI
     app_url:              { ok: appUrlOk,        label: 'NEXT_PUBLIC_APP_URL',               required: true,  section: '07', hint: 'https://pios.sustain-intl.com' },
     anthropic_api_key:    { ok: anthropicOk,     label: 'ANTHROPIC_API_KEY',                 required: true,  section: '07', hint: 'console.anthropic.com/settings/keys → Create Key' },
