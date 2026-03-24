@@ -9,7 +9,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('full_name, avatar_url, role, programme_name, google_email, tenant_id')
+    .select('full_name, avatar_url, role, persona_type, job_title, organisation, programme_name, google_email, tenant_id')
     .eq('id', user.id)
     .single()
 

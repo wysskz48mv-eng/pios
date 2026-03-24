@@ -168,7 +168,7 @@ Return only JSON array: [{"title":"...","summary":"one sentence","relevance":1-1
   }
 
   const elapsed = Math.round((Date.now() - start) / 1000)
-  console.log(`[cron/feeds] FM news: ${fmNewsRefreshed} refreshed, ${skipped} skipped. Feeds: ${feedsRefreshed} topics. Errors: ${failed}. ${elapsed}s`)
+  // console.log(`[cron/feeds] FM news: ${fmNewsRefreshed} refreshed, ${skipped} skipped. Feeds: ${feedsRefreshed} topics. Errors: ${failed}. ${elapsed}s`)
 
   return NextResponse.json({
     fmNewsRefreshed, feedsRefreshed, skipped, failed, elapsed_s: elapsed,

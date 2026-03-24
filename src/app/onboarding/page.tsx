@@ -1,4 +1,5 @@
 'use client'
+import React from 'react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -122,6 +123,19 @@ function Input({ value, onChange, placeholder, type = 'text' }: { value: string;
 export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
+
+  // Redirect existing users who already completed onboarding
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push('/auth/login'); return }
+      supabase.from('user_profiles').select('persona_type').eq('id', user.id).single()
+        .then(({ data }) => {
+          if (data?.persona_type && data.persona_type !== 'student') {
+            router.push('/platform/dashboard')
+          }
+        })
+    })
+  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const [step, setStep]             = useState(1)
   const [persona, setPersona]       = useState('')

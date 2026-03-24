@@ -108,3 +108,24 @@ body {
 
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .ai-pulse { animation: pulse 2s ease-in-out infinite; }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .pios-card { padding: 14px; border-radius: 10px; }
+  .pios-card-sm { padding: 10px; border-radius: 7px; }
+  .pios-btn { padding: 7px 12px; font-size: 12px; }
+  .pios-input { padding: 9px 12px; font-size: 14px; }
+  body { font-size: 13px; }
+}
+
+/* ── Tablet ── */
+@media (max-width: 1024px) {
+  .pios-card { padding: 16px; }
+}
+
+/* ── Print (for report packs) ── */
+@media print {
+  body { background: white; color: black; }
+  .pios-card { border: 1px solid #ccc; background: white; }
+  nav, aside { display: none; }
+}
