@@ -424,7 +424,7 @@ function ClaimsTab() {
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3, flexWrap:'wrap' as const }}>
                   <span style={{ fontSize:13, fontWeight:600 }}>{c.claimant_name}</span>
-                  <Badge label={c.status} colour={CLM_STATUS[c.status]??'#64748b'} />
+                  <Badge label={String(c.status ?? "")} colour={CLM_STATUS[c.status]??'#64748b'} />
                   {c.category && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{c.category}</span>}
                 </div>
                 <div style={{ fontSize:12, color:'var(--pios-muted)' }}>{c.description}</div>
@@ -432,7 +432,7 @@ function ClaimsTab() {
                 {c.rejection_reason && <div style={{ fontSize:11, color:'#ef4444' }}>Rejected: {c.rejection_reason}</div>}
               </div>
               <div style={{ textAlign:'right' as const, flexShrink:0 }}>
-                <div style={{ fontSize:16, fontWeight:800 }}>{c.currency} {parseFloat(c.amount).toFixed(2)}</div>
+                <div style={{ fontSize:16, fontWeight:800 }}>{String(c.currency ?? "")} {parseFloat(c.amount).toFixed(2)}</div>
                 {c.status === 'submitted' && (
                   <div style={{ display:'flex', gap:6, marginTop:6, justifyContent:'flex-end' }}>
                     <button onClick={()=>approve(c.id)} disabled={actioning===c.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>{actioning===c.id?'…':'✓ Approve'}</button>
@@ -516,10 +516,10 @@ function StaffTab() {
             <div key={(s as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(167,139,250,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>{s.full_name.charAt(0)}</div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{s.full_name}</div>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{String(s.full_name ?? "")}</div>
                 <div style={{ fontSize:11, color:'var(--pios-muted)', display:'flex', gap:8 }}>
-                  <span>{s.email}</span>
-                  {s.role && <><span>·</span><span>{s.role}</span></>}
+                  <span>{String(s.email ?? "")}</span>
+                  {s.role && <><span>·</span><span>{String(s.role ?? "")}</span></>}
                   <span>·</span><span>{s.employment_type}</span>
                 </div>
               </div>

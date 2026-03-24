@@ -239,9 +239,9 @@ export default function MeetingsPage() {
                   background: selected?.id===m.id ? 'var(--pios-surface)' : 'var(--pios-surface2)',
                   border:`1px solid ${selected?.id===m.id ? ACCENT+'50' : 'var(--pios-border)'}`,
                 }}>
-                <div style={{ fontSize:12, fontWeight:600, marginBottom:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{m.title}</div>
+                <div style={{ fontSize:12, fontWeight:600, marginBottom:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{String(m.title ?? "")}</div>
                 <div style={{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap' as const }}>
-                  <span style={{ fontSize:10, color:'var(--pios-muted)' }}>{m.meeting_date}</span>
+                  <span style={{ fontSize:10, color:'var(--pios-muted)' }}>{String(m.meeting_date ?? "")}</span>
                   <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: domainColour(m.domain)+'20', color: domainColour(m.domain), fontWeight:600 }}>
                     {domainLabel(m.domain)}
                   </span>
@@ -268,13 +268,13 @@ export default function MeetingsPage() {
               {/* Meeting header */}
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:16 }}>
                 <div>
-                  <h2 style={{ fontSize:16, fontWeight:700, marginBottom:4 }}>{selected.title}</h2>
+                  <h2 style={{ fontSize:16, fontWeight:700, marginBottom:4 }}>{String(selected.title ?? "")}</h2>
                   <div style={{ display:'flex', gap:8, flexWrap:'wrap' as const }}>
-                    <span style={{ fontSize:11, color:'var(--pios-muted)' }}>{selected.meeting_date}</span>
-                    {selected.duration_mins && <span style={{ fontSize:11, color:'var(--pios-muted)' }}>{selected.duration_mins} mins</span>}
+                    <span style={{ fontSize:11, color:'var(--pios-muted)' }}>{String(selected.meeting_date ?? "")}</span>
+                    {selected.duration_mins && <span style={{ fontSize:11, color:'var(--pios-muted)' }}>{String(selected.duration_mins ?? "")} mins</span>}
                     <Badge label={TYPE_LABELS[selected.meeting_type] ?? selected.meeting_type} colour={ACCENT} />
                     <Badge label={domainLabel(selected.domain)} colour={domainColour(selected.domain)} />
-                    {selected.platform && <Badge label={selected.platform} colour='#64748b' />}
+                    {selected.platform && <Badge label={String(selected.platform ?? "")} colour='#64748b' />}
                   </div>
                   {(selected.attendees ?? []).length > 0 && (
                     <div style={{ fontSize:11, color:'var(--pios-muted)', marginTop:4 }}>

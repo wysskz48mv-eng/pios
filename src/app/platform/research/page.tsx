@@ -83,7 +83,7 @@ function SearchTab() {
     })
     const data = await res.json()
     setResults((data.results ?? []) as SearchResult[])
-    if (data.guardSummary) setGuardSummary(data.guardSummary)
+    if (data.guardSummary) setGuardSummary((data as Record<string,unknown>).guardSummary as GuardSummary)
     setMeta(data)
     setLoading(false)
   }
@@ -165,9 +165,9 @@ function SearchTab() {
           )}
           {guardSummary && (
             <div style={{ padding:'10px 14px', borderRadius:8, marginBottom:14, display:'flex', gap:16, alignItems:'center', flexWrap:'wrap',
-              background: ((guardSummary as Record<string,unknown>).fabricated_risk as string | number | boolean) > 0 ? 'rgba(239,68,68,0.07)' : ((guardSummary as Record<string,unknown>).needs_review as string | number | boolean) > 0 ? 'rgba(245,158,11,0.07)' : 'rgba(34,197,94,0.07)',
-              border: `1px solid ${((guardSummary as Record<string,unknown>).fabricated_risk as string | number | boolean) > 0 ? 'rgba(239,68,68,0.2)' : ((guardSummary as Record<string,unknown>).needs_review as string | number | boolean) > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
-              <span style={{ fontSize:12, fontWeight:600, color: ((guardSummary as Record<string,unknown>).fabricated_risk as string | number | boolean) > 0 ? '#ef4444' : ((guardSummary as Record<string,unknown>).needs_review as string | number | boolean) > 0 ? '#f59e0b' : '#22c55e' }}>
+              background: (Number((guardSummary as Record<string,unknown>).fabricated_risk) > 0 ? 'rgba(239,68,68,0.07)' : (Number((guardSummary as Record<string,unknown>).needs_review) > 0 ? 'rgba(245,158,11,0.07)' : 'rgba(34,197,94,0.07)')),
+              border: `1px solid ${Number((guardSummary as Record<string,unknown>).fabricated_risk) > 0 ? 'rgba(239,68,68,0.2)' : (Number((guardSummary as Record<string,unknown>).needs_review) > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)')}` }}>
+              <span style={{ fontSize:12, fontWeight:600, color: (Number((guardSummary as Record<string,unknown>).fabricated_risk) > 0 ? '#ef4444' : (Number((guardSummary as Record<string,unknown>).needs_review) > 0 ? '#f59e0b' : '#22c55e')) }}>
                 🔍 Citation Guard:
               </span>
               <span style={{ fontSize:12, color:'var(--pios-muted)' }}>
@@ -283,7 +283,7 @@ function JournalsTab() {
     setLoading(true)
     const res = await fetch('/api/research/journals')
     const data = await res.json()
-    setJournals(data.journals ?? [])
+    setJournals(((data as Record<string,unknown>).journals ?? []) as Record<string,unknown>[])
     setLoading(false)
   }, [])
 
@@ -311,7 +311,7 @@ function JournalsTab() {
     setSaving(true)
     await fetch('/api/research/journals', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'add', journal: { ...addForm, impact_factor: parseFloat(addForm.impact_factor) || null } }),
+      body: JSON.stringify({ action: 'add', journal: { ...(addForm as Record<string,unknown>), impact_factor: parseFloat(addForm.impact_factor) || null } }),
     })
     setAddForm({ journal_name: '', publisher: '', impact_factor: '', quartile: 'Q2', subject_area: '', submission_url: '', guidelines_url: '', priority: 'medium' })
     setShowAdd(false); setSaving(false); load()
@@ -491,7 +491,7 @@ function CFPTab() {
   const [savingId, setSavingId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/research/cfp').then(r => r.json()).then(d => setSaved(d.calls ?? []))
+    fetch('/api/research/cfp').then(r => r.json()).then(d => setSaved(((d as Record<string,unknown>).calls ?? []) as Record<string,unknown>[]))
   }, [])
 
   async function fetchCFPs() {
@@ -541,7 +541,7 @@ function CFPTab() {
                 <div key={i} className="pios-card" style={{ padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{cfp.title}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{String(cfp.title ?? "")}</span>
                       {cfp.relevance_score >= 4 && <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 20, background: '#22c55e20', color: '#22c55e', fontWeight: 600, flexShrink: 0 }}>High match</span>}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--pios-muted)', marginBottom: 4 }}>{cfp.journal_name || cfp.conference_name}</div>
@@ -552,7 +552,7 @@ function CFPTab() {
                     {days !== null && (
                       <div style={{ fontSize: 13, fontWeight: 700, color: days < 30 ? '#ef4444' : days < 60 ? '#f59e0b' : '#22c55e', marginBottom: 4 }}>{days}d left</div>
                     )}
-                    {cfp.deadline && <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 8 }}>{cfp.deadline}</div>}
+                    {cfp.deadline && <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 8 }}>{String(cfp.deadline ?? "")}</div>}
                     <button onClick={() => saveCFP(cfp)} disabled={savingId === cfp.title} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: `1px solid ${ACCENT}`, background: 'none', cursor: 'pointer', color: ACCENT }}>
                       {savingId === cfp.title ? 'Saving…' : '+ Track'}
                     </button>
@@ -574,7 +574,7 @@ function CFPTab() {
               return (
                 <div key={(cfp as Record<string,unknown>).id as string} className="pios-card" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{cfp.title}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{String(cfp.title ?? "")}</div>
                     <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{cfp.journal_name}</div>
                   </div>
                   {days !== null && (
@@ -582,12 +582,12 @@ function CFPTab() {
                       {days > 0 ? `${days}d` : 'Passed'}
                     </div>
                   )}
-                  <select value={cfp.status} onChange={e => updateCFPStatus(cfp.id, e.target.value)}
+                  <select value={String(cfp.status ?? "")} onChange={e => updateCFPStatus(cfp.id, e.target.value)}
                     style={{ fontSize: 10, padding: '2px 6px', borderRadius: 12, border: 'none', cursor: 'pointer', background: (CFP_STATUS_COLOURS[cfp.status] ?? '#64748b') + '20', color: CFP_STATUS_COLOURS[cfp.status] ?? '#64748b', fontWeight: 600, outline: 'none' }}>
                     {['new', 'considering', 'planning', 'dismissed'].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                   {cfp.submission_url && (
-                    <a href={cfp.submission_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: ACCENT, flexShrink: 0 }}>View →</a>
+                    <a href={String(cfp.submission_url ?? "")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: ACCENT, flexShrink: 0 }}>View →</a>
                   )}
                 </div>
               )
@@ -806,10 +806,10 @@ function LibraryTab() {
   return (
     <div>
       {/* Stats */}
-      {stats && stats.total > 0 && (
+      {stats && (stats.total as number) > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 16 }}>
           {[
-            { label: 'Total', val: stats.total, c: '#6c8eff', f: 'all' },
+            { label: 'Total', val: (stats.total as number), c: '#6c8eff', f: 'all' },
             { label: 'Unread', val: stats.unread, c: '#64748b', f: 'unread' },
             { label: 'Reading', val: stats.reading, c: '#6c8eff', f: 'reading' },
             { label: 'Read', val: stats.read, c: '#22c55e', f: 'read' },

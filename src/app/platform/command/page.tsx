@@ -325,7 +325,7 @@ export default function CommandPage() {
   }
 
   async function handleEditFeed(data: unknown) {
-    await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'update', id: editingFeed.id, ...(data as Record<string,unknown>) }) })
+    await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'update', id: (editingFeed as Record<string,unknown>).id, ...(data as Record<string,unknown>) }) })
     loadFeeds()
   }
 
@@ -495,17 +495,17 @@ export default function CommandPage() {
               {/* Layout toggle */}
               <div style={{ display:'flex', gap:2, padding:2, borderRadius:8, border:'1px solid var(--pios-border)', background:'var(--pios-surface2)' }}>
                 {[['grid','▦'],['list','☰']].map(([layout, icon]) => (
-                  <button key={layout} onClick={() => updateFeedSetting('command_layout', layout)} style={{ padding:'4px 10px', borderRadius:6, border:'none', fontSize:13, cursor:'pointer', background: feedSettings.command_layout===layout ? 'var(--pios-surface)' : 'transparent', color: feedSettings.command_layout===layout ? 'var(--pios-text)' : 'var(--pios-dim)' }}>{icon}</button>
+                  <button key={layout} onClick={() => updateFeedSetting('command_layout', layout)} style={{ padding:'4px 10px', borderRadius:6, border:'none', fontSize:13, cursor:'pointer', background: (feedSettings as Record<string,unknown>).command_layout===layout ? 'var(--pios-surface)' : 'transparent', color: (feedSettings as Record<string,unknown>).command_layout===layout ? 'var(--pios-text)' : 'var(--pios-dim)' }}>{icon}</button>
                 ))}
               </div>
               {/* Relevance toggle */}
               <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--pios-muted)', cursor:'pointer' }}>
-                <input type="checkbox" checked={String(feedSettings.show_relevance ?? "")} onChange={e => updateFeedSetting('show_relevance', e.target.checked)} />
+                <input type="checkbox" checked={String((feedSettings as Record<string,unknown>).show_relevance ?? "")} onChange={e => updateFeedSetting('show_relevance', e.target.checked)} />
                 Show relevance
               </label>
               {/* Brief toggle */}
               <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--pios-muted)', cursor:'pointer' }}>
-                <input type="checkbox" checked={String(feedSettings.brief_include_feeds ?? "")} onChange={e => updateFeedSetting('brief_include_feeds', e.target.checked)} />
+                <input type="checkbox" checked={String((feedSettings as Record<string,unknown>).brief_include_feeds ?? "")} onChange={e => updateFeedSetting('brief_include_feeds', e.target.checked)} />
                 Include in brief
               </label>
               <button onClick={() => setShowAddFeed(true)} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>+ Add feed</button>
