@@ -413,9 +413,13 @@ export default function ExecutivePage() {
       {/* ── TIME ──────────────────────────────────────────── */}
       {activeTab === 'time' && (
         <div className="text-center py-16 text-muted-foreground">
-          <Clock className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm font-medium">Time Sovereignty Agent™ (TSA™)</p>
-          <p className="text-xs mt-1">Calendar audit and strategic block protection — coming in Sprint 23.</p>
+          <Clock className="w-10 h-10 mx-auto mb-3 text-cyan-400/40" />
+          <p className="text-sm font-medium text-foreground">Time Sovereignty Agent™ (TSA™)</p>
+          <p className="text-xs mt-2 mb-5">Manage protected blocks, run calendar audits, and track your weekly strategic time ratio.</p>
+          <a href="/platform/time-sovereignty"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-xl text-sm font-medium hover:bg-cyan-500/20 transition-colors">
+            Open Time Sovereignty Agent →
+          </a>
         </div>
       )}
 
