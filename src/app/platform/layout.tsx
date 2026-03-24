@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PlatformShell } from '@/components/layout/PlatformShell'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -21,7 +22,9 @@ export default async function PlatformLayout({ children }: { children: React.Rea
 
   return (
     <PlatformShell userProfile={profile as Record<string,unknown> | undefined} tenant={tenant as Record<string,unknown> | undefined}>
-      {children}
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
     </PlatformShell>
   )
 }

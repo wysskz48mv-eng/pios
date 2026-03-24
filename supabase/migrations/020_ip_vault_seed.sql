@@ -59,3 +59,20 @@ end $$;
 create index if not exists idx_knowledge_user_domain on public.knowledge_entries(user_id, domain);
 create index if not exists idx_knowledge_type        on public.knowledge_entries(entry_type);
 create index if not exists idx_knowledge_search      on public.knowledge_entries using gin(to_tsvector('english', title || ' ' || coalesce(summary,'')));
+
+-- ── Storage bucket setup (run once in Supabase dashboard if not via SQL) ─────
+-- Storage buckets cannot be created via SQL in Supabase — use dashboard or API
+-- Manual step: Supabase Dashboard → Storage → Create bucket:
+--   Name: pios-files
+--   Public: false (private — signed URLs used)
+--   File size limit: 26214400 (25 MB)
+--   Allowed MIME types: application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/plain, text/csv, image/png, image/jpeg, image/gif, image/webp, application/json
+
+-- ── Storage RLS policies (apply after creating pios-files bucket) ─────────
+-- These can be run in SQL editor after bucket creation:
+--
+-- insert into storage.buckets (id, name, public) values ('pios-files', 'pios-files', false)
+-- on conflict do nothing;
+--
+-- create policy "User owns their files" on storage.objects
+-- for all using (bucket_id = 'pios-files' AND auth.uid()::text = (storage.foldername(name))[1]);

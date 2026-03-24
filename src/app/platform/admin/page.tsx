@@ -358,6 +358,27 @@ export default function AdminPage() {
         </div>
       </div>
 
+
+      {/* ── Supabase Storage Setup ───────────────── */}
+      <div className="mt-4 bg-card border border-amber-500/20 rounded-xl p-5">
+        <h3 className="text-sm font-semibold mb-1">Supabase Storage — pios-files bucket</h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          File uploads require a storage bucket. Create it once in Supabase Dashboard.
+        </p>
+        <div className="space-y-2 text-xs font-mono bg-muted/30 rounded-lg p-3 text-muted-foreground">
+          <div>1. Go to Supabase → Storage → New bucket</div>
+          <div>2. Name: <span className="text-amber-400">pios-files</span> · Public: <span className="text-amber-400">false</span></div>
+          <div>3. File size limit: <span className="text-amber-400">26214400</span> (25 MB)</div>
+          <div>4. Run in SQL editor:</div>
+          <pre className="text-xs text-teal-400 mt-1 whitespace-pre-wrap">{"create policy \"User files\" on storage.objects\nfor all using (\n  bucket_id = 'pios-files' AND\n  auth.uid()::text = (storage.foldername(name))[1]\n);"}</pre>
+        </div>
+        <a href="https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/storage/buckets"
+          target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-blue-400 hover:underline mt-3">
+          Open Storage Dashboard →
+        </a>
+      </div>
+
       {/* ── Demo Data Seeder ────────────────────────── */}
       <div className="mt-8 bg-card border border-amber-500/20 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
