@@ -43,15 +43,15 @@ const HITL_BANNER = (
 
 // ── Payroll runs tab ──────────────────────────────────────────────────────────
 function RunsTab() {
-  const [runs, setRuns]           = useState<Record<string,unknown>[]>([])
+  const [runs, setRuns]           = useState<PayrollRun[]>([])
   const [loading, setLoading]     = useState(true)
   const [detecting, setDetecting] = useState(false)
   const [detectResult, setDetectResult] = useState<Record<string,unknown>|null>(null)
-  const [selectedRun, setSelectedRun]   = useState<Record<string,unknown>|null>(null)
+  const [selectedRun, setSelectedRun]   = useState<PayrollRun|null>(null)
   const [lines, setLines]         = useState<PayrollLine[]>([])
   const [linesLoading, setLinesLoading] = useState(false)
   const [remitting, setRemitting] = useState(false)
-  const [remitPreview, setRemitPreview] = useState<Record<string,unknown>|null>(null)
+  const [remitPreview, setRemitPreview] = useState<{subject?:string;body?:string;remittances?:{staff_name:string;notification:{body?:string};[key:string]:unknown}[]}|null>(null)
   const [banner, setBanner] = useState<{msg:string;ok:boolean}|null>(null)
 
   const loadRuns = useCallback(async () => {
@@ -64,9 +64,9 @@ function RunsTab() {
 
   useEffect(() => { loadRuns() }, [loadRuns])
 
-  async function selectRun(run: unknown) {
+  async function selectRun(run: PayrollRun) {
     setSelectedRun(run as PayrollRun); setLinesLoading(true); setRemitPreview(null)
-    const res = await fetch(`/api/payroll?type=lines&run_id=${String((run as Record<string,unknown>).id ?? "")}`)
+    const res = await fetch(`/api/payroll?type=lines&run_id=${String(run.id ?? "")}`)
     const d = await res.json()
     setLines((d.lines ?? []) as PayrollLine[]); setLinesLoading(false)
   }
@@ -81,7 +81,7 @@ function RunsTab() {
 
   async function approveRun(runId: string) {
     await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'approve_run', run_id:runId }) })
-    loadRuns(); if (selectedRun?.id === runId) setSelectedRun(p => p ? {...p, status:'approved'} : p)
+    loadRuns(); if (selectedRun?.id === runId) setSelectedRun(p => p ? {...p, status:'approved'} as PayrollRun : p)
   }
 
   async function previewRemit() {
@@ -121,10 +121,10 @@ function RunsTab() {
       </div>
 
       {detectResult && (
-        <div style={{ padding:'12px 16px', borderRadius:8, background: detectResult.detected?'rgba(34,197,94,0.08)':'rgba(108,142,255,0.08)', borderLeft:`3px solid ${detectResult.detected?'#22c55e':'#6c8eff'}`, marginBottom:16, fontSize:13 }}>
+        <div style={{ padding:'12px 16px', borderRadius:8, background: Boolean(detectResult.detected)?'rgba(34,197,94,0.08)':'rgba(108,142,255,0.08)', borderLeft:`3px solid ${Boolean(detectResult.detected)?'#22c55e':'#6c8eff'}`, marginBottom:16, fontSize:13 }}>
           {detectResult.detected
-            ? <>✓ <strong>{detectResult.message}</strong></>
-            : detectResult.message}
+            ? <>✓ <strong>{String(detectResult.message ?? "")}</strong></>
+            : String(detectResult.message ?? "")}
         </div>
       )}
 
@@ -141,23 +141,23 @@ function RunsTab() {
           ) : (
             <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
               {runs.map(run => (
-                <div key={(run as Record<string,unknown>).id as string} onClick={()=>selectRun(run)} className="pios-card" style={{ padding:'14px 16px', cursor:'pointer', border:`1px solid ${selectedRun?.id===(run as Record<string,unknown>).id?'rgba(167,139,250,0.4)':'var(--pios-border)'}`, background:selectedRun?.id===(run as Record<string,unknown>).id?'rgba(167,139,250,0.05)':'var(--pios-surface)' }}>
+                <div key={run.id as string} onClick={()=>selectRun(run)} className="pios-card" style={{ padding:'14px 16px', cursor:'pointer', border:`1px solid ${selectedRun?.id===run.id?'rgba(167,139,250,0.4)':'var(--pios-border)'}`, background:selectedRun?.id===run.id?'rgba(167,139,250,0.05)':'var(--pios-surface)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                     <div>
-                      <div style={{ fontSize:14, fontWeight:700, marginBottom:3 }}>{(run as Record<string,unknown>).pay_period ?? 'Payroll Run'}</div>
+                      <div style={{ fontSize:14, fontWeight:700, marginBottom:3 }}>{run.pay_period ?? "Payroll Run"}</div>
                       <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                        <Badge label={String((run as Record<string,unknown>).status ?? "")} colour={RUN_STATUS[(run as Record<string,unknown>).status]??'#64748b'} />
-                        {(run as Record<string,unknown>).company_entity && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{String((run as Record<string,unknown>).company_entity ?? "")}</span>}
+                        <Badge label={String(run.status ?? "")} colour={RUN_STATUS[run.status as keyof typeof RUN_STATUS]??'#64748b'} />
+                        {Boolean(run.company_entity) && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{String(run.company_entity ?? "")}</span>}
                       </div>
                     </div>
                     <div style={{ textAlign:'right' as const }}>
-                      <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{String((run as Record<string,unknown>).currency ?? "")} {parseFloat((run as Record<string,unknown>).total_net??0).toFixed(2)}</div>
-                      <div style={{ fontSize:11, color:'var(--pios-dim)' }}>net · {(run as Record<string,unknown>).payroll_lines?.length??0} staff</div>
+                      <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{String(run.currency ?? "")} {(Number(run.total_net ?? 0)).toFixed(2)}</div>
+                      <div style={{ fontSize:11, color:'var(--pios-dim)' }}>net · {(run.staff_lines ?? run.payroll_lines)?.length ?? 0} staff</div>
                     </div>
                   </div>
-                  {(run as Record<string,unknown>).status === 'draft' && (
+                  {run.status === 'draft' && (
                     <div style={{ marginTop:10 }}>
-                      <button onClick={e=>{e.stopPropagation();approveRun((run as Record<string,unknown>).id)}} style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>
+                      <button onClick={e=>{e.stopPropagation();approveRun(run.id)}} style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>
                         ✓ Approve run
                       </button>
                     </div>
@@ -195,8 +195,8 @@ function RunsTab() {
                           {l.staff_email && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{String(l.staff_email ?? "")}</div>}
                         </div>
                         <div style={{ textAlign:'right' as const }}>
-                          <div style={{ fontSize:13, fontWeight:700 }}>{selectedRun.currency} {parseFloat(l.net_pay??0).toFixed(2)}</div>
-                          <div style={{ fontSize:10, color:'var(--pios-dim)' }}>Gross {parseFloat(l.gross_pay??0).toFixed(2)}</div>
+                          <div style={{ fontSize:13, fontWeight:700 }}>{selectedRun.currency} {(l.net_pay ?? 0).toFixed(2)}</div>
+                          <div style={{ fontSize:10, color:'var(--pios-dim)' }}>Gross {(l.gross_pay ?? 0).toFixed(2)}</div>
                         </div>
                         {l.remittance_sent && <span style={{ fontSize:10, color:'#22c55e', marginLeft:8 }}>✓ Notified</span>}
                       </div>
@@ -217,7 +217,7 @@ function RunsTab() {
                       <div style={{ padding:'10px 14px', borderRadius:8, background:'rgba(167,139,250,0.08)', marginBottom:10, fontSize:12 }}>
                         <strong>{remitPreview.remittances?.length} remittance drafts ready.</strong> Review the notifications below, then confirm to queue all transfers.
                       </div>
-                      {remitPreview.remittances?.slice(0,2).map((r: unknown, i: number) => (
+                      {remitPreview.remittances?.slice(0,2).map((r: {staff_name:string;notification:{body?:string}}, i: number) => (
                         <div key={i} style={{ padding:'10px', borderRadius:6, background:'var(--pios-surface2)', marginBottom:8, fontSize:11 }}>
                           <div style={{ fontWeight:600, marginBottom:4 }}>To: {r.staff_name}</div>
                           <div style={{ color:'var(--pios-muted)', lineHeight:1.5 }}>{r.notification.body?.slice(0,200)}…</div>
@@ -243,7 +243,7 @@ function RunsTab() {
 
 // ── Transfer queue tab ────────────────────────────────────────────────────────
 function TransfersTab() {
-  const [transfers, setTransfers] = useState<Record<string,unknown>[]>([])
+  const [transfers, setTransfers] = useState<Transfer[]>([])
   const [loading, setLoading]     = useState(true)
   const [filter, setFilter]       = useState('queued')
   const [actioning, setActioning] = useState<string|null>(null)
@@ -268,8 +268,8 @@ function TransfersTab() {
     setActioning(null); load()
   }
 
-  const totalQueued = transfers.filter(t=>t.status==='queued').reduce((s,t)=>s+(parseFloat(t.amount)||0),0)
-  const totalApproved = transfers.filter(t=>t.status==='approved').reduce((s,t)=>s+(parseFloat(t.amount)||0),0)
+  const totalQueued = transfers.filter(t=>t.status==='queued').reduce((s,t)=>s+(Number(t.amount)||0),0)
+  const totalApproved = transfers.filter(t=>t.status==='approved').reduce((s,t)=>s+(Number(t.amount)||0),0)
 
   return (
     <div>
@@ -280,10 +280,10 @@ function TransfersTab() {
             { label:'Awaiting approval', value:`${transfers.filter(t=>t.status==='queued').length} · ${transfers[0]?.currency??'GBP'} ${totalQueued.toFixed(2)}`, colour:'#6c8eff' },
             { label:'Approved — ready', value:`${transfers.filter(t=>t.status==='approved').length} · ${transfers[0]?.currency??'GBP'} ${totalApproved.toFixed(2)}`, colour:'#f59e0b' },
             { label:'Completed', value:transfers.filter(t=>t.status==='completed').length, colour:'#22c55e' },
-          ].map(s=>(
-            <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
-              <div style={{ fontSize:13, fontWeight:700, color:(s as Record<string,unknown>).colour, marginBottom:3 }}>{(s as Record<string,unknown>).value}</div>
-              <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{(s as Record<string,unknown>).label}</div>
+          ].map((s: {label:string;value:string|number;colour:string})=>(
+            <div key={s.label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
+              <div style={{ fontSize:13, fontWeight:700, color:String(s.colour), marginBottom:3 }}>{String(s.value ?? "")}</div>
+              <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{String(s.label ?? "")}</div>
             </div>
           ))}
         </div>
@@ -301,22 +301,22 @@ function TransfersTab() {
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
-          {transfers.map(t => (
-            <div key={(t as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+          {transfers.map((t: Transfer) => (
+            <div key={t.id as string} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3, flexWrap:'wrap' as const }}>
-                  <span style={{ fontSize:13, fontWeight:600 }}>{t.recipient_name}</span>
+                  <span style={{ fontSize:13, fontWeight:600 }}>{String(t.recipient_name ?? "")}</span>
                   <Badge label={t.status} colour={TRF_STATUS[t.status]??'#64748b'} />
-                  <Badge label={t.transfer_type?.replace('_',' ')??'payment'} colour="#64748b" />
+                  <Badge label={String(t.transfer_type ?? 'payment').replace('_', ' ')} colour="#64748b" />
                 </div>
                 <div style={{ fontSize:11, color:'var(--pios-dim)', display:'flex', gap:10 }}>
-                  {t.recipient_email && <span>{t.recipient_email}</span>}
+                  {Boolean(t.recipient_email) && <span>{String(t.recipient_email ?? "")}</span>}
                   <span>{t.reference}</span>
-                  {t.transfer_reference && <span style={{ color:'#22c55e' }}>Ref: {t.transfer_reference}</span>}
+                  {Boolean(t.transfer_reference) && t.transfer_reference && <span style={{ color:'#22c55e' }}>Ref: {Boolean(t.transfer_reference) && t.transfer_reference}</span>}
                 </div>
               </div>
               <div style={{ textAlign:'right' as const, flexShrink:0 }}>
-                <div style={{ fontSize:16, fontWeight:800 }}>{t.currency} {parseFloat(t.amount).toFixed(2)}</div>
+                <div style={{ fontSize:16, fontWeight:800 }}>{t.currency} {Number(t.amount).toFixed(2)}</div>
                 {t.status === 'queued' && (
                   <button onClick={()=>approve(t.id)} disabled={actioning===t.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e', marginTop:4 }}>
                     {actioning===t.id?'…':'✓ Approve'}
@@ -338,7 +338,7 @@ function TransfersTab() {
 
 // ── Expense claims tab ────────────────────────────────────────────────────────
 function ClaimsTab() {
-  const [claims, setClaims]   = useState<Record<string,unknown>[]>([])
+  const [claims, setClaims]   = useState<Claim[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('submitted')
   const [actioning, setActioning] = useState<string|null>(null)
@@ -349,8 +349,8 @@ function ClaimsTab() {
   const load = useCallback((f=filter) => {
     setLoading(true)
     fetch('/api/payroll?type=claims').then(r=>r.json()).then(d=>{
-      const filtered = f === 'all' ? (d.claims??[]) : (d.claims??[]).filter((c: unknown) => c.status === f)
-      setClaims(filtered); setLoading(false)
+      const filtered = f === 'all' ? (d.claims??[]) : (d.claims??[]).filter((c: Claim) => c.status === f)
+      setClaims(filtered as Claim[]); setLoading(false)
     })
   }, [filter])
 
@@ -419,8 +419,8 @@ function ClaimsTab() {
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
-          {claims.map(c => (
-            <div key={(c as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+          {claims.map((c: Claim) => (
+            <div key={c.id as string} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3, flexWrap:'wrap' as const }}>
                   <span style={{ fontSize:13, fontWeight:600 }}>{String(c.claimant_name ?? "")}</span>
@@ -432,7 +432,7 @@ function ClaimsTab() {
                 {c.rejection_reason && <div style={{ fontSize:11, color:'#ef4444' }}>Rejected: {String(c.rejection_reason ?? "")}</div>}
               </div>
               <div style={{ textAlign:'right' as const, flexShrink:0 }}>
-                <div style={{ fontSize:16, fontWeight:800 }}>{String(c.currency ?? "")} {parseFloat(c.amount).toFixed(2)}</div>
+                <div style={{ fontSize:16, fontWeight:800 }}>{String(c.currency ?? "")} {Number(c.amount).toFixed(2)}</div>
                 {c.status === 'submitted' && (
                   <div style={{ display:'flex', gap:6, marginTop:6, justifyContent:'flex-end' }}>
                     <button onClick={()=>approve(c.id)} disabled={actioning===c.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>{actioning===c.id?'…':'✓ Approve'}</button>
@@ -450,7 +450,7 @@ function ClaimsTab() {
 
 // ── Staff tab ─────────────────────────────────────────────────────────────────
 function StaffTab() {
-  const [staff, setStaff]     = useState<Record<string,unknown>[]>([])
+  const [staff, setStaff]     = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -513,19 +513,19 @@ function StaffTab() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {staff.map(s => (
-            <div key={(s as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(167,139,250,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>{(s as Record<string,unknown>).full_name.charAt(0)}</div>
+            <div key={s.id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(167,139,250,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>{s.full_name?.[0] ?? ""}</div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{String((s as Record<string,unknown>).full_name ?? "")}</div>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{String(s.full_name ?? "")}</div>
                 <div style={{ fontSize:11, color:'var(--pios-muted)', display:'flex', gap:8 }}>
-                  <span>{String((s as Record<string,unknown>).email ?? "")}</span>
-                  {(s as Record<string,unknown>).role && <><span>·</span><span>{String((s as Record<string,unknown>).role ?? "")}</span></>}
-                  <span>·</span><span>{(s as Record<string,unknown>).employment_type}</span>
+                  <span>{String(s.email ?? "")}</span>
+                  {Boolean(s.role) && <><span>·</span><span>{s.role}</span></>}
+                  <span>·</span><span>{String(s.employment_type ?? "")}</span>
                 </div>
               </div>
               <div style={{ textAlign:'right' as const }}>
-                <div style={{ fontSize:13, fontWeight:700 }}>{(s as Record<string,unknown>).salary_currency} {parseFloat((s as Record<string,unknown>).monthly_salary??0).toFixed(0)}/mo</div>
-                <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{(s as Record<string,unknown>).company_entity?.replace('VeritasIQ Technologies Ltd','VIQ').replace('Sustain International UK Ltd','SI UK')}</div>
+                <div style={{ fontSize:13, fontWeight:700 }}>{s.salary_currency} {Number(s.monthly_salary ?? 0).toFixed(0)}/mo</div>
+                <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{s.company_entity?.replace('VeritasIQ Technologies Ltd','VIQ').replace('Sustain International UK Ltd','SI UK')}</div>
               </div>
             </div>
           ))}
@@ -538,7 +538,7 @@ function StaffTab() {
 // ── Chase tab ─────────────────────────────────────────────────────────────────
 function ChaseTab() {
   const [checking, setChecking]   = useState(false)
-  const [chaseResult, setChaseResult] = useState<Record<string,unknown>|null>(null)
+  const [chaseResult, setChaseResult] = useState<ChaseResult|null>(null)
   const [log, setLog]             = useState<Record<string,unknown>[]>([])
   const [accountantEmail, setAccountantEmail] = useState('')
   const [expectedDate, setExpectedDate] = useState('')
@@ -551,7 +551,7 @@ function ChaseTab() {
     setChecking(true); setChaseResult(null)
     const res = await fetch('/api/payroll/chase', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accountant_email:accountantEmail||undefined, expected_date:expectedDate||undefined }) })
     const d = await res.json()
-    setChaseResult(d); setChecking(false)
+    setChaseResult(d as ChaseResult); setChecking(false)
     if (!d.chase_needed || d.chase_needed) {
       fetch('/api/payroll/chase').then(r=>r.json()).then(x=>setLog(x.log??[]))
     }
@@ -578,23 +578,23 @@ function ChaseTab() {
       </div>
 
       {chaseResult && (
-        <div className="pios-card" style={{ marginBottom:16, borderLeft:`3px solid ${chaseResult.chase_needed?(levelColour as Record<string,unknown>)[chaseResult.chase_level]??'#f59e0b':'#22c55e'}` }}>
+        <div className="pios-card" style={{ marginBottom:16, borderLeft:`3px solid ${chaseResult.chase_needed?(levelColour as Record<string,string>)[chaseResult.chase_level ?? ''] ?? '#f59e0b':'#22c55e'}` }}>
           {!chaseResult.chase_needed ? (
-            <div style={{ fontSize:13, color:'#22c55e' }}>✓ {chaseResult.message}</div>
+            <div style={{ fontSize:13, color:'#22c55e' }}>✓ {String(chaseResult.message ?? "")}</div>
           ) : chaseResult.already_sent ? (
-            <div style={{ fontSize:13, color:'var(--pios-muted)' }}>⚠ {chaseResult.message}</div>
+            <div style={{ fontSize:13, color:'var(--pios-muted)' }}>⚠ {String(chaseResult.message ?? "")}</div>
           ) : (
             <>
               <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:10 }}>
-                <Badge label={chaseResult.chase_level} colour={(levelColour as Record<string,unknown>)[chaseResult.chase_level]??'#f59e0b'} />
-                <span style={{ fontSize:13, fontWeight:600 }}>{chaseResult.days_overdue} days overdue</span>
+                <Badge label={String(chaseResult.chase_level ?? "")} colour={(levelColour as Record<string,string>)[chaseResult.chase_level ?? ''] ?? '#f59e0b'} />
+                <span style={{ fontSize:13, fontWeight:600 }}>{Number(chaseResult.days_overdue ?? 0)} days overdue</span>
               </div>
-              {chaseResult.draft && (
+              {Boolean(chaseResult.draft) && (
                 <div>
                   <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-muted)', marginBottom:6 }}>Draft email:</div>
                   <div style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface2)', marginBottom:10 }}>
                     <div style={{ fontSize:12, fontWeight:600, marginBottom:4 }}>Subject: {String(chaseResult.draft?.subject ?? '')}</div>
-                    <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, whiteSpace:'pre-wrap' as const }}>{typeof chaseResult.draft?.body === 'string' ? chaseResult.draft.body : String(chaseResult.draft?.body ?? '')}</div>
+                    <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, whiteSpace:'pre-wrap' as const }}>{String(chaseResult.draft?.body ?? '')}</div>
                   </div>
                   <p style={{ fontSize:11, color:'#f59e0b' }}>⚠ Review and copy this email to send manually. PIOS has not sent this email.</p>
                 </div>
@@ -604,15 +604,15 @@ function ChaseTab() {
         </div>
       )}
 
-      {(log as Record<string,unknown>).length > 0 && (
+      {(log as unknown[]).length > 0 && (
         <div>
           <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-muted)', marginBottom:10, textTransform:'uppercase' as const, letterSpacing:'0.06em' }}>Chase history</div>
           <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
-            {(log as Record<string,unknown>).map(l => (
+            {log.map((l: Record<string,unknown>) => (
               <div key={(l as Record<string,unknown>).id as string} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10 }}>
-                <Badge label={String(l.chase_level ?? "")} colour={(levelColour as Record<string,unknown>)[l.chase_level]??'#f59e0b'} />
+                <Badge label={String(l.chase_level ?? "")} colour={(levelColour as Record<string,string>)[String(l.chase_level ?? '')]??'#f59e0b'} />
                 <span style={{ fontSize:12, flex:1 }}>Payroll {String(l.days_overdue ?? "")}d overdue — expected {String(l.expected_date ?? "")}</span>
-                <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{new Date(l.sent_at).toLocaleDateString('en-GB')}</span>
+                <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{new Date(String(l.sent_at ?? '')).toLocaleDateString('en-GB')}</span>
               </div>
             ))}
           </div>
@@ -626,18 +626,52 @@ function ChaseTab() {
 type PayrollRun = {
   id: string; run_date: string; status: string; total_gross?: number
   total_net?: number; currency?: string; notes?: string
-  [key: string]: unknown
+  staff_lines?: PayrollLine[]; payroll_lines?: PayrollLine[]; pdf_url?: string
+  pay_period?: string; pay_date?: string; company_entity?: string
+  confidence?: number; remittance_sent_at?: string
 }
 type PayrollLine = {
+  role_label?: string;
   id: string; staff_id?: string; full_name: string; role?: string
-  gross: number; net: number; deductions?: number; currency?: string
+  gross: number; net: number; net_pay?: number; gross_pay?: number
+  deductions?: number; currency?: string
+  bank_account?: string; payment_method?: string; company_entity?: string
+  employment_type?: string; salary_currency?: string; monthly_salary?: number
+  staff_name?: string; staff_email?: string
+  remittance_sent?: boolean; remittance_sent_at?: string
   [key: string]: unknown
 }
 type StaffMember = {
   id: string; full_name: string; email: string; role: string
   department?: string; salary?: number; currency?: string; status?: string
+  bank_account?: string; payment_method?: string; company_entity?: string
+  employment_type?: string; salary_currency?: string; monthly_salary?: number | string
+}
+
+type Transfer = {
+  id: string; status: string; amount: number | string; currency?: string
+  recipient_name?: string; recipient_email?: string; bank_account?: string
+  payment_method?: string; reference?: string; created_at?: string
+  run_id?: string; staff_id?: string
+  transfer_type?: string; transfer_reference?: string
   [key: string]: unknown
 }
+
+type Claim = {
+  id: string; status: string; claimant_name?: string; claimant_email?: string
+  amount: number | string; currency?: string; description?: string
+  category?: string; claim_period?: string; created_at?: string
+  rejection_reason?: string
+  [key: string]: unknown
+}
+
+type ChaseResult = {
+  chase_needed?: boolean; chase_level?: string; message?: string
+  days_overdue?: number; already_sent?: boolean
+  draft?: { subject?: string; body?: string }
+  [key: string]: unknown
+}
+
 
 export default function PayrollPage() {
   const [tab, setTab] = useState<Tab>('runs')
