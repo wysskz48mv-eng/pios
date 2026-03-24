@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireMFA } from '@/lib/mfa'
 import { createServiceClient } from '@/lib/supabase/server'
 import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'

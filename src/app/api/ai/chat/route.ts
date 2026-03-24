@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety, auditLog, IP_HEADERS } from '@/lib/security-middleware'
+import { checkRateLimit, LIMITS } from '@/lib/redis-rate-limit'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60
@@ -27,6 +28,10 @@ export const maxDuration = 60
  */
 export async function POST(request: Request) {
   try {
+    // Rate limiting — ISO 27001 A.12.6
+    const ip = (request.headers as Record<string, {get?:(h:string)=>string|null}>).get?.('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+    const rl = await checkRateLimit({ key: `pios:ai:${ip}`, ...LIMITS.ai })
+    if (rl) return rl
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

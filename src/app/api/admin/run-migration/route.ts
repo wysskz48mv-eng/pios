@@ -10,6 +10,8 @@ export const maxDuration = 60
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, LIMITS } from '@/lib/redis-rate-limit'
+import { requireMFA } from '@/lib/mfa'
 
 const OWNER_EMAIL = 'info@sustain-intl.com'
 
@@ -273,11 +275,18 @@ async function runPg(sql: string): Promise<{ ok: boolean; result?: string; err?:
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  const rl = await checkRateLimit({ key: `pios:admin:${ip}`, ...LIMITS.admin })
+  if (rl) return rl
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user || user.email !== OWNER_EMAIL) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
+
+  // MFA guard — admin routes require AAL2 if enrolled
+  const mfaError = await requireMFA(supabase)
+  if (mfaError) return mfaError
 
   const body = await req.json().catch(() => ({}))
   const id: string = body.migration ?? '012'

@@ -1,32 +1,23 @@
-# Dependabot configuration — ISO 27001 A.12.6 Vulnerability Management
-# Automatically raises PRs for npm dependency updates
-# VeritasIQ Technologies Ltd
+# Dependabot — ISO 27001 A.12.6 Vulnerability Management
+# PIOS v2.4.2 | VeritasIQ Technologies Ltd
 version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "08:00"
+      interval: "daily"
+      time: "07:00"
       timezone: "Europe/London"
     open-pull-requests-limit: 10
-    reviewers:
-      - "wysskz48mv-eng"
-    labels:
-      - "security"
-      - "dependencies"
+    labels: ["security", "dependencies"]
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "security"
     ignore:
-      # Major version bumps require manual review
       - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      security-patches:
-        applies-to: security-updates
-        patterns: ["*"]
-      minor-patch-updates:
-        applies-to: version-updates
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
+        update-types: ["version-update:semver-patch"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels: ["security", "github-actions"]

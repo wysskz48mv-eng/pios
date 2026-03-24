@@ -4,6 +4,7 @@ import { callClaude } from '@/lib/ai/client'
 import { createNotification } from '@/lib/notifications'
 import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
 import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
+import { checkRateLimit, LIMITS } from '@/lib/redis-rate-limit'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60
@@ -30,6 +31,9 @@ export const maxDuration = 60
  */
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+    const rl = await checkRateLimit({ key: `pios:brief:${ip}`, max: 10, windowMs: 60*60*1000 })
+    if (rl) return rl
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -1,3 +1,36 @@
+## [v2.4.2] — 2026-03-24 · Sprint 56 — Security hardening (T10/T11/T12)
+
+### T10 — MFA enforcement (admin routes)
+- `src/lib/mfa.ts` — new Supabase AAL2 session check helper with graceful
+  degradation. `requireMFA(supabase)` returns 403 if user has TOTP enrolled
+  but session is only AAL1; `getMFAStatus()` for settings UI.
+- `/api/admin/run-migration` — `requireMFA()` applied after owner email check.
+  If MFA enrolled but not verified: 403 with redirect to /platform/settings?tab=security.
+- `/api/admin/migrate` — `requireMFA` import added.
+
+### T11 — Rate limiting (API routes)
+- `/api/ai/chat` — rate limit: 20 req/min per IP (`LIMITS.ai`)
+- `/api/brief` — rate limit: 10 req/hr per IP (brief generation is expensive)
+- `/api/admin/run-migration` — rate limit: 30 req/min per IP (`LIMITS.admin`)
+- All use existing `checkRateLimit` + `LIMITS` from `src/lib/redis-rate-limit.ts`
+  (Upstash Redis when configured, in-memory fallback when not)
+
+### T12 — GitHub Actions security scanning + Dependabot
+- `.github/workflows/security.yml` — daily 07:00 UTC:
+  - npm audit (fail on high/critical)
+  - CodeQL JavaScript analysis (security-and-quality queries)
+  - TruffleHog secret detection (verified secrets only)
+- `.github/dependabot.yml` — daily npm updates (major/minor) + weekly Actions updates
+
+### SRAF remediation refs
+- SRAF B-01 (MFA/IAM) — T10 closes PIOS gap
+- SRAF B-03 (API rate limiting) — T11 closes PIOS gap  
+- SRAF B-04 (vulnerability management) — T12 closes PIOS gap
+
+package.json: 2.4.1 -> 2.4.2
+
+---
+
 ## [v2.4.1] — 2026-03-24 · Sprint 55 — M013 migration collision fix
 
 ### Bug fix: M012 filename collision resolved
