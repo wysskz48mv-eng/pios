@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 
 // GET /api/live/investiscript
 // Pulls live metrics from the InvestiScript Supabase project.
