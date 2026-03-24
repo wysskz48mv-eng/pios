@@ -348,6 +348,8 @@ export default function DashboardPage() {
             { dot:'#4ade80', label:'OKR Pulse', value:`${(execSnap.okr_summary as Record<string,unknown>)?.avg_prog ?? 0}%`, sub:`${(execSnap.okr_summary as Record<string,unknown>)?.total ?? 0} active · ${(execSnap.okr_summary as Record<string,unknown>)?.at_risk ?? 0} at risk`, href:'/platform/executive' },
             { dot:'#fbbf24', label:'Open Decisions', value:String(execSnap.open_decisions_count ?? 0), sub:'requiring action', href:'/platform/executive?tab=decisions' },
             { dot:'#60a5fa', label:'Stakeholders Due', value:String(execSnap.stakeholders_due_count ?? 0), sub:'need contact this week', href:'/platform/executive?tab=stakeholders' },
+            { dot:'#a78bfa', label:'IP Assets', value:String(execSnap.ip_assets_count ?? 0), sub:'registered in vault', href:'/platform/ip-vault' },
+            { dot:'#3b82f6', label:'Active Contracts', value:String(execSnap.active_contracts_count ?? 0), sub:'in contract register', href:'/platform/contracts' },
           ].map(s => (
             <a key={(s as Record<string,unknown>).label as string} href={s.href} style={{ textDecoration:'none' }}>
               <div className="pios-card-sm" style={{ padding:'14px 16px', cursor:'pointer' }}>
@@ -468,6 +470,55 @@ export default function DashboardPage() {
           </Link>
         )}
       </div>
+
+      {/* ── CEO Module Quick-Access ─────────────────────────────── */}
+      <div style={{ marginTop: 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pios-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+          Professional OS — Quick Access
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 10 }}>
+          {([
+            { href:'/platform/command',      icon:'⚡', label:'Command Centre',     sub:'Live cockpit',          colour:'#6c8eff' },
+            { href:'/platform/executive',    icon:'🎯', label:'Executive OS',       sub:'OKRs + decisions',      colour:'#a78bfa' },
+            { href:'/platform/consulting',   icon:'🧩', label:'Frameworks',         sub:'15 NemoClaw™ tools',    colour:'#4f46e5' },
+            { href:'/platform/ip-vault',     icon:'🔐', label:'IP Vault',           sub:'Frameworks + TMs',      colour:'#7c3aed' },
+            { href:'/platform/contracts',    icon:'📑', label:'Contracts',          sub:'Register + renewals',   colour:'#3b82f6' },
+            { href:'/platform/financials',   icon:'📈', label:'Group P&L',          sub:'YTD burn + pipeline',   colour:'#22c55e' },
+            { href:'/platform/knowledge',    icon:'🧠', label:'SE-MIL',             sub:'Institutional memory',  colour:'#0d9488' },
+            { href:'/platform/time-sovereignty', icon:'⏱', label:'Time Sovereignty', sub:'TSA™ engine',         colour:'#22d3ee' },
+          ] as { href:string; icon:string; label:string; sub:string; colour:string }[]).map(m => (
+            <Link key={m.href} href={m.href} style={{ textDecoration:'none' }}>
+              <div className="pios-card-sm" style={{ cursor:'pointer', padding:'10px 12px', borderLeft:`3px solid ${m.colour}30`, transition:'border-color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderLeftColor = m.colour)}
+                onMouseLeave={e => (e.currentTarget.style.borderLeftColor = `${m.colour}30`)}>
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+                  <span style={{ fontSize:16 }}>{m.icon}</span>
+                  <span style={{ fontSize:12, fontWeight:600, color:'var(--pios-text)' }}>{m.label}</span>
+                </div>
+                <div style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.sub}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8 }}>
+          {([
+            { href:'/platform/calendar',     icon:'📅', label:'Calendar',       colour:'#0ea5e9' },
+            { href:'/platform/research',     icon:'🔬', label:'Research',       colour:'#8b5cf6' },
+            { href:'/platform/comms',        icon:'📢', label:'Comms Hub',      colour:'#f59e0b' },
+            { href:'/platform/intelligence', icon:'🌐', label:'Intelligence',   colour:'#0d9488' },
+            { href:'/platform/notifications',icon:'🔔', label:'Notifications',  colour:'#ef4444' },
+            { href:'/platform/ai',           icon:'✨', label:'AI Companion',   colour:'#c084fc' },
+          ] as { href:string; icon:string; label:string; colour:string }[]).map(m => (
+            <Link key={m.href} href={m.href} style={{ textDecoration:'none' }}>
+              <div className="pios-card-sm" style={{ padding:'8px 10px', cursor:'pointer', textAlign:'center' as const }}>
+                <div style={{ fontSize:18, marginBottom:3 }}>{m.icon}</div>
+                <div style={{ fontSize:10, color:'var(--pios-muted)', fontWeight:600 }}>{m.label}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
     </div>
   )
 }

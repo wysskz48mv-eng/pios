@@ -124,7 +124,7 @@ export async function GET() {
     // Exec persona — load OKR + decision + stakeholder snapshots
     let execSnapshot: Record<string,unknown> | null = null
     if (isExec) {
-      const [okrsR2, decisionsR2, stakeR2] = await Promise.allSettled([
+      const [okrsR2, decisionsR2, stakeR2, ipR, contractsR2] = await Promise.allSettled([
         supabase.from('exec_okrs')
           .select('id,title,health,progress,period')
           .eq('user_id', user.id).eq('status', 'active').limit(5),
@@ -136,10 +136,14 @@ export async function GET() {
           .eq('user_id', user.id)
           .lte('next_touchpoint', new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0])
           .order('importance').limit(5),
+        (supabase as any).from('ip_assets').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        (supabase as any).from('contracts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'active'),
       ])
       const okrs2      = okrsR2.status      === 'fulfilled' ? (okrsR2.value?.data      ?? []) : []
       const decisions2 = decisionsR2.status === 'fulfilled' ? (decisionsR2.value?.data ?? []) : []
       const stakes2    = stakeR2.status     === 'fulfilled' ? (stakeR2.value?.data     ?? []) : []
+      const ipCount    = ipR.status         === 'fulfilled' ? ((ipR.value as any)?.count ?? 0) : 0
+      const contractCount = contractsR2.status === 'fulfilled' ? ((contractsR2.value as any)?.count ?? 0) : 0
       const atRisk = (okrs2 as Record<string,unknown>[]).filter(o => o.health !== 'on_track').length
       execSnapshot = {
         okrs: okrs2,
@@ -154,6 +158,8 @@ export async function GET() {
         open_decisions_count:    (decisions2 as unknown[]).length,
         stakeholders_due:        stakes2,
         stakeholders_due_count:  (stakes2 as unknown[]).length,
+        ip_assets_count:         ipCount,
+        active_contracts_count:  contractCount,
       }
     }
 
