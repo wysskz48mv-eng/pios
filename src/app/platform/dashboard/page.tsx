@@ -331,7 +331,7 @@ export default function DashboardPage() {
       )}
 
       {/* AI Morning Brief */}
-      <div className="pios-card" style={{ borderColor: 'rgba(167,139,250,0.2)', marginBottom: 16 }}>
+      <div id="brief" className="pios-card" style={{ borderColor: 'rgba(167,139,250,0.2)', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ai)' }} className="ai-pulse" />

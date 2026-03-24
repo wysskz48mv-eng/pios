@@ -133,8 +133,18 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
                   color: active ? (String((item as any).colour || '') || 'var(--ai)') : 'inherit',
                 }}>{item.icon}</span>
                 {!collapsed && (
-                  <span style={{ fontSize: '13px', fontWeight: active ? 600 : 400 }}>
+                  <span style={{ fontSize: '13px', fontWeight: active ? 600 : 400, flex: 1 }}>
                     {item.label}
+                    {item.href === '/platform/notifications' && unread > 0 && (
+                      <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 700, background: '#ef4444', color: '#fff' }}>
+                        {unread > 9 ? '9+' : unread}
+                      </span>
+                    )}
+                  </span>
+                )}
+                {!collapsed && (item as any).badge && (
+                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: 'rgba(167,139,250,0.15)', color: '#a78bfa', letterSpacing: '0.04em', flexShrink: 0 }}>
+                    {(item as any).badge}
                   </span>
                 )}
               </div>
