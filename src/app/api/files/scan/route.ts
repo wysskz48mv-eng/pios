@@ -66,7 +66,7 @@ async function listDriveFolders(token: string, parentId = 'root'): Promise<any[]
   return data.files ?? []
 }
 
-async function classifyBatch(files: any[], spaces: any[]): Promise<any[]> {
+async function classifyBatch(files: Record<string,unknown>[], spaces: Record<string,unknown>[]): Promise<Record<string,unknown>[]> {
   const spaceNames = spaces.map(s => s.path).join(', ')
   const fileList = files.map(f => `${f.id} | ${f.name} | ${f.mimeType ?? 'unknown'}`).join('\n')
 

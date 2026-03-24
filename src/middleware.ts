@@ -128,11 +128,11 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() { return request.cookies.getAll() },
-        setAll(cs: { name: string; value: string; options?: any }[]) {
-          cs.forEach(({ name, value }: { name: string; value: string; options?: any }) => request.cookies.set(name, value))
+        setAll(cs: { name: string; value: string; options?: Record<string,unknown> }[]) {
+          cs.forEach(({ name, value }: { name: string; value: string; options?: Record<string,unknown> }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
           for (const [k, v] of Object.entries(SEC_HEADERS)) response.headers.set(k, v)
-          cs.forEach(({ name, value, options }: { name: string; value: string; options?: any }) =>
+          cs.forEach(({ name, value, options }: { name: string; value: string; options?: Record<string,unknown> }) =>
             response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2]))
         },
       },

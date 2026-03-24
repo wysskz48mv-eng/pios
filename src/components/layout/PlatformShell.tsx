@@ -7,8 +7,8 @@ import { TrialExpiredGate } from '@/components/TrialExpiredGate'
 
 interface PlatformShellProps {
   children: React.ReactNode
-  userProfile?: any
-  tenant?: any
+  userProfile?: Record<string,unknown>
+  tenant?: Record<string,unknown>
 }
 
 export function PlatformShell({ children, userProfile, tenant }: PlatformShellProps) {

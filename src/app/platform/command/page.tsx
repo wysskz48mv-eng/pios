@@ -44,7 +44,7 @@ function timeAgo(iso: string) {
 }
 
 // ── Feed item card ────────────────────────────────────────────────────────────
-function FeedItem({ item, showRelevance }: { item: any; showRelevance: boolean }) {
+function FeedItem({ item, showRelevance }: { item: unknown; showRelevance: boolean }) {
   const [expanded, setExpanded] = useState(false)
   return (
     <div style={{ padding:'12px 0', borderBottom:'1px solid var(--pios-border)', cursor:'pointer' }} onClick={() => setExpanded(!expanded)}>
@@ -156,7 +156,7 @@ function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
 // ── Add / Edit feed modal ─────────────────────────────────────────────────────
 const DEFAULT_FORM = { label:'', description:'', emoji:'📰', topic:'', keywords:'', sources:'', exclude_terms:'', category:'industry', layout:'cards', refresh_freq:'daily', max_items:8, is_active:true }
 
-function FeedFormModal({ feed, onSave, onClose }: { feed: any|null; onSave: (data: unknown) => void; onClose: () => void }) {
+function FeedFormModal({ feed, onSave, onClose }: { feed: Record<string,unknown>|null; onSave: (data: unknown) => void; onClose: () => void }) {
   const [form, setForm] = useState(feed ? {
     ...feed,
     keywords: (feed.keywords ?? []).join(', '),
