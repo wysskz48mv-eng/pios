@@ -152,7 +152,75 @@ export async function POST(request: Request) {
         synced++
       }
 
-      return NextResponse.json({ synced, total: items.length })
+      return NextResponse.json({ synced, total: items.length, provider: 'google' })
+    }
+
+    // ── Sync from Microsoft Graph Calendar ───────────────────────────────────
+    if (action === 'sync_microsoft') {
+      const { data: account } = await supabase
+        .from('connected_email_accounts')
+        .select('ms_access_token, ms_refresh_token, ms_token_expiry')
+        .eq('user_id', user.id)
+        .eq('provider', 'microsoft')
+        .eq('is_active', true)
+        .single()
+
+      if (!account?.ms_access_token) {
+        return NextResponse.json({ error: 'Microsoft account not connected', synced: 0 })
+      }
+
+      const now    = new Date()
+      const future = new Date(now.getTime() + 60 * 86400000)
+
+      const msRes = await fetch(
+        `https://graph.microsoft.com/v1.0/me/calendarView?` + new URLSearchParams({
+          startDateTime: now.toISOString(),
+          endDateTime:   future.toISOString(),
+          $orderby:      'start/dateTime',
+          $top:          '100',
+          $select:       'id,subject,bodyPreview,start,end,location,attendees,isOnlineMeeting,onlineMeetingUrl',
+        }),
+        { headers: { Authorization: `Bearer ${account.ms_access_token}` } }
+      )
+
+      if (!msRes.ok) {
+        return NextResponse.json({ error: `Microsoft Graph error: ${msRes.status}`, synced: 0 })
+      }
+
+      const msData = await msRes.json()
+      const items  = msData.value ?? []
+      let synced   = 0
+
+      for (const item of items) {
+        if (!item.subject) continue
+        const startTime = item.start?.dateTime ? new Date(item.start.dateTime).toISOString() : null
+        const endTime   = item.end?.dateTime   ? new Date(item.end.dateTime).toISOString()   : null
+        if (!startTime) continue
+
+        const domain = classifyDomain(item.subject, item.bodyPreview ?? '')
+
+        await supabase.from('calendar_events').upsert({
+          user_id:         user.id,
+          google_event_id: `ms_${item.id}`,  // prefix to avoid collision with Google IDs
+          title:           item.subject,
+          description:     item.bodyPreview ?? null,
+          domain,
+          start_time:      startTime,
+          end_time:        endTime,
+          all_day:         false,
+          location:        item.location?.displayName ?? null,
+          attendees:       (item.attendees ?? []).map((a: Record<string,unknown>) => ({
+            email: (a.emailAddress as Record<string,string>)?.address,
+            name:  (a.emailAddress as Record<string,string>)?.name,
+          })),
+          google_meet_url: item.onlineMeetingUrl ?? null,
+          source:          'microsoft',
+          updated_at:      new Date().toISOString(),
+        }, { onConflict: 'google_event_id', ignoreDuplicates: false })
+        synced++
+      }
+
+      return NextResponse.json({ synced, total: items.length, provider: 'microsoft' })
     }
 
     // ── Create event ─────────────────────────────────────────────────────────
