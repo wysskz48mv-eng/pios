@@ -11,7 +11,7 @@ import { Resend }                    from 'resend'
 export const runtime    = 'nodejs'
 export const maxDuration = 30
 
-const FROM = process.env.FROM_EMAIL ?? 'noreply@veritasiq.tech'
+const FROM = process.env.FROM_EMAIL ?? 'noreply@veritasiq.io'
 
 function admin() {
   return createClient(
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
             <p style="font-size:12px;color:#6b7280;margin:0">${programme} · Target: ${fmtDate(m.target_date)}</p>
           </div>
           <p style="font-size:13px;color:#6b7280">Log into PIOS to update your progress or mark this milestone complete.</p>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'}/platform/learning" style="display:inline-block;background:#8B5CF6;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;margin-top:8px">View in PIOS →</a>
+          <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'}/platform/learning" style="display:inline-block;background:#8B5CF6;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;margin-top:8px">View in PIOS →</a>
         </div>
       </div>
     `

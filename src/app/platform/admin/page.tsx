@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PIOS Admin — Migration runner, platform health, system config
-// Owner-only: info@veritasiq.tech
+// Owner-only: info@veritasiq.io
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
@@ -337,7 +337,7 @@ export default function AdminPage() {
             { key:'NEXT_PUBLIC_SUPABASE_ANON_KEY', value:'Your Supabase anon key',                  required:true },
             { key:'SUPABASE_SERVICE_ROLE_KEY',     value:'Your Supabase service role key',           required:true },
             { key:'ANTHROPIC_API_KEY',             value:'sk-ant-...',                               required:true },
-            { key:'NEXT_PUBLIC_APP_URL',           value:'https://pios.veritasiq.tech', required:true },
+            { key:'NEXT_PUBLIC_APP_URL',           value:'https://pios.veritasiq.io', required:true },
             { key:'STRIPE_SECRET_KEY',             value:'sk_live_... or sk_test_...',               required:false },
             { key:'STRIPE_WEBHOOK_SECRET',         value:'whsec_...',                                required:false },
             { key:'STRIPE_PRICE_STUDENT',          value:'price_...',                                required:false },

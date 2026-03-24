@@ -26,7 +26,7 @@ const MS_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token
 const MS_GRAPH_ME  = 'https://graph.microsoft.com/v1.0/me'
 
 export async function GET(req: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'
   const { searchParams } = new URL(req.url)
 
   const code  = searchParams.get('code')

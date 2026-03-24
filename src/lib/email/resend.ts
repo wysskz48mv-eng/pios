@@ -34,7 +34,7 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
     return { ok: false, error: 'RESEND_API_KEY not configured' }
   }
 
-  const from = payload.from ?? process.env.RESEND_FROM_EMAIL ?? 'PIOS <noreply@veritasiq.tech>'
+  const from = payload.from ?? process.env.RESEND_FROM_EMAIL ?? 'PIOS <noreply@veritasiq.io>'
 
   try {
     const res = await fetch(RESEND_API, {
@@ -103,7 +103,7 @@ export function morningBriefHtml(briefContent: string, date: string, userName: s
         <tr><td style="background:#0e1015;border-radius:0 0 12px 12px;padding:20px 36px;border-top:1px solid rgba(255,255,255,0.06);">
           <p style="margin:0;font-size:11px;color:#454d63;line-height:1.6;">
             You're receiving this because you have morning briefs enabled in PIOS.<br/>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'}/platform/settings" style="color:#a78bfa;text-decoration:none;">Manage preferences</a>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'}/platform/settings" style="color:#a78bfa;text-decoration:none;">Manage preferences</a>
           </p>
         </td></tr>
       </table>
@@ -118,7 +118,7 @@ export function morningBriefText(briefContent: string, date: string, userName: s
   const dateFormatted = new Date(date).toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
-  return `PIOS Morning Brief — ${dateFormatted}\n\nGood morning, ${userName.split(' ')[0]}\n\n${briefContent}\n\n---\nManage preferences: ${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'}/platform/settings`
+  return `PIOS Morning Brief — ${dateFormatted}\n\nGood morning, ${userName.split(' ')[0]}\n\n${briefContent}\n\n---\nManage preferences: ${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'}/platform/settings`
 }
 
 /** Trial / welcome email */
@@ -154,7 +154,7 @@ export interface WeeklyDigestData {
 
 /** Weekly digest email HTML */
 export function weeklyDigestHtml(d: WeeklyDigestData): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'
 
   const headline = (label: string, value: string | number, sub: string, color = '#a78bfa') =>
     `<td style="text-align:center;padding:0 12px;">
@@ -242,7 +242,7 @@ export function weeklyDigestHtml(d: WeeklyDigestData): string {
 
 /** Plain-text fallback for weekly digest */
 export function weeklyDigestText(d: WeeklyDigestData): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'
   const lines = [
     `PIOS Weekly Digest — ${d.weekLabel}`,
     `Good morning, ${d.userName.split(' ')[0]}`,

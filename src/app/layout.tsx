@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PIOS — Personal Intelligent Operating System',
     description: 'The AI operating system for multi-domain professionals.',
-    url: 'https://pios.veritasiq.tech',
+    url: 'https://pios.veritasiq.io',
     siteName: 'PIOS',
   },
 }

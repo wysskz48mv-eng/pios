@@ -28,7 +28,7 @@ export default function PrivacyPage() {
             title: '1. Who we are',
             body: `PIOS ("Personal Intelligent Operating System") is operated by VeritasIQ Technologies Ltd, a company registered in the UAE (Free Zone). Our registered address is Fujairah Creative City Free Zone, UAE.
 
-For data protection enquiries: info@veritasiq.tech`
+For data protection enquiries: info@veritasiq.io`
           },
           {
             title: '2. What data we collect',
@@ -81,7 +81,7 @@ Each provider operates under their own privacy policy and data processing agreem
 • Export: export your data in JSON format (available on request)
 • Withdraw consent: disconnect Google integrations at any time via Settings → Integrations
 
-To exercise any of these rights, contact us at info@veritasiq.tech or use the in-app Settings controls.`
+To exercise any of these rights, contact us at info@veritasiq.io or use the in-app Settings controls.`
           },
           {
             title: '7. Data retention',
@@ -108,7 +108,7 @@ We do not use analytics cookies, advertising cookies, or any third-party trackin
             title: '11. Contact',
             body: `VeritasIQ Technologies Ltd
 Fujairah Creative City Free Zone, UAE
-Email: info@veritasiq.tech`
+Email: info@veritasiq.io`
           },
         ].map(section => (
           <div key={section.title} style={{ marginBottom:28 }}>

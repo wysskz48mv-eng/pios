@@ -186,7 +186,7 @@ export default function OperatorPage() {
               <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">No operator configured</p>
               <p className="text-xs mt-1">This is a direct PIOS deployment. White-label operator mode is available for enterprise licensing.</p>
-              <a href="mailto:info@veritasiq.tech" className="inline-block mt-4 text-xs text-violet-400 hover:underline">Contact us about white-label licensing →</a>
+              <a href="mailto:info@veritasiq.io" className="inline-block mt-4 text-xs text-violet-400 hover:underline">Contact us about white-label licensing →</a>
             </div>
           )}
         </div>

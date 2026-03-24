@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       )
     }
 
-    const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'}/platform/settings?billing=returned`
+    const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'}/platform/settings?billing=returned`
 
     const session = await stripe.billingPortal.sessions.create({
       customer: tenant.stripe_customer_id,

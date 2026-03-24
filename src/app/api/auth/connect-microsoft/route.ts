@@ -41,7 +41,7 @@ const MS_SCOPES = [
 
 export async function GET(req: NextRequest) {
   const clientId  = process.env.AZURE_CLIENT_ID
-  const appUrl    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'
+  const appUrl    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'
 
   if (!clientId) {
     return NextResponse.json(
