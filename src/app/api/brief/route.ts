@@ -229,6 +229,15 @@ export async function POST(req: NextRequest) {
       }
     } catch { /* never block */ }
 
+
+    // Fetch NemoClaw training config for personalised brief system prompt
+    const { data: briefTcData } = await (supabase as any)
+      .from('exec_intelligence_config')
+      .select('persona_context,company_context,goals_context,custom_instructions,tone_preference')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const briefTc = briefTcData as any
+
     const qiddiyaDaysLeft = Math.max(0, Math.ceil((new Date('2026-04-14').getTime() - Date.now()) / 86400000))
     const qiddiyaUrgency = qiddiyaDaysLeft <= 7 ? 'CRITICAL' : qiddiyaDaysLeft <= 14 ? 'URGENT' : 'ACTIVE'
 
@@ -247,22 +256,40 @@ export async function POST(req: NextRequest) {
       ].join('')
     }
 
-    const system = `You are the PIOS AI Companion for Douglas Masuku — founder CEO of VeritasIQ Technologies Ltd, DBA candidate at University of Portsmouth, FM consultant building VeritasEdge™ (service charge SaaS), InvestiScript (investigative journalism AI), and PIOS.
 
-COMMERCIAL PRIORITY: Qiddiya RFP QPMO-410-CT-07922 — ${qiddiyaDaysLeft} days remaining (${qiddiyaUrgency}). Submission deadline 14 April 2026. This must be referenced if ${qiddiyaDaysLeft} <= 21.
+    const pName  = String((bProfile as any)?.full_name ?? 'there')
+    const pTitle = String((bProfile as any)?.job_title ?? 'Professional')
+    const pOrg   = String((bProfile as any)?.organisation ?? 'your organisation')
 
-Generate his morning brief. Be direct and action-oriented. No pleasantries.
+    const tcContext = briefTc ? [
+      briefTc.persona_context && `About user: ${briefTc.persona_context}`,
+      briefTc.company_context && `Company: ${briefTc.company_context}`,
+      briefTc.goals_context   && `Goals: ${briefTc.goals_context}`,
+      briefTc.custom_instructions && `Brief style: ${briefTc.custom_instructions}`,
+    ].filter(Boolean).join('\n') : ''
+
+    const toneInstr = briefTc?.tone_preference === 'direct' ? 'Be blunt, skip preamble.'
+      : briefTc?.tone_preference === 'coaching' ? 'Frame as coaching questions.'
+      : 'Be professional and direct.'
+
+    const qiddiyaNote = qiddiyaDaysLeft <= 21
+      ? `\nCOMMERCIAL PRIORITY: Qiddiya RFP — ${qiddiyaDaysLeft} days remaining (${qiddiyaUrgency}). Call this out explicitly.`
+      : ''
+
+    const system = `You are PIOS AI — ${pName}'s personal intelligent operating system.
+User: ${pName} | ${pTitle} | ${pOrg}${tcContext ? '\n\n' + tcContext : ''}${qiddiyaNote}
+
+Generate their morning brief. ${toneInstr} No pleasantries.
 
 Rules:
-- If overdue tasks exist, lead with them — they are the #1 priority
-- If Qiddiya RFP deadline is within 21 days, call it out with exact days remaining
-- Flag if thesis writing pace is dangerously behind
-- If meeting action items are awaiting task promotion, call them out explicitly — direct to /platform/meetings
-- If auto-captured receipts/invoices are present, mention total and suggest reviewing Expenses
-- Identify cross-domain conflicts (academic vs business deadlines)
-- Name the 2-3 items requiring his personal decision or action today
-- Close with one actionable FM/platform signal if present
-- Max 350 words. Plain prose, no bullet points, no lists.`
+- Lead with overdue tasks — they are #1 priority
+- Flag dangerously behind thesis pace or academic deadlines
+- Call out meeting action items awaiting task promotion (→ /platform/meetings)
+- Note auto-captured receipts/invoices pending review
+- Identify cross-domain conflicts
+- Name 2-3 items requiring personal decision or action today
+- Use ## Section headers for each section (Overdue Tasks, Today's Priorities, etc.)
+- Max 350 words per section`
 
     const content: string = await callClaude(
       [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${execBriefSection}${liveCtx ? '\n\nPLATFORM STATUS:' + liveCtx : ''}` }],
