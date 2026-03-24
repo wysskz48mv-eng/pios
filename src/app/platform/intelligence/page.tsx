@@ -1,8 +1,9 @@
 /**
  * /platform/intelligence — FM & Research Intelligence Feed
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v2.7 | VeritasIQ Technologies Ltd
  */
 "use client"
+import Link from 'next/link'
 import { useState, useEffect } from "react"
 import { Rss, Loader2, ExternalLink, RefreshCw, BookOpen, Globe, TrendingUp, Calendar } from "lucide-react"
 
@@ -52,6 +53,21 @@ export default function IntelligencePage() {
           <RefreshCw className={"w-4 h-4 " + (refreshing ? "animate-spin" : "")} />
           {refreshing ? "Refreshing…" : "Refresh"}
         </button>
+      </div>
+
+      {/* SIA™ link — upgrade to Signal Brief */}
+      <div className="flex items-center justify-between mb-4 p-4 rounded-xl bg-violet-500/5 border border-violet-500/20">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <div className="w-2 h-2 rounded-full bg-violet-400" />
+            <span className="text-xs font-semibold text-violet-400 uppercase tracking-wide">SIA™ Strategic Intelligence Agent</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Get executive-grade Signal Briefs with SO WHAT analysis across 6 sectors</p>
+        </div>
+        <Link href="/platform/comms?tab=sia"
+          className="flex-shrink-0 text-xs px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg font-medium hover:bg-violet-500/20 transition-colors">
+          Open SIA™ →
+        </Link>
       </div>
 
       {/* Category filter */}

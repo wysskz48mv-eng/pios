@@ -11,7 +11,8 @@ const DOMAIN_MODES = [
   { key:'general',      label:'General',      icon:'◉', colour:'#a78bfa', prompt:'' },
   { key:'academic',     label:'DBA Research', icon:'🎓', colour:'#6c8eff', prompt:'Focus on my DBA research at University of Portsmouth. Topic: AI-enabled forecasting in GCC FM. Theory: STS + sensemaking.' },
   { key:'fm_consulting',label:'FM Consulting', icon:'🏗️', colour:'#2dd4a0', prompt:'Focus on FM consulting. Key projects: Qiddiya (QPMO-410-CT-07922), King Salman Park (SAR 229.6M). Reference VeritasEdge™ platform.' },
-  { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'#f59e0b', prompt:'Focus on my SaaS platforms: VeritasEdge™ v5.8 (service charge), InvestiScript v3 (AI journalism), PIOS v2.2. Stack: Next.js 14, Supabase, Claude API.' },
+  { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'#f59e0b', prompt:'Focus on my SaaS platforms: VeritasEdge™ v5.8 (service charge), InvestiScript v3 (AI journalism), PIOS v2.7. Stack: Next.js 14, Supabase, Claude API.' },
+  { key:'executive_os', label:'Executive OS',  icon:'⚡', colour:'#22d3ee', prompt:'Focus on my Executive OS — OKRs, open decisions, stakeholder management. Apply EOSA™ thinking. Reference my active OKRs and open decisions.' },
   { key:'business',     label:'Business',     icon:'🏢', colour:'#e05a7a', prompt:'Focus on company management: VeritasIQ Technologies Ltd (UK SaaS), Sustain International UK Ltd (FM consultancy), VeritasIQ Technologies Ltd (UAE holding). Governance, compliance, financials.' },
 ] as const
 
@@ -23,6 +24,10 @@ const SHORTCUTS = [
   { label:'VeritasEdge sprint status',        prompt:'What was completed in the last VeritasEdge sprint and what needs to happen next?' },
   { label:'Draft a client email',             prompt:'Help me draft a professional email to a client. Tell me who the client is and what you need to communicate.' },
   { label:'FM market signal',                 prompt:'What is the most important FM industry development I should be paying attention to right now?' },
+  { label:'Executive OS brief',             prompt:'Generate my executive operating brief — OKR pulse, open decisions, stakeholder alerts, and one strategic focus for this week.' },
+  { label:'Apply a consulting framework',    prompt:'I have a business challenge I need to think through. Which PIOS consulting framework (POM™, OAE™, SDL™, CVDM™, CPA™, SCE™, AAM™) is most appropriate and why?' },
+  { label:'Structure a decision',            prompt:'I have an important decision to make. Help me structure it using the Decision Architecture approach — options map, constraints, and a clear recommendation.' },
+  { label:'Time sovereignty audit',          prompt:'Review my current time allocation and flag where busyness might be replacing strategy. What should I protect or cut?' },
   { label:'Summarise this week',              prompt:'Give me a summary of what I have accomplished this week and what is outstanding.' },
 ]
 

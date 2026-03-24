@@ -4,6 +4,7 @@
  */
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { MessageSquare, Zap, Radio, FileText, Plus, Loader2, Copy, Check, Archive } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────
@@ -36,7 +37,11 @@ function FInput({ label, value, onChange, placeholder, textarea = false }: {
 }
 
 export default function CommsPage() {
-  const [activeTab, setActiveTab] = useState<'bica'|'sia'|'history'>('bica')
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState<'bica'|'sia'|'history'>(() => {
+    const tab = searchParams?.get('tab')
+    return (tab === 'sia' || tab === 'bica' || tab === 'history') ? tab : 'bica'
+  })
 
   // BICA state
   const [templates, setTemplates]     = useState<Template[]>([])

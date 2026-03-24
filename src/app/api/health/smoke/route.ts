@@ -4,7 +4,7 @@
  * Used by the Setup Guide and admin to confirm platform is production-ready.
  * Each check is independent; failures do not cascade.
  *
- * PIOS v2.4 | Sprint 58 | VeritasIQ Technologies Ltd
+ * PIOS v2.7 | Sprint 58 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'

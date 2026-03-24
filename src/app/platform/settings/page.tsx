@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Settings — profile edit, plan, integrations, email accounts, news feed prefs
-// PIOS v2.2 | VeritasIQ Technologies Ltd
+// PIOS v2.7 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CONTEXT_LABELS: Record<string, string> = {
@@ -295,6 +295,69 @@ function Row({ label, value, colour }: { label:string; value:string; colour?:str
   )
 }
 
+
+const PERSONAS = [
+  { key: 'student',      label: 'Student / Researcher',   desc: 'DBA, MBA, MSc, PhD, CPD',            icon: '🎓' },
+  { key: 'professional', label: 'Professional / Consultant', desc: 'Consultant, analyst, specialist', icon: '💼' },
+  { key: 'executive',    label: 'Executive / Founder',    desc: 'CEO, MD, C-suite, founder',           icon: '⚡' },
+  { key: 'founder',      label: 'Founder',                desc: 'Startup founder / operator',          icon: '🚀' },
+  { key: 'individual',   label: 'Individual',             desc: 'Personal use',                        icon: '👤' },
+]
+
+function PersonaSection() {
+  const [currentPersona, setCurrentPersona] = useState<string>('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved]   = useState(false)
+
+  useEffect(() => {
+    fetch('/api/profile').then(r => r.json()).then(d => {
+      setCurrentPersona((d.profile as Record<string,unknown>)?.persona_type as string ?? 'individual')
+    }).catch(() => {})
+  }, [])
+
+  async function updatePersona(key: string) {
+    setSaving(true)
+    setCurrentPersona(key)
+    try {
+      await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persona_type: key }),
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch { /* silent */ }
+    setSaving(false)
+  }
+
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 2 }}>Platform Persona</div>
+          <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>Controls your dashboard, AI context, and available modules</div>
+        </div>
+        {saved && <span style={{ fontSize: 12, color: '#22c55e' }}>✓ Saved</span>}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        {PERSONAS.map(p => (
+          <button key={p.key} onClick={() => updatePersona(p.key)} disabled={saving}
+            style={{
+              padding: '12px 14px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+              background: currentPersona === p.key ? 'rgba(167,139,250,0.12)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${currentPersona === p.key ? 'rgba(167,139,250,0.4)' : 'rgba(255,255,255,0.08)'}`,
+              transition: 'all .15s',
+            }}>
+            <div style={{ fontSize: 18, marginBottom: 4 }}>{p.icon}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 2 }}>{p.label}</div>
+            <div style={{ fontSize: 11, color: 'var(--pios-muted)', lineHeight: 1.4 }}>{p.desc}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function SettingsPage() {
   const [profile, setProfile] = useState<unknown>(null)
   const [tenant,  setTenant]  = useState<unknown>(null)
@@ -382,7 +445,9 @@ export default function SettingsPage() {
 
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:16 }}>
 
-        {/* Profile */}
+        <PersonaSection />
+
+      {/* Profile */}
         <Section title="Profile">
           {editing ? (
             <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>

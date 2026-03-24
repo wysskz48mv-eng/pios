@@ -15,7 +15,7 @@ export const runtime = 'nodejs'
 const ALLOWED_FIELDS = [
   'full_name', 'billing_email', 'programme_name', 'university',
   'timezone', 'job_title', 'organisation', 'phone',
-  'preferred_domains', 'notification_prefs', 'avatar_url',
+  'preferred_domains', 'notification_prefs', 'avatar_url', 'persona_type',
 ]
 
 const VALID_TIMEZONES_PARTIAL = [
