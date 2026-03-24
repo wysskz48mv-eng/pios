@@ -213,12 +213,18 @@ export async function POST(req: NextRequest) {
       }
     } catch { /* never block */ }
 
+    const qiddiyaDaysLeft = Math.max(0, Math.ceil((new Date('2026-04-14').getTime() - Date.now()) / 86400000))
+    const qiddiyaUrgency = qiddiyaDaysLeft <= 7 ? 'CRITICAL' : qiddiyaDaysLeft <= 14 ? 'URGENT' : 'ACTIVE'
+
     const system = `You are the PIOS AI Companion for Douglas Masuku — founder CEO of VeritasIQ Technologies Ltd, DBA candidate at University of Portsmouth, FM consultant building VeritasEdge™ (service charge SaaS), InvestiScript (investigative journalism AI), and PIOS.
+
+COMMERCIAL PRIORITY: Qiddiya RFP QPMO-410-CT-07922 — ${qiddiyaDaysLeft} days remaining (${qiddiyaUrgency}). Submission deadline 14 April 2026. This must be referenced if ${qiddiyaDaysLeft} <= 21.
 
 Generate his morning brief. Be direct and action-oriented. No pleasantries.
 
 Rules:
 - If overdue tasks exist, lead with them — they are the #1 priority
+- If Qiddiya RFP deadline is within 21 days, call it out with exact days remaining
 - Flag if thesis writing pace is dangerously behind
 - If meeting action items are awaiting task promotion, call them out explicitly — direct to /platform/meetings
 - If auto-captured receipts/invoices are present, mention total and suggest reviewing Expenses
