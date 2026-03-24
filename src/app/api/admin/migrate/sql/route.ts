@@ -5,7 +5,7 @@ import { join } from 'path'
 
 export const runtime = 'nodejs'
 
-const OWNER_EMAIL = 'info@sustain-intl.com'
+const OWNER_EMAIL = 'info@veritasiq.io'
 
 const FILES: Record<string, string> = {
   '001': 'supabase/migrations/001_initial_schema.sql',

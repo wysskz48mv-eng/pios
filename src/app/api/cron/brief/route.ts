@@ -235,7 +235,7 @@ export async function GET(req: NextRequest) {
               <h2 style="color:#ef4444;margin-bottom:8px">⚠ Overdue Tasks (${overdue.length})</h2>
               <pre style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:12px;font-size:13px;white-space:pre-wrap">${overdueLines}</pre>
               ${dueTodayLines ? `<h3 style="color:#f97316;margin-top:16px">Due Today</h3><pre style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:12px;font-size:13px;white-space:pre-wrap">${dueTodayLines}</pre>` : ''}
-              <p style="color:#6b7280;font-size:12px;margin-top:16px">Sent by PIOS · <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.sustain-intl.com'}/platform/tasks">View all tasks →</a></p>
+              <p style="color:#6b7280;font-size:12px;margin-top:16px">Sent by PIOS · <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'}/platform/tasks">View all tasks →</a></p>
             </div>`,
             text: `OVERDUE TASKS (${overdue.length}):\n${overdueLines}\n${dueTodayLines ? '\nDUE TODAY:\n' + dueTodayLines : ''}`,
           }).catch(() => {})

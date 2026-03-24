@@ -13,7 +13,7 @@ const DOMAIN_MODES = [
   { key:'fm_consulting',label:'FM Consulting', icon:'🏗️', colour:'#2dd4a0', prompt:'Focus on FM consulting. Key projects: Qiddiya (QPMO-410-CT-07922), King Salman Park (SAR 229.6M). Reference VeritasEdge™ platform.' },
   { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'#f59e0b', prompt:'Focus on my SaaS platforms: VeritasEdge™ v5.8 (service charge), InvestiScript v3 (AI journalism), PIOS v2.7. Stack: Next.js 14, Supabase, Claude API.' },
   { key:'executive_os', label:'Executive OS',  icon:'⚡', colour:'#22d3ee', prompt:'Focus on my Executive OS — OKRs, open decisions, stakeholder management. Apply EOSA™ thinking. Reference my active OKRs and open decisions.' },
-  { key:'business',     label:'Business',     icon:'🏢', colour:'#e05a7a', prompt:'Focus on company management: VeritasIQ Technologies Ltd (UK SaaS), Sustain International UK Ltd (FM consultancy), VeritasIQ Technologies Ltd (UAE holding). Governance, compliance, financials.' },
+  { key:'business',     label:'Business',     icon:'🏢', colour:'#e05a7a', prompt:'Focus on company management: VeritasIQ Technologies Ltd (UK SaaS), VeritasIQ Technologies Ltd (FM consultancy), VeritasIQ Technologies Ltd (UAE holding). Governance, compliance, financials.' },
 ] as const
 
 const SHORTCUTS = [

@@ -78,12 +78,12 @@ export async function GET() {
     google_connected:     { ok: googleTokenOk,   label: 'Google account connected (OAuth flow)', required: false, section: '02', hint: 'Complete Google sign-in from Settings to connect Gmail/Calendar' },
     // §03 Resend
     resend_api_key:       { ok: resendOk,        label: 'RESEND_API_KEY',                    required: true,  section: '03', hint: 'resend.com/api-keys → create key with Send access' },
-    resend_from_email:    { ok: fromEmailOk,     label: 'RESEND_FROM_EMAIL (FROM_EMAIL)',     required: false, section: '03', hint: 'e.g. noreply@sustain-intl.com — must be a Resend-verified domain' },
+    resend_from_email:    { ok: fromEmailOk,     label: 'RESEND_FROM_EMAIL (FROM_EMAIL)',     required: false, section: '03', hint: 'e.g. noreply@veritasiq.io — must be a Resend-verified domain' },
     // §04 Cron
     cron_secret:          { ok: cronOk,          label: 'CRON_SECRET',                       required: true,  section: '04', hint: 'openssl rand -hex 32 — also add to Vercel → Settings → Cron Jobs' },
     // §05 Stripe
     stripe_keys:          { ok: stripeKeysOk,    label: 'Stripe keys (secret + publishable)', required: true,  section: '05' },
-    stripe_price_ids:     { ok: stripePricesOk,  label: 'Stripe price IDs (×3)',             required: true,  section: '05', hint: 'POST /api/stripe/setup while logged in as info@sustain-intl.com' },
+    stripe_price_ids:     { ok: stripePricesOk,  label: 'Stripe price IDs (×3)',             required: true,  section: '05', hint: 'POST /api/stripe/setup while logged in as info@veritasiq.io' },
     stripe_webhook:       { ok: stripeWebhookOk, label: 'STRIPE_WEBHOOK_SECRET',             required: false, section: '05', hint: 'Stripe → Developers → Webhooks → /api/stripe/webhook' },
     // §06 Live data
     se_live_data:         { ok: seDataOk,        label: 'SUPABASE_SE_SERVICE_KEY (VeritasEdge™)', required: false, section: '06', hint: 'Supabase project oxqqzxvuksgzeeyhufhp → service_role' },
@@ -93,7 +93,7 @@ export async function GET() {
     azure_client_id:     { ok: envSet('AZURE_CLIENT_ID'),     label: 'AZURE_CLIENT_ID',     required: false, section: '02', hint: 'Azure Portal → App registrations → Overview → Application (client) ID' },
     azure_client_secret: { ok: envSet('AZURE_CLIENT_SECRET'), label: 'AZURE_CLIENT_SECRET', required: false, section: '02', hint: 'Azure Portal → App registrations → Certificates & secrets → New client secret' },
     // §07 App + AI
-    app_url:              { ok: appUrlOk,        label: 'NEXT_PUBLIC_APP_URL',               required: true,  section: '07', hint: 'https://pios.sustain-intl.com' },
+    app_url:              { ok: appUrlOk,        label: 'NEXT_PUBLIC_APP_URL',               required: true,  section: '07', hint: 'https://pios.veritasiq.io' },
     anthropic_api_key:    { ok: anthropicOk,     label: 'ANTHROPIC_API_KEY',                 required: true,  section: '07', hint: 'console.anthropic.com/settings/keys → Create Key' },
   }
 

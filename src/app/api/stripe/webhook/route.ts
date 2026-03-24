@@ -11,8 +11,8 @@ function getResend() {
   return new R(key)
 }
 
-const FROM    = process.env.FROM_EMAIL ?? 'noreply@sustain-intl.com'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.sustain-intl.com'
+const FROM    = process.env.FROM_EMAIL ?? 'noreply@veritasiq.io'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'
 
 const PLAN_LIMITS: Record<string, { credits: number; seats: number }> = {
   student:      { credits: 2_000,  seats: 1 },

@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-const OWNER_EMAIL = 'info@sustain-intl.com'
+const OWNER_EMAIL = 'info@veritasiq.io'
 const SURVEY_URL  = process.env.NPS_SURVEY_URL ?? 'https://forms.gle/placeholder'
 
 export async function POST(req: NextRequest) {

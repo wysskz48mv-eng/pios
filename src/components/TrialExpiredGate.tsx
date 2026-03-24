@@ -121,7 +121,7 @@ export function TrialExpiredGate({ userName }: TrialExpiredGateProps) {
 
       <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>
         Your data is preserved for 30 days after trial expiry.
-        Questions? <a href="mailto:info@sustain-intl.com" style={{ color: '#a78bfa' }}>Contact support</a>
+        Questions? <a href="mailto:info@veritasiq.io" style={{ color: '#a78bfa' }}>Contact support</a>
       </p>
     </div>
   )

@@ -5,7 +5,7 @@ export const runtime = 'nodejs'
 // GET /.well-known/ai-plugin.json
 // Agent discovery manifest for Claude for Chrome and AI agents
 export async function GET() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.sustain-intl.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'
 
   return NextResponse.json({
     schema_version: 'v1',
@@ -26,7 +26,7 @@ All operations are scoped to the authenticated user via Supabase session cookie.
       url: `${appUrl}/api/claude-context`,
     },
     logo_url: `${appUrl}/favicon.svg`,
-    contact_email: 'info@sustain-intl.com',
+    contact_email: 'info@veritasiq.io',
     legal_info_url: `${appUrl}/`,
   })
 }

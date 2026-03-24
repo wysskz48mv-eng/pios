@@ -315,7 +315,7 @@ export async function GET() {
           generated_at:  new Date().toISOString(),
           platform:      'PIOS v2.2',
           llms_txt:      '/llms.txt',
-          docs:          'https://pios.sustain-intl.com/platform/setup',
+          docs:          'https://pios.veritasiq.io/platform/setup',
         },
       },
       {

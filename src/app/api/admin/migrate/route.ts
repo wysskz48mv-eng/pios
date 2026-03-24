@@ -11,13 +11,13 @@ export const maxDuration = 60
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/admin/migrate
 // Executes a specific PIOS migration SQL file via Supabase service role.
-// Only callable by the authenticated owner (info@sustain-intl.com).
+// Only callable by the authenticated owner (info@veritasiq.io).
 //
 // body: { migration: '001' | '002' | ... | '007', seed_secret?: string }
 // GET  /api/admin/migrate — returns migration status (which tables exist)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const OWNER_EMAIL = 'info@sustain-intl.com'
+const OWNER_EMAIL = 'info@veritasiq.io'
 
 const MIGRATIONS: Record<string, {
   id: string
