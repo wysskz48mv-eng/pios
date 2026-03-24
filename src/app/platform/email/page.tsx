@@ -148,15 +148,23 @@ export default function EmailPage() {
         <div>
           <h1 style={{ fontSize:22,fontWeight:700,marginBottom:4 }}>Inbox Intelligence</h1>
           <p style={{ fontSize:13,color:'var(--pios-muted)' }}>
-            AI-triaged · Gmail connected
+            {accounts.length > 0 ? 'AI-triaged · Gmail connected' : 'Connect Gmail to start triaging your inbox'}
             {unreadCount>0 && <span style={{ marginLeft:10,padding:'2px 8px',borderRadius:10,background:'rgba(239,68,68,0.1)',color:'#ef4444',fontSize:11,fontWeight:600 }}>{unreadCount} unread</span>}
           </p>
         </div>
         <div style={{ display:'flex',gap:8 }}>
-          <button className="pios-btn pios-btn-ghost" onClick={()=>setShowCompose(!showCompose)} style={{ fontSize:12 }}>✉ Compose</button>
-          <button className="pios-btn pios-btn-primary" onClick={syncGmail} disabled={syncing} style={{ fontSize:12 }}>
-            {syncing?'⟳ Syncing…':'↻ Sync Gmail'}
-          </button>
+          {accounts.length === 0 ? (
+            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-primary" style={{ fontSize:12, textDecoration:'none' }}>
+              Connect Gmail →
+            </a>
+          ) : (
+            <>
+              <button className="pios-btn pios-btn-ghost" onClick={()=>setShowCompose(!showCompose)} style={{ fontSize:12 }}>✉ Compose</button>
+              <button className="pios-btn pios-btn-primary" onClick={syncGmail} disabled={syncing} style={{ fontSize:12 }}>
+                {syncing?'⟳ Syncing…':'↻ Sync Gmail'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -217,7 +225,26 @@ export default function EmailPage() {
         </div>
       ) : (
         <div style={{ display:'grid',gridTemplateColumns:selected?'1fr 1fr':'1fr',gap:16 }}>
-          {/* Email list */}
+          {/* No accounts connected */}
+      {accounts.length === 0 && !loading && (
+        <div className="pios-card" style={{ textAlign:'center' as const, padding:'48px 24px', marginBottom:16 }}>
+          <div style={{ fontSize:40, marginBottom:16 }}>📧</div>
+          <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>Connect your Gmail</div>
+          <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:24, maxWidth:400, margin:'0 auto 24px' }}>
+            PIOS will triage your inbox, extract action items from emails, auto-capture receipts, and include email context in your daily brief.
+          </p>
+          <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' as const }}>
+            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-primary" style={{ textDecoration:'none', fontSize:13 }}>
+              🔗 Connect Gmail
+            </a>
+            <a href="/platform/settings" className="pios-btn pios-btn-ghost" style={{ textDecoration:'none', fontSize:13 }}>
+              ⚙ Settings
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Email list */}
           <div className="pios-card" style={{ padding:0,overflow:'hidden' }}>
             {loading ? <p style={{ textAlign:'center' as const,padding:'40px',color:'var(--pios-muted)' }}>Loading…</p>
             : emails.map((e,i)=>(

@@ -23,6 +23,7 @@ const PUBLIC_PATHS = new Set([
   '/api/stripe/webhook',   // Stripe must bypass auth — verified by signature
   '/api/health',
   '/api/health/smoke',     // Smoke test — auth checked inside route
+  '/api/auth/connect-gmail', // OAuth initiation — no user session yet
 ])
 
 // ── ISO 27001 A.14.2 — Security response headers ────────────────────────────
