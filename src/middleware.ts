@@ -18,8 +18,11 @@ const PUBLIC_PATHS = new Set([
   '/auth/reset-password',
   '/privacy',
   '/terms',
+  '/pricing',              // Public marketing page — no auth needed
+  '/onboarding',           // New user signup flow — auth checked inside page
   '/api/stripe/webhook',   // Stripe must bypass auth — verified by signature
   '/api/health',
+  '/api/health/smoke',     // Smoke test — auth checked inside route
 ])
 
 // ── ISO 27001 A.14.2 — Security response headers ────────────────────────────
