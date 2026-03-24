@@ -3,49 +3,78 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// /onboarding — First-run wizard for new PIOS users
-// Step 1: Complete profile (name, role, organisation, DBA/academic context)
-// Step 2: Choose plan (Student / Individual / Professional)
-// Step 3: Connect Gmail (optional but recommended)
-// PIOS v2.2 | VeritasIQ Technologies Ltd
-// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * /onboarding — First-run wizard
+ * Step 0: Persona selection (student | professional/executive)
+ * Step 1: Profile setup (context-aware per persona)
+ * Step 2: Plan selection
+ * Step 3: Optional Gmail connect
+ * PIOS Sprint 22 | VeritasIQ Technologies Ltd
+ */
+
+const PERSONAS = [
+  {
+    key: 'student',
+    icon: '🎓',
+    title: 'Student / Researcher',
+    subtitle: 'DBA, MBA, MSc, PhD, CPD or professional qualification',
+    features: ['Thesis & chapter tracker', 'CPD deadline management', 'Academic calendar', 'Literature organiser', 'Supervisor comms'],
+    colour: '#6c8eff',
+  },
+  {
+    key: 'professional',
+    icon: '💼',
+    title: 'Professional / Consultant',
+    subtitle: 'Consultant, project manager, analyst, or specialist',
+    features: ['Client project tracker', 'Consulting framework engine', 'Proposal drafting AI', 'Stakeholder management', 'Time & expense tracking'],
+    colour: '#a78bfa',
+  },
+  {
+    key: 'executive',
+    icon: '⚡',
+    title: 'Executive / Founder',
+    subtitle: 'CEO, MD, founder, or C-suite leader',
+    features: ['Executive Operating System™', 'Decision Architecture™', 'OKR & performance pulse', 'Board & investor comms', 'Strategic intelligence feed'],
+    colour: '#22d3ee',
+    badge: 'Most powerful',
+  },
+]
 
 const PLANS = [
   {
-    key: 'student',
-    name: 'Student',
-    price: '$9/mo',
-    colour: '#6c8eff',
-    description: 'Academic lifecycle + calendar + personal tasks',
-    features: ['Academic Lifecycle Manager', 'AI Calendar (basic)', 'Personal Tasks', '2,000 AI credits/mo', '50% off for .edu emails'],
-  },
-  {
     key: 'individual',
-    name: 'Individual',
+    name: 'Starter',
     price: '$19/mo',
-    colour: '#a78bfa',
-    description: 'Full PIOS — all three core modules',
-    popular: true,
-    features: ['Everything in Student', 'Gmail Autonomous Triage', 'Personal Projects', 'Expense Tracker', 'PIOS AI Companion', '5,000 AI credits/mo'],
+    colour: '#6c8eff',
+    description: 'Core PIOS for individuals',
+    features: ['All platform modules', 'Gmail autonomous triage', '5,000 AI credits/mo', 'Personal projects & tasks'],
   },
   {
     key: 'professional',
     name: 'Professional',
     price: '$39/mo',
+    colour: '#a78bfa',
+    description: 'Full platform + consulting engine',
+    popular: true,
+    features: ['Everything in Starter', 'Consulting Strategist Agent™', 'Decision Architecture Agent™', '15,000 AI credits/mo', 'Priority support'],
+  },
+  {
+    key: 'enterprise',
+    name: 'Executive',
+    price: '$79/mo',
     colour: '#22d3ee',
-    description: 'Full platform + FM consulting engine',
-    features: ['Everything in Individual', 'FM Consulting Engine', 'Business Ops Dashboard', '15,000 AI credits/mo', 'Priority support', 'Cross-domain clash detection'],
+    description: 'Full Personal OS for senior leaders',
+    features: ['Everything in Professional', 'EOSA™ Executive Operating System', 'Stakeholder Intelligence Agent™', 'Board & investor comms', '40,000 AI credits/mo', 'White-glove onboarding'],
   },
 ]
 
-function ProgressDots({ step }: { step: number }) {
+function ProgressDots({ step, total }: { step: number; total: number }) {
   return (
     <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 40 }}>
-      {[1, 2, 3].map(n => (
-        <div key={n} style={{
-          width: n === step ? 24 : 8, height: 8, borderRadius: 4,
-          background: n === step ? '#a78bfa' : n < step ? 'rgba(167,139,250,0.4)' : 'rgba(255,255,255,0.1)',
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} style={{
+          width: i + 1 === step ? 24 : 8, height: 8, borderRadius: 4,
+          background: i + 1 === step ? '#a78bfa' : i + 1 < step ? 'rgba(167,139,250,0.4)' : 'rgba(255,255,255,0.1)',
           transition: 'all .3s ease',
         }} />
       ))}
@@ -60,323 +89,216 @@ function Label({ children }: { children: React.ReactNode }) {
 function Input({ value, onChange, placeholder, type = 'text' }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return (
     <input
-      type={type}
-      value={value}
-      placeholder={placeholder}
+      type={type} value={value}
       onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
       style={{
-        width: '100%', padding: '10px 14px', borderRadius: 8, fontSize: 13,
-        background: '#0e1015', border: '1px solid rgba(255,255,255,0.08)',
-        color: '#dde2f0', outline: 'none', fontFamily: 'inherit',
-        boxSizing: 'border-box' as const,
+        width: '100%', padding: '10px 14px', borderRadius: 8,
+        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+        color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const,
+        marginBottom: 16,
       }}
     />
   )
 }
 
 export default function OnboardingPage() {
-  const [step, setStep]     = useState(1)
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState<string | null>(null)
-  const [selectedPlan, setSelectedPlan] = useState<string>('individual')
-
-  const [form, setForm] = useState({
-    full_name:       '',
-    job_title:       '',
-    organisation:    '',
-    programme_name:  '',
-    university:      '',
-    timezone:        'Asia/Dubai',
-  })
-  const f = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
-
-  const router   = useRouter()
+  const router = useRouter()
   const supabase = createClient()
 
-  // ── Step 1 save ──────────────────────────────────────────────────────────
+  const [step, setStep]             = useState(1)
+  const [persona, setPersona]       = useState('')
+  const [fullName, setFullName]     = useState('')
+  const [jobTitle, setJobTitle]     = useState('')
+  const [organisation, setOrg]      = useState('')
+  const [programme, setProgramme]   = useState('')
+  const [university, setUniversity] = useState('')
+  const [timezone, setTimezone]     = useState('Europe/London')
+  const [plan, setPlan]             = useState('professional')
+  const [saving, setSaving]         = useState(false)
+  const [error, setError]           = useState('')
+
   async function saveProfile() {
-    if (!form.full_name.trim()) { setError('Please enter your name.'); return }
-    setSaving(true); setError(null)
+    setSaving(true)
+    setError('')
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-      const { error: e } = await supabase.from('user_profiles').update({
-        full_name:      form.full_name,
-        job_title:      form.job_title,
-        organisation:   form.organisation,
-        programme_name: form.programme_name,
-        university:     form.university,
-        timezone:       form.timezone,
-        onboarded:      false, // mark not yet fully onboarded
-      }).eq('id', user.id)
-      if (e) throw e
-      setStep(2)
-    } catch (e: unknown) {
-      setError(e.message ?? 'Failed to save profile')
-    } finally {
-      setSaving(false)
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: fullName,
+          job_title: jobTitle || undefined,
+          organisation: organisation || undefined,
+          programme_name: programme || undefined,
+          university: university || undefined,
+          timezone,
+          persona_type: persona || 'individual',
+          onboarded: true,
+        }),
+      })
+      if (!res.ok) throw new Error('Profile save failed')
+      setStep(3)
+    } catch {
+      setError('Could not save profile. Please try again.')
     }
-  }
-
-  // ── Step 2 — plan select → Stripe checkout or skip ───────────────────────
-  async function choosePlan(planKey: string) {
-    setSaving(true)
-    // If they want to try first, skip to step 3 (individual is default free trial)
-    setSelectedPlan(planKey)
     setSaving(false)
-    setStep(3)
   }
 
-  // ── Step 3 — connect Gmail or skip to dashboard ───────────────────────────
-  async function connectGmail() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
-    })
-    if (error) setError(error.message)
-  }
-
-  async function skipToCheckout() {
-    // Mark onboarded — always go to dashboard (trial flow, no Stripe redirect)
+  async function completePlan() {
     setSaving(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.from('user_profiles').update({ onboarded: true }).eq('id', user.id)
-      }
-    } catch { /* silent */ }
-    router.push('/platform/dashboard')
+    // Plan upgrade is handled via Stripe — for now just mark onboarded
+    const { error: e } = await supabase.auth.updateUser({})
+    if (!e) router.push('/platform/dashboard')
+    setSaving(false)
   }
 
-  async function goToDashboard() {
-    setSaving(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) await supabase.from('user_profiles').update({ onboarded: true }).eq('id', user.id)
-    } catch { /* silent */ }
-    router.push('/platform/dashboard')
+  const card: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+    borderRadius: 16, padding: 32,
   }
 
-  // ── Layout shell ──────────────────────────────────────────────────────────
   return (
     <div style={{
-      minHeight: '100vh', background: '#060709',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(135deg, #0a0b1a 0%, #0d0f24 100%)',
+      padding: 24, fontFamily: 'system-ui, sans-serif',
     }}>
-      <div style={{ width: '100%', maxWidth: step === 2 ? 860 : 480 }}>
-
-        {/* Logo */}
-        <div style={{ textAlign: 'center' as const, marginBottom: 32 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 48, height: 48, borderRadius: 12, marginBottom: 12,
-            background: 'linear-gradient(135deg, #a78bfa, #6c8eff)',
-            fontSize: 20, fontWeight: 800, color: '#fff',
-          }}>P</div>
-          <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#454d63', fontWeight: 600 }}>PIOS · Setup</div>
+      <div style={{ width: '100%', maxWidth: step === 1 ? 720 : 480 }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ fontSize: 28, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
+            PIOS<span style={{ color: '#a78bfa' }}>™</span>
+          </div>
+          <div style={{ fontSize: 13, color: '#454d63', marginTop: 4 }}>Personal Intelligence Operating System</div>
         </div>
 
-        <ProgressDots step={step} />
+        <ProgressDots step={step} total={4} />
 
-        {/* ─── STEP 1: Profile ─────────────────────────────────────────── */}
+        {/* ── STEP 1: Persona selection ─────────────────────── */}
         {step === 1 && (
-          <div style={{ background: '#111318', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '32px' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>Tell us about yourself</h2>
-            <p style={{ fontSize: 13, color: '#7a8299', margin: '0 0 28px', lineHeight: 1.6 }}>This personalises your morning brief and AI companion.</p>
-
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 16 }}>
-              <div>
-                <Label>Full name *</Label>
-                <Input value={form.full_name} onChange={v => f('full_name', v)} placeholder="Your full name" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <Label>Job title</Label>
-                  <Input value={form.job_title} onChange={v => f('job_title', v)} placeholder="Your job title" />
-                </div>
-                <div>
-                  <Label>Organisation</Label>
-                  <Input value={form.organisation} onChange={v => f('organisation', v)} placeholder="Your organisation" />
-                </div>
-              </div>
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase' as const, color: '#a78bfa', marginBottom: 12 }}>Academic (optional)</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <Label>Programme</Label>
-                    <Input value={form.programme_name} onChange={v => f('programme_name', v)} placeholder="e.g. DBA, MBA, MSc" />
-                  </div>
-                  <div>
-                    <Label>University</Label>
-                    <Input value={form.university} onChange={v => f('university', v)} placeholder="Your university" />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label>Timezone</Label>
-                <select
-                  value={form.timezone}
-                  onChange={e => f('timezone', e.target.value)}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 8, fontSize: 13, background: '#0e1015', border: '1px solid rgba(255,255,255,0.08)', color: '#dde2f0', outline: 'none', fontFamily: 'inherit' }}
-                >
-                  <option value="Asia/Dubai">Asia/Dubai (UAE, UTC+4)</option>
-                  <option value="Europe/London">Europe/London (UK)</option>
-                  <option value="America/New_York">America/New_York (EST)</option>
-                  <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
-                  <option value="Africa/Johannesburg">Africa/Johannesburg (SAST)</option>
-                </select>
-              </div>
-            </div>
-
-            {error && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 12 }}>{error}</div>}
-
-            <button
-              onClick={saveProfile}
-              disabled={saving}
-              style={{
-                width: '100%', marginTop: 24, padding: '12px', borderRadius: 8,
-                background: 'linear-gradient(135deg, #a78bfa, #6c8eff)',
-                border: 'none', color: '#fff', fontWeight: 600, fontSize: 14,
-                cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1,
-                fontFamily: 'inherit',
-              }}
-            >{saving ? 'Saving…' : 'Continue →'}</button>
-          </div>
-        )}
-
-        {/* ─── STEP 2: Plan ───────────────────────────────────────────── */}
-        {step === 2 && (
           <div>
-            {/* Trial CTA banner */}
-            <div style={{
-              background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.25)',
-              borderRadius: 12, padding: '20px 24px', marginBottom: 24, textAlign: 'center' as const,
-            }}>
-              <div style={{ fontSize: 22, marginBottom: 6 }}>🎉</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
-                Start your 3-day free trial
-              </div>
-              <div style={{ fontSize: 13, color: '#7a8299', marginBottom: 16, lineHeight: 1.6 }}>
-                Full access to all features. No credit card required. Cancel any time.
-              </div>
-              <button
-                onClick={() => { choosePlan('individual') }}
-                style={{
-                  padding: '12px 32px', borderRadius: 8,
-                  background: 'linear-gradient(135deg, #a78bfa, #6c8eff)',
-                  border: 'none', color: '#fff', fontWeight: 700, fontSize: 14,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >Start free trial →</button>
-            </div>
-
-            <div style={{ textAlign: 'center' as const, marginBottom: 28 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.4)', margin: '0 0 6px' }}>Or choose a paid plan</h2>
-              <p style={{ fontSize: 13, color: '#7a8299', margin: 0 }}>Billed monthly. Upgrade or cancel any time.</p>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
-              {PLANS.map(plan => (
-                <div
-                  key={plan.key}
-                  onClick={() => setSelectedPlan(plan.key)}
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 8, textAlign: 'center' }}>
+              How will you use PIOS?
+            </h2>
+            <p style={{ fontSize: 14, color: '#454d63', textAlign: 'center', marginBottom: 28 }}>
+              Choose your primary context. You can change this later.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+              {PERSONAS.map(p => (
+                <button key={p.key} onClick={() => { setPersona(p.key); setStep(2) }}
                   style={{
-                    background: selectedPlan === plan.key ? `${plan.colour}10` : '#111318',
-                    border: `1px solid ${selectedPlan === plan.key ? plan.colour : 'rgba(255,255,255,0.06)'}`,
-                    borderRadius: 12, padding: '24px 20px', cursor: 'pointer',
+                    background: persona === p.key ? `rgba(${p.colour === '#22d3ee' ? '34,211,238' : p.colour === '#a78bfa' ? '167,139,250' : '108,142,255'},0.1)` : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${persona === p.key ? p.colour : 'rgba(255,255,255,0.06)'}`,
+                    borderRadius: 14, padding: 20, cursor: 'pointer', textAlign: 'left' as const,
                     transition: 'all .2s', position: 'relative' as const,
-                  }}
-                >
-                  {plan.popular && (
-                    <div style={{
-                      position: 'absolute' as const, top: -10, left: '50%', transform: 'translateX(-50%)',
-                      background: plan.colour, color: '#fff', fontSize: 10, fontWeight: 700,
-                      letterSpacing: 1, textTransform: 'uppercase' as const, padding: '3px 10px', borderRadius: 20,
-                      whiteSpace: 'nowrap' as const,
-                    }}>Most Popular</div>
+                  }}>
+                  {p.badge && (
+                    <div style={{ position: 'absolute', top: -10, right: 12, background: '#22d3ee', color: '#000', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 20 }}>{p.badge}</div>
                   )}
-                  <div style={{ fontSize: 15, fontWeight: 700, color: plan.colour, marginBottom: 4 }}>{plan.name}</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 8 }}>{plan.price}</div>
-                  <div style={{ fontSize: 11, color: '#7a8299', marginBottom: 16, lineHeight: 1.5 }}>{plan.description}</div>
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6 }}>
-                    {plan.features.map(f => (
-                      <div key={f} style={{ fontSize: 11, color: '#7a8299', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                        <span style={{ color: plan.colour, flexShrink: 0 }}>✓</span>
-                        {f}
-                      </div>
+                  <div style={{ fontSize: 28, marginBottom: 10 }}>{p.icon}</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{p.title}</div>
+                  <div style={{ fontSize: 12, color: '#454d63', marginBottom: 14, lineHeight: 1.5 }}>{p.subtitle}</div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {p.features.map(f => (
+                      <li key={f} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4, paddingLeft: 14, position: 'relative' as const }}>
+                        <span style={{ position: 'absolute', left: 0, color: p.colour }}>·</span>{f}
+                      </li>
                     ))}
-                  </div>
-                </div>
+                  </ul>
+                </button>
               ))}
             </div>
-            <button
-              onClick={() => choosePlan(selectedPlan)}
-              disabled={saving}
-              style={{
-                width: '100%', padding: '13px', borderRadius: 8,
-                background: 'linear-gradient(135deg, #a78bfa, #6c8eff)',
-                border: 'none', color: '#fff', fontWeight: 600, fontSize: 14,
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >Continue with {PLANS.find(p => p.key === selectedPlan)?.name} →</button>
-            <button onClick={() => setStep(1)} style={{ width: '100%', marginTop: 8, padding: '10px', background: 'none', border: 'none', color: '#454d63', fontSize: 12, cursor: 'pointer' }}>← Back</button>
           </div>
         )}
 
-        {/* ─── STEP 3: Connect Gmail ──────────────────────────────────── */}
-        {step === 3 && (
-          <div style={{ background: '#111318', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '32px' }}>
-            <div style={{ textAlign: 'center' as const, marginBottom: 28 }}>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>✉</div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>Connect your Gmail</h2>
-              <p style={{ fontSize: 13, color: '#7a8299', margin: 0, lineHeight: 1.6 }}>
-                PIOS reads your inbox to surface action items, draft replies, and include email context in your morning brief.
-              </p>
-            </div>
+        {/* ── STEP 2: Profile ───────────────────────────────── */}
+        {step === 2 && (
+          <div style={card}>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 24 }}>Set up your profile</h2>
+            <Label>Full name</Label>
+            <Input value={fullName} onChange={setFullName} placeholder="Your full name" />
 
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10, marginBottom: 24 }}>
-              {[
-                { icon: '⚡', title: 'Smart triage', desc: 'AI surfaces action items from your inbox automatically' },
-                { icon: '📋', title: 'Morning brief context', desc: 'Outstanding emails included in your daily AI brief' },
-                { icon: '🔒', title: 'Read-only by default', desc: 'gmail.modify scope — PIOS only labels, never deletes' },
-              ].map(item => (
-                <div key={item.title} style={{ display: 'flex', gap: 12, padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#dde2f0', marginBottom: 2 }}>{item.title}</div>
-                    <div style={{ fontSize: 12, color: '#7a8299' }}>{item.desc}</div>
+            {(persona === 'professional' || persona === 'executive') && <>
+              <Label>Job title</Label>
+              <Input value={jobTitle} onChange={setJobTitle} placeholder="CEO, Managing Director, Consultant…" />
+              <Label>Organisation</Label>
+              <Input value={organisation} onChange={setOrg} placeholder="Your company or firm" />
+            </>}
+
+            {persona === 'student' && <>
+              <Label>Programme</Label>
+              <Input value={programme} onChange={setProgramme} placeholder="e.g. DBA — University of Portsmouth" />
+              <Label>University</Label>
+              <Input value={university} onChange={setUniversity} placeholder="University name" />
+            </>}
+
+            <Label>Timezone</Label>
+            <select value={timezone} onChange={e => setTimezone(e.target.value)} style={{
+              width: '100%', padding: '10px 14px', borderRadius: 8,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              color: '#fff', fontSize: 14, marginBottom: 16,
+            }}>
+              {['Europe/London','Europe/Dublin','Europe/Paris','Asia/Riyadh','Asia/Dubai','Asia/Karachi','Africa/Johannesburg','America/New_York','America/Chicago','America/Los_Angeles','UTC'].map(tz => (
+                <option key={tz} value={tz}>{tz}</option>
+              ))}
+            </select>
+
+            {error && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12 }}>{error}</p>}
+
+            <button onClick={saveProfile} disabled={!fullName || saving}
+              style={{ width: '100%', padding: '12px', borderRadius: 8, background: '#a78bfa', border: 'none', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: !fullName || saving ? 0.5 : 1 }}>
+              {saving ? 'Saving…' : 'Continue →'}
+            </button>
+          </div>
+        )}
+
+        {/* ── STEP 3: Plan ──────────────────────────────────── */}
+        {step === 3 && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 8, textAlign: 'center' }}>Choose your plan</h2>
+            <p style={{ fontSize: 14, color: '#454d63', textAlign: 'center', marginBottom: 28 }}>14-day free trial on all plans. Cancel anytime.</p>
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+              {PLANS.map(p => (
+                <button key={p.key} onClick={() => setPlan(p.key)}
+                  style={{
+                    background: plan === p.key ? 'rgba(167,139,250,0.1)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${plan === p.key ? '#a78bfa' : 'rgba(255,255,255,0.06)'}`,
+                    borderRadius: 12, padding: '16px 20px', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                  }}>
+                  <div style={{ textAlign: 'left' as const }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>{p.name}</span>
+                      {p.popular && <span style={{ fontSize: 10, fontWeight: 600, background: '#a78bfa', color: '#fff', padding: '1px 7px', borderRadius: 20 }}>Popular</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#454d63' }}>{p.description}</div>
                   </div>
-                </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' as const }}>{p.price}</div>
+                </button>
               ))}
             </div>
-
-            {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
-
-            <button
-              onClick={connectGmail}
-              style={{
-                width: '100%', padding: '12px', borderRadius: 8, marginBottom: 10,
-                background: '#fff', border: 'none', color: '#1a1a2e',
-                fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-              Connect Google Account
+            <button onClick={() => setStep(4)} style={{ width: '100%', marginTop: 20, padding: '12px', borderRadius: 8, background: '#a78bfa', border: 'none', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+              Continue →
             </button>
+          </div>
+        )}
 
+        {/* ── STEP 4: Gmail connect ─────────────────────────── */}
+        {step === 4 && (
+          <div style={card}>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 8 }}>Connect Gmail</h2>
+            <p style={{ fontSize: 14, color: '#454d63', lineHeight: 1.7, marginBottom: 28 }}>
+              PIOS automatically triages your inbox, captures action items, and extracts receipts.
+              Connecting Gmail unlocks the full autonomous intelligence layer.
+            </p>
             <button
-              onClick={skipToCheckout}
-              disabled={saving}
-              style={{ width: '100%', padding: '11px', borderRadius: 8, background: 'none', border: '1px solid rgba(255,255,255,0.08)', color: '#7a8299', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
-            >{saving ? 'Redirecting…' : 'Skip — connect later'}</button>
-
-            <button onClick={goToDashboard} style={{ width: '100%', marginTop: 6, padding: '10px', background: 'none', border: 'none', color: '#454d63', fontSize: 12, cursor: 'pointer' }}>
-              Go straight to dashboard →
+              onClick={async () => { await supabase.auth.signInWithOAuth({ provider: 'google', options: { scopes: 'email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly', redirectTo: `${window.location.origin}/auth/callback?next=/platform/dashboard` } }) }}
+              style={{ width: '100%', padding: '12px', borderRadius: 8, background: '#fff', border: 'none', color: '#000', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 12 }}>
+              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.1 0 5.8 1.1 8 2.9l6-6C34.4 3.1 29.5 1 24 1 14.8 1 7 6.7 3.7 14.6l7 5.5C12.4 13.8 17.7 9.5 24 9.5z"/><path fill="#34A853" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.1 5.1-4.5 6.7l7 5.5C43.1 37 46.1 31.3 46.1 24.5z"/><path fill="#FBBC05" d="M10.7 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7-5.5C2.3 17.1 1 20.4 1 24s1.3 6.9 3.7 9.6l7-5.4z"/><path fill="#4285F4" d="M24 47c5.5 0 10.1-1.8 13.5-4.9l-7-5.5c-1.9 1.3-4.3 2-6.5 2-6.3 0-11.6-4.3-13.5-10.1l-7 5.5C7 40.3 14.8 47 24 47z"/></svg>
+              Connect Gmail & Calendar
+            </button>
+            <button onClick={completePlan} disabled={saving}
+              style={{ width: '100%', padding: '12px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#6b7280', fontSize: 14, cursor: 'pointer' }}>
+              Skip for now → Enter PIOS
             </button>
           </div>
         )}

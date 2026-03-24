@@ -16,6 +16,7 @@ const NAV = [
   { href: '/platform/email',     icon: '✉',  label: 'Inbox',          colour: '#2dd4a0' },
   { href: '/platform/files',     icon: '🗂️', label: 'File Intel',     colour: '#f59e0b' },
   { href: '/platform/documents',  icon: '📄', label: 'Documents',       colour: '#8B5CF6' },
+  { href: '/platform/executive',   icon: '⚡', label: 'Executive OS',   colour: '#22d3ee', badge: 'EOSA™' },
   { href: '/platform/intelligence',icon: '📡',label: 'Intelligence',     colour: '#22d3ee' },
   { href: '/platform/payroll',   icon: '💳', label: 'Payroll',        colour: '#a78bfa' },
   { href: '/platform/projects',  icon: '◈',  label: 'Projects',       colour: '#f59e0b' },
