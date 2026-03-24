@@ -12,6 +12,107 @@ const ACCENT = '#6c8eff'
 const TABS = ['search', 'journals', 'cfp', 'library', 'import'] as const
 type Tab = typeof TABS[number]
 
+type SearchResult = {
+  title: string
+  authors: string | string[]
+  year: number | string
+  journal: string
+  doi?: string
+  abstract?: string
+  source?: string
+  source_type?: string
+  citations?: number
+  relevance?: number
+  relevance_notes?: string
+  read_status?: string
+  verified?: boolean
+  needs_review?: boolean
+  fabricated_risk?: number
+  warning?: string
+  provenance_label?: string
+  hitl_reason?: string
+  requires_hitl?: boolean
+  crossref_title?: string
+  [key: string]: unknown
+}
+
+type GuardSummary = {
+  totalFound?: number
+  database?: string
+  aiGuidance?: string
+  fabricated_risk?: number
+  needs_review?: number
+  verified?: number
+  warning?: string
+}
+
+type JournalRecord = {
+  id: string
+  journal_name: string
+  publisher?: string
+  impact_factor?: number | string
+  quartile?: string
+  subject_area?: string
+  submission_url?: string
+  guidelines_url?: string
+  priority?: string
+  status?: string
+  notes?: string
+}
+
+type CFPRecord = {
+  id: string
+  title: string
+  conference_name?: string
+  deadline?: string
+  location?: string
+  url?: string
+  submission_url?: string
+  status?: string
+  notes?: string
+  relevance_score?: number
+}
+
+type LibraryItem = {
+  id: string
+  title: string
+  authors?: string | string[]
+  year?: number | string
+  journal?: string
+  doi?: string
+  url?: string
+  source_type?: string
+  notes?: string
+  tags?: string | string[]
+  read_status?: string
+  relevance?: number
+  relevance_score?: number
+  provenance_label?: string
+  hitl_reason?: string
+  requires_hitl?: boolean
+  ai_summary?: string
+  citation_apa?: string
+  created_at?: string
+  themes?: string[]
+  _guard?: {
+    provenance_label?: string
+    hitl_reason?: string
+    [key: string]: unknown
+  }
+  [key: string]: unknown
+}
+
+type ResearchStats = {
+  total?: number
+  verified?: number
+  needs_review?: number
+  val?: number | string
+  label?: string
+  c?: string
+  icon?: string
+  [key: string]: unknown
+}
+
 const DB_OPTIONS = [
   { value: 'scopus',         label: 'Scopus',              note: 'Largest abstract/citation DB — primary for DBA' },
   { value: 'web_of_science', label: 'Web of Science',      note: 'High-quality journal index' },
@@ -61,15 +162,15 @@ function SearchTab() {
   const [yearTo,     setYearTo]     = useState('')
   const [maxResults, setMaxResults] = useState(10)
   const [loading,    setLoading]    = useState(false)
-  const [results,    setResults]    = useState<Record<string,unknown>[]>([])
-  const [guardSummary, setGuardSummary] = useState<Record<string,unknown>|null>(null)
+  const [results,    setResults]    = useState<SearchResult[]>([])
+  const [guardSummary, setGuardSummary] = useState<GuardSummary|null>(null)
   const [meta,       setMeta]       = useState<Record<string,unknown>|null>(null)
   const [history,    setHistory]    = useState<Record<string,unknown>[]>([])
   const [expanded,   setExpanded]   = useState<Set<number>>(new Set())
   useEffect(() => {
     fetch('/api/research/search')
       .then(r => r.ok ? r.json() : {})
-      .then((d: unknown) => setHistory(d.history ?? []))
+      .then((d: unknown) => setHistory(((d as Record<string,unknown>).history as Record<string,unknown>[]) ?? []))
       .catch(() => {})
   }, [])
 
@@ -82,7 +183,7 @@ function SearchTab() {
       body: JSON.stringify({ query, database, yearFrom: yearFrom || undefined, yearTo: yearTo || undefined, maxResults }),
     })
     const data = await res.json()
-    setResults((data.results ?? []) as SearchResult[])
+    setResults((data as Record<string,unknown>).results as SearchResult[] ?? [])
     if (data.guardSummary) setGuardSummary((data as Record<string,unknown>).guardSummary as GuardSummary)
     setMeta(data)
     setLoading(false)
@@ -154,13 +255,13 @@ function SearchTab() {
             <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{results.length} results</span>
-                <span style={{ fontSize: 12, color: 'var(--pios-muted)', marginLeft: 8 }}>of ~{meta.totalFound?.toLocaleString()} found in {DB_OPTIONS.find(d => d.value === meta.database)?.label}</span>
+                <span style={{ fontSize: 12, color: 'var(--pios-muted)', marginLeft: 8 }}>of ~{((meta as Record<string,unknown>).totalFound as number | undefined)?.toLocaleString()} found in {DB_OPTIONS.find(d => d.value === (meta as Record<string,unknown>).database as string)?.label}</span>
               </div>
             </div>
           )}
-          {meta?.aiGuidance && (
+          {!!(meta as Record<string,unknown>)?.aiGuidance && (
             <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(108,142,255,0.08)', borderLeft: `3px solid ${ACCENT}`, fontSize: 12, color: 'var(--pios-text)', marginBottom: 14, lineHeight: 1.6 }}>
-              💡 <strong>AI guidance:</strong> {meta.aiGuidance}
+              <>💡 <strong>AI guidance:</strong> {String((meta as Record<string,unknown>)?.aiGuidance ?? "")}</>
             </div>
           )}
           {guardSummary && (
@@ -183,25 +284,25 @@ function SearchTab() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, marginBottom: 4, color: 'var(--pios-text)' }}>{String(r.title ?? "")}</div>
                     <div style={{ fontSize: 11, color: 'var(--pios-muted)', display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
-                      <span>{r.authors?.slice(0, 3).join(', ')}{(Number(r.authors?.length ?? 0) > 3) ? ' et al.' : ''}</span>
+                      <span>{(Array.isArray(r.authors) ? (r.authors as string[]).slice(0, 3).join(', ') : String(r.authors ?? ''))}{((Array.isArray(r.authors) ? (r.authors as string[]).length > 3 : false)) ? ' et al.' : ''}</span>
                       <span>·</span>
                       <span style={{ fontStyle: 'italic' }}>{String(r.journal ?? "")}</span>
                       <span>·</span>
                       <span>{String(r.year ?? "")}</span>
-                      {(Number(r.citations) > 0) && <><span>·</span><span>{String(r.citations ?? "")} citations</span></>}
-                      {r.open_access && <span style={{ color: '#22c55e', fontWeight: 600 }}>OA</span>}
+                      {((r.citations !== undefined && Number(r.citations) > 0)) && <><span>·</span><span>{String(r.citations ?? "")} citations</span></>}
+                      {Boolean((r as Record<string,unknown>).open_access) && <span style={{ color: '#22c55e', fontWeight: 600 }}>OA</span>}
                     </div>
                   </div>
                   <div style={{ display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
-                    {r.provenance_label && (() => {
+                    {String(r.provenance_label ?? "") && (() => {
                       const badges: Record<string,{text:string,colour:string,bg:string}> = {
                         AI_VERIFIED:    { text:'✓ Verified',       colour:'#22c55e', bg:'rgba(34,197,94,0.1)' },
                         AI_UNVERIFIED:  { text:'⚠ Unverified',     colour:'#f59e0b', bg:'rgba(245,158,11,0.1)' },
                         FABRICATED_RISK:{ text:'✗ Check manually', colour:'#ef4444', bg:'rgba(239,68,68,0.1)' },
                       }
-                      const b = badges[r.provenance_label]
+                      const b = badges[r.provenance_label as keyof typeof badges]
                       return b ? (
-                        <span title={r.verification_note ?? r.hitl_reason ?? ''} style={{ fontSize:10, padding:'2px 8px', borderRadius:20, fontWeight:600, background:b.bg, color:b.colour }}>
+                        <span title={String((r as Record<string,unknown>).verification_note ?? String(r.hitl_reason ?? "") ?? "") ?? ''} style={{ fontSize:10, padding:'2px 8px', borderRadius:20, fontWeight:600, background:b.bg, color:b.colour }}>
                           {b.text}
                         </span>
                       ) : null
@@ -220,7 +321,7 @@ function SearchTab() {
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
-                      {r.keywords?.slice(0, 6).map((k: string) => (
+                      {((r.keywords as string[] | undefined) ?? []).slice(0, 6).map((k: string) => (
                         <span key={k} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'var(--pios-surface2)', color: 'var(--pios-muted)' }}>{k}</span>
                       ))}
                       {r.doi && (
@@ -229,13 +330,13 @@ function SearchTab() {
                           DOI: {String(r.doi ?? "")} →
                         </a>
                       )}
-                      {r.crossref_title && String(r.provenance_label) === 'FABRICATED_RISK' && (
+                      {r.crossref_title && String(r.provenance_label ?? "") === 'FABRICATED_RISK' && (
                         <div style={{ width:'100%', marginTop:6, padding:'6px 10px', borderRadius:6, background:'rgba(239,68,68,0.08)', fontSize:11, color:'#ef4444' }}>
                           ⚠ CrossRef title: &ldquo;{String(r.crossref_title ?? "")}&rdquo; — differs from AI output. Verify before citing.
                         </div>
                       )}
-                      {r.requires_hitl && r.hitl_reason && (
-                        <div style={{ width:'100%', marginTop:4, fontSize:11, color:'#f59e0b' }}>HITL: {String(r.hitl_reason ?? "")}</div>
+                      {r.requires_hitl && String(r.hitl_reason ?? "") && (
+                        <div style={{ width:'100%', marginTop:4, fontSize:11, color:'#f59e0b' }}>HITL: {String(String(r.hitl_reason ?? "") ?? "")}</div>
                       )}
                     </div>
                   </div>
@@ -255,9 +356,9 @@ function SearchTab() {
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>Recent searches</div>
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6 }}>
             {history.map((h, i) => (
-              <button key={i} onClick={() => setQuery(h.query)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', textAlign: 'left' as const }}>
-                <span style={{ fontSize: 12, color: 'var(--pios-text)' }}>{h.query}</span>
-                <span style={{ fontSize: 11, color: 'var(--pios-dim)', whiteSpace: 'nowrap' as const }}>{h.database_name} · {h.result_count} results</span>
+              <button key={i} onClick={() => setQuery((h as Record<string,unknown>).query as string)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', textAlign: 'left' as const }}>
+                <span style={{ fontSize: 12, color: 'var(--pios-text)' }}>{String((h as Record<string,unknown>).query ?? '')}</span>
+                <span style={{ fontSize: 11, color: 'var(--pios-dim)', whiteSpace: 'nowrap' as const }}>{String((h as Record<string,unknown>).database_name ?? '')} · {String((h as Record<string,unknown>).result_count ?? '')} results</span>
               </button>
             ))}
           </div>
@@ -269,9 +370,9 @@ function SearchTab() {
 
 // ── JOURNAL WATCHLIST TAB ─────────────────────────────────────────────────────
 function JournalsTab() {
-  const [journals, setJournals] = useState<Record<string,unknown>[]>([])
+  const [journals, setJournals] = useState<JournalRecord[]>([])
   const [loading, setLoading]   = useState(true)
-  const [selected, setSelected] = useState<Record<string,unknown>|null>(null)
+  const [selected, setSelected] = useState<JournalRecord|null>(null)
   const [guidelines, setGuidelines] = useState<Record<string,unknown>|null>(null)
   const [guideLoading, setGuideLoading] = useState(false)
   const [showAdd, setShowAdd]   = useState(false)
@@ -283,21 +384,21 @@ function JournalsTab() {
     setLoading(true)
     const res = await fetch('/api/research/journals')
     const data = await res.json()
-    setJournals(((data as Record<string,unknown>).journals ?? []) as Record<string,unknown>[])
+    setJournals(Array.isArray((data as Record<string,unknown>).journals) ? (data as Record<string,unknown>).journals as JournalRecord[] : [])
     setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  async function getGuidelines(j: unknown) {
-    setSelected(j); setGuidelines(null); setGuideLoading(true)
+  async function getGuidelines(j: JournalRecord) {
+    setSelected(j as JournalRecord); setGuidelines(null); setGuideLoading(true)
     const res = await fetch('/api/research/journals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_guidelines', id: (j as Record<string,unknown>).id, journalName: (j as Record<string,unknown>).journal_name, publisher: (j as Record<string,unknown>).publisher, guidelinesUrl: (j as Record<string,unknown>).guidelines_url }),
+      body: JSON.stringify({ action: 'get_guidelines', id: j.id, journalName: j.journal_name, publisher: j.publisher ?? '', guidelinesUrl: j.guidelines_url ?? '' }),
     })
     const data = await res.json()
-    setGuidelines(data.guidelines)
+    setGuidelines((data as Record<string,unknown>).guidelines as Record<string,unknown>)
     setGuideLoading(false)
   }
 
@@ -361,37 +462,37 @@ function JournalsTab() {
 
         {loading ? <Spinner /> : (
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-            {journals.map(j => (
-              <div key={(j as Record<string,unknown>).id as string} onClick={() => setSelected(selected?.id === (j as Record<string,unknown>).id ? null : j)} className="pios-card"
-                style={{ padding: '14px 16px', cursor: 'pointer', border: `1px solid ${selected?.id === (j as Record<string,unknown>).id ? ACCENT + '60' : 'var(--pios-border)'}`, background: selected?.id === (j as Record<string,unknown>).id ? 'rgba(108,142,255,0.05)' : 'var(--pios-surface)' }}>
+            {journals.map((j: Record<string,unknown>) => (
+              <div key={j.id as string} onClick={() => setSelected(selected?.id === String(j.id ?? "") ? null : j as JournalRecord)} className="pios-card"
+                style={{ padding: '14px 16px', cursor: 'pointer', border: `1px solid ${selected?.id === j.id ? ACCENT + '60' : 'var(--pios-border)'}`, background: selected?.id === j.id ? 'rgba(108,142,255,0.05)' : 'var(--pios-surface)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <span style={{ fontSize: 13, fontWeight: 600 }}>{String((j as Record<string,unknown>).journal_name ?? "")}</span>
-                      <Badge status={String((j as Record<string,unknown>).status ?? "")} map={STATUS_COLOURS} />
-                      <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: priorityColor((j as Record<string,unknown>).priority) + '20', color: priorityColor((j as Record<string,unknown>).priority), fontWeight: 600 }}>{String((j as Record<string,unknown>).priority ?? "")}</span>
+                      <Badge status={String(j.status ?? "")} map={STATUS_COLOURS} />
+                      <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: priorityColor(String(j.priority ?? '')) + '20', color: priorityColor(String(j.priority ?? '')), fontWeight: 600 }}>{String((j as Record<string,unknown>).priority ?? "")}</span>
                     </div>
                     <div style={{ display: 'flex', gap: 10, fontSize: 11, color: 'var(--pios-dim)', flexWrap: 'wrap' as const }}>
-                      {(j as Record<string,unknown>).publisher && <span>{String((j as Record<string,unknown>).publisher ?? "")}</span>}
-                      {(j as Record<string,unknown>).impact_factor && <><span>·</span><span>IF {String((j as Record<string,unknown>).impact_factor ?? "")}</span></>}
-                      {(j as Record<string,unknown>).quartile && <><span>·</span><span style={{ fontWeight: 600, color: (j as Record<string,unknown>).quartile === 'Q1' ? '#22c55e' : (j as Record<string,unknown>).quartile === 'Q2' ? ACCENT : 'var(--pios-dim)' }}>{String((j as Record<string,unknown>).quartile ?? "")}</span></>}
-                      {(j as Record<string,unknown>).is_scopus_indexed && <><span>·</span><span style={{ color: '#f59e0b' }}>Scopus</span></>}
+                      {Boolean((j as Record<string,unknown>).publisher) && <span>{String((j as Record<string,unknown>).publisher ?? "")}</span>}
+                      {Boolean((j as Record<string,unknown>).impact_factor) && <><span>·</span><span>IF {String((j as Record<string,unknown>).impact_factor ?? "")}</span></>}
+                      {Boolean((j as Record<string,unknown>).quartile) && <><span>·</span><span style={{ fontWeight: 600, color: String((j as Record<string,unknown>).quartile ?? '') === 'Q1' ? '#22c55e' : String((j as Record<string,unknown>).quartile ?? '') === 'Q2' ? ACCENT : 'var(--pios-dim)' }}>{String((j as Record<string,unknown>).quartile ?? "")}</span></>}
+                      {Boolean((j as Record<string,unknown>).is_scopus_indexed) && <><span>·</span><span style={{ color: '#f59e0b' }}>Scopus</span></>}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                    <button onClick={e => { e.stopPropagation(); getGuidelines(j) }} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', color: ACCENT }}>Guidelines</button>
-                    <button onClick={e => { e.stopPropagation(); deleteJournal((j as Record<string,unknown>).id) }} style={{ fontSize: 11, padding: '3px 6px', borderRadius: 6, border: '1px solid rgba(239,68,68,0.2)', background: 'none', cursor: 'pointer', color: '#ef4444' }}>✕</button>
+                    <button onClick={e => { e.stopPropagation(); getGuidelines(j as JournalRecord) }} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', color: ACCENT }}>Guidelines</button>
+                    <button onClick={e => { e.stopPropagation(); deleteJournal(String((j as Record<string,unknown>).id ?? '')) }} style={{ fontSize: 11, padding: '3px 6px', borderRadius: 6, border: '1px solid rgba(239,68,68,0.2)', background: 'none', cursor: 'pointer', color: '#ef4444' }}>✕</button>
                   </div>
                 </div>
                 <div style={{ marginTop: 8, display: 'flex', gap: 6, alignItems: 'center' }}>
                   <span style={{ fontSize: 11, color: 'var(--pios-dim)' }}>Status:</span>
-                  <select value={String((j as Record<string,unknown>).status ?? "")} onClick={e => e.stopPropagation()} onChange={e => updateStatus((j as Record<string,unknown>).id, e.target.value)}
-                    style={{ fontSize: 10, padding: '2px 6px', borderRadius: 12, border: 'none', cursor: 'pointer', background: (STATUS_COLOURS[(j as Record<string,unknown>).status] ?? '#64748b') + '20', color: STATUS_COLOURS[(j as Record<string,unknown>).status] ?? '#64748b', fontWeight: 600, outline: 'none' }}>
+                  <select value={String((j as Record<string,unknown>).status ?? "")} onClick={e => e.stopPropagation()} onChange={e => updateStatus(String((j as Record<string,unknown>).id ?? ''), e.target.value)}
+                    style={{ fontSize: 10, padding: '2px 6px', borderRadius: 12, border: 'none', cursor: 'pointer', background: (STATUS_COLOURS[String(j.status ?? '') as keyof typeof STATUS_COLOURS] ?? '#64748b') + '20', color: STATUS_COLOURS[String(j.status ?? '') as keyof typeof STATUS_COLOURS] ?? '#64748b', fontWeight: 600, outline: 'none' }}>
                     {['researching', 'drafting', 'submitted', 'under_review', 'accepted', 'rejected', 'published'].map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                   </select>
-                  {(j as Record<string,unknown>).submission_url && (
-                    <a href={String((j as Record<string,unknown>).submission_url ?? "")} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 11, color: ACCENT, marginLeft: 'auto' }}>Submit →</a>
-                  )}
+                  {j.submission_url ? (
+                    <a href={String(j.submission_url ?? "")} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 11, color: ACCENT, marginLeft: 'auto' }}>Submit →</a>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -405,14 +506,14 @@ function JournalsTab() {
           <div className="pios-card" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{selected.journal_name}</div>
-                <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>{selected.publisher}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{String(selected?.journal_name ?? "")}</div>
+                <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>{String(selected?.publisher ?? "")}</div>
               </div>
               <button onClick={() => { setSelected(null); setGuidelines(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--pios-muted)', fontSize: 16 }}>✕</button>
             </div>
 
             {!guidelines && !guideLoading && (
-              <button className="pios-btn pios-btn-primary" onClick={() => getGuidelines(selected)} style={{ fontSize: 12, width: '100%' }}>
+              <button className="pios-btn pios-btn-primary" onClick={() => selected && getGuidelines(selected as unknown as JournalRecord)} style={{ fontSize: 12, width: '100%' }}>
                 Get author guidelines summary
               </button>
             )}
@@ -431,23 +532,23 @@ function JournalsTab() {
                     { label: 'Timeline', value: guidelines.typical_timeline ?? '—' },
                   ].map(f => (
                     <div key={(f as Record<string,unknown>).label as string} style={{ padding: '8px 10px', borderRadius: 6, background: 'var(--pios-surface2)' }}>
-                      <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 2, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{f.label}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600 }}>{f.value}</div>
+                      <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 2, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{String((f as Record<string,unknown>).label ?? "")}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>{String((f as Record<string,unknown>).value ?? "")}</div>
                     </div>
                   ))}
                 </div>
 
-                {guidelines.fit_assessment && (
+                {Boolean((guidelines as Record<string,unknown>).fit_assessment) && (
                   <div style={{ padding: '10px 12px', borderRadius: 6, background: 'rgba(108,142,255,0.08)', borderLeft: `2px solid ${ACCENT}`, fontSize: 12, lineHeight: 1.6 }}>
                     <div style={{ fontWeight: 600, marginBottom: 4, color: ACCENT }}>Fit for your DBA research</div>
-                    {guidelines.fit_assessment}
+                    {String((guidelines as Record<string,unknown>).fit_assessment ?? "")}
                   </div>
                 )}
 
-                {(Number(guidelines.key_requirements?.length ?? 0) > 0) && (
+                {(Number(((guidelines as Record<string,unknown>).key_requirements as unknown[] | undefined)?.length ?? 0) > 0) && (
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Key requirements</div>
-                    {guidelines.key_requirements.map((r: string, i: number) => (
+                    {((guidelines as Record<string,unknown>)?.key_requirements as string[]).map((r: string, i: number) => (
                       <div key={i} style={{ fontSize: 12, padding: '4px 0', borderBottom: '1px solid var(--pios-border)', color: 'var(--pios-text)', display: 'flex', gap: 8 }}>
                         <span style={{ color: ACCENT, flexShrink: 0 }}>✓</span>{r}
                       </div>
@@ -455,10 +556,10 @@ function JournalsTab() {
                   </div>
                 )}
 
-                {(Number(guidelines.submission_checklist?.length ?? 0) > 0) && (
+                {(Number(((guidelines as Record<string,unknown>).submission_checklist as unknown[] | undefined)?.length ?? 0) > 0) && (
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Submission checklist</div>
-                    {guidelines.submission_checklist.map((item: string, i: number) => (
+                    {((guidelines as Record<string,unknown>)?.submission_checklist as string[]).map((item: string, i: number) => (
                       <label key={i} style={{ display: 'flex', gap: 8, padding: '5px 0', borderBottom: '1px solid var(--pios-border)', cursor: 'pointer', fontSize: 12 }}>
                         <input type="checkbox" />
                         <span>{item}</span>
@@ -467,8 +568,8 @@ function JournalsTab() {
                   </div>
                 )}
 
-                {selected.guidelines_url && (
-                  <a href={selected.guidelines_url} target="_blank" rel="noopener noreferrer"
+                {Boolean(selected.guidelines_url) && (
+                  <a href={String(selected?.guidelines_url ?? "")} target="_blank" rel="noopener noreferrer"
                     style={{ display: 'block', textAlign: 'center' as const, padding: '8px', borderRadius: 8, border: `1px solid ${ACCENT}40`, color: ACCENT, fontSize: 12, textDecoration: 'none' }}>
                     View official guidelines →
                   </a>
@@ -502,12 +603,12 @@ function CFPTab() {
     setLoading(false)
   }
 
-  async function saveCFP(cfp: unknown) {
-    setSavingId(cfp.title)
+  async function saveCFP(cfp: Record<string,unknown>) {
+    setSavingId(cfp.title as string)
     await fetch('/api/research/cfp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'save', cfp }) })
     const res = await fetch('/api/research/cfp')
     const data = await res.json()
-    setSaved(data.calls ?? [])
+    setSaved(((data as Record<string,unknown>).calls ?? []) as Record<string,unknown>[])
     setSavingId(null)
   }
 
@@ -536,25 +637,25 @@ function CFPTab() {
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>Discovered ({live.length})</div>
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
             {live.map((cfp, i) => {
-              const days = cfp.deadline ? daysUntil(cfp.deadline) : null
+              const days = String((cfp as Record<string,unknown>).deadline ?? "") ? daysUntil(String((cfp as Record<string,unknown>).deadline ?? "")) : null
               return (
                 <div key={i} className="pios-card" style={{ padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{String(cfp.title ?? "")}</span>
-                      {cfp.relevance_score >= 4 && <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 20, background: '#22c55e20', color: '#22c55e', fontWeight: 600, flexShrink: 0 }}>High match</span>}
+                      <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{String((cfp as Record<string,unknown>).title ?? "")}</span>
+                      {Number((cfp as Record<string,unknown>).relevance_score ?? 0) >= 4 && <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 20, background: '#22c55e20', color: '#22c55e', fontWeight: 600, flexShrink: 0 }}>High match</span>}
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--pios-muted)', marginBottom: 4 }}>{cfp.journal_name || cfp.conference_name}</div>
-                    {cfp.topic_summary && <p style={{ fontSize: 12, color: 'var(--pios-dim)', lineHeight: 1.5, marginBottom: 6 }}>{cfp.topic_summary}</p>}
-                    {cfp.relevance_reason && <p style={{ fontSize: 11, color: ACCENT, fontStyle: 'italic' }}>→ {cfp.relevance_reason}</p>}
+                    <div style={{ fontSize: 12, color: 'var(--pios-muted)', marginBottom: 4 }}>{String(cfp.journal_name ?? (cfp as Record<string,unknown>).conference_name ?? "") }</div>
+                    {String((cfp as Record<string,unknown>).topic_summary ?? "") && <p style={{ fontSize: 12, color: 'var(--pios-dim)', lineHeight: 1.5, marginBottom: 6 }}>{String((cfp as Record<string,unknown>).topic_summary ?? "")}</p>}
+                    {String((cfp as Record<string,unknown>).relevance_reason ?? "") && <p style={{ fontSize: 11, color: ACCENT, fontStyle: 'italic' }}>→ {String((cfp as Record<string,unknown>).relevance_reason ?? "")}</p>}
                   </div>
                   <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
                     {days !== null && (
                       <div style={{ fontSize: 13, fontWeight: 700, color: days < 30 ? '#ef4444' : days < 60 ? '#f59e0b' : '#22c55e', marginBottom: 4 }}>{days}d left</div>
                     )}
-                    {cfp.deadline && <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 8 }}>{String(cfp.deadline ?? "")}</div>}
-                    <button onClick={() => saveCFP(cfp)} disabled={savingId === cfp.title} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: `1px solid ${ACCENT}`, background: 'none', cursor: 'pointer', color: ACCENT }}>
-                      {savingId === cfp.title ? 'Saving…' : '+ Track'}
+                    {String((cfp as Record<string,unknown>).deadline ?? "") && <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 8 }}>{String((cfp as Record<string,unknown>).deadline ?? "")}</div>}
+                    <button onClick={() => saveCFP(cfp)} disabled={savingId === String((cfp as Record<string,unknown>).title ?? "")} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: `1px solid ${ACCENT}`, background: 'none', cursor: 'pointer', color: ACCENT }}>
+                      {savingId === String((cfp as Record<string,unknown>).title ?? "") ? 'Saving…' : '+ Track'}
                     </button>
                   </div>
                 </div>
@@ -569,25 +670,25 @@ function CFPTab() {
         <div>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>Tracked ({saved.length})</div>
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-            {saved.map(cfp => {
-              const days = cfp.deadline ? daysUntil(cfp.deadline) : null
+            {saved.map((cfp: Record<string,unknown>) => {
+              const days = String((cfp as Record<string,unknown>).deadline ?? "") ? daysUntil(String((cfp as Record<string,unknown>).deadline ?? "")) : null
               return (
-                <div key={(cfp as Record<string,unknown>).id as string} className="pios-card" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div key={cfp.id as string} className="pios-card" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{String(cfp.title ?? "")}</div>
-                    <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{cfp.journal_name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{String((cfp as Record<string,unknown>).title ?? "")}</div>
+                    <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{String(cfp.journal_name ?? (cfp as Record<string,unknown>).conference_name ?? "")}</div>
                   </div>
                   {days !== null && (
                     <div style={{ fontSize: 12, fontWeight: 700, color: days < 14 ? '#ef4444' : days < 30 ? '#f59e0b' : 'var(--pios-muted)', flexShrink: 0 }}>
                       {days > 0 ? `${days}d` : 'Passed'}
                     </div>
                   )}
-                  <select value={String(cfp.status ?? "")} onChange={e => updateCFPStatus(cfp.id, e.target.value)}
-                    style={{ fontSize: 10, padding: '2px 6px', borderRadius: 12, border: 'none', cursor: 'pointer', background: (CFP_STATUS_COLOURS[cfp.status] ?? '#64748b') + '20', color: CFP_STATUS_COLOURS[cfp.status] ?? '#64748b', fontWeight: 600, outline: 'none' }}>
+                  <select value={String(cfp.status ?? "")} onChange={e => updateCFPStatus(String((cfp as Record<string,unknown>).id ?? ""), e.target.value)}
+                    style={{ fontSize: 10, padding: '2px 6px', borderRadius: 12, border: 'none', cursor: 'pointer', background: (CFP_STATUS_COLOURS[String(cfp.status ?? "")] ?? '#64748b') + '20', color: CFP_STATUS_COLOURS[String(cfp.status ?? "")] ?? '#64748b', fontWeight: 600, outline: 'none' }}>
                     {['new', 'considering', 'planning', 'dismissed'].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  {cfp.submission_url && (
-                    <a href={String(cfp.submission_url ?? "")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: ACCENT, flexShrink: 0 }}>View →</a>
+                  {String((cfp as Record<string,unknown>).submission_url ?? "") && (
+                    <a href={String((cfp as Record<string,unknown>).submission_url ?? "")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: ACCENT, flexShrink: 0 }}>View →</a>
                   )}
                 </div>
               )
@@ -676,7 +777,7 @@ function ImportTab() {
               { name: 'ISO Online Browsing Platform', url: 'https://www.iso.org/obp', desc: 'Preview standard scope and structure' },
               { name: 'UoP Library E-Standards', url: 'https://library.port.ac.uk', desc: 'Search "standards" in the library portal' },
             ].map(r => (
-              <div key={(r as Record<string,unknown>).name as string} style={{ padding: '8px 10px', borderRadius: 6, background: 'var(--pios-surface2)' }}>
+              <div key={r.name as string} style={{ padding: '8px 10px', borderRadius: 6, background: 'var(--pios-surface2)' }}>
                 <a href={String(r.url ?? "")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', display: 'block', marginBottom: 2 }}>{String(r.name ?? "")} →</a>
                 <span style={{ fontSize: 11, color: 'var(--pios-dim)' }}>{String(r.desc ?? "")}</span>
               </div>
@@ -736,11 +837,11 @@ function ImportTab() {
 // ── LITERATURE LIBRARY TAB ────────────────────────────────────────────────────
 function LibraryTab() {
   const supabase = createClient()
-  const [items,    setItems]    = useState<Record<string,unknown>[]>([])
+  const [items,    setItems]    = useState<LibraryItem[]>([])
   const [deleteItemConfirm, setDeleteItemConfirm] = useState<string|null>(null)
   const [stats,    setStats]    = useState<Record<string,unknown>|null>(null)
   const [loading,  setLoading]  = useState(true)
-  const [selected, setSelected] = useState<Record<string,unknown>|null>(null)
+  const [selected, setSelected] = useState<LibraryItem|null>(null)
   const [filter,   setFilter]   = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [search,   setSearch]   = useState('')
@@ -758,16 +859,16 @@ function LibraryTab() {
     const res = await fetch(`/api/literature?${params}`)
     const d = await res.json()
     setItems(d.items ?? [])
-    setStats((d as Record<string,unknown>).stats as Record<string,unknown>[])
+    setStats(((d as Record<string,unknown>).stats ?? {}) as Record<string,unknown>)
     setLoading(false)
   }, [filter, typeFilter, search])
 
   useEffect(() => { load() }, [load])
 
-  async function updateItem(id: string, updates: unknown) {
-    await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id, ...updates }) })
-    setItems(prev => prev.map((i: Record<string,unknown>) => (i as Record<string,unknown>).id === id ? { ...(i as Record<string,unknown>), ...updates } : i))
-    if (selected?.id === id) setSelected((p: unknown) => ({ ...p, ...updates }))
+  async function updateItem(id: string, updates: Partial<LibraryItem> | Record<string,unknown>) {
+    await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id, ...(updates as Record<string,unknown>) }) })
+    setItems(prev => prev.map((i: LibraryItem) => i.id === id ? { ...i, ...(updates as Partial<LibraryItem>) } as LibraryItem : i))
+    if (selected?.id === id) setSelected(p => p ? ({ ...p, ...(updates as Record<string,unknown>) } as LibraryItem) : null)
   }
 
   async function generateSummary(id: string) {
@@ -776,8 +877,8 @@ function LibraryTab() {
     const d = await res.json()
     if (d.summary) {
       const updates = { ai_summary: d.summary, citation_apa: d.citation_apa, themes: d.suggested_themes ?? [], relevance: d.suggested_relevance_score, _guard: d.guard ?? null }
-      setItems(prev => prev.map((i: Record<string,unknown>) => (i as Record<string,unknown>).id === id ? { ...(i as Record<string,unknown>), ...updates } : i))
-      if (selected?.id === id) setSelected((p: unknown) => ({ ...p, ...updates }))
+      setItems(prev => prev.map((i: LibraryItem) => i.id === id ? { ...i, ...(updates as Partial<LibraryItem>) } as LibraryItem : i))
+      if (selected?.id === id) setSelected(p => p ? ({ ...p, ...(updates as Record<string,unknown>) } as LibraryItem) : null)
     }
     setAiLoading(null)
   }
@@ -806,17 +907,17 @@ function LibraryTab() {
   return (
     <div>
       {/* Stats */}
-      {stats && (stats.total as number) > 0 && (
+      {stats && ((stats as Record<string,unknown>)?.total as number as number) > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 16 }}>
           {[
-            { label: 'Total', val: (stats.total as number), c: '#6c8eff', f: 'all' },
+            { label: 'Total', val: ((stats as Record<string,unknown>)?.total as number as number), c: '#6c8eff', f: 'all' },
             { label: 'Unread', val: stats.unread, c: '#64748b', f: 'unread' },
             { label: 'Reading', val: stats.reading, c: '#6c8eff', f: 'reading' },
             { label: 'Read', val: stats.read, c: '#22c55e', f: 'read' },
             { label: 'Revisit', val: stats.revisit, c: '#f59e0b', f: 'revisit' },
           ].map(s => (
             <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => setFilter(s.f)}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: s.c, lineHeight: 1, marginBottom: 2 }}>{s.val}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: s.c, lineHeight: 1, marginBottom: 2 }}>{String(s.val ?? "")}</div>
               <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{s.label}</div>
             </div>
           ))}
@@ -875,36 +976,36 @@ function LibraryTab() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
               {items.map(item => (
-                <div key={(item as Record<string,unknown>).id as string} onClick={() => setSelected(selected?.id===(item as Record<string,unknown>).id ? null : item)}
+                <div key={item.id as string} onClick={() => setSelected(selected?.id===item.id ? null : item)}
                   className="pios-card" style={{ padding: '12px 16px', cursor: 'pointer',
-                    border: `1px solid ${selected?.id===(item as Record<string,unknown>).id ? ACCENT+'50' : 'var(--pios-border)'}`,
-                    background: selected?.id===(item as Record<string,unknown>).id ? ACCENT+'05' : 'var(--pios-surface)' }}>
+                    border: `1px solid ${selected?.id===item.id ? ACCENT+'50' : 'var(--pios-border)'}`,
+                    background: selected?.id===item.id ? ACCENT+'05' : 'var(--pios-surface)' }}>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{TYPE_ICONS[(item as Record<string,unknown>).source_type] ?? '📄'}</span>
+                    <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{TYPE_ICONS[String(item.source_type ?? "") as keyof typeof TYPE_ICONS] ?? '📄'}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35, marginBottom: 3 }}>{String((item as Record<string,unknown>).title ?? "")}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35, marginBottom: 3 }}>{String(item.title ?? "")}</div>
                       <div style={{ fontSize: 11, color: 'var(--pios-muted)', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
-                        {(Number(((item as Record<string,unknown>).authors as unknown[])?.length ?? 0) > 0) && <span>{((item as Record<string,unknown>).authors as string[]).slice(0,2).join(', ')}{(((item as Record<string,unknown>).authors as string[])?.length ?? 0) > 2 ? ' et al.' : ''}</span>}
-                        {(item as Record<string,unknown>).year && <><span>·</span><span>{String((item as Record<string,unknown>).year ?? "")}</span></>}
-                        {(item as Record<string,unknown>).journal && <><span>·</span><span style={{ fontStyle: 'italic' }}>{String((item as Record<string,unknown>).journal ?? "")}</span></>}
+                        {(Number((item.authors as unknown[])?.length ?? 0) > 0) && <span>{(item.authors as string[]).slice(0,2).join(', ')}{((item.authors as string[])?.length ?? 0) > 2 ? ' et al.' : ''}</span>}
+                        {item.year != null && <><span>·</span><span>{String(item.year)}</span></>}
+                        {item.journal && <><span>·</span><span style={{ fontStyle: 'italic' }}>{item.journal}</span></>}
                       </div>
                       <div style={{ display: 'flex', gap: 6, marginTop: 5, flexWrap: 'wrap' as const, alignItems: 'center' }}>
-                        <select value={String((item as Record<string,unknown>).read_status ?? "")} onClick={e => e.stopPropagation()}
-                          onChange={e => updateItem((item as Record<string,unknown>).id, { read_status: e.target.value })}
-                          style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, border: 'none', cursor: 'pointer', background: (READ_COLOURS[(item as Record<string,unknown>).read_status]??'#64748b')+'20', color: READ_COLOURS[(item as Record<string,unknown>).read_status]??'#64748b', fontWeight: 600, outline: 'none' }}>
+                        <select value={String(item.read_status ?? "")} onClick={e => e.stopPropagation()}
+                          onChange={e => updateItem(String(item.id ?? ''), { read_status: e.target.value })}
+                          style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, border: 'none', cursor: 'pointer', background: (READ_COLOURS[String(item.read_status ?? "") as keyof typeof READ_COLOURS]??'#64748b')+'20', color: READ_COLOURS[String(item.read_status ?? "") as keyof typeof READ_COLOURS]??'#64748b', fontWeight: 600, outline: 'none' }}>
                           {['unread','reading','read','revisit'].map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        {(item as Record<string,unknown>).relevance && <span style={{ fontSize: 11, color: '#f59e0b' }}>{'★'.repeat((item as Record<string,unknown>).relevance)}{'☆'.repeat(5-(item as Record<string,unknown>).relevance)}</span>}
-                        {(item as Record<string,unknown>).ai_summary && <span style={{ fontSize: 10, color: '#a78bfa' }}>✦ AI</span>}
-                        {(item as Record<string,unknown>).doi && <a href={`https://doi.org/${String((item as Record<string,unknown>).doi ?? "")}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: ACCENT }}>DOI →</a>}
-                        {((item as Record<string,unknown>).tags as string[])?.slice(0,3).map((t: string) => (
+                        {Boolean(item.relevance) && <span style={{ fontSize: 11, color: '#f59e0b' }}>{'★'.repeat(Number(item.relevance ?? 0))}{'☆'.repeat(5 - Number(item.relevance ?? 0))}</span>}
+                        {Boolean(item.ai_summary) && <span style={{ fontSize: 10, color: '#a78bfa' }}>✦ AI</span>}
+                        {Boolean(item.doi) && <a href={`https://doi.org/${String(item.doi ?? "")}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: ACCENT }}>DOI →</a>}
+                        {(item.tags as string[] | undefined)?.slice(0,3).map((t: string) => (
                           <span key={t} style={{ fontSize: 9, padding: '1px 6px', borderRadius: 10, background: 'var(--pios-surface2)', color: 'var(--pios-dim)' }}>{t}</span>
                         ))}
                       </div>
                     </div>
-                    <button onClick={e => { e.stopPropagation(); deleteItem((item as Record<string,unknown>).id) }} disabled={deleting===(item as Record<string,unknown>).id}
+                    <button onClick={e => { e.stopPropagation(); deleteItem(String(item.id ?? '')) }} disabled={Boolean(deleting && deleting===String(item.id ?? ""))}
                       style={{ fontSize: 11, padding: '3px 6px', borderRadius: 5, border: '1px solid rgba(239,68,68,0.2)', background: 'none', cursor: 'pointer', color: '#ef4444', flexShrink: 0, opacity: 0.6 }}>
-                      {deleting===(item as Record<string,unknown>).id ? '…' : '✕'}
+                      {deleting===item.id ? '…' : '✕'}
                     </button>
                   </div>
                 </div>
@@ -919,9 +1020,9 @@ function LibraryTab() {
             <div className="pios-card" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginBottom: 4 }}>{selected.title}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginBottom: 4 }}>{String(selected?.title ?? "")}</div>
                   <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
-                    {(selected.authors as string[])?.join(', ')} {selected.year ? `(${selected.year})` : ''}
+                    {(selected.authors as string[] | undefined)?.join(', ')} {selected.year ? `(${selected.year})` : ''}
                   </div>
                 </div>
                 <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--pios-muted)', fontSize: 16, marginLeft: 8 }}>✕</button>
@@ -930,44 +1031,44 @@ function LibraryTab() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <span style={{ fontSize: 11, color: 'var(--pios-muted)' }}>Relevance:</span>
                 {[1,2,3,4,5].map(n => (
-                  <button key={n} onClick={() => updateItem(selected.id, { relevance: n })}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: n<=(selected.relevance??0)?'#f59e0b':'var(--pios-dim)', padding: '0 1px', lineHeight: 1 }}>★</button>
+                  <button key={n} onClick={() => updateItem(String(selected?.id ?? ""), { relevance: n })}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: n <= Number(selected?.relevance ?? 0)?'#f59e0b':'var(--pios-dim)', padding: '0 1px', lineHeight: 1 }}>★</button>
                 ))}
               </div>
 
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginBottom: 4 }}>Notes</div>
                 <textarea className="pios-input" rows={3} placeholder="Add reading notes…"
-                  defaultValue={selected.notes ?? ''}
-                  onBlur={e => updateItem(selected.id, { notes: e.target.value })}
+                  defaultValue={String(selected.notes ?? "")}
+                  onBlur={e => updateItem(String(selected.id ?? ""), { notes: e.target.value })}
                   style={{ width: '100%', resize: 'vertical' as const, fontFamily: 'inherit', fontSize: 12 }} />
               </div>
 
-              {selected.ai_summary ? (
+              {Boolean(selected.ai_summary) ? (
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#a78bfa', marginBottom: 6 }}>✦ AI Summary</div>
-                  <p style={{ fontSize: 12, color: 'var(--pios-text)', lineHeight: 1.65, marginBottom: 8 }}>{selected.ai_summary}</p>
+                  <p style={{ fontSize: 12, color: 'var(--pios-text)', lineHeight: 1.65, marginBottom: 8 }}>{String(selected.ai_summary ?? "")}</p>
                   {selected._guard && (
                     <div style={{ marginBottom:6, padding:'5px 10px', borderRadius:6, fontSize:11, fontWeight:600,
-                      background: selected._guard.provenance_label==='AI_VERIFIED' ? 'rgba(34,197,94,0.08)' : selected._guard.provenance_label==='FABRICATED_RISK' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
-                      color: selected._guard.provenance_label==='AI_VERIFIED' ? '#22c55e' : selected._guard.provenance_label==='FABRICATED_RISK' ? '#ef4444' : '#f59e0b',
+                      background: selected._guard?.provenance_label==='AI_VERIFIED' ? 'rgba(34,197,94,0.08)' : selected._guard?.provenance_label==='FABRICATED_RISK' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
+                      color: selected._guard?.provenance_label==='AI_VERIFIED' ? '#22c55e' : selected._guard?.provenance_label==='FABRICATED_RISK' ? '#ef4444' : '#f59e0b',
                     }}>
-                      {selected._guard.provenance_label==='AI_VERIFIED' ? '✓ CrossRef verified' :
-                       selected._guard.provenance_label==='FABRICATED_RISK' ? '✗ Not found in CrossRef — verify before citing' :
+                      {selected._guard?.provenance_label==='AI_VERIFIED' ? '✓ CrossRef verified' :
+                       selected._guard?.provenance_label==='FABRICATED_RISK' ? '✗ Not found in CrossRef — verify before citing' :
                        '⚠ Partial verification'}
-                      {selected._guard.hitl_reason && <span style={{ fontWeight:400, marginLeft:6 }}>· {selected._guard.hitl_reason}</span>}
+                      {selected._guard?.hitl_reason && <span style={{ fontWeight:400, marginLeft:6 }}>· {selected._guard?.hitl_reason}</span>}
                     </div>
                   )}
-                  {selected.citation_apa && (
+                  {Boolean(selected.citation_apa) && (
                     <div style={{ padding: '8px 10px', borderRadius: 6, background: 'var(--pios-surface2)', fontSize: 11, color: 'var(--pios-muted)', fontStyle: 'italic' }}>
-                      {selected.citation_apa}
+                      {String(selected.citation_apa ?? "")}
                     </div>
                   )}
                 </div>
               ) : (
-                <button onClick={() => generateSummary(selected.id)} disabled={aiLoading===selected.id}
+                <button onClick={() => generateSummary(String(selected.id ?? ""))} disabled={aiLoading===String(selected.id ?? "")}
                   style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px dashed rgba(167,139,250,0.3)', background: 'none', cursor: 'pointer', color: '#a78bfa', fontSize: 12, marginBottom: 12 }}>
-                  {aiLoading===selected.id ? '⟳ Generating…' : '✦ Generate AI summary + APA citation'}
+                  {aiLoading===String(selected.id ?? "") ? '⟳ Generating…' : '✦ Generate AI summary + APA citation'}
                 </button>
               )}
 
@@ -979,8 +1080,8 @@ function LibraryTab() {
                   { label: 'Added',  value: selected.created_at ? new Date(selected.created_at).toLocaleDateString('en-GB') : '—' },
                 ].map(f => (
                   <div key={(f as Record<string,unknown>).label as string} style={{ padding: '6px 8px', borderRadius: 5, background: 'var(--pios-surface2)' }}>
-                    <div style={{ fontSize: 9, color: 'var(--pios-dim)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 1 }}>{f.label}</div>
-                    <div style={{ fontSize: 11, fontWeight: 600 }}>{f.value}</div>
+                    <div style={{ fontSize: 9, color: 'var(--pios-dim)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 1 }}>{String((f as Record<string,unknown>).label ?? "")}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600 }}>{String((f as Record<string,unknown>).value ?? "")}</div>
                   </div>
                 ))}
               </div>
@@ -1001,18 +1102,7 @@ function LibraryTab() {
 
 
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
-type SearchResult = {
-  title: string; authors: string; year: number; journal: string
-  doi?: string; abstract?: string; source?: string; citations?: number
-  relevance?: number; verified?: boolean; needs_review?: boolean
-  fabricated_risk?: number; warning?: string; provenance_label?: string
-  [key: string]: unknown
-}
-type GuardSummary = {
-  totalFound?: number; database?: string; aiGuidance?: string
-  fabricated_risk?: number; needs_review?: number; verified?: number
-  warning?: string; [key: string]: unknown
-}
+// Types defined at top of file
 
 export default function ResearchPage() {
   const [tab, setTab] = useState<Tab>('search')
