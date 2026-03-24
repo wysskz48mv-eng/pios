@@ -359,6 +359,7 @@ function PersonaSection() {
 }
 
 
+
 type EmailAccount = {
   id: string; email?: string; provider?: string; name?: string
   connected?: boolean; last_synced?: string; display_name?: string

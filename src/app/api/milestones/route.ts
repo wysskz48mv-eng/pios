@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     if (upcoming) q = q.in('status', ['upcoming', 'in_progress'])
 
     const { data, error } = await q
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
 
     // Compute days_until for each milestone
     const now = new Date()
@@ -60,10 +60,10 @@ export async function GET(req: NextRequest) {
     // Summary counts
     const summary = {
       total:       enriched.length,
-      upcoming:    enriched.filter((m: Record<string,unknown>) => (m as Record<string,unknown>).status === 'upcoming').length,
-      in_progress: enriched.filter((m: Record<string,unknown>) => (m as Record<string,unknown>).status === 'in_progress').length,
+      upcoming:    enriched.filter((m: any) => (m as Record<string,unknown>).status === 'upcoming').length,
+      in_progress: enriched.filter((m: any) => (m as Record<string,unknown>).status === 'in_progress').length,
       completed:   enriched.filter(m => ['passed','submitted'].includes(m.status)).length,
-      overdue:     enriched.filter((m: Record<string,unknown>) => (m as Record<string,unknown>).is_overdue).length,
+      overdue:     enriched.filter((m: any) => (m as Record<string,unknown>).is_overdue).length,
       next:        enriched.find(m => m.status === 'upcoming' && m.target_date) ?? null,
     }
 
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
     return NextResponse.json({ ok: true, milestone: data })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
@@ -144,7 +144,7 @@ export async function PATCH(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
     return NextResponse.json({ ok: true, milestone: data })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
@@ -166,7 +166,7 @@ export async function DELETE(req: NextRequest) {
       .eq('id', id)
       .eq('user_id', user.id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })

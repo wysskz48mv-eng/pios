@@ -105,7 +105,7 @@ export default function AiPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', id }),
     })
-    setSessions(prev => prev.filter(s => s.id !== id))
+    setSessions(prev => prev.filter(s => (s as any).id !== id))
     if (activeId === id) { setActiveId(null); setMessages([]) }
   }
 
@@ -123,7 +123,7 @@ export default function AiPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'title', id, messages: msgs }),
       }).then(r => r.json()).then(d => {
-        if (d.title) setSessions(prev => prev.map(s => s.id === id ? { ...s, title: d.title } : s))
+        if (d.title) setSessions(prev => prev.map(s => (s as any).id === id ? { ...s, title: d.title } : s))
       })
     }
   }
@@ -227,16 +227,16 @@ export default function AiPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', flex: 1 }}>
               {sessions.map(s => (
-                <div key={s.id} onClick={() => loadSession(s.id)} style={{
+                <div key={(s as any).id} onClick={() => loadSession((s as any).id)} style={{
                   padding: '8px 10px', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 6,
-                  background: activeId === s.id ? 'rgba(167,139,250,0.1)' : 'transparent',
-                  border: `1px solid ${activeId === s.id ? 'rgba(167,139,250,0.25)' : 'transparent'}`,
+                  background: activeId === (s as any).id ? 'rgba(167,139,250,0.1)' : 'transparent',
+                  border: `1px solid ${activeId === (s as any).id ? 'rgba(167,139,250,0.25)' : 'transparent'}`,
                 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{s.title ?? 'Conversation'}</div>
-                    <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}><TimeAgo iso={s.updated_at} /></div>
+                    <div style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{(s as any).title ?? 'Conversation'}</div>
+                    <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}><TimeAgo iso={(s as any).updated_at} /></div>
                   </div>
-                  <button onClick={e => deleteSession(s.id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--pios-dim)', fontSize: 13, padding: '0 2px', flexShrink: 0, opacity: 0.5, lineHeight: 1 }}>✕</button>
+                  <button onClick={e => deleteSession((s as any).id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--pios-dim)', fontSize: 13, padding: '0 2px', flexShrink: 0, opacity: 0.5, lineHeight: 1 }}>✕</button>
                 </div>
               ))}
             </div>

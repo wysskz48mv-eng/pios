@@ -161,9 +161,9 @@ export async function GET() {
     const receiptsCount = receiptsRes.count ?? 0
 
     // ── Derived stats ─────────────────────────────────────────────────────────
-    const overdueTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
-    const todayTasks   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date === today)
-    const criticalTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).priority === 'critical')
+    const overdueTasks = tasks.filter((t: any) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
+    const todayTasks   = tasks.filter((t: any) => (t as Record<string,unknown>).due_date === today)
+    const criticalTasks = tasks.filter((t: any) => (t as Record<string,unknown>).priority === 'critical')
 
     const totalWords   = chapters.reduce((s: number, c: unknown) => s + ((c as Record<string,unknown>).word_count ?? 0), 0)
     const targetWords  = chapters.reduce((s: number, c: unknown) => s + ((c as Record<string,unknown>).target_words ?? 8000), 0)
@@ -176,7 +176,7 @@ export async function GET() {
     }, 0)
 
     const pendingMeetingActions = meetings.reduce((s: number, m: unknown) =>
-      s + ((m.ai_action_items as unknown[])?.length ?? 0), 0)
+      s + (((m as any).ai_action_items as unknown[])?.length ?? 0), 0)
 
     // ── Response ──────────────────────────────────────────────────────────────
     return NextResponse.json(
@@ -196,7 +196,7 @@ export async function GET() {
           date:              today,
           day:               new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
           has_brief:         !!brief,
-          brief_summary:     brief?.content ? brief.content.slice(0, 500) + (brief.content.length > 500 ? '…' : '') : null,
+          brief_summary:     brief?.content ? String(brief.content ?? "").slice(0, 500) + (brief.content.length > 500 ? '…' : '') : null,
           brief_url:         '/api/brief',
         },
 
@@ -275,7 +275,7 @@ export async function GET() {
 
           recent_receipts: receipts.slice(0, 5).map((r: Record<string, unknown>) => ({
             subject:  r.subject,
-            vendor:   r.receipt_data?.vendor ?? r.sender_name,
+            vendor:   r.receipt_data?.vendor as string ?? r.sender_name,
             amount:   r.receipt_data?.amount,
             currency: r.receipt_data?.currency ?? 'GBP',
             date:     r.received_at?.slice(0, 10),
@@ -297,7 +297,7 @@ export async function GET() {
 
         // Notifications
         notifications: notifs.map((n: Record<string, unknown>) => ({
-          title: n.title, type: n.type, domain: n.domain, created: n.created_at,
+          title: (n as any)?.title, type: (n as any)?.type, domain: n.domain, created: n.created_at,
         })),
 
         // Quick action guide for Claude

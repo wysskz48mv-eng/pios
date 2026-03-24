@@ -209,7 +209,7 @@ export async function POST(request: Request) {
           end_time:        endTime,
           all_day:         false,
           location:        (item as any).location?.displayName ?? null,
-          attendees:       ((item as any).attendees ?? []).map((a: Record<string,unknown>) => ({
+          attendees:       ((item as any).attendees ?? []).map((a: any) => ({
             email: (a.emailAddress as Record<string,string>)?.address,
             name:  (a.emailAddress as Record<string,string>)?.name,
           })),

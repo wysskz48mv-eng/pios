@@ -178,7 +178,7 @@ export default function AdminPage() {
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {Object.entries(MIGRATION_DETAILS).map(([id, details]) => {
-              const st = status[id]
+              const st = (status as any)[id]
               const result = results[id]
               const isExpanded = expanded === id
               return (
@@ -290,11 +290,11 @@ export default function AdminPage() {
             <div style={{ fontSize:13, fontWeight:700, marginBottom:10 }}>Run All Results</div>
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {results.all.results?.map((r: unknown) => (
-                <div key={r.id} style={{ display:'flex', gap:10, alignItems:'center', fontSize:12 }}>
-                  <span style={{ fontSize:10, padding:'1px 6px', borderRadius:4, fontFamily:'monospace', background:'var(--pios-surface)', border:'1px solid var(--pios-border)' }}>{r.id}</span>
-                  <span style={{ flex:1 }}>{r.name}</span>
-                  <span style={{ fontSize:11, color:r.status==='applied'?'#22c55e':r.status==='skipped'?'var(--pios-dim)':'#ef4444' }}>
-                    {r.status==='applied'?'✓ Applied':r.status==='skipped'?'○ Skipped':'✗ Error'}
+                <div key={(r as any).id} style={{ display:'flex', gap:10, alignItems:'center', fontSize:12 }}>
+                  <span style={{ fontSize:10, padding:'1px 6px', borderRadius:4, fontFamily:'monospace', background:'var(--pios-surface)', border:'1px solid var(--pios-border)' }}>{(r as any).id}</span>
+                  <span style={{ flex:1 }}>{(r as any).name}</span>
+                  <span style={{ fontSize:11, color:(r as any).status==='applied'?'#22c55e':(r as any).status==='skipped'?'var(--pios-dim)':'#ef4444' }}>
+                    {(r as any).status==='applied'?'✓ Applied':(r as any).status==='skipped'?'○ Skipped':'✗ Error'}
                   </span>
                 </div>
               ))}

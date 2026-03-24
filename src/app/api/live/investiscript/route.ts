@@ -54,19 +54,19 @@ export async function GET() {
       return o.planStatus === 'trialing' && o.trialEndsAt && new Date(o.trialEndsAt) > now
     }).length
     const planBreakdown  = orgs.reduce((acc: Record<string, number>, o: unknown) => {
-      if (o.planStatus === 'active') acc[o.plan] = (acc[o.plan] || 0) + 1
+      if ((o as any).planStatus === 'active') acc[(o as any).plan] = (acc[(o as any).plan] || 0) + 1
       return acc
     }, {})
 
     // Recency
-    const recentOrgs   = orgs.filter((o: Record<string, unknown>) => o.createdAt > thirtyDaysAgo).length
-    const recentUsers  = users.filter((u: Record<string, unknown>) => u.createdAt > thirtyDaysAgo).length
-    const recentTopics = topics.filter((t: Record<string, unknown>) => t.createdAt > sevenDaysAgo).length
+    const recentOrgs   = orgs.filter((o: Record<string, unknown>) => (o as any).createdAt > thirtyDaysAgo).length
+    const recentUsers  = users.filter((u: Record<string, unknown>) => (u as any).createdAt > thirtyDaysAgo).length
+    const recentTopics = topics.filter((t: Record<string, unknown>) => (t as any).createdAt > sevenDaysAgo).length
 
     // Usage
-    const totalInputTokens  = usage.reduce((s: number, r: unknown) => s + (Number(r.inputTokens)  || 0), 0)
-    const totalOutputTokens = usage.reduce((s: number, r: unknown) => s + (Number(r.outputTokens) || 0), 0)
-    const totalCostUsd      = usage.reduce((s: number, r: unknown) => s + (Number(r.costUsd)      || 0), 0)
+    const totalInputTokens  = usage.reduce((s: number, r: unknown) => s + (Number((r as any).inputTokens)  || 0), 0)
+    const totalOutputTokens = usage.reduce((s: number, r: unknown) => s + (Number((r as any).outputTokens) || 0), 0)
+    const totalCostUsd      = usage.reduce((s: number, r: unknown) => s + (Number((r as any).costUsd)      || 0), 0)
 
     return NextResponse.json({
       connected: true,

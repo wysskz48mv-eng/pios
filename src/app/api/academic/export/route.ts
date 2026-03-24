@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   if (chapter_id) q = (q as Record<string, unknown>).eq('id', chapter_id)
 
   const { data: chapters, error } = await q
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
 
   // Fetch user profile for thesis title
   const { data: profile } = await supabase

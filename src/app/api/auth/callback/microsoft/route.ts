@@ -90,9 +90,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${appUrl}/platform/settings?tab=email&error=Token+exchange+failed`)
   }
 
-  if (tokenData.error) {
+  if ((tokenData as any).error) {
     return NextResponse.redirect(
-      `${appUrl}/platform/settings?tab=email&error=${encodeURIComponent(tokenData.error_description ?? tokenData.error)}`
+      `${appUrl}/platform/settings?tab=email&error=${encodeURIComponent((tokenData as any).error_description ?? (tokenData as any).error)}`
     )
   }
 
@@ -109,8 +109,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${appUrl}/platform/settings?tab=email&error=Could+not+fetch+Microsoft+profile`)
   }
 
-  const emailAddress = msProfile.mail ?? msProfile.userPrincipalName ?? ''
-  const displayName  = msProfile.displayName ?? ''
+  const emailAddress = (msProfile as any).mail ?? (msProfile as any).userPrincipalName ?? ''
+  const displayName  = (msProfile as any).displayName ?? ''
 
   // Extract tenant ID from access token claims (JWT middle segment)
   let msTenantId: string | null = null

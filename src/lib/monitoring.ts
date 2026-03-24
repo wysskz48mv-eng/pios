@@ -20,7 +20,7 @@ async function getSentry() {
         environment: process.env.NODE_ENV ?? 'production',
         release: 'pios@1.0',
         tracesSampleRate: 0.1,
-        beforeSend(e: unknown) { if (e.user) { delete e.user.email; delete e.user.ip_address }; return e },
+        beforeSend(e: unknown) { if ((e as any).user) { delete (e as any).user.email; delete (e as any).user.ip_address }; return e },
       })
     }
     return Sentry
@@ -31,8 +31,8 @@ export async function captureError(error: unknown, context?: ErrorCtx) {
   console.error('[PIOS]', error, context ?? '')
   const s = await getSentry(); if (!s) return
   s.withScope((scope: unknown) => {
-    if (context) scope.setExtras(context)
-    scope.setTag('product', 'pios')
+    if (context) (scope as any).setExtras(context)
+    (scope as any).setTag('product', 'pios')
     s.captureException(error)
   })
 }

@@ -135,8 +135,8 @@ export async function GET(req: NextRequest) {
 
     const acts = (activities ?? []) as unknown[]
     const bodyInfo = CPD_BODIES[profile?.cpd_body ?? 'OTHER'] ?? CPD_BODIES.OTHER
-    const verifiable    = acts.reduce((s, a) => s + (Number(a.hours_verifiable)     || 0), 0)
-    const nonVerifiable = acts.reduce((s, a) => s + (Number(a.hours_non_verifiable) || 0), 0)
+    const verifiable    = acts.reduce((s: any, a) => s + (Number((a as any).hours_verifiable)     || 0), 0)
+    const nonVerifiable: any = acts.reduce((s: any, a) => s + (Number((a as any).hours_non_verifiable) || 0), 0)
     const totalHours    = verifiable + nonVerifiable
     const target        = profile?.cpd_hours_target ?? bodyInfo.totalHours
     const pct           = target > 0 ? Math.round((totalHours / target) * 100) : 0
@@ -163,15 +163,15 @@ export async function GET(req: NextRequest) {
 
   const ms     = (milestones ?? []) as unknown[]
   const now    = new Date()
-  const passed = ms.filter((m: Record<string,unknown>) => (m as Record<string,unknown>).status === 'passed').length
+  const passed = ms.filter((m: any) => (m as Record<string,unknown>).status === 'passed').length
   const total  = ms.length
   const overdue = ms.filter(m =>
-    (m.status === 'upcoming' || m.status === 'in_progress') &&
-    m.target_date && new Date(m.target_date) < now
+    ((m as any)?.status === 'upcoming' || (m as any)?.status === 'in_progress') &&
+    (m as any).target_date && new Date((m as any).target_date) < now
   ).length
   const nextDue = ms
-    .filter((m: Record<string,unknown>) => (m as Record<string,unknown>).status === 'upcoming' || m.status === 'in_progress')
-    .sort((a, b) => new Date(a.target_date ?? '9999').getTime() - new Date(b.target_date ?? '9999').getTime())[0] ?? null
+    .filter((m: any) => (m as Record<string,unknown>).status === 'upcoming' || (m as any)?.status === 'in_progress')
+    .sort((a, b) => new Date((a as any).target_date ?? '9999').getTime() - new Date((b as any).target_date ?? '9999').getTime())[0] ?? null
 
   return NextResponse.json({
     ok: true, view: 'milestones',

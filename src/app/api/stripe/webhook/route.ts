@@ -34,8 +34,8 @@ export async function POST(request: Request) {
   const supabase = createServiceClient()
 
   // ── checkout.session.completed ────────────────────────────────────────────
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object
+  if ((event as any).type === 'checkout.session.completed') {
+    const session = (event as any).data.object
     const { user_id, plan } = session.metadata ?? {}
     const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.individual
 
@@ -70,8 +70,8 @@ export async function POST(request: Request) {
   }
 
   // ── customer.subscription.updated ────────────────────────────────────────
-  if (event.type === 'customer.subscription.updated') {
-    const sub = event.data.object
+  if ((event as any).type === 'customer.subscription.updated') {
+    const sub = (event as any).data.object
     const status = sub.status as string
     await supabase.from('tenants')
       .update({ subscription_status: status, updated_at: new Date().toISOString() })
@@ -79,8 +79,8 @@ export async function POST(request: Request) {
   }
 
   // ── customer.subscription.deleted ────────────────────────────────────────
-  if (event.type === 'customer.subscription.deleted') {
-    const sub = event.data.object
+  if ((event as any).type === 'customer.subscription.deleted') {
+    const sub = (event as any).data.object
     await supabase.from('tenants')
       .update({
         subscription_status: 'canceled',
@@ -92,8 +92,8 @@ export async function POST(request: Request) {
   }
 
   // ── invoice.payment_succeeded — reset monthly AI credits ─────────────────
-  if (event.type === 'invoice.payment_succeeded') {
-    const invoice = event.data.object
+  if ((event as any).type === 'invoice.payment_succeeded') {
+    const invoice = (event as any).data.object
     if (invoice.billing_reason === 'subscription_cycle') {
       await supabase.from('tenants')
         .update({ ai_credits_used: 0, updated_at: new Date().toISOString() })
@@ -102,8 +102,8 @@ export async function POST(request: Request) {
   }
 
   // ── invoice.payment_failed — alert user ───────────────────────────────────
-  if (event.type === 'invoice.payment_failed') {
-    const invoice = event.data.object
+  if ((event as any).type === 'invoice.payment_failed') {
+    const invoice = (event as any).data.object
     await supabase.from('tenants')
       .update({ subscription_status: 'past_due', updated_at: new Date().toISOString() })
       .eq('stripe_customer_id', invoice.customer)
@@ -122,8 +122,8 @@ export async function POST(request: Request) {
   }
 
   // ── customer.subscription.trial_will_end (3-day warning) ──────────────────
-  if (event.type === 'customer.subscription.trial_will_end') {
-    const sub = event.data.object
+  if ((event as any).type === 'customer.subscription.trial_will_end') {
+    const sub = (event as any).data.object
     const { data: tenant } = await supabase.from('tenants')
       .select('id').eq('stripe_subscription_id', sub.id).single()
 

@@ -55,7 +55,7 @@ Return ONLY valid JSON:
 }`
 
     const remittances = []
-    for (const line of pendingLines) {
+    for (const line of (pendingLines as any[])) {
       const userPrompt = `Generate remittance notification:
 Staff: ${line.staff_name} (${line.staff_email ?? 'no email'})
 Pay period: ${month}

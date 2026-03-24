@@ -113,14 +113,14 @@ export async function POST(req: NextRequest) {
     const tasks     = tasksR.data ?? []
     const overdue   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
     const dueToday  = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date === today)
-    const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date as string || (t as Record<string,unknown>).due_date as string > today)
+    const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date || String((t as Record<string,unknown>).due_date ?? '') > today)
 
     // Thesis velocity
     const chapters    = chaptersR.data ?? []
     const totalWords  = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
     const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
     const nearestDl   = (modulesR.data ?? []).map((m: Record<string,unknown>) => (m as Record<string,unknown>).deadline).filter(Boolean).sort()[0]
-    const daysLeft    = nearestDl ? Math.max(1, Math.round((new Date(nearestDl).getTime() - now.getTime()) / 86400000)) : null
+    const daysLeft    = nearestDl ? Math.max(1, Math.round((new Date(String(nearestDl ?? "")).getTime() - now.getTime()) / 86400000)) : null
     const wordsPerDay = daysLeft ? Math.ceil(Math.max(0, targetWords - totalWords) / daysLeft) : null
 
     const fmt = (d: string) => new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
@@ -143,12 +143,12 @@ export async function POST(req: NextRequest) {
         : '',
 
       `ACADEMIC MODULES:\n` + ((modulesR.data ?? []).map(m =>
-        `- ${(m as Record<string,unknown>).title} [${(m as Record<string,unknown>).status}] — ${(m as Record<string,unknown>).deadline ? fmt((m as Record<string,unknown>).deadline) : 'TBD'}`).join('\n') || 'none'),
+        `- ${(m as Record<string,unknown>).title} [${(m as Record<string,unknown>).status}] — ${(m as Record<string,unknown>).deadline ? fmt(String((m as Record<string,unknown>).deadline ?? "")) : 'TBD'}`).join('\n') || 'none'),
 
       chapters.length > 0
         ? `THESIS: ${totalWords.toLocaleString()}/${targetWords.toLocaleString()} words (${Math.round(totalWords/Math.max(targetWords,1)*100)}%)` +
           (wordsPerDay ? ` · needs ${wordsPerDay.toLocaleString()} words/day` : '') + '\n' +
-          chapters.map(c => `- Ch${c.chapter_num} ${c.title}: ${c.word_count ?? 0}/${c.target_words ?? 8000} words [${c.status}]`).join('\n')
+          chapters.map(c => `- Ch${c.chapter_num} ${(c as any)?.title}: ${c.word_count ?? 0}/${c.target_words ?? 8000} words [${(c as any)?.status}]`).join('\n')
         : '',
 
       (projectsR.data ?? []).length > 0
@@ -156,11 +156,11 @@ export async function POST(req: NextRequest) {
         : '',
 
       (notifsR.data ?? []).length > 0
-        ? `UNREAD ALERTS (${notifsR.data?.length}):\n` + (notifsR.data ?? []).map(n => `- [${n.type.toUpperCase()}] ${n.title}`).join('\n')
+        ? `UNREAD ALERTS (${notifsR.data?.length}):\n` + (notifsR.data ?? []).map(n => `- [${(n as any)?.type.toUpperCase()}] ${(n as any)?.title}`).join('\n')
         : 'UNREAD ALERTS: none',
 
       (expensesR.data ?? []).length > 0
-        ? `UNBILLED EXPENSES (${expensesR.data?.length}):\n` + (expensesR.data ?? []).map(e => `- ${e.currency} ${e.amount} — ${e.description} (${fmt(e.date)})`).join('\n')
+        ? `UNBILLED EXPENSES (${expensesR.data?.length}):\n` + (expensesR.data ?? []).map(e => `- ${e.currency} ${(e as any)?.amount} — ${e.description} (${fmt(e.date)})`).join('\n')
         : '',
 
       (payrollR.data ?? []).length > 0
@@ -168,26 +168,26 @@ export async function POST(req: NextRequest) {
         : '',
 
       (fmNewsR.data ?? []).length > 0
-        ? `FM INTELLIGENCE (last 24h):\n` + (fmNewsR.data ?? []).map((n: Record<string, unknown>) => `- [${(n.category ?? '').toUpperCase()}] ${n.headline}`).join('\n')
+        ? `FM INTELLIGENCE (last 24h):\n` + (fmNewsR.data ?? []).map((n: any) => `- [${String(n.category ?? '').toUpperCase()}] ${String(n.headline ?? "")}`).join('\n')
         : 'FM INTELLIGENCE: no fresh signals',
 
       (cfpR.data ?? []).length > 0
-        ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: Record<string, unknown>) => `- "${c.title}" (${c.journal_name ?? 'journal'}) — ${c.deadline}`).join('\n')
+        ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: any) => `- "${(c as any)?.title}" (${String(c.journal_name ?? 'journal')}) — ${String(c.deadline ?? "")}`).join('\n')
         : '',
 
       // Meetings context (Otter.ai integration)
       (meetingsR.data ?? []).length > 0
         ? `RECENT MEETINGS (${meetingsR.data?.length}):\n` +
           (meetingsR.data ?? []).map((m: Record<string, unknown>) =>
-            `- [${String((m as Record<string,unknown>).meeting_type).toUpperCase()}] ${(m as Record<string,unknown>).title} (${(m as Record<string,unknown>).meeting_date}) — ${(m as Record<string,unknown>).status}${(m as Record<string,unknown>).ai_summary ? ': ' + String((m as Record<string,unknown>).ai_summary).slice(0, 120) + '…' : ''}${(m as Record<string,unknown>).tasks_created ? ' [tasks created]' : ''}`
+            `- [${String((m as Record<string,unknown>).meeting_type ?? "").toUpperCase()}] ${(m as Record<string,unknown>).title} (${(m as Record<string,unknown>).meeting_date}) — ${(m as Record<string,unknown>).status}${(m as Record<string,unknown>).ai_summary ? ': ' + String((m as Record<string,unknown>).ai_summary).slice(0, 120) + '…' : ''}${(m as Record<string,unknown>).tasks_created ? ' [tasks created]' : ''}`
           ).join('\n')
         : '',
 
       (pendingActionsR.data ?? []).length > 0
         ? `MEETING ACTION ITEMS AWAITING TASK PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
-          (pendingActionsR.data ?? []).flatMap((m: unknown) =>
-            (((m as Record<string,unknown>).ai_action_items ?? []) as unknown[]).slice(0,3).map((a: Record<string, unknown>) =>
-              `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${(m as Record<string,unknown>).title}" (${(m as Record<string,unknown>).meeting_date}). Go to /platform/meetings to promote.`
+          (pendingActionsR.data ?? []).flatMap((m: any) =>
+            (((m as Record<string,unknown>).ai_action_items ?? []) as unknown[]).slice(0,3).map((a: any) =>
+              `- [${String(a.priority ?? 'medium').toUpperCase()}] ${String(a.action ?? "")} — from "${(m as Record<string,unknown>).title}" (${(m as Record<string,unknown>).meeting_date}). Go to /platform/meetings to promote.`
             )
           ).join('\n')
         : '',
@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
       (receiptsR.data ?? []).length > 0
         ? `AUTO-CAPTURED RECEIPTS/INVOICES (last 48h — ${receiptsR.data?.length}):\n` +
           (receiptsR.data ?? []).map((r: Record<string, unknown>) => {
-            const rd = r.receipt_data
+            const rd = r.receipt_data as any
             return rd
               ? `- ${rd.vendor ?? r.sender_name ?? 'Unknown'}: ${rd.currency ?? 'GBP'} ${rd.amount ?? '?'} — ${r.subject} (${rd.date ?? 'today'})`
               : `- ${r.subject} from ${r.sender_name}`
@@ -223,7 +223,7 @@ export async function POST(req: NextRequest) {
       }
       if (ghRes.status === 'fulfilled' && ghRes.value?.connected && ghRes.value.repos) {
         const commits = Object.values(ghRes.value.repos as Record<string,any>)
-          .map((r: Record<string,unknown>) => (r as Record<string,unknown>).commits?.[0] ? `${r.label}: ${(((r as Record<string,unknown>).commits as Record<string,unknown>[])?.[0].message ?? '').slice(0,60)}` : null)
+          .map((r: Record<string,unknown>) => ((r as any)?.commits as any[])?.[0] ? `${String((r as any)?.label ?? "")}: ${String(((r as any)?.commits as any[])?.[0]?.message ?? "").slice(0,60)}` : null)
           .filter(Boolean).slice(0,3).join(' | ')
         if (commits) liveCtx += `\nLATEST COMMITS: ${commits}`
       }
@@ -264,7 +264,7 @@ Rules:
 - Close with one actionable FM/platform signal if present
 - Max 350 words. Plain prose, no bullet points, no lists.`
 
-    const content = await callClaude(
+    const content: string = await callClaude(
       [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${execBriefSection}${liveCtx ? '\n\nPLATFORM STATUS:' + liveCtx : ''}` }],
       system, 700
     )
@@ -282,14 +282,14 @@ Rules:
     if (!force) {
       const { data: profile } = await supabase
         .from('user_profiles').select('billing_email, google_email, full_name').eq('id', user.id).single()
-      const userEmail = (profile as Record<string,unknown>)?.billing_email ?? (profile as Record<string,unknown>)?.google_email
+      const userEmail = String((profile as Record<string,unknown>)?.billing_email ?? (profile as Record<string,unknown>)?.google_email ?? "")
       const userName  = (profile as Record<string,unknown>)?.full_name ?? 'there'
       if (userEmail) {
         sendEmail({
           to:      userEmail,
           subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
-          html:    morningBriefHtml(content, today, userName),
-          text:    morningBriefText(content, today, userName),
+          html:    morningBriefHtml(String(content ?? ""), String(today ?? ""), String(userName ?? "")),
+          text:    morningBriefText(String(content ?? ""), String(today ?? ""), String(userName ?? "")),
         }).catch(() => {})
       }
     }

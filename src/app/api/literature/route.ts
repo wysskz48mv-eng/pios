@@ -36,16 +36,16 @@ export async function GET(request: Request) {
     if (search) q = q.or(`title.ilike.%${search}%,journal.ilike.%${search}%,notes.ilike.%${search}%`)
 
     const { data, error } = await q.limit(100)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
 
     // Aggregate stats
     const all = data ?? []
     const stats = {
       total:   all.length,
-      unread:  all.filter((i: Record<string,unknown>) => (i as Record<string,unknown>).read_status === 'unread').length,
-      reading: all.filter((i: Record<string,unknown>) => (i as Record<string,unknown>).read_status === 'reading').length,
-      read:    all.filter((i: Record<string,unknown>) => (i as Record<string,unknown>).read_status === 'read').length,
-      revisit: all.filter((i: Record<string,unknown>) => (i as Record<string,unknown>).read_status === 'revisit').length,
+      unread:  all.filter((i: any) => (i as Record<string,unknown>).read_status === 'unread').length,
+      reading: all.filter((i: any) => (i as Record<string,unknown>).read_status === 'reading').length,
+      read:    all.filter((i: any) => (i as Record<string,unknown>).read_status === 'read').length,
+      revisit: all.filter((i: any) => (i as Record<string,unknown>).read_status === 'revisit').length,
       byType:  all.reduce((acc: Record<string,number>, i) => { acc[i.source_type] = (acc[i.source_type]||0)+1; return acc }, {}),
     }
 
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         read_status: 'unread',
         updated_at:  new Date().toISOString(),
       }).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ item: data }, { status: 201 })
     }
 
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       const { error } = await supabase.from('literature_items')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id).eq('user_id', user.id)
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ updated: true })
     }
 
@@ -139,7 +139,7 @@ Existing notes: ${item.notes ?? 'none'}
 Tags: ${item.tags?.join(', ') ?? 'none'}`
 
       const raw = await callClaude([{ role: 'user', content: prompt }], system, 1000)
-      let parsed: unknown = {}
+      let parsed: any = {}
       try {
         parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
       } catch {
@@ -194,8 +194,8 @@ Tags: ${item.tags?.join(', ') ?? 'none'}`
 
       if (format === 'apa') {
         const list = items
-          .filter((i: Record<string,unknown>) => (i as Record<string,unknown>).citation_apa)
-          .map((i: Record<string,unknown>) => (i as Record<string,unknown>).citation_apa)
+          .filter((i: any) => (i as Record<string,unknown>).citation_apa)
+          .map((i: any) => (i as Record<string,unknown>).citation_apa)
           .join('\n\n')
         return NextResponse.json({ export: list, count: items.length, format: 'apa' })
       }
