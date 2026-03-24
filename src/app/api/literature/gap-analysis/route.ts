@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
   try {
     const raw = await callClaude([{ role: 'user', content: prompt }], 'You are an expert academic supervisor.', 2000)
     const clean = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/, '').trim()
-    let parsed: any
+    let parsed: unknown
     try { parsed = JSON.parse(clean) } catch {
       return NextResponse.json({ error: 'AI parse failed', raw: clean.slice(0, 300) }, { status: 500 })
     }

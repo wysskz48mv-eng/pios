@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
   const clientSecret = process.env.AZURE_CLIENT_SECRET!
   const redirectUri  = `${appUrl}/api/auth/callback/microsoft`
 
-  let tokenData: any
+  let tokenData: unknown
   try {
     const tokenRes = await fetch(MS_TOKEN_URL, {
       method: 'POST',
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
   const { access_token, refresh_token, expires_in, id_token } = tokenData
 
   // ── Fetch Microsoft Graph /me profile ────────────────────────────────────
-  let msProfile: any
+  let msProfile: unknown
   try {
     const meRes = await fetch(MS_GRAPH_ME, {
       headers: { Authorization: `Bearer ${access_token}` },
