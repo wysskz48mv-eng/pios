@@ -21,6 +21,10 @@ const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
   '012': { file: '012_trial_and_plan_status.sql',  tables: ['tenants(plan_status+seats_limit)','sync_plan_status trigger'] },
   '013': { file: '013_learning_hub_v2.sql',        tables: ['cpd_bodies','learning_journal_entries','learning_journeys(patched)'] },
   '014': { file: '014_nps_survey.sql',               tables: ['nps_survey_responses'] },
+  '015': { file: '015_executive_persona.sql',        tables: ['exec_principles','exec_decisions','exec_reviews','exec_okrs','exec_key_results','exec_stakeholders','exec_time_blocks'] },
+  '016': { file: '016_consulting_decision_time.sql', tables: ['consulting_engagements','exec_decision_analyses','exec_time_audits'] },
+  '017': { file: '017_sia_bica.sql',                 tables: ['sia_signal_briefs','bica_comms'] },
+  '018': { file: '018_operator_whitelabel.sql',      tables: ['operator_configs','okr_notification_prefs'] },
 }
 
 const SUPABASE_URL = 'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new'

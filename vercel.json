@@ -19,6 +19,10 @@
     {
       "path": "/api/cron/supervisor-digest",
       "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/okr-digest",
+      "schedule": "0 7 * * 1"
     }
   ],
   "functions": {
@@ -36,6 +40,21 @@
     },
     "src/app/api/cron/feeds/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/cron/okr-digest/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/exec/agent/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/consulting/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/bica/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/sia/route.ts": {
+      "maxDuration": 60
     }
   },
   "regions": [
