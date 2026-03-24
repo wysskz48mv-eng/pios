@@ -1,14 +1,15 @@
 /**
  * VeritasIQ Technologies Ltd — API Security Middleware (TypeScript)
  * ==================================================================
- * ISO 27001: A.8.20, A.8.3, A.8.15
- * IS-POL-003 (Access Control), IS-POL-008 (SSDLC), IS-POL-015 (Transfer)
+ * ISO 27001: A.8.20, A.8.3, A.8.15, A.12.4
+ * IS-POL-003, IS-POL-008, IS-POL-015
  *
- * Use in API routes:
- *   import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
+ * AUDIT LOGS: Write to Supabase audit_log table — ISO 27001 A.12.4 compliant.
+ * Console fallback if DB unavailable.
  */
+import { NextRequest } from 'next/server'
+import crypto from 'crypto'
 
-// ── Prompt injection patterns (IS-POL-008 — AI route security) ───────────────
 const INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?previous\s+instructions/i,
   /you\s+are\s+now\s+in\s+developer\s+mode/i,
@@ -17,93 +18,92 @@ const INJECTION_PATTERNS = [
   /reveal\s+(your\s+)?(instructions|prompt|training)/i,
   /what\s+are\s+your\s+(hidden\s+)?instructions/i,
   /pretend\s+(you\s+are|to\s+be)/i,
-  /act\s+as\s+(if\s+you\s+are\s+)?(?!a\s+journalist)/i,
   /disregard\s+(your|all|the)/i,
   /output\s+(the\s+)?(system|original)\s+prompt/i,
+  /\[\s*INST\s*\]|\[\s*\/INST\s*\]/i,
+  /<\|(?:im_start|im_end|system|user)\|>/i,
 ]
 
-// ── Fields that must never appear in API responses (IS-POL-004 TRADE SECRET) ─
-const BLOCKED_RESPONSE_FIELDS = [
+const BLOCKED_FIELDS = new Set([
   'cafx_factor', 'cafx_value', 'climate_factor',
-  'bench_rate', 'bench_rate_per_sqm', 'benchmark_rate',
-  'hdca_weight', 'hdca_usage', 'usage_weight',
-  'astax_code', 'system_prompt', '_internal',
-  'raw_coefficient', 'calibration_value',
-]
+  'bench_rate', 'bench_rate_per_sqm', 'hdca_weight',
+  'system_prompt', '_internal', 'raw_coefficient',
+])
 
-export interface SecurityCheckResult {
-  safe: boolean
-  reason?: string
-  category?: 'injection' | 'ip_extraction' | 'clean'
+export function generateCsrfToken(): string {
+  return crypto.randomBytes(32).toString('hex')
 }
 
-/**
- * Check user input for prompt injection attempts.
- * Use on ALL API routes that pass user content to Claude.
- */
+export function validateCsrfToken(token: string | null, expected: string | null): boolean {
+  if (!token || !expected || token.length !== expected.length) return false
+  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))
+}
+
+export interface SecurityCheckResult {
+  safe: boolean; reason?: string; category?: 'injection' | 'clean'
+}
+
 export function checkPromptSafety(input: string): SecurityCheckResult {
   if (!input || typeof input !== 'string') return { safe: true, category: 'clean' }
-
-  for (const pattern of INJECTION_PATTERNS) {
-    if (pattern.test(input)) {
-      return {
-        safe: false,
-        reason: 'Input contains patterns associated with prompt injection.',
-        category: 'injection',
-      }
-    }
+  for (const p of INJECTION_PATTERNS) {
+    if (p.test(input)) return { safe: false, reason: 'Prompt injection pattern detected.', category: 'injection' }
   }
   return { safe: true, category: 'clean' }
 }
 
-/**
- * Strip trade secret fields from any API response object.
- * Use before returning any AI-computed result.
- */
 export function sanitiseApiResponse<T extends Record<string, unknown>>(data: T): T {
-  const sanitised = { ...data }
-  for (const field of BLOCKED_RESPONSE_FIELDS) {
-    if (field in sanitised) {
-      delete sanitised[field]
-    }
-    // Also remove nested _internal objects
-    for (const key of Object.keys(sanitised)) {
-      if (key.startsWith('_') && typeof sanitised[key] === 'object') {
-        delete sanitised[key]
-      }
-    }
+  const out = { ...data }
+  for (const f of BLOCKED_FIELDS) delete out[f]
+  for (const key of Object.keys(out)) {
+    if (key.startsWith('_')) delete out[key]
+    else if (out[key] && typeof out[key] === 'object' && !Array.isArray(out[key]))
+      out[key] = sanitiseApiResponse(out[key] as Record<string, unknown>) as T[typeof key]
   }
-  return sanitised as T
+  return out as T
 }
 
 /**
- * Log API access for ISO 27001 audit trail (IS-POL-003, A.8.15).
- * Call at the start of sensitive API routes.
+ * ISO 27001 A.12.4 — Write to Supabase audit_log table.
+ * Falls back to console if DB unavailable. Never throws.
  */
-export function auditLog(params: {
-  userId: string | undefined
-  action: string
-  resource: string
-  ip: string
-  riskLevel?: 'low' | 'medium' | 'high'
-}): void {
+export async function auditLog(
+  req: NextRequest | Request | null,
+  params: {
+    userId?:  string
+    action:   string
+    detail?:  string | Record<string, unknown>
+    risk?:    'low' | 'medium' | 'high'
+    [key: string]: unknown
+  }
+): Promise<void> {
+  const ip = req
+    ? String((req.headers as Record<string, unknown>).get?.'x-forwarded-for' ?? 'unknown').split(',')[0].trim()
+    : 'server'
+  const ua = req
+    ? String((req.headers as Record<string, unknown>).get?.'user-agent' ?? '').slice(0, 200)
+    : 'server'
+
   const entry = {
-    ts: new Date().toISOString(),
-    userId: params.userId ?? 'anonymous',
-    action: params.action,
-    resource: params.resource,
-    ip: params.ip,
-    risk: params.riskLevel ?? 'low',
+    user_id:    params.userId ?? null,
+    action:     params.action,
+    ip_address: ip,
+    user_agent: ua,
+    metadata:   {
+      ...(typeof params.detail === 'object' ? params.detail : { detail: params.detail }),
+      risk: params.risk ?? 'low',
+      ts:   new Date().toISOString(),
+    },
   }
-  // In production: write to security_events table in Supabase
-  // For now: structured console log (picked up by Vercel log drain)
-  console.log('[AUDIT]', JSON.stringify(entry))
+
+  try {
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = createClient()
+    await supabase.from('audit_log').insert(entry)
+  } catch {
+    console.log('[AUDIT]', JSON.stringify({ ...entry, _fallback: true }))
+  }
 }
 
-/**
- * Standard IP ownership headers for all API responses.
- * Add to NextResponse headers on sensitive endpoints.
- */
 export const IP_HEADERS = {
   'X-IP-Notice':     '\u00A9 2026 VeritasIQ Technologies Ltd. Proprietary and confidential.',
   'X-Content-Owner': 'VeritasIQ Technologies Ltd',

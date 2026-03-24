@@ -1,0 +1,21 @@
+# Security Policy — VeritasIQ Technologies Ltd
+# ISO 27001:2022 A.6.1.2 / CERT BCP-38
+
+Contact: security@veritasiq.co.uk
+Expires: 2027-03-24T00:00:00.000Z
+Encryption: https://pios-wysskz48mv-engs-projects.vercel.app/.well-known/pgp-key.txt
+Preferred-Languages: en
+Canonical: https://pios-wysskz48mv-engs-projects.vercel.app/.well-known/security.txt
+Policy: https://pios-wysskz48mv-engs-projects.vercel.app/security-policy
+Acknowledgments: https://pios-wysskz48mv-engs-projects.vercel.app/security-acknowledgments
+
+# Responsible Disclosure Policy
+# We follow coordinated disclosure. Please allow 90 days for remediation
+# before public disclosure. We do not operate a bug bounty programme at
+# this time but acknowledge all valid reports.
+
+# Out of scope:
+# - Denial of service attacks
+# - Social engineering of staff
+# - Physical security
+# - Issues in third-party services (Vercel, Supabase, Resend)

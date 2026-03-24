@@ -63,8 +63,6 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('Not found.', { status: 404 })
   }
 
-  const { pathname } = request.nextUrl
-
   // Build base response and apply security headers to everything
   let response = NextResponse.next({ request })
   for (const [k, v] of Object.entries(SEC_HEADERS)) response.headers.set(k, v)
@@ -78,6 +76,28 @@ export async function middleware(request: NextRequest) {
   // Public paths — headers only
   if (Array.from(PUBLIC_PATHS).some(p => pathname === p || pathname.startsWith(p + '/'))) {
     return response
+  }
+
+  // ── CSRF protection (ISO 27001 A.8.26) ─────────────────────────────────────
+  const method = request.method.toUpperCase()
+  if (['POST','PUT','PATCH','DELETE'].includes(method) &&
+      !pathname.startsWith('/api/stripe/webhook') &&
+      !pathname.startsWith('/auth/')) {
+    const origin  = request.headers.get('origin')  ?? ''
+    const referer = request.headers.get('referer') ?? ''
+    const host    = request.headers.get('host')    ?? ''
+    const allowed = [
+      `https://${host}`, 'http://localhost:3000', 'http://localhost:3001',
+      process.env.NEXT_PUBLIC_APP_URL ?? '',
+    ].filter(Boolean)
+    const ok = !origin || !referer ||
+      allowed.some(o => origin.startsWith(o) || referer.startsWith(o))
+    if (!ok) {
+      return new NextResponse(
+        JSON.stringify({ error: 'CSRF validation failed' }),
+        { status: 403, headers: { 'Content-Type': 'application/json', ...SEC_HEADERS } }
+      )
+    }
   }
 
   // Rate limiting
