@@ -157,6 +157,32 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
             )}
           </div>
         </Link>
+        <Link href="/platform/notifications" style={{ textDecoration: 'none' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: collapsed ? '10px 0' : '9px 16px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            color: 'var(--pios-muted)', cursor: 'pointer', position: 'relative' as const,
+          }}>
+            <span style={{ fontSize: '16px', position: 'relative' as const }}>
+              🔔
+              {unread > 0 && (
+                <span style={{
+                  position: 'absolute' as const, top: -4, right: -4,
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: '#ef4444', color: '#fff',
+                  fontSize: 9, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>{unread > 9 ? '9+' : unread}</span>
+              )}
+            </span>
+            {!collapsed && (
+              <span style={{ fontSize: '13px' }}>
+                Notifications{unread > 0 ? ` (${unread})` : ''}
+              </span>
+            )}
+          </div>
+        </Link>
         <Link href="/platform/settings" style={{ textDecoration: 'none' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
