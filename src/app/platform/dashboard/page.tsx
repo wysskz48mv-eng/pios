@@ -3,21 +3,72 @@ import { useEffect, useState, useCallback } from 'react'
 import { formatRelative, priorityColour, domainColour, domainLabel } from '@/lib/utils'
 import Link from 'next/link'
 
+
+type DashTask = {
+  id: string; title?: string; status?: string; deadline?: string
+  domain?: string; priority?: string; project_id?: string
+  updated_at?: string; created_at?: string; due_date?: string
+}
+
+type DashProject = {
+  id: string; name?: string; title?: string; status?: string; deadline?: string
+  domain?: string; progress?: number; module_count?: number; colour?: string
+}
+
+type DashModule = {
+  id: string; title?: string; status?: string; deadline?: string
+  module_type?: string; credits?: number
+}
+
+type DashNotif = {
+  id: string; title?: string; message?: string; type?: string
+  created_at?: string; read?: boolean; url?: string
+}
+
+type DashEvent = {
+  id: string; title?: string; start_time?: string; end_time?: string
+  meeting_type?: string; platform?: string; attendees?: string
+  calendar_id?: string
+}
+
+type TenantRecord = {
+  id: string; name?: string; plan?: string; subscription_status?: string
+  trial_ends_at?: string; company_name?: string
+}
+
+type SnapRecord = {
+  totalBudgetSAR?: number; districts?: number
+  costUsd?: number; thisMonth?: number; total?: number
+  tenants?: {total?: number}
+  projects?: {total?: number; active?: number}
+  assets?: {total?: number; active?: number} | number
+  organisations?: {total?: number}
+  obe?: {totalBudgetSAR?: number; lastRun?: string}
+  apiUsage?: {total?: number; thisMonth?: number; costUsd?: number}
+  agents?: {total?: number; recentRuns?: number}
+  investigations?: {total?: number; recentWeek?: number}
+  topics?: {total?: number}
+  scripts?: {total?: number}
+  usage?: {thisMonth?: number; [key:string]: unknown}
+  users?: {total?: number}
+  [key: string]: unknown
+}
+
 export default function DashboardPage() {
-  const [tasks, setTasks]       = useState<Record<string,unknown>[]>([])
-  const [projects, setProjects] = useState<Record<string,unknown>[]>([])
-  const [modules, setModules]   = useState<Record<string,unknown>[]>([])
+  const [tasks, setTasks]       = useState<DashTask[]>([])
+  const [projects, setProjects] = useState<DashProject[]>([])
+  const [modules, setModules]   = useState<DashModule[]>([])
   const [brief, setBrief]       = useState<string | null>(null)
-  const [notifs, setNotifs]     = useState<Record<string,unknown>[]>([])
+  const [notifs, setNotifs]     = useState<DashNotif[]>([])
   const [loading, setLoading]   = useState(true)
   const [briefLoading, setBriefLoading] = useState(false)
-  const [tenant, setTenant]     = useState<Record<string,unknown>|null>(null)
+  const [tenant, setTenant]     = useState<TenantRecord|null>(null)
   const [todayEvents,   setTodayEvents]   = useState<Record<string,unknown>[]>([])
   const [pendingInvoices, setPendingInvoices] = useState<number>(0)
   const [actionEmails,    setActionEmails]    = useState<number>(0)
   const [pendingTransfers,setPendingTransfers]= useState<number>(0)
-  const [seSnap, setSeSnap] = useState<Record<string,unknown>|null>(null)
-  const [isSnap, setIsSnap] = useState<Record<string,unknown>|null>(null)
+  const [seSnap, setSeSnap] = useState<SnapRecord|null>(null)
+  const [isSnap, setIsSnap] = useState<SnapRecord|null>(null)
   const [meetingActions, setMeetingActions] = useState<number>(0)
   const [receipts48h,    setReceipts48h]    = useState<number>(0)
   const [emailAccounts,  setEmailAccounts]  = useState<number>(0)
@@ -56,10 +107,10 @@ export default function DashboardPage() {
   // Fetch cross-platform live snapshots (non-blocking, runs once)
   useEffect(() => {
     fetch('/api/live/veritasedge').then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.connected && d?.snapshot) setSeSnap((d as Record<string,unknown>).snapshot as Record<string,unknown>[]) })
+      .then(d => { if (d?.connected && d?.snapshot) setSeSnap((d as Record<string,unknown>).snapshot as SnapRecord) })
       .catch(() => {})
     fetch('/api/live/investiscript').then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.connected && d?.snapshot) setIsSnap((d as Record<string,unknown>).snapshot as Record<string,unknown>[]) })
+      .then(d => { if (d?.connected && d?.snapshot) setIsSnap((d as Record<string,unknown>).snapshot as SnapRecord) })
       .catch(() => {})
   }, [])
 
@@ -69,8 +120,8 @@ export default function DashboardPage() {
 
   const isExecPersona = ['executive','founder','professional'].includes(persona)
 
-  const criticalCount  = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).priority === 'critical').length
-  const weekDeadlines  = modules.filter((m: Record<string,unknown>) => (m as Record<string,unknown>).deadline &&
+  const criticalCount  = tasks.filter((t: Record<string,unknown>) => t.priority === 'critical').length
+  const weekDeadlines  = modules.filter((m: Record<string,unknown>) => m.deadline &&
     new Date(m.deadline as string) < new Date(Date.now() + 7 * 86400000)).length
 
   async function generateBrief(force = false) {
@@ -87,7 +138,7 @@ export default function DashboardPage() {
   const DOMAINS = [
     { key: 'academic',      label: 'Academic',      icon: '🎓', extra: `${modules.length} active` },
     { key: 'fm_consulting', label: 'FM Consulting',  icon: '🏗',  extra: 'Qiddiya active' },
-    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: `${seSnap ? ((seSnap as Record<string,unknown>).tenants?.total ?? (seSnap as Record<string,unknown>).organisations?.total ?? 0) + ' tenants' : 'SE · IS · PIOS'}` },
+    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: `${seSnap ? (seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0) + ' tenants' : 'SE · IS · PIOS'}` },
     { key: 'business',      label: 'Business',       icon: '🏢',  extra: 'Group ops' },
     { key: 'personal',      label: 'Personal',       icon: '✦',   extra: `${projects.length} projects` },
   ]
@@ -128,19 +179,19 @@ export default function DashboardPage() {
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
                 {[
-                  { l:'Tenants', v: (seSnap as Record<string,unknown>).tenants?.total ?? (seSnap as Record<string,unknown>).organisations?.total ?? 0 },
-                  { l:'Projects', v: (seSnap as Record<string,unknown>).projects?.total ?? 0 },
-                  { l:'Assets', v: ((seSnap as Record<string,unknown>).assets?.total ?? 0).toLocaleString() },
+                  { l:'Tenants', v: seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0 },
+                  { l:'Projects', v: seSnap.projects?.total ?? 0 },
+                  { l:'Assets', v: (typeof seSnap?.assets === "object" ? (seSnap.assets as {total?:number})?.total ?? 0 : Number(seSnap?.assets ?? 0)).toLocaleString() },
                 ].map(m => (
-                  <div key={(m as Record<string,unknown>).l as string}>
+                  <div key={m.l as string}>
                     <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{m.v}</div>
                     <div style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.l}</div>
                   </div>
                 ))}
               </div>
-              {(seSnap as Record<string,unknown>).obe?.totalBudgetSAR && (
+              {seSnap.obe?.totalBudgetSAR && (
                 <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
-                  Last OBE: SAR {((seSnap as Record<string,unknown>).obe.totalBudgetSAR/1e6).toFixed(1)}M
+                  Last OBE: SAR {(seSnap.obe.totalBudgetSAR/1e6).toFixed(1)}M
                 </div>
               )}
             </div>
@@ -153,21 +204,21 @@ export default function DashboardPage() {
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
                 {[
-                  { l:'Newsrooms', v: (isSnap as Record<string,unknown>).organisations?.total ?? 0 },
-                  { l:'Investigations', v: (isSnap as Record<string,unknown>).investigations?.total ?? (isSnap as Record<string,unknown>).topics?.total ?? 0 },
-                  { l:'Scripts', v: (isSnap as Record<string,unknown>).scripts?.total ?? 0 },
+                  { l:'Newsrooms', v: isSnap.organisations?.total ?? 0 },
+                  { l:'Investigations', v: isSnap.investigations?.total ?? isSnap.topics?.total ?? 0 },
+                  { l:'Scripts', v: isSnap.scripts?.total ?? 0 },
                 ].map(m => (
-                  <div key={(m as Record<string,unknown>).l as string}>
+                  <div key={m.l as string}>
                     <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{m.v}</div>
                     <div style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.l}</div>
                   </div>
                 ))}
               </div>
-              {((isSnap as Record<string,unknown>).apiUsage?.costUsd != null || (isSnap as Record<string,unknown>).usage?.thisMonth != null) && (
+              {(isSnap.apiUsage?.costUsd != null || isSnap.usage?.thisMonth != null) && (
                 <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
-                  {(isSnap as Record<string,unknown>).apiUsage?.costUsd != null
-                    ? `$${(isSnap as Record<string,unknown>).apiUsage.costUsd.toFixed(2)} API cost (30d)`
-                    : `${(isSnap as Record<string,unknown>).usage.thisMonth} AI calls this month`}
+                  {isSnap.apiUsage?.costUsd != null
+                    ? `$${isSnap.apiUsage.costUsd.toFixed(2)} API cost (30d)`
+                    : `${isSnap?.usage?.thisMonth} AI calls this month`}
                 </div>
               )}
             </div>
@@ -184,11 +235,11 @@ export default function DashboardPage() {
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
             {todayEvents.map((e:any) => (
-              <div key={(e as Record<string,unknown>).id as string} style={{ display:'flex', alignItems:'center', gap:12, padding:'6px 0', borderBottom:'1px solid var(--pios-border)' }}>
+              <div key={e.id as string} style={{ display:'flex', alignItems:'center', gap:12, padding:'6px 0', borderBottom:'1px solid var(--pios-border)' }}>
                 <div style={{ minWidth:50, fontSize:12, fontWeight:600, color:'#22d3ee' }}>
                   {e.all_day ? 'All day' : new Date(e.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
                 </div>
-                <div style={{ flex:1, fontSize:13, fontWeight:500 }}>{e.title}</div>
+                <div style={{ flex:1, fontSize:13, fontWeight:500 }}>{String(e.title ?? "")}</div>
                 {e.location && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>📍 {e.location}</div>}
                 {e.google_meet_url && <a href={e.google_meet_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#22c55e' }}>🎥 Join</a>}
                 <span style={{ fontSize:10, padding:'1px 6px', borderRadius:3, background:`${domainColour(e.domain||'personal')}20`, color:domainColour(e.domain||'personal') }}>
@@ -322,7 +373,7 @@ export default function DashboardPage() {
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {notifs.map(n => (
-            <div key={(n as Record<string,unknown>).id as string} style={{
+            <div key={n.id as string} style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '5px 12px', borderRadius: 20, fontSize: 11,
               background: n.type === 'critical' ? 'rgba(239,68,68,0.1)' : n.type === 'warning' ? 'rgba(245,158,11,0.1)' : n.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(167,139,250,0.1)',
@@ -330,7 +381,7 @@ export default function DashboardPage() {
               border: `1px solid currentColor`, opacity: 0.85,
             }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', display: 'inline-block', flexShrink: 0 }} />
-              {n.title}
+              {String(n.title ?? "")}
             </div>
           ))}
           </div>
@@ -355,13 +406,13 @@ export default function DashboardPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {tasks.slice(0, 6).map(t => (
-                <div key={(t as Record<string,unknown>).id as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 9, borderRadius: 7, background: 'var(--pios-surface2)' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: priorityColour(t.priority), flexShrink: 0, marginTop: 4 }} />
+                <div key={t.id as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 9, borderRadius: 7, background: 'var(--pios-surface2)' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: priorityColour(String(t.priority ?? '')), flexShrink: 0, marginTop: 4 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{String(t.title ?? "")}</div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 3 }}>
-                      <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: `${domainColour(t.domain)}20`, color: domainColour(t.domain) }}>{domainLabel(t.domain)}</span>
-                      {t.due_date && <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{formatRelative(t.due_date)}</span>}
+                      <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: `${domainColour(String(t.domain ?? ''))}20`, color: domainColour(String(t.domain ?? '')) }}>{domainLabel(String(t.domain ?? ''))}</span>
+                      {Boolean(t.due_date) && <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{formatRelative(String(t.due_date ?? ''))}</span>}
                     </div>
                   </div>
                 </div>
@@ -384,10 +435,10 @@ export default function DashboardPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {modules.map(m => (
-                <div key={(m as Record<string,unknown>).id as string} style={{ padding: 9, borderRadius: 7, background: 'var(--pios-surface2)', borderLeft: '3px solid #6c8eff' }}>
+                <div key={m.id as string} style={{ padding: 9, borderRadius: 7, background: 'var(--pios-surface2)', borderLeft: '3px solid #6c8eff' }}>
                   <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 3 }}>{m.title}</div>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: m.status === 'in_progress' ? 'rgba(45,212,160,0.1)' : 'rgba(108,142,255,0.1)', color: m.status === 'in_progress' ? '#2dd4a0' : '#6c8eff' }}>{m.status.replace('_', ' ')}</span>
+                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: (m.status ?? '') === 'in_progress' ? 'rgba(45,212,160,0.1)' : 'rgba(108,142,255,0.1)', color: (m.status ?? '') === 'in_progress' ? '#2dd4a0' : '#6c8eff' }}>{String(m.status ?? '').replace('_', ' ')}</span>
                     {m.deadline && <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{formatRelative(m.deadline)}</span>}
                   </div>
                 </div>
@@ -400,14 +451,14 @@ export default function DashboardPage() {
       {/* Active Projects */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
         {projects.map(p => (
-          <div key={(p as Record<string,unknown>).id as string} className="pios-card-sm" style={{ borderTop: `3px solid ${p.colour || domainColour(p.domain)}` }}>
+          <div key={p.id as string} className="pios-card-sm" style={{ borderTop: `3px solid ${p.colour || domainColour(String(p.domain ?? ''))}` }}>
             <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</div>
             <div style={{ height: 4, background: 'var(--pios-surface2)', borderRadius: 2, marginBottom: 6 }}>
-              <div style={{ height: '100%', width: `${p.progress}%`, background: p.colour || domainColour(p.domain), borderRadius: 2, transition: 'width 0.3s' }} />
+              <div style={{ height: '100%', width: `${p.progress}%`, background: p.colour || domainColour(String(p.domain ?? '')), borderRadius: 2, transition: 'width 0.3s' }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{domainLabel(p.domain)}</span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: p.colour || domainColour(p.domain) }}>{p.progress}%</span>
+              <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{domainLabel(String(p.domain ?? ''))}</span>
+              <span style={{ fontSize: 10, fontWeight: 600, color: p.colour || domainColour(String(p.domain ?? '')) }}>{p.progress}%</span>
             </div>
           </div>
         ))}

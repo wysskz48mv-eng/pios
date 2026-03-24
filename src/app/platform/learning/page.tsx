@@ -22,9 +22,54 @@ function fmt(d: string|null) {
   return new Date(d).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
 }
 
+
+type LearningProfile = {
+  id?: string; full_name?: string; programme_name?: string
+  supervisor?: string; university?: string; start_date?: string
+  expected_completion?: string; wizard_completed?: boolean
+  research_area?: string; student_id?: string
+}
+
+type LearningMilestone = {
+  id: string; title?: string; status?: string; target_date?: string
+  deadline?: string; category?: string; is_overdue?: boolean
+  days_until?: number | null
+}
+
+type LearningActivity = {
+  id: string; type?: string; title?: string; description?: string
+  created_at?: string; domain?: string; points?: number
+}
+
+type LearningData = {
+  profile?: LearningProfile
+  milestones?: LearningMilestone[]
+  activities?: LearningActivity[]
+  summary?: {
+    total?: number; completed?: number; overdue?: number
+    completedCredits?: number; totalCredits?: number
+    pct?: number; nextDue?: string
+    verifiable?: number; verifiableTarget?: number
+    totalHours?: number; target?: number
+    next?: {title?: string; deadline?: string}
+    [key: string]: unknown
+  }
+  cpd?: {
+    hours?: number; target?: number; entries?: unknown[]
+    by_category?: Record<string, number>
+    [key: string]: unknown
+  }
+}
+
+type CpdActivity = {
+  id: string; title?: string; activity_type?: string; provider?: string
+  completion_date?: string; hours_total?: number; hours_verifiable?: number
+  cpd_body?: string; evidence_url?: string; notes?: string; status?: string
+}
+
 export default function LearningHubPage() {
-  const [data,    setData]    = useState<unknown>(null)
-  const [cpdData, setCpdData] = useState<unknown>(null)
+  const [data,    setData]    = useState<LearningData|null>(null)
+  const [cpdData, setCpdData] = useState<LearningData|null>(null)
   const [loading, setLoading] = useState(true)
   const [tab,     setTab]     = useState<'milestones'|'cpd'|'activities'|'journal'>('milestones')
   const [marking, setMarking] = useState<string|null>(null)
@@ -46,7 +91,7 @@ export default function LearningHubPage() {
   useEffect(() => { load() }, [])
 
   // wizard_completed=false: show inline prompt, don't hard redirect
-  const showWizardPrompt = data && !loading && (data as Record<string,unknown>)?.profile && !((data as Record<string,unknown>).profile as Record<string,unknown>)?.wizard_completed
+  const showWizardPrompt = data && !loading && (data as Record<string,unknown>)?.profile && !(data?.profile as Record<string,unknown>)?.wizard_completed
 
   async function markDone(id: string) {
     setMarking(id)
@@ -80,7 +125,7 @@ export default function LearningHubPage() {
 
   const profile  = data?.profile
   const summary  = data?.summary
-  const ms       = (data?.milestones ?? []) as unknown[]
+  const ms       = (data?.milestones ?? []) as LearningMilestone[]
   const cpdSum   = cpdData?.summary
   const isCpd    = profile?.persona === 'cpd_professional'
 
@@ -168,20 +213,20 @@ export default function LearningHubPage() {
                 </Link>
               </div>
             ) : ms.map(m => {
-              const sc = STATUS_COLORS[m.status] ?? STATUS_COLORS.upcoming
-              const isOverdue = m.status === 'upcoming' && m.target_date && new Date(m.target_date) < new Date()
+              const sc = STATUS_COLORS[(m.status ?? '') as keyof typeof STATUS_COLORS] ?? STATUS_COLORS.upcoming
+              const isOverdue = (m.status ?? '') === 'upcoming' && m.target_date && new Date(String(m.target_date ?? '')) < new Date()
               return (
                 <div key={m.id} className="px-4 py-3 flex items-center gap-4 hover:bg-muted/10">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className={`text-sm font-medium ${m.status==='passed' ? 'line-through text-muted-foreground' : ''}`}>{m.title}</p>
+                      <p className={`text-sm font-medium ${(m.status ?? '')==='passed' ? 'line-through text-muted-foreground' : ''}`}>{String(m.title ?? "")}</p>
                       <span className="text-xs px-1.5 py-0.5 rounded-full font-medium capitalize" style={{ background:sc.bg, color:sc.text }}>
-                        {isOverdue ? 'OVERDUE' : m.status.replace('_',' ')}
+                        {isOverdue ? 'OVERDUE' : String(m.status ?? '').replace('_',' ')}
                       </span>
                     </div>
-                    {m.target_date && (
+                    {Boolean(m.target_date) && (
                       <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
-                        {m.status==='passed' ? `Completed ${fmt(m.completed_date)}` : `Due ${fmt(m.target_date)}`}
+                        {(m.status ?? '')==='passed' ? `Completed ${fmt(m.completed_date)}` : `Due ${fmt(m.target_date)}`}
                       </p>
                     )}
                   </div>
@@ -214,7 +259,7 @@ export default function LearningHubPage() {
               </div>
               <div className="flex gap-4 text-xs text-muted-foreground">
                 <span>Verifiable: {cpdSum.verifiable}h / {cpdSum.verifiableTarget}h</span>
-                <span>Non-verifiable: {cpdSum.nonVerifiable}h</span>
+                <span>Non-verifiable: {Number(cpdSum?.nonVerifiable ?? 0)}h</span>
               </div>
             </div>
           )}
@@ -281,14 +326,14 @@ export default function LearningHubPage() {
           <div className="rounded-xl border bg-card overflow-hidden">
             {(cpdData?.activities ?? []).length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">No CPD activities logged yet this year.</p>
-            ) : (cpdData?.activities ?? []).map((a: Record<string, unknown>) => (
+            ) : (cpdData?.activities ?? []).map((a: CpdActivity) => (
               <div key={a.id} className="px-4 py-3 border-b last:border-0 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">{a.title}</p>
-                  <p className="text-xs text-muted-foreground">{a.activity_type} · {a.provider ?? '—'} · {fmt(a.completed_date)}</p>
+                  <p className="text-sm font-medium">{String(a.title ?? "")}</p>
+                  <p className="text-xs text-muted-foreground">{String(a.activity_type ?? "")} · {a.provider ?? '—'} · {fmt(String(a.completion_date ?? ""))}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  {Number(a.hours_verifiable)>0 && <p className="text-xs font-semibold text-green-600">{a.hours_verifiable}h verifiable</p>}
+                  {Number(a.hours_verifiable ?? 0)>0 && <p className="text-xs font-semibold text-green-600">{Number(a.hours_verifiable ?? 0)}h verifiable</p>}
                   {Number(a.hours_non_verifiable)>0 && <p className="text-xs text-muted-foreground">{a.hours_non_verifiable}h non-ver.</p>}
                 </div>
               </div>
