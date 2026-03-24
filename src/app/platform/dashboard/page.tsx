@@ -317,7 +317,26 @@ export default function DashboardPage() {
           </div>
         </div>
         {brief ? (
-          <p style={{ fontSize: 13, lineHeight: 1.75, whiteSpace: 'pre-wrap', color: 'var(--pios-text)' }}>{brief}</p>
+          <div>
+            {brief.includes('##')
+              ? brief.split(/^##\s+/m).filter(Boolean).map((section, i) => {
+                  const [title, ...bodyLines] = section.split('\n')
+                  const body = bodyLines.join('\n').trim()
+                  const isAlert = /overdue|at.risk|critical|urgent/i.test(title)
+                  return (
+                    <div key={i} style={{
+                      marginBottom: 12, padding: '10px 14px', borderRadius: 8,
+                      background: isAlert ? 'rgba(239,68,68,0.06)' : 'var(--pios-surface2)',
+                      borderLeft: `3px solid ${isAlert ? '#ef4444' : 'rgba(167,139,250,0.4)'}`,
+                    }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: isAlert ? '#ef4444' : 'var(--ai)', marginBottom: 6 }}>{title.trim()}</div>
+                      <p style={{ fontSize: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--pios-text)', margin: 0 }}>{body}</p>
+                    </div>
+                  )
+                })
+              : <p style={{ fontSize: 13, lineHeight: 1.75, whiteSpace: 'pre-wrap', color: 'var(--pios-text)' }}>{brief}</p>
+            }
+          </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <p style={{ color: 'var(--pios-muted)', fontSize: 13, marginBottom: 16 }}>

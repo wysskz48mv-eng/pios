@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     const briefTc = briefTcData as any
     try {
       // Gather full context for this user
-      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR] = await Promise.all([
+      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR, okrsR, decisionsR] = await Promise.all([
         admin.from('tasks').select('title,domain,priority,due_date,status')
           .eq('user_id', uid).not('status', 'in', '("done","cancelled")')
           .order('due_date', { ascending: true }).limit(15),
@@ -105,9 +105,16 @@ export async function GET(req: NextRequest) {
           .eq('user_id', uid).eq('is_receipt', true)
           .gte('received_at', new Date(Date.now() - 48 * 3600000).toISOString())
           .order('received_at', { ascending: false }).limit(5),
+        // Executive OS data (OKRs + open decisions)
+        admin.from('exec_okrs').select('title,health,progress,period')
+          .eq('user_id', uid).eq('status', 'active').order('health').limit(5),
+        admin.from('exec_decisions').select('title,framework_used,status')
+          .eq('user_id', uid).eq('status', 'open').limit(4),
       ])
 
       const tasks     = tasksR.data ?? []
+      const okrs      = (okrsR as any)?.data ?? []
+      const decisions = (decisionsR as any)?.data ?? []
       const overdue   = tasks.filter((t: any) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
       const dueToday  = tasks.filter((t: any) => (t as Record<string,unknown>).due_date === today)
       const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date || String((t as Record<string,unknown>).due_date ?? '') > today)
@@ -192,6 +199,17 @@ export async function GET(req: NextRequest) {
               const rd = r.receipt_data as any
               return rd ? `- ${rd.vendor as string ?? r.sender_name}: ${rd.currency ?? 'GBP'} ${rd.amount ?? '?'}` : `- ${r.subject}`
             }).join('\n')
+          : '',
+
+
+        (okrs as any[]).length > 0
+          ? `EXECUTIVE OKRs (${(okrs as any[]).length} active):\n` +
+            (okrs as any[]).map((o: any) => `- ${o.health === 'at_risk' ? '⚠ ' : ''}${o.title} — ${o.progress ?? 0}% (${o.period ?? ''}) [${o.health ?? 'unknown'}]`).join('\n')
+          : '',
+
+        (decisions as any[]).length > 0
+          ? `OPEN DECISIONS REQUIRING ACTION (${(decisions as any[]).length}):\n` +
+            (decisions as any[]).map((d: any) => `- ${d.title} [${d.framework_used ?? 'TBD'}]`).join('\n')
           : '',
 
       ].filter(Boolean).join('\n\n')
