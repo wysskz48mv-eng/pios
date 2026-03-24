@@ -61,6 +61,7 @@ export default function DashboardPage() {
   const [brief, setBrief]       = useState<string | null>(null)
   const [notifs, setNotifs]     = useState<DashNotif[]>([])
   const [loading, setLoading]   = useState(true)
+  const [loadErr, setLoadErr]   = useState<string|null>(null)
   const [briefLoading, setBriefLoading] = useState(false)
   const [tenant, setTenant]     = useState<TenantRecord|null>(null)
   const [todayEvents,   setTodayEvents]   = useState<Record<string,unknown>[]>([])
@@ -84,6 +85,7 @@ export default function DashboardPage() {
       fetch('/api/dashboard'),
       fetch('/api/notifications'),
     ])
+    if (!dashRes.ok) { setLoadErr('Failed to load dashboard data — retrying will help'); }
     const [d, nR]: [any, any] = await Promise.all([
       dashRes.ok ? dashRes.json() : {},
       notifsRes.ok ? notifsRes.json() : { notifications: [] },
@@ -261,6 +263,12 @@ export default function DashboardPage() {
       )}
 
 
+      {loadErr && (
+        <div style={{ background:'rgba(239,68,68,0.07)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:10, padding:'10px 16px', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <span style={{ fontSize:13, color:'#ef4444' }}>⚠ {loadErr}</span>
+          <button onClick={load} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', color:'#ef4444', cursor:'pointer' }}>Retry</button>
+        </div>
+      )}
       {/* ── First-time welcome ────────────────────────────── */}
       {!loading && tasks.length === 0 && projects.length === 0 && (
         <div style={{ background:'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(14,207,176,0.06))', border:'1px solid rgba(167,139,250,0.2)', borderRadius:14, padding:'20px 24px', marginBottom:16 }}>
