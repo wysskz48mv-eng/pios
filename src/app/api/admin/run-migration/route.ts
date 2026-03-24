@@ -281,6 +281,410 @@ DO $$ BEGIN
 END $$;
 SELECT 'M014: nps_survey_responses ready' AS result`,
   },
+  '015': {
+    name: 'M015: Executive Persona Foundation — persona_type, EOSA™, PAA™, STIA™',
+    sentinel: 'user_persona_settings',
+    sql: `-- ============================================================
+-- PIOS Sprint 22 — Executive Persona Foundation
+-- M015: persona_type, executive tables, EOSA, PAA, STIA
+-- VeritasIQ Technologies Ltd
+-- ============================================================
+
+-- ── 1. Add persona_type to user_profiles ─────────────────────
+alter table public.user_profiles
+  add column if not exists persona_type text
+    default 'individual'
+    check (persona_type in ('student','professional','executive','founder','consultant'));
+
+-- ── 2. Executive Operating System — principles ────────────────
+create table if not exists public.exec_principles (
+  id          uuid primary key default uuid_generate_v4(),
+  tenant_id   uuid references public.tenants(id) on delete cascade,
+  user_id     uuid references auth.users(id) on delete cascade,
+  title       text not null,
+  description text,
+  category    text default 'leadership'
+    check (category in ('leadership','decision','values','communication','time','other')),
+  sort_order  integer default 0,
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now()
+);
+
+-- ── 3. Decision Log (DAA™) ────────────────────────────────────
+create table if not exists public.exec_decisions (
+  id              uuid primary key default uuid_generate_v4(),
+  tenant_id       uuid references public.tenants(id) on delete cascade,
+  user_id         uuid references auth.users(id) on delete cascade,
+  title           text not null,
+  context         text,
+  options_json    jsonb default '[]',   -- [{label, pros, cons, score}]
+  decision_made   text,
+  rationale       text,
+  outcome         text,
+  framework_used  text,                 -- 'POM','OAE','SDL','CVDM','CPA','SCE','AAM'
+  status          text default 'open'
+    check (status in ('open','decided','reviewing','closed')),
+  decided_at      timestamptz,
+  review_date     date,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+
+-- ── 4. Review Cadence (EOSA™) ────────────────────────────────
+create table if not exists public.exec_reviews (
+  id            uuid primary key default uuid_generate_v4(),
+  tenant_id     uuid references public.tenants(id) on delete cascade,
+  user_id       uuid references auth.users(id) on delete cascade,
+  cadence       text not null
+    check (cadence in ('daily','weekly','monthly','quarterly','annual')),
+  title         text not null,
+  content       text,
+  wins          text[],
+  blockers      text[],
+  focus_next    text[],
+  okr_health    text default 'on_track'
+    check (okr_health in ('on_track','at_risk','off_track')),
+  ai_summary    text,
+  created_at    timestamptz default now()
+);
+
+-- ── 5. Stakeholder CRM (STIA™) ────────────────────────────────
+create table if not exists public.exec_stakeholders (
+  id                uuid primary key default uuid_generate_v4(),
+  tenant_id         uuid references public.tenants(id) on delete cascade,
+  user_id           uuid references auth.users(id) on delete cascade,
+  name              text not null,
+  role              text,
+  organisation      text,
+  relationship_type text default 'professional'
+    check (relationship_type in ('client','investor','partner','vendor','team','advisor','other','professional')),
+  importance        text default 'medium'
+    check (importance in ('critical','high','medium','low')),
+  last_interaction  timestamptz,
+  next_touchpoint   date,
+  open_commitments  text[],
+  notes             text,
+  health_score      integer default 70 check (health_score between 0 and 100),
+  tags              text[],
+  created_at        timestamptz default now(),
+  updated_at        timestamptz default now()
+);
+
+-- ── 6. OKR Objectives (PAA™ enhancement) ─────────────────────
+create table if not exists public.exec_okrs (
+  id            uuid primary key default uuid_generate_v4(),
+  tenant_id     uuid references public.tenants(id) on delete cascade,
+  user_id       uuid references auth.users(id) on delete cascade,
+  title         text not null,
+  description   text,
+  period        text not null,             -- e.g. 'Q1 2026'
+  status        text default 'active'
+    check (status in ('active','paused','completed','cancelled')),
+  health        text default 'on_track'
+    check (health in ('on_track','at_risk','off_track')),
+  progress      integer default 0 check (progress between 0 and 100),
+  ai_commentary text,
+  last_reviewed timestamptz,
+  due_date      date,
+  created_at    timestamptz default now(),
+  updated_at    timestamptz default now()
+);
+
+create table if not exists public.exec_key_results (
+  id          uuid primary key default uuid_generate_v4(),
+  objective_id uuid references public.exec_okrs(id) on delete cascade,
+  tenant_id   uuid references public.tenants(id) on delete cascade,
+  user_id     uuid references auth.users(id) on delete cascade,
+  title       text not null,
+  metric_type text default 'percentage'
+    check (metric_type in ('percentage','number','boolean','currency')),
+  target      numeric,
+  current     numeric default 0,
+  unit        text,
+  status      text default 'on_track'
+    check (status in ('on_track','at_risk','off_track','completed')),
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now()
+);
+
+-- ── 7. Time blocks (TSA™) ─────────────────────────────────────
+create table if not exists public.exec_time_blocks (
+  id          uuid primary key default uuid_generate_v4(),
+  tenant_id   uuid references public.tenants(id) on delete cascade,
+  user_id     uuid references auth.users(id) on delete cascade,
+  label       text not null,
+  block_type  text default 'strategic'
+    check (block_type in ('strategic','deep_work','stakeholder','admin','recovery','other')),
+  day_of_week integer[],                -- 0=Sun … 6=Sat
+  start_time  time,
+  end_time    time,
+  protected   boolean default true,
+  notes       text,
+  created_at  timestamptz default now()
+);
+
+-- ── 8. RLS ────────────────────────────────────────────────────
+alter table public.exec_principles    enable row level security;
+alter table public.exec_decisions     enable row level security;
+alter table public.exec_reviews       enable row level security;
+alter table public.exec_stakeholders  enable row level security;
+alter table public.exec_okrs          enable row level security;
+alter table public.exec_key_results   enable row level security;
+alter table public.exec_time_blocks   enable row level security;
+
+do $$ declare t text; begin
+  foreach t in array array[
+    'exec_principles','exec_decisions','exec_reviews',
+    'exec_stakeholders','exec_okrs','exec_time_blocks'
+  ] loop
+    execute format('
+      create policy if not exists "tenant_rls_%s"
+        on public.%s for all using (
+          tenant_id = (select tenant_id from public.user_profiles where id = auth.uid())
+        )', t, t);
+  end loop;
+end $$;
+
+create policy if not exists "tenant_rls_exec_key_results"
+  on public.exec_key_results for all using (
+    tenant_id = (select tenant_id from public.user_profiles where id = auth.uid())
+  );
+
+-- ── 9. Indexes ────────────────────────────────────────────────
+create index if not exists idx_exec_decisions_user    on public.exec_decisions(user_id, status);
+create index if not exists idx_exec_reviews_cadence   on public.exec_reviews(user_id, cadence);
+create index if not exists idx_exec_stakeholders_user on public.exec_stakeholders(user_id, importance);
+create index if not exists idx_exec_okrs_period       on public.exec_okrs(user_id, period, health);`,
+  },
+  '016': {
+    name: 'M016: Consulting, Decision Analysis, Time Sovereignty — Sprint 23',
+    sentinel: 'consulting_engagements',
+    sql: `-- ============================================================
+-- PIOS Sprint 23 — CSA™ · DAA™ · TSA™
+-- M016: consulting engagements, decision analysis, time audit
+-- VeritasIQ Technologies Ltd
+-- ============================================================
+
+-- ── 1. Consulting Engagements (CSA™) ─────────────────────────
+create table if not exists public.consulting_engagements (
+  id              uuid primary key default uuid_generate_v4(),
+  tenant_id       uuid references public.tenants(id) on delete cascade,
+  user_id         uuid references auth.users(id) on delete cascade,
+  client_name     text not null,
+  engagement_type text default 'strategy'
+    check (engagement_type in ('strategy','operations','change','commercial','diagnostic','other')),
+  status          text default 'active'
+    check (status in ('active','proposal','on_hold','completed','cancelled')),
+  framework_used  text,   -- POM™ | OAE™ | SDL™ | CVDM™ | CPA™ | SCE™ | AAM™
+  brief           text,
+  ai_output       text,   -- last generated artefact
+  start_date      date,
+  end_date        date,
+  value           numeric,
+  currency        text default 'GBP',
+  tags            text[],
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+
+-- ── 2. Decision options (extends exec_decisions DAA™) ─────────
+-- Options are stored as jsonb in exec_decisions.options_json
+-- but we also log AI analysis separately for audit trail
+create table if not exists public.exec_decision_analyses (
+  id              uuid primary key default uuid_generate_v4(),
+  decision_id     uuid references public.exec_decisions(id) on delete cascade,
+  tenant_id       uuid references public.tenants(id) on delete cascade,
+  user_id         uuid references auth.users(id) on delete cascade,
+  framework_used  text not null,
+  analysis_text   text not null,
+  recommendation  text,
+  confidence      integer check (confidence between 0 and 100),
+  created_at      timestamptz default now()
+);
+
+-- ── 3. Time audit log (TSA™) ──────────────────────────────────
+create table if not exists public.exec_time_audits (
+  id              uuid primary key default uuid_generate_v4(),
+  tenant_id       uuid references public.tenants(id) on delete cascade,
+  user_id         uuid references auth.users(id) on delete cascade,
+  week_start      date not null,
+  strategic_hours numeric default 0,
+  operational_hours numeric default 0,
+  admin_hours     numeric default 0,
+  stakeholder_hours numeric default 0,
+  recovery_hours  numeric default 0,
+  total_hours     numeric default 0,
+  strategic_pct   integer generated always as (
+    case when total_hours > 0
+    then round((strategic_hours / total_hours) * 100)
+    else 0 end
+  ) stored,
+  ai_commentary   text,
+  recommendations text[],
+  created_at      timestamptz default now()
+);
+
+-- ── 4. RLS ────────────────────────────────────────────────────
+alter table public.consulting_engagements    enable row level security;
+alter table public.exec_decision_analyses    enable row level security;
+alter table public.exec_time_audits          enable row level security;
+
+do $$ declare t text; begin
+  foreach t in array array[
+    'consulting_engagements','exec_decision_analyses','exec_time_audits'
+  ] loop
+    execute format('
+      create policy if not exists "tenant_rls_%s"
+        on public.%s for all using (
+          tenant_id = (select tenant_id from public.user_profiles where id = auth.uid())
+        )', t, t);
+  end loop;
+end $$;
+
+-- ── 5. Indexes ────────────────────────────────────────────────
+create index if not exists idx_consulting_user_status on public.consulting_engagements(user_id, status);
+create index if not exists idx_daa_decision           on public.exec_decision_analyses(decision_id);
+create index if not exists idx_tsa_week               on public.exec_time_audits(user_id, week_start);`,
+  },
+  '017': {
+    name: 'M017: SIA™ + BICA™ — Strategic Intelligence & Board Comms — Sprint 24',
+    sentinel: 'exec_intelligence_config',
+    sql: `-- ============================================================
+-- PIOS Sprint 24 — SIA™ · BICA™
+-- M017: exec intelligence config, board comms, investor updates
+-- VeritasIQ Technologies Ltd
+-- ============================================================
+
+-- ── 1. Executive intelligence config (SIA™) ──────────────────
+-- Extends user_feed_topics — adds exec_priority flag + so_what field
+alter table public.user_feed_topics
+  add column if not exists exec_priority  boolean default false,
+  add column if not exists persona_target text    default 'all'
+    check (persona_target in ('all','executive','student','professional'));
+
+-- ── 2. Signal briefs (SIA™ weekly digest) ────────────────────
+create table if not exists public.sia_signal_briefs (
+  id          uuid primary key default uuid_generate_v4(),
+  tenant_id   uuid references public.tenants(id) on delete cascade,
+  user_id     uuid references auth.users(id) on delete cascade,
+  title       text not null,
+  cadence     text default 'weekly' check (cadence in ('daily','weekly')),
+  content     text not null,          -- full AI-generated brief
+  signals     jsonb default '[]',     -- [{title, source, so_what, category}]
+  sectors     text[],                 -- sectors covered in this brief
+  created_at  timestamptz default now()
+);
+
+-- ── 3. Board / investor comms (BICA™) ────────────────────────
+create table if not exists public.bica_comms (
+  id              uuid primary key default uuid_generate_v4(),
+  tenant_id       uuid references public.tenants(id) on delete cascade,
+  user_id         uuid references auth.users(id) on delete cascade,
+  title           text not null,
+  comms_type      text not null
+    check (comms_type in ('board_update','investor_update','ceo_letter','stakeholder_report','strategy_memo','other')),
+  audience        text,
+  period          text,                   -- e.g. 'Q1 2026', 'March 2026'
+  tone            text default 'formal'
+    check (tone in ('formal','confident','balanced','direct')),
+  inputs_json     jsonb default '{}',     -- structured inputs used to generate
+  content         text,                   -- AI-generated content
+  status          text default 'draft'
+    check (status in ('draft','reviewed','sent','archived')),
+  word_count      integer,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+
+-- ── 4. RLS ────────────────────────────────────────────────────
+alter table public.sia_signal_briefs  enable row level security;
+alter table public.bica_comms         enable row level security;
+
+create policy if not exists "tenant_rls_sia_signal_briefs"
+  on public.sia_signal_briefs for all using (
+    tenant_id = (select tenant_id from public.user_profiles where id = auth.uid())
+  );
+create policy if not exists "tenant_rls_bica_comms"
+  on public.bica_comms for all using (
+    tenant_id = (select tenant_id from public.user_profiles where id = auth.uid())
+  );
+
+-- ── 5. Indexes ────────────────────────────────────────────────
+create index if not exists idx_sia_briefs_user   on public.sia_signal_briefs(user_id, created_at);
+create index if not exists idx_bica_comms_user   on public.bica_comms(user_id, comms_type, status);`,
+  },
+  '018': {
+    name: 'M018: White-Label Operator Mode — operator_configs, OKR prefs — Sprint 25',
+    sentinel: 'operator_configs',
+    sql: `-- ============================================================
+-- PIOS Sprint 25 — White-Label Operator Mode
+-- M018: operator_configs, okr_notification_prefs
+-- VeritasIQ Technologies Ltd
+-- ============================================================
+
+-- ── 1. Operator / white-label config ──────────────────────────
+-- One row per PIOS deployment (operator = accelerator, PE firm, etc.)
+create table if not exists public.operator_configs (
+  id                uuid primary key default uuid_generate_v4(),
+  operator_name     text not null,
+  slug              text unique not null,            -- e.g. 'techstars-london'
+  logo_url          text,
+  primary_colour    text default '#a78bfa',          -- brand hex
+  accent_colour     text default '#22d3ee',
+  support_email     text,
+  custom_domain     text,                            -- e.g. 'pios.techstars.com'
+  -- Feature flags
+  features_enabled  text[] default ARRAY[
+    'executive_os','consulting','time_sovereignty','comms_hub','intelligence'
+  ],
+  features_disabled text[] default '{}',
+  -- Persona defaults
+  default_persona   text default 'executive'
+    check (default_persona in ('student','professional','executive','founder','consultant')),
+  -- Billing
+  plan_override     text,                            -- forces all tenants to this plan
+  seats_limit       integer default 50,
+  -- Metadata
+  active            boolean default true,
+  notes             text,
+  created_at        timestamptz default now(),
+  updated_at        timestamptz default now()
+);
+
+-- ── 2. Tenant → operator link ──────────────────────────────────
+alter table public.tenants
+  add column if not exists operator_id uuid references public.operator_configs(id);
+
+-- ── 3. OKR notification preferences ──────────────────────────
+create table if not exists public.okr_notification_prefs (
+  user_id             uuid primary key references auth.users(id) on delete cascade,
+  tenant_id           uuid references public.tenants(id) on delete cascade,
+  weekly_digest       boolean default true,
+  drift_alerts        boolean default true,
+  digest_day          integer default 1       -- 0=Sun 1=Mon … 6=Sat
+    check (digest_day between 0 and 6),
+  digest_time_utc     time default '07:00',
+  email_address       text,                   -- override if different from auth email
+  last_sent_at        timestamptz,
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now()
+);
+
+-- ── 4. RLS ────────────────────────────────────────────────────
+alter table public.operator_configs      enable row level security;
+alter table public.okr_notification_prefs enable row level security;
+
+-- operator_configs: only service role can write; anyone can read their own operator
+create policy if not exists "operator_configs_read"
+  on public.operator_configs for select using (active = true);
+
+create policy if not exists "okr_prefs_own"
+  on public.okr_notification_prefs for all using (auth.uid() = user_id);
+
+-- ── 5. Indexes ────────────────────────────────────────────────
+create index if not exists idx_tenants_operator      on public.tenants(operator_id);
+create index if not exists idx_okr_prefs_digest_day  on public.okr_notification_prefs(digest_day, weekly_digest);`,
+  },
 }
 
 async function runPg(sql: string): Promise<{ ok: boolean; result?: string; err?: string }> {

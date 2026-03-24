@@ -147,6 +147,30 @@ export async function GET() {
     return { ok: true, detail: '/api/brief route loaded — AI ready for morning brief generation' }
   }))
 
+  // ── 13. Executive persona tables (M015) ──────────────────────────────────
+  checks.push(await runCheck('db_persona', 'Executive persona tables (M015)', false, async () => {
+    const { error } = await supabase.from('exec_okrs').select('id').limit(1)
+    return error
+      ? { ok: false, detail: `exec_okrs missing — run M015: ${error.message}`, warn: true }
+      : { ok: true, detail: 'exec_okrs accessible (M015 applied)' }
+  }))
+
+  // ── 14. SIA/BICA signal tables (M017) ────────────────────────────────────
+  checks.push(await runCheck('db_sia', 'SIA™/BICA™ signal tables (M017)', false, async () => {
+    const { error } = await supabase.from('sia_signal_briefs').select('id').limit(1)
+    return error
+      ? { ok: false, detail: `sia_signal_briefs missing — run M017: ${error.message}`, warn: true }
+      : { ok: true, detail: 'sia_signal_briefs accessible (M017 applied)' }
+  }))
+
+  // ── 15. Operator config table (M018) ─────────────────────────────────────
+  checks.push(await runCheck('db_operator', 'Operator config (M018)', false, async () => {
+    const { error } = await supabase.from('operator_configs').select('id').limit(1)
+    return error
+      ? { ok: false, detail: `operator_configs missing — run M018: ${error.message}`, warn: true }
+      : { ok: true, detail: 'operator_configs accessible (M018 applied)' }
+  }))
+
   // ── Summary ────────────────────────────────────────────────────────────────
   const criticalFails = checks.filter(c => c.critical && c.status === 'fail')
   const passes        = checks.filter(c => c.status === 'pass').length
