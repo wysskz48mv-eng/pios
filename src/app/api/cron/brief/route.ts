@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
       const tasks     = tasksR.data ?? []
       const overdue   = tasks.filter((t: any) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
       const dueToday  = tasks.filter((t: any) => (t as Record<string,unknown>).due_date === today)
-      const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date as string || (t as Record<string,unknown>).due_date as string > today)
+      const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date || String((t as Record<string,unknown>).due_date ?? '') > today)
 
       // Skip users with nothing to brief on
       if (tasks.length + (modulesR.data?.length ?? 0) === 0) continue
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       const totalWords  = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
       const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
       const nearestDl   = (modulesR.data ?? []).map((m: any) => (m as Record<string,unknown>).deadline).filter(Boolean).sort()[0]
-      const daysLeft    = nearestDl ? Math.max(1, Math.round((new Date(nearestDl).getTime() - now.getTime()) / 86400000)) : null
+      const daysLeft    = nearestDl ? Math.max(1, Math.round((new Date(String(nearestDl ?? "")).getTime() - now.getTime()) / 86400000)) : null
       const wordsPerDay = daysLeft ? Math.ceil(Math.max(0, targetWords - totalWords) / daysLeft) : null
 
       const fmt = (d: string) => new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
@@ -135,7 +135,7 @@ export async function GET(req: NextRequest) {
           : '',
 
         `ACADEMIC MODULES:\n` + ((modulesR.data ?? []).map(m =>
-          `- ${(m as Record<string,unknown>).title} [${(m as Record<string,unknown>).status}] — ${(m as Record<string,unknown>).deadline ? fmt(String((m as Record<string,unknown>).deadline ?? "")) : 'TBD'}`).join('\n') || 'none'),
+          `- ${String((m as Record<string,unknown>).title ?? "")} [${(m as Record<string,unknown>).status}] — ${(m as Record<string,unknown>).deadline ? fmt(String((m as Record<string,unknown>).deadline ?? "")) : 'TBD'}`).join('\n') || 'none'),
 
         chapters.length > 0
           ? `THESIS: ${totalWords.toLocaleString()}/${targetWords.toLocaleString()} words (${Math.round(totalWords/Math.max(targetWords,1)*100)}%)` +
@@ -156,16 +156,16 @@ export async function GET(req: NextRequest) {
           : '',
 
         (fmNewsR.data ?? []).length > 0
-          ? `FM INTELLIGENCE:\n` + (fmNewsR.data ?? []).map((n: Record<string, unknown>) => `- [${String(n.category ?? '').toUpperCase()}] ${n.headline}`).join('\n')
+          ? `FM INTELLIGENCE:\n` + (fmNewsR.data ?? []).map((n: any) => `- [${String(n.category ?? '').toUpperCase()}] ${String(n.headline ?? "")}`).join('\n')
           : 'FM INTELLIGENCE: no fresh signals',
 
         (cfpR.data ?? []).length > 0
-          ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: Record<string, unknown>) => `- "${(c as any)?.title}" — ${c.deadline}`).join('\n')
+          ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: any) => `- "${(c as any)?.title}" — ${String(c.deadline ?? "")}`).join('\n')
           : '',
         (meetingsR.data ?? []).length > 0
           ? `RECENT MEETINGS (${meetingsR.data?.length}):\n` +
             (meetingsR.data ?? []).map((m: Record<string, unknown>) =>
-              `- [${(m as Record<string,unknown>).meeting_type?.toUpperCase()}] ${(m as Record<string,unknown>).title} (${(m as Record<string,unknown>).meeting_date})${(m as Record<string,unknown>).ai_summary ? ': ' + String((m as Record<string,unknown>).ai_summary).slice(0, 100) + '...' : ''}${(m as Record<string,unknown>).tasks_created ? ' [tasks created]' : ''}`
+              `- [${String((m as Record<string,unknown>).meeting_type ?? "").toUpperCase()}] ${String((m as Record<string,unknown>).title ?? "")} (${String((m as Record<string,unknown>).meeting_date ?? "")})${(m as Record<string,unknown>).ai_summary ? ': ' + String((m as Record<string,unknown>).ai_summary).slice(0, 100) + '...' : ''}${String((m as Record<string,unknown>).tasks_created ?? "") ? ' [tasks created]' : ''}`
             ).join('\n')
           : '',
 
@@ -173,7 +173,7 @@ export async function GET(req: NextRequest) {
           ? `MEETING ACTIONS AWAITING PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
             (pendingActionsR.data ?? []).flatMap((m: any) =>
               (((m as Record<string,unknown>).ai_action_items ?? []) as unknown[]).slice(0,3).map((a: any) =>
-                `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${(m as Record<string,unknown>).title}"`
+                `- [${String(a.priority ?? 'medium').toUpperCase()}] ${String(a.action ?? "")} — from "${String((m as Record<string,unknown>).title ?? "")}"`
               )
             ).join('\n')
           : '',
@@ -181,7 +181,7 @@ export async function GET(req: NextRequest) {
         (receiptsR.data ?? []).length > 0
           ? `AUTO-CAPTURED RECEIPTS (last 48h — ${receiptsR.data?.length}):\n` +
             (receiptsR.data ?? []).map((r: Record<string, unknown>) => {
-              const rd = r.receipt_data
+              const rd = r.receipt_data as any
               return rd ? `- ${rd.vendor as string ?? r.sender_name}: ${rd.currency ?? 'GBP'} ${rd.amount ?? '?'}` : `- ${r.subject}`
             }).join('\n')
           : '',
@@ -205,14 +205,14 @@ export async function GET(req: NextRequest) {
       }, { onConflict: 'user_id,brief_date' })
 
       // Email delivery
-      const userEmail = (profile as Record<string, unknown>).billing_email ?? (profile as Record<string, unknown>).google_email
+      const userEmail = String((profile as Record<string, unknown>).billing_email ?? (profile as Record<string, unknown>).google_email ?? "")
       const userName  = (profile as Record<string, unknown>).full_name ?? 'there'
       if (userEmail) {
         await sendEmail({
           to:      userEmail,
           subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
-          html:    morningBriefHtml(String(content ?? ""), today, userName),
-          text:    morningBriefText(String(content ?? ""), today, userName),
+          html:    morningBriefHtml(String(content ?? ""), String(today ?? ""), String(userName ?? "")),
+          text:    morningBriefText(String(content ?? ""), String(today ?? ""), String(userName ?? "")),
         }).catch(() => {})
 
         // Task urgency alert — separate email if overdue or due tomorrow
@@ -227,7 +227,7 @@ export async function GET(req: NextRequest) {
           const overdueLines = overdue.map(t =>
             `• [${(t.priority??'').toUpperCase()}] ${t.title} — was due ${(t as Record<string,unknown>).due_date as string}`
           ).join('\n')
-          const dueTodayLines = dueToday.map(t => `• ${t.title} [${t.domain}]`).join('\n')
+          const dueTodayLines = dueToday.map(t => `• ${String((t as any)?.title ?? "")} [${String((t as any)?.domain ?? "")}]`).join('\n')
           await sendEmail({
             to:      userEmail,
             subject: `⚠ ${overdue.length} overdue task${overdue.length > 1 ? 's' : ''} — PIOS Alert`,

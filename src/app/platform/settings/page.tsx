@@ -148,7 +148,7 @@ function EmailAccountsSection() {
           {/* Context */}
           <label style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:4 }}>Context</label>
           <select value={addCtx} onChange={e => setAddCtx(e.target.value)} style={{ ...(inp as Record<string,unknown>), marginBottom:10 }}>
-            {Object.entries(CONTEXT_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+            {Object.entries(CONTEXT_LABELS).map(([v,l]) => <option key={String(v ?? "")} value={v}>{l}</option>)}
           </select>
 
           <label style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:4 }}>Label (optional)</label>
@@ -157,7 +157,7 @@ function EmailAccountsSection() {
           {/* Provider tabs */}
           <div style={{ display:'flex', gap:4, marginBottom:12, marginTop:4 }}>
             {(['google','microsoft','imap'] as const).map(p => (
-              <button key={p} onClick={() => setAddProvider(p)} style={{
+              <button key={String(p ?? "")} onClick={() => setAddProvider(p)} style={{
                 padding:'5px 12px', borderRadius:6, fontSize:11, fontWeight: addProvider===p ? 700 : 400,
                 border:`1px solid ${addProvider===p ? PROVIDER_COLOURS[p] : 'var(--pios-border)'}`,
                 background: addProvider===p ? PROVIDER_COLOURS[p]+'20' : 'transparent',
@@ -348,9 +348,9 @@ function PersonaSection() {
               border: `1px solid ${currentPersona === p.key ? 'rgba(167,139,250,0.4)' : 'rgba(255,255,255,0.08)'}`,
               transition: 'all .15s',
             }}>
-            <div style={{ fontSize: 18, marginBottom: 4 }}>{p.icon}</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 2 }}>{p.label}</div>
-            <div style={{ fontSize: 11, color: 'var(--pios-muted)', lineHeight: 1.4 }}>{p.desc}</div>
+            <div style={{ fontSize: 18, marginBottom: 4 }}>{String(p.icon ?? "")}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 2 }}>{String(p.label ?? "")}</div>
+            <div style={{ fontSize: 11, color: 'var(--pios-muted)', lineHeight: 1.4 }}>{String(p.desc ?? "")}</div>
           </button>
         ))}
       </div>
@@ -369,11 +369,11 @@ type EmailAccount = {
   receipt_scan_enabled?: boolean
 }
 
-// ProfileRecord defined above
+// any defined above
 
-// TenantRecord → TenantSettings above
+// any → TenantSettings above
 
-// UserRecord → ProfileRecord above
+// any → any above
 
 // FeedSettings → FeedSettings above
 
@@ -406,7 +406,7 @@ type ConnectedAccount = {
 }
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<ProfileRecord|null>(null)
+  const [profile, setProfile] = useState<any|null>(null)
   const [tenant,  setTenant]  = useState<Record<string,unknown>|null>(null)
   const [user,    setUser]    = useState<Record<string,unknown>|null>(null)
   const [feedSettings,   setFeedSettings]   = useState<Record<string,unknown>|null>(null)
@@ -415,22 +415,22 @@ export default function SettingsPage() {
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)
   const [saved,   setSaved]   = useState(false)
-  const [form, setForm] = useState({ full_name:'', programme_name:'', university:'', timezone:'Europe/London', job_title:'', organisation:'', billing_email:'' })
+  const [form, setForm] = useState<Record<string,string>>({ full_name:'', programme_name:'', university:'', timezone:'Europe/London', job_title:'', organisation:'', billing_email:'' })
   useEffect(() => {
     async function load() {
       const [pR, fR] = await Promise.all([
         fetch('/api/profile').then(r => r.ok ? r.json() : {}) as Promise<unknown>,
         fetch('/api/feeds').then(r => r.json()).catch(() => ({ settings: null })),
       ])
-      setUser(((pR as Record<string,unknown>).user ?? null) as UserRecord | null)
-      setProfile(((pR as Record<string,unknown>).profile ?? null) as ProfileRecord | null)
-      setTenant(((pR as Record<string,unknown>).tenant ?? null) as TenantRecord | null)
+      setUser(((pR as Record<string,unknown>).user ?? null) as any)
+      setProfile(((pR as Record<string,unknown>).profile ?? null) as any | null)
+      setTenant(((pR as Record<string,unknown>).tenant ?? null) as any)
       setFeedSettings(fR.settings)
-      if ((pR as Record<string,unknown>).profile) setForm({
-        full_name:      ((pR as Record<string,unknown>).profile as ProfileRecord)?.full_name ?? '',
-        billing_email:  ((pR as Record<string,unknown>).profile as ProfileRecord)?.billing_email ?? '',
-        programme_name: ((pR as Record<string,unknown>).profile as ProfileRecord)?.programme_name ?? '',
-        university:     ((pR as Record<string,unknown>).profile as ProfileRecord)?.university ?? '',
+      if ((pR as Record<string,unknown>).profile) setForm({  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        full_name:      String(((pR as Record<string,unknown>).profile as any)?.full_name ?? ''),
+        billing_email:  String(((pR as Record<string,unknown>).profile as any)?.billing_email ?? ''),
+        programme_name: String(((pR as Record<string,unknown>).profile as any)?.programme_name ?? ''),
+        university:     String(((pR as Record<string,unknown>).profile as any)?.university ?? ''),
         timezone:       ((pR as Record<string,unknown>).profile as ProfileRecord)?.timezone       ?? 'Europe/London',
         job_title:      ((pR as Record<string,unknown>).profile as ProfileRecord)?.job_title      ?? '',
         organisation:   ((pR as Record<string,unknown>).profile as ProfileRecord)?.organisation   ?? '',
@@ -522,7 +522,7 @@ export default function SettingsPage() {
                 ['Programme',profile?.programme_name ?? '—'],
                 ['University',profile?.university ?? '—'],
                 ['Timezone', profile?.timezone ?? 'Europe/London'],
-              ].map(([l,v]) => <Row key={l} label={l} value={v} />)}
+              ].map((row: any) => <Row key={String(row[0] ?? "")} label={String(row[0] ?? "")} value={String(row[1] ?? "")} />)}
               <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(true)} style={{ fontSize:12,marginTop:12,width:'100%' }}>✎ Edit profile</button>
             </div>
           )}
@@ -533,9 +533,9 @@ export default function SettingsPage() {
         <Section title="Plan & AI Credits">
           <div style={{ marginBottom:16 }}>
             <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:10 }}>
-              <span style={{ fontSize:22,fontWeight:800,color:'#a78bfa' }}>{planInfo.name}</span>
-              <span style={{ fontSize:11,padding:'2px 8px',borderRadius:20,background:'rgba(167,139,250,0.1)',color:'#a78bfa' }}>{tenant?.subscription_status ?? 'active'}</span>
-              <span style={{ fontSize:13,color:'var(--pios-muted)',marginLeft:'auto' }}>${planInfo.price}/mo</span>
+              <span style={{ fontSize:22,fontWeight:800,color:'#a78bfa' }}>{String(planInfo.name ?? "")}</span>
+              <span style={{ fontSize:11,padding:'2px 8px',borderRadius:20,background:'rgba(167,139,250,0.1)',color:'#a78bfa' }}>{String(tenant?.subscription_status ?? 'active')}</span>
+              <span style={{ fontSize:13,color:'var(--pios-muted)',marginLeft:'auto' }}>${String(planInfo.price ?? "")}/mo</span>
             </div>
             <div style={{ height:6,background:'var(--pios-surface2)',borderRadius:3,marginBottom:6 }}>
               <div style={{ height:'100%',width:`${creditsPct}%`,background:creditsPct>90?'#ef4444':creditsPct>70?'#f59e0b':'#a78bfa',borderRadius:3,transition:'width 0.3s' }} />
@@ -544,10 +544,10 @@ export default function SettingsPage() {
           </div>
           <div style={{ display:'flex',flexDirection:'column' as const,gap:8 }}>
             {Object.entries(PLANS).map(([key,p]) => (
-              <div key={key} style={{ padding:'10px 12px',borderRadius:8,background:plan===key?'rgba(167,139,250,0.08)':'var(--pios-surface2)',border:`1px solid ${plan===key?'rgba(167,139,250,0.3)':'transparent'}` }}>
+              <div key={String(key ?? "")} style={{ padding:'10px 12px',borderRadius:8,background:plan===key?'rgba(167,139,250,0.08)':'var(--pios-surface2)',border:`1px solid ${plan===key?'rgba(167,139,250,0.3)':'transparent'}` }}>
                 <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
                   <div>
-                    <span style={{ fontSize:13,fontWeight:600 }}>{p.name}</span>
+                    <span style={{ fontSize:13,fontWeight:600 }}>{String(p.name ?? "")}</span>
                     <span style={{ fontSize:11,color:'var(--pios-dim)',marginLeft:8 }}>{p.credits.toLocaleString()} AI credits</span>
                   </div>
                   {plan===key?<span style={{ fontSize:11,color:'#a78bfa',fontWeight:600 }}>Current</span>
@@ -578,7 +578,7 @@ export default function SettingsPage() {
               background: billingNotice.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
               color: billingNotice.ok ? '#22c55e' : '#ef4444',
               border: `1px solid ${billingNotice.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
-              {billingNotice.msg}
+              {String(billingNotice.msg ?? "")}
             </div>
           )}
         </Section>
@@ -596,8 +596,8 @@ export default function SettingsPage() {
             <div key={(i as Record<string,unknown>).name as string} style={{ padding:'10px 0',borderBottom:'1px solid var(--pios-border)' }}>
               <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
                 <div style={{ flex:1,minWidth:0 }}>
-                  <div style={{ fontSize:13,fontWeight:500,marginBottom:2 }}>{i.name}</div>
-                  <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{i.detail}</div>
+                  <div style={{ fontSize:13,fontWeight:500,marginBottom:2 }}>{String(i.name ?? "")}</div>
+                  <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{String(i.detail ?? "")}</div>
                 </div>
                 <span style={{ fontSize:11,padding:'3px 10px',borderRadius:20,background:i.connected?'rgba(34,197,94,0.1)':'rgba(255,255,255,0.05)',color:i.connected?'#22c55e':'var(--pios-dim)',flexShrink:0,marginLeft:12 }}>
                   {i.connected?'Connected':'Not connected'}
@@ -621,12 +621,12 @@ export default function SettingsPage() {
               ].map(opt=>(
                 <label key={(opt as Record<string,unknown>).key as string} style={{ display:'flex',alignItems:'center',gap:10,cursor:'pointer',fontSize:13 }}>
                   <input type="checkbox" checked={!!(feedSettings as Record<string,unknown>)[opt.key]} onChange={e=>updateFeedSetting(opt.key, e.target.checked)} />
-                  {opt.label}
+                  {String(opt.label ?? "")}
                 </label>
               ))}
               <div>
                 <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:6 }}>Brief feed items count (how many top items to include)</div>
-                <input type="number" className="pios-input" min={1} max={10} value={feedSettings.brief_feed_count??3} onChange={e=>updateFeedSetting('brief_feed_count',parseInt(e.target.value)||3)} style={{ width:80 }} />
+                <input type="number" className="pios-input" min={1} max={10} value={Number(feedSettings.brief_feed_count??3)} onChange={e=>updateFeedSetting('brief_feed_count',parseInt(e.target.value)||3)} style={{ width:80 }} />
               </div>
               <Link href="/platform/command" style={{ fontSize:12,color:'#6c8eff',textDecoration:'none' }}>Manage feed topics →</Link>
             </div>
@@ -645,7 +645,7 @@ export default function SettingsPage() {
             ['Owner',           'VeritasIQ Technologies Ltd'],
             ['Migrations run',  '001–007'],
           ].map(([l,v])=>(
-            <div key={l} style={{ display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--pios-border)' }}>
+            <div key={String(l ?? "")} style={{ display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--pios-border)' }}>
               <span style={{ fontSize:12,color:'var(--pios-muted)' }}>{l}</span>
               <span style={{ fontSize:12,fontFamily:'monospace',color:'var(--pios-text)' }}>{v}</span>
             </div>

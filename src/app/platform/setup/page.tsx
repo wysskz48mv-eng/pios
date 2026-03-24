@@ -224,7 +224,7 @@ function CopyBtn({ text }: { text: string }) {
 
 export default function SetupGuidePage() {
   const [done, setDone] = useState<Set<string>>(new Set())
-  const [status, setStatus] = useState<unknown>(null)
+  const [status, setStatus] = useState<Record<string,any> | null>(null)
   const [statusLoading, setStatusLoading] = useState(true)
 
   useEffect(() => {
@@ -362,7 +362,7 @@ export default function SetupGuidePage() {
               {/* Step items — hidden when done */}
               {!isDone && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  {step.items.map((item, i) => (
+                  {step.items.map((item: any, i: number) => (
                     <div key={i} style={{ borderLeft: '2px solid rgba(255,255,255,0.06)', paddingLeft: 16 }}>
                       {item.label && <div style={{ fontSize: 12, fontWeight: 600, color: '#c8cedd', marginBottom: 6 }}>{item.label}</div>}
                       {item.key && (

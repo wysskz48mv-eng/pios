@@ -322,7 +322,7 @@ export default function AcademicPage() {
             {Boolean(aiReview.risk) && (
               <p style={{ fontSize:11, color:'#f59e0b', margin:'0 0 6px' }}>⚠ {String(aiReview.risk ?? "")}</p>
             )}
-            {Array.isArray(aiReview.immediate_actions) && (aiReview.immediate_actions as string[] | undefined).length > 0 && (
+            {Array.isArray(aiReview.immediate_actions) && ((aiReview.immediate_actions as string[]) ?? []).length > 0 && (
               <div style={{ marginTop:8 }}>
                 <div style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', marginBottom:4 }}>IMMEDIATE ACTIONS</div>
                 {(aiReview.immediate_actions as string[]).map((a:string, i:number) => (
@@ -396,10 +396,10 @@ export default function AcademicPage() {
                     <div style={{ display:'flex', gap:6 }}>
                       <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{String(m.module_type ?? "")}</span>
                       {m.credits&&<span style={{ fontSize:10, color:'var(--pios-dim)' }}>· {String(m.credits ?? "")} cr</span>}
-                      {m.deadline&&<span style={{ fontSize:10, color:'var(--pios-dim)' }}>· {formatRelative(m.deadline)}</span>}
+                      {m.deadline&&<span style={{ fontSize:10, color:'var(--pios-dim)' }}>· {formatRelative(String(m.deadline ?? ""))}</span>}
                     </div>
                   </div>
-                  <select value={String(m.status ?? "")} onChange={e=>updateModuleStatus(m.id,e.target.value)} style={{ fontSize:10, padding:'2px 6px', borderRadius:12, border:'none', cursor:'pointer', background:(STATUS_(COLOURS as any)[String(m.status ?? '')]??'var(--pios-dim)')+'20', color:STATUS_(COLOURS as any)[String(m.status ?? '')]??'var(--pios-dim)', fontWeight:600, outline:'none', flexShrink:0 }}>
+                  <select value={String(m.status ?? "")} onChange={e=>updateModuleStatus(m.id,e.target.value)} style={{ fontSize:10, padding:'2px 6px', borderRadius:12, border:'none', cursor:'pointer', background:(STATUS_COLOURS[String(m.status ?? '')]??'var(--pios-dim)')+'20', color:STATUS_COLOURS[String(m.status ?? '')]??'var(--pios-dim)', fontWeight:600, outline:'none', flexShrink:0 }}>
                     {['enrolled','in_progress','submitted','passed','failed','complete'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
                   </select>
                 </div>
@@ -521,8 +521,8 @@ function MilestonesSection() {
           {summary && (
             <div style={{ fontSize:11, color:'var(--pios-dim)', marginTop:2 }}>
               {Number(summary?.completed ?? 0)}/{Number(summary?.total ?? 0)} complete
-              {Boolean((summary?.overdue ?? 0) > 0) && <span style={{ color:'#f87171', marginLeft:6 }}>· {(summary?.overdue ?? 0)} overdue</span>}
-              {Boolean(summary?.next) && <span style={{ color:'var(--pios-muted)', marginLeft:6 }}>· next: {summary?.next?.title}</span>}
+              {Boolean(Number(summary?.overdue ?? 0) > 0) && <span style={{ color:'#f87171', marginLeft:6 }}>· {Number(summary?.overdue ?? 0)} overdue</span>}
+              {Boolean(summary?.next) && <span style={{ color:'var(--pios-muted)', marginLeft:6 }}>· next: {String((summary?.next as any)?.title ?? "")}</span>}
             </div>
           )}
         </div>
@@ -543,8 +543,8 @@ function MilestonesSection() {
           {milestones.map(m => (
             <div key={m.id as string} style={{
               padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)',
-              borderLeft:`3px solid ${MILESTONE_STATUS_(COLOURS as any)[String(m.status ?? '')]??'var(--pios-border)'}`,
-              opacity: ['waived','skipped'].includes(m.status) ? 0.5 : 1,
+              borderLeft:`3px solid ${MILESTONE_STATUS_COLOURS[String(m.status ?? '')]??'var(--pios-border)'}`,
+              opacity: ['waived','skipped'].includes(String(m.status ?? '')) ? 0.5 : 1,
             }}>
               <div style={{ fontSize:11, fontWeight:600, marginBottom:4, lineHeight:1.3 }}>{String(m.title ?? "")}</div>
               <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
@@ -553,8 +553,8 @@ function MilestonesSection() {
                   disabled={saving === m.id}
                   onChange={e => updateStatus(m.id, e.target.value)}
                   style={{ fontSize:9, padding:'2px 5px', borderRadius:8, border:'none',
-                    background:(MILESTONE_STATUS_(COLOURS as any)[String(m.status ?? '')]??'#64748b')+'22',
-                    color:MILESTONE_STATUS_(COLOURS as any)[String(m.status ?? '')]??'var(--pios-dim)',
+                    background:(MILESTONE_STATUS_COLOURS[String(m.status ?? '')]??'#64748b')+'22',
+                    color:MILESTONE_STATUS_COLOURS[String(m.status ?? '')]??'var(--pios-dim)',
                     fontWeight:700, cursor:'pointer', outline:'none', textTransform:'uppercase', letterSpacing:'0.04em' }}>
                   {['upcoming','in_progress','submitted','passed','failed','deferred','waived'].map(s =>
                     <option key={s} value={s}>{s.replace(/_/g,' ')}</option>
@@ -562,7 +562,7 @@ function MilestonesSection() {
                 </select>
                 {Boolean(m.target_date) && (
                   <span style={{ fontSize:9, color: m.is_overdue ? '#f87171' : 'var(--pios-dim)' }}>
-                    {m.is_overdue ? '⚠ ' : ''}{m.days_until !== null ? (m.days_until < 0 ? `${Math.abs(m.days_until)}d overdue` : `${String(m.days_until ?? "")}d`) : ''}
+                    {m.is_overdue ? '⚠ ' : ''}{(m.days_until ?? null) !== null ? (Number(m.days_until) < 0 ? `${Math.abs(Number(m.days_until))}d overdue` : `${Number(m.days_until)}d`) : ''}
                   </span>
                 )}
               </div>

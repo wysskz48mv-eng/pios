@@ -51,9 +51,9 @@ export async function GET(req: NextRequest) {
     const enriched = (data ?? []).map((m: Record<string, unknown>) => ({
       ...m,
       days_until:  m.target_date
-        ? Math.ceil((new Date(m.target_date).getTime() - now.getTime()) / 86400000)
+        ? Math.ceil((new Date(String(m.target_date ?? "")).getTime() - now.getTime()) / 86400000)
         : null,
-      is_overdue: m.target_date && new Date(m.target_date) < now
+      is_overdue: m.target_date && new Date(String(m.target_date ?? "")) < now
         && !['passed','waived','skipped'].includes(m.status),
     }))
 

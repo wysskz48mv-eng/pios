@@ -15,7 +15,7 @@ export const maxDuration = 60
 // body: { folder_id?: string, max_files?: number, apply_rules?: boolean }
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function getGoogleToken(supabase: unknown, userId: string): Promise<string | null> {
+async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
   const { data: profile } = await supabase.from('user_profiles')
     .select('google_access_token, google_refresh_token, google_token_expiry')
     .eq('id', userId).single()
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
     }
 
     // Build a classification map
-    const classMap = Object.fromEntries(classifications.map(c => [c.id, c]))
+    const classMap = Object.fromEntries(classifications.map(c => [(c as any)?.id, c]))
 
     // Get filing rules
     const { data: rules } = await supabase.from('filing_rules')

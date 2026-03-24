@@ -196,7 +196,7 @@ export async function GET() {
           date:              today,
           day:               new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
           has_brief:         !!brief,
-          brief_summary:     brief?.content ? String(brief.content ?? "").slice(0, 500) + (brief.content.length > 500 ? '…' : '') : null,
+          brief_summary:     brief?.content ? String(brief.content ?? "").slice(0, 500) + (((brief.content as any[])).length > 500 ? '…' : '') : null,
           brief_url:         '/api/brief',
         },
 
