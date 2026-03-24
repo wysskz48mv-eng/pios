@@ -1,3 +1,42 @@
+## [v2.4.1] — 2026-03-24 · Sprint 55 — M013 migration collision fix
+
+### Bug fix: M012 filename collision resolved
+- **Root cause:** Two migration files shared the number `012`:
+  `012_learning_hub_v2.sql` (CPD bodies + journal tracking) and
+  `012_trial_and_plan_status.sql` (tenants plan_status + seats_limit).
+  The `run-migration` route mapped `'012'` → trial SQL, so the
+  learning hub migration was never reachable from the admin UI.
+
+### Changes
+- **`013_learning_hub_v2.sql`** — New canonical migration file. Renamed
+  from `012_learning_hub_v2.sql`. Creates:
+  - `cpd_bodies` reference table (12 UK CPD bodies seeded: CIMA, ICAEW,
+    ICE, RICS, CIPD, NMC, SRA, ACCA, BCS, CIOB, RIBA, CMI)
+  - `learning_journal_entries` table (RLS, user isolation)
+  - Patches `learning_journeys` with `journal_entries`, `supervisor_approved`,
+    `supervisor_approved_at`, `target_completion_date` columns
+- **`/api/admin/run-migration`** — M013 entry added to MIGRATIONS object
+  with full idempotent SQL (all `IF NOT EXISTS` guarded)
+- **`/platform/admin`** — `MIGRATION_DETAILS` updated:
+  - `'012'` now correctly references `012_trial_and_plan_status.sql`
+  - `'013'` added referencing `013_learning_hub_v2.sql`
+- **`runMigration()` routing fix** — Admin page now correctly routes:
+  - IDs `001`–`007` → `/api/admin/migrate` (file-based runner)
+  - IDs `008`–`013` → `/api/admin/run-migration` (inline SQL via pg)
+  Previously **all** IDs were sent to `/api/admin/migrate` which only
+  knew 001–007 — meaning 008–012 silently failed or hit wrong SQL.
+- **`runAll()` fix** — Now calls both endpoints in sequence (legacy then
+  extended), returning combined results.
+- `/api/learning-journey` journal writes (`_pending: 'M012'`) will
+  resolve once M013 is run from `/platform/admin`.
+
+### Action required
+Run **M013** from `/platform/admin` → click Run next to migration 013.
+This creates `cpd_bodies` and `learning_journal_entries` and patches
+`learning_journeys` with the v2 fields.
+
+---
+
 ## [v2.3.0] — 2026-03-24 · Study Timer / Pomodoro
 
 ### Study Timer

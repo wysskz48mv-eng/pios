@@ -18,7 +18,8 @@ const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
   '009': { file: '009_multi_email_meeting_notes.sql', tables: ['connected_email_accounts','meeting_notes','email_items(patched)'] },
   '010': { file: '010_dba_milestones.sql',        tables: ['dba_milestones'] },
   '011': { file: '011_learning_journeys.sql',     tables: ['learning_journeys','learning_journey_steps','cpd_logs','programme_milestones'] },
-  '012': { file: '012_learning_hub_v2.sql',       tables: ['learning_journeys(patched)','cpd_bodies'] },
+  '012': { file: '012_trial_and_plan_status.sql',  tables: ['tenants(plan_status+seats_limit)','sync_plan_status trigger'] },
+  '013': { file: '013_learning_hub_v2.sql',        tables: ['cpd_bodies','learning_journal_entries','learning_journeys(patched)'] },
 }
 
 const SUPABASE_URL = 'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new'
@@ -57,7 +58,11 @@ export default function AdminPage() {
 
   async function runMigration(id: string) {
     setRunning(id)
-    const res = await fetch('/api/admin/migrate', {
+    // 001-007: legacy migrate route (file-based runner)
+    // 008-013: run-migration route (inline SQL via pg direct connection)
+    const legacyIds = ['001','002','003','004','005','006','007']
+    const endpoint  = legacyIds.includes(id) ? '/api/admin/migrate' : '/api/admin/run-migration'
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ migration: id }),
@@ -66,18 +71,27 @@ export default function AdminPage() {
     setResults(prev => ({ ...prev, [id]: d }))
     setExpanded(id)
     setRunning(null)
-    if (d.status === 'applied') loadStatus()
+    if (d.status === 'applied' || d.success) loadStatus()
   }
 
   async function runAll() {
     setRunning('all')
-    const res = await fetch('/api/admin/migrate', {
+    // Run legacy (001-007) then extended (008-013) migrations in sequence
+    const legacyRes = await fetch('/api/admin/migrate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ run_all: true }),
     })
-    const d = await res.json()
-    setResults(prev => ({ ...prev, all: d }))
+    const legacyData = await legacyRes.json()
+
+    const extRes = await fetch('/api/admin/run-migration', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ migration: 'all' }),
+    })
+    const extData = await extRes.json()
+
+    setResults(prev => ({ ...prev, all: { legacy: legacyData, extended: extData } }))
     setRunning(null)
     loadStatus()
   }
