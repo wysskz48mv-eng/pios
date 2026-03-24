@@ -178,6 +178,31 @@ export async function GET() {
   const fails         = checks.filter(c => c.status === 'fail').length
   const overallOk     = criticalFails.length === 0
 
+  checks.push(await runCheck('db_ip_vault', 'IP Vault table (M019)', false, async () => {
+    const { error } = await (supabase as any).from('ip_assets').select('id').limit(1)
+    return error ? { ok: false, detail: 'Run M019 migration: ' + error.message, warn: true }
+                 : { ok: true, detail: 'ip_assets table accessible' }
+  }))
+
+  checks.push(await runCheck('db_contracts', 'Contract Register (M019)', false, async () => {
+    const { error } = await (supabase as any).from('contracts').select('id').limit(1)
+    return error ? { ok: false, detail: 'Run M019 migration: ' + error.message, warn: true }
+                 : { ok: true, detail: 'contracts table accessible' }
+  }))
+
+  checks.push(await runCheck('db_knowledge', 'SE-MIL Knowledge Base (M020)', false, async () => {
+    const { error } = await (supabase as any).from('knowledge_entries').select('id').limit(1)
+    return error ? { ok: false, detail: 'Run M020 migration: ' + error.message, warn: true }
+                 : { ok: true, detail: 'knowledge_entries accessible' }
+  }))
+
+  checks.push(await runCheck('storage_bucket', 'pios-files storage bucket', false, async () => {
+    const { data, error } = await (supabase as any).storage.getBucket('pios-files')
+    if (error || !data) return { ok: false, detail: 'Create pios-files bucket in Storage dashboard', warn: true }
+    return { ok: true, detail: 'pios-files bucket exists — file uploads enabled' }
+  }))
+
+
   return NextResponse.json({
     ok:            overallOk,
     status:        overallOk ? (warns > 0 ? 'degraded' : 'healthy') : 'critical',
