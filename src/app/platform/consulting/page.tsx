@@ -166,6 +166,11 @@ export default function ConsultingPage() {
         <div className="grid grid-cols-5 gap-5">
           {/* Framework selector */}
           <div className="col-span-2 space-y-2">
+            {!selFramework && (
+              <div className="text-xs text-violet-400/70 mb-3 p-2 bg-violet-500/5 rounded-lg border border-violet-500/10">
+                Select a framework → describe your situation → click Run Analysis
+              </div>
+            )}
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-3">Select framework</p>
             {frameworks.map(fw => (
               <button key={fw.key} onClick={() => setSelFramework(fw.key)}

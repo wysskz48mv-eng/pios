@@ -99,6 +99,8 @@ export default function DashboardPage() {
     setReceipts48h(d.counts?.receipts_48h  ?? 0)
     setEmailAccounts(d.counts?.email_accounts ?? 0)
     setNotifs((nR.notifications ?? []).filter((n: Record<string, unknown>) => !n.read))
+    setPersona(d.persona ?? '')
+    if (d.exec) setExecSnap(d.exec)
     setLoading(false)
   }, [])
 
@@ -248,6 +250,37 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+
+      {/* ── First-time welcome ────────────────────────────── */}
+      {!loading && tasks.length === 0 && projects.length === 0 && (
+        <div style={{ background:'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(14,207,176,0.06))', border:'1px solid rgba(167,139,250,0.2)', borderRadius:14, padding:'20px 24px', marginBottom:16 }}>
+          <div style={{ fontSize:20, marginBottom:4 }}>👋 Welcome to PIOS</div>
+          <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:16, maxWidth:520 }}>
+            Your Personal Intelligent Operating System is ready. Here are 5 things to do first:
+          </p>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:8 }}>
+            {[
+              { icon:'🧬', title:'Train NemoClaw™ AI', desc:'Tell it your role, company & goals', href:'/platform/ai' },
+              { icon:'✓',  title:'Add your first task', desc:'Start with something due today', href:'/platform/tasks' },
+              { icon:'🎯', title:'Set an OKR', desc:'What are you trying to achieve this quarter?', href:'/platform/executive' },
+              { icon:'📅', title:'Connect Google Calendar', desc:'Sync your calendar for smart scheduling', href:'/platform/settings' },
+              { icon:'📄', title:'Generate your daily brief', desc:'Your cross-domain AI briefing', href:'/platform/dashboard#brief' },
+            ].map(item => (
+              <a key={item.href} href={item.href} style={{ textDecoration:'none', display:'flex', alignItems:'flex-start', gap:10, padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)', border:'1px solid var(--pios-border)', cursor:'pointer' }}>
+                <span style={{ fontSize:18, flexShrink:0 }}>{item.icon}</span>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-text)', marginBottom:2 }}>{item.title}</div>
+                  <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{item.desc}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+          <a href="/platform/setup" style={{ display:'inline-block', marginTop:14, fontSize:11, color:'var(--ai)', textDecoration:'underline' }}>
+            Or follow the full Setup Guide →
+          </a>
         </div>
       )}
 
