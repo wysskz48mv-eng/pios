@@ -44,7 +44,7 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20 }}>
           <div style={{ flex:1,minWidth:0 }}>
             {editing?<input className="pios-input" value={form.title} onChange={e=>f('title',e.target.value)} style={{ fontSize:17,fontWeight:700,marginBottom:6 }} autoFocus placeholder="Event title…" />
-              :<h2 style={{ fontSize:17,fontWeight:700,lineHeight:1.3,marginBottom:4 }}>{event.title}</h2>}
+              :<h2 style={{ fontSize:17,fontWeight:700,lineHeight:1.3,marginBottom:4 }}>{String(event.title ?? "")}</h2>}
             <div style={{ display:'flex',gap:8,alignItems:'center',flexWrap:'wrap' as const }}>
               <span style={{ fontSize:11,padding:'2px 8px',borderRadius:20,background:domainColour(event.domain||'personal')+'20',color:domainColour(event.domain||'personal'),fontWeight:600 }}>{domainLabel(event.domain||'personal')}</span>
               {event.source==='google'&&<span style={{ fontSize:11,color:'#4285F4' }}>📅 Google</span>}
@@ -166,16 +166,26 @@ function MonthGrid({ year,month,events,onDayClick,onEventClick }:{ year:number;m
   )
 }
 
+
+type CalEvent = {
+  id: string; title?: string; start_time?: string; end_time?: string
+  date?: string; meeting_type?: string; platform?: string
+  attendees?: string; location?: string; description?: string
+  calendar_id?: string; status?: string; domain?: string
+  all_day?: boolean; duration_mins?: number; color?: string
+  [key: string]: unknown
+}
+
 export default function CalendarPage() {
   const today=new Date()
   const [year,setYear]=useState(today.getFullYear())
   const [month,setMonth]=useState(today.getMonth())
-  const [events,setEvents]=useState<Record<string,unknown>[]>([])
+  const [events,setEvents]=useState<CalEvent[]>([])
   const [loading,setLoading]=useState(true)
   const [syncing,setSyncing]=useState(false)
   const [syncMsg,setSyncMsg]=useState<string|null>(null)
   const [googleConnected,setGoogleConnected]=useState(false)
-  const [selectedEvent,setSelectedEvent]=useState<Record<string,unknown>|null>(null)
+  const [selectedEvent,setSelectedEvent]=useState<CalEvent|null>(null)
   const [addingDate,setAddingDate]=useState<Date|null>(null)
   const [view,setView]=useState<'month'|'list'>('month')
 

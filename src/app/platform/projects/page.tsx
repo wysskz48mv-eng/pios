@@ -45,8 +45,8 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
     if (project.id) setEditing(false); else onClose()
   }
 
-  const projTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).project_id === project.id)
-  const doneTasks = projTasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).status === 'done').length
+  const projTasks = tasks.filter((t: Record<string,unknown>) => t.project_id === project.id)
+  const doneTasks = projTasks.filter((t: Record<string,unknown>) => t.status === 'done').length
 
   return (
     <div style={{ position:'fixed',inset:0,zIndex:200,display:'flex',justifyContent:'flex-end' }}>
@@ -55,7 +55,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start' }}>
           <div style={{ flex:1,minWidth:0 }}>
             {editing ? <input className="pios-input" value={form.title} onChange={e=>f('title',e.target.value)} style={{ fontSize:17,fontWeight:700,marginBottom:6 }} autoFocus placeholder="Project title…" />
-              : <h2 style={{ fontSize:17,fontWeight:700,lineHeight:1.3,marginBottom:4 }}>{project.title}</h2>}
+              : <h2 style={{ fontSize:17,fontWeight:700,lineHeight:1.3,marginBottom:4 }}>{String(project.title ?? "")}</h2>}
             {!editing && (
               <div style={{ display:'flex',gap:8,alignItems:'center',flexWrap:'wrap' as const }}>
                 <span style={{ fontSize:11,padding:'2px 8px',borderRadius:20,background:(STATUS_COLOUR[project.status]??'#64748b')+'20',color:STATUS_COLOUR[project.status]??'#64748b',fontWeight:600 }}>{project.status?.replace('_',' ')}</span>
@@ -102,7 +102,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
           </div>
         ) : (
           <>
-            {project.description && <div style={{ fontSize:13,color:'var(--pios-muted)',lineHeight:1.65,padding:'12px 14px',borderRadius:8,background:'var(--pios-surface2)' }}>{project.description}</div>}
+            {project.description && <div style={{ fontSize:13,color:'var(--pios-muted)',lineHeight:1.65,padding:'12px 14px',borderRadius:8,background:'var(--pios-surface2)' }}>{String(project.description ?? "")}</div>}
             <div>
               <div style={{ display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:12 }}>
                 <span style={{ color:'var(--pios-muted)' }}>Progress</span>
@@ -133,9 +133,9 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
                 <div style={{ fontSize:11,fontWeight:600,color:'var(--pios-muted)',marginBottom:8,textTransform:'uppercase' as const,letterSpacing:'0.06em' }}>Linked tasks ({projTasks.length})</div>
                 <div style={{ display:'flex',flexDirection:'column' as const,gap:5 }}>
                   {projTasks.slice(0,6).map(t=>(
-                    <div key={(t as Record<string,unknown>).id as string} style={{ display:'flex',gap:8,alignItems:'center',padding:'6px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
+                    <div key={t.id as string} style={{ display:'flex',gap:8,alignItems:'center',padding:'6px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
                       <span style={{ width:8,height:8,borderRadius:'50%',background:t.status==='done'?'#22c55e':t.status==='in_progress'?'#6c8eff':'#64748b',flexShrink:0,display:'inline-block' }} />
-                      <span style={{ fontSize:12,flex:1,textDecoration:t.status==='done'?'line-through':'none',color:t.status==='done'?'var(--pios-dim)':'var(--pios-text)' }}>{t.title}</span>
+                      <span style={{ fontSize:12,flex:1,textDecoration:t.status==='done'?'line-through':'none',color:t.status==='done'?'var(--pios-dim)':'var(--pios-text)' }}>{String(t.title ?? "")}</span>
                       {t.due_date&&<span style={{ fontSize:10,color:'var(--pios-dim)' }}>{formatRelative(t.due_date)}</span>}
                     </div>
                   ))}
@@ -154,13 +154,29 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
   )
 }
 
+
+type Project = {
+  id: string; name?: string; status?: string; deadline?: string
+  domain?: string; progress?: number; description?: string
+  colour?: string; client?: string; budget?: number | string
+  start_date?: string; end_date?: string; created_at?: string
+  task_count?: number; completed_tasks?: number
+}
+
+type ProjectTask = {
+  id: string; title?: string; status?: string; priority?: string
+  deadline?: string; domain?: string; project_id?: string
+  assigned_to?: string; created_at?: string; updated_at?: string
+  notes?: string; tags?: string
+}
+
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Record<string,unknown>[]>([])
-  const [tasks,    setTasks]    = useState<Record<string,unknown>[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [tasks,    setTasks]    = useState<ProjectTask[]>([])
   const [loading,  setLoading]  = useState(true)
   const [filter,   setFilter]   = useState<'active'|'all'|'completed'>('active')
   const [domainFilter, setDomainFilter] = useState('all')
-  const [selected, setSelected] = useState<Record<string,unknown>|null>(null)
+  const [selected, setSelected] = useState<Project|null>(null)
   const [adding,   setAdding]   = useState(false)
 
   const load = useCallback(async () => {
@@ -256,10 +272,10 @@ export default function ProjectsPage() {
             const pt = tasks.filter(t=>t.project_id===p.id)
             const done = pt.filter(t=>t.status==='done').length
             return (
-              <div key={(p as Record<string,unknown>).id as string} onClick={()=>setSelected(p)} className="pios-card" style={{ cursor:'pointer',borderTop:`3px solid ${p.colour||domainColour(p.domain)}`,padding:'14px 16px',transition:'border-color 0.15s' }}>
+              <div key={p.id as string} onClick={()=>setSelected(p as Project)} className="pios-card" style={{ cursor:'pointer',borderTop:`3px solid ${p.colour||domainColour(p.domain)}`,padding:'14px 16px',transition:'border-color 0.15s' }}>
                 <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:8 }}>
                   <div style={{ flex:1,minWidth:0 }}>
-                    <div style={{ fontSize:14,fontWeight:700,marginBottom:4,lineHeight:1.3 }}>{p.title}</div>
+                    <div style={{ fontSize:14,fontWeight:700,marginBottom:4,lineHeight:1.3 }}>{String(p.title ?? "")}</div>
                     <div style={{ display:'flex',gap:6,flexWrap:'wrap' as const,alignItems:'center' }}>
                       <span style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:domainColour(p.domain)+'20',color:domainColour(p.domain) }}>{domainLabel(p.domain)}</span>
                       <span style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:(STATUS_COLOUR[p.status]??'#64748b')+'20',color:STATUS_COLOUR[p.status]??'#64748b' }}>{p.status?.replace('_',' ')}</span>

@@ -61,13 +61,13 @@ function TaskDrawer({ task, onClose, onSave, onDelete }: { task:any; onClose:()=
             {editing ? (
               <input className="pios-input" value={form.title} onChange={e=>f('title',e.target.value)} style={{ fontSize:17, fontWeight:700, marginBottom:8 }} autoFocus />
             ) : (
-              <h2 style={{ fontSize:17, fontWeight:700, lineHeight:1.3, marginBottom:4, color:task.status==='done'?'var(--pios-dim)':'var(--pios-text)', textDecoration:task.status==='done'?'line-through':'none' }}>{task.title}</h2>
+              <h2 style={{ fontSize:17, fontWeight:700, lineHeight:1.3, marginBottom:4, color:task.status==='done'?'var(--pios-dim)':'var(--pios-text)', textDecoration:task.status==='done'?'line-through':'none' }}>{String(task.title ?? "")}</h2>
             )}
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' as const, alignItems:'center' }}>
-              <StatusPill status={task.status} />
-              <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:domainColour(task.domain)+'20', color:domainColour(task.domain), fontWeight:600 }}>{domainLabel(task.domain)}</span>
-              <PriorityDot priority={task.priority} />
-              <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{task.priority}</span>
+              <StatusPill status={String(task.status ?? "")} />
+              <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:domainColour(task.domain)+'20', color:domainColour(task.domain), fontWeight:600 }}>{domainLabel(String(task?.domain ?? ''))}</span>
+              <PriorityDot priority={String(task.priority ?? "")} />
+              <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{String(task.priority ?? "")}</span>
             </div>
           </div>
           <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--pios-muted)', fontSize:18, marginLeft:8 }}>✕</button>
@@ -138,18 +138,18 @@ function TaskDrawer({ task, onClose, onSave, onDelete }: { task:any; onClose:()=
 // ── AI Prioritise panel ────────────────────────────────────────────────────────
 function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }) {
   const [loading, setLoading] = useState(true)
-  const [result, setResult]   = useState<Record<string,unknown>|null>(null)
+  const [result, setResult]   = useState<DetectResult|null>(null)
 
   useEffect(() => {
-    const openTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).status !== 'done')
+    const openTasks = tasks.filter((t: Record<string,unknown>) => (t.status ?? '') !== 'done')
     fetch('/api/tasks', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'ai_prioritise', tasks: openTasks }),
-    }).then(r=>r.json()).then(d=>{ setResult(d); setLoading(false) }).catch(()=>setLoading(false))
+    }).then(r=>r.json()).then(d=>{ setResult(d as DetectResult); setLoading(false) }).catch(()=>setLoading(false))
   }, [])
 
-  const rankMap = Object.fromEntries((result?.prioritised ?? []).map((p: unknown) => [p.id, p]))
+  const rankMap = Object.fromEntries((result?.prioritised ?? []).map((p: {id?:string;reasoning?:string;priority?:string;title?:string}) => [String(p.id ?? ""), p]))
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:200, display:'flex', justifyContent:'flex-end' }}>
@@ -177,31 +177,31 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
               </div>
             )}
 
-            {result.blocked_risks?.length > 0 && (
+            {(result.blocked_risks?.length ?? 0) > 0 && (
               <div style={{ padding:'10px 14px', borderRadius:8, background:'rgba(249,115,22,0.08)', borderLeft:'3px solid #f97316', fontSize:12, color:'var(--pios-text)' }}>
                 <div style={{ fontWeight:600, color:'#f97316', marginBottom:4 }}>⚠ Blocking risks</div>
-                {result.blocked_risks.map((r:string,i:number) => <div key={i} style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5 }}>• {r}</div>)}
+                {result.blocked_risks?.map((r:string,i:number) => <div key={i} style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5 }}>• {r}</div>)}
               </div>
             )}
 
-            {result.prioritised?.length > 0 && (
+            {(result.prioritised?.length ?? 0) > 0 && (
               <div>
                 <div style={{ fontSize:11, fontWeight:600, color:'var(--pios-muted)', marginBottom:10, textTransform:'uppercase' as const, letterSpacing:'0.06em' }}>Priority order for today</div>
                 <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
-                  {result.prioritised.slice(0,10).map((p: unknown) => {
-                    const task = tasks.find(t=>t.id===p.id)
+                  {result.prioritised?.slice(0,10).map((p: {id?:string;urgency?:string;rank?:number;reasoning?:string}) => {
+                    const task = tasks.find(t => t.id === String(p.id ?? ''))
                     if (!task) return null
-                    const urgencyColor = { critical:'#ef4444', high:'#f59e0b', medium:'#6c8eff', low:'#64748b' }[p.urgency as string] ?? '#64748b'
+                    const urgencyColor = { critical:'#ef4444', high:'#f59e0b', medium:'#6c8eff', low:'#64748b' }[(p.urgency ?? '') as 'critical'|'high'|'medium'|'low'] ?? '#64748b'
                     return (
-                      <div key={(p as Record<string,unknown>).id as string} style={{ display:'flex', gap:12, padding:'10px 14px', borderRadius:8, background:'var(--pios-surface2)', alignItems:'flex-start' }}>
-                        <span style={{ fontSize:18, fontWeight:800, color:'var(--pios-dim)', minWidth:28, lineHeight:1.2 }}>#{p.rank}</span>
+                      <div key={String(p.id ?? "")} style={{ display:'flex', gap:12, padding:'10px 14px', borderRadius:8, background:'var(--pios-surface2)', alignItems:'flex-start' }}>
+                        <span style={{ fontSize:18, fontWeight:800, color:'var(--pios-dim)', minWidth:28, lineHeight:1.2 }}>#{Number(p.rank ?? 0)}</span>
                         <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{task.title}</div>
-                          <div style={{ display:'flex', gap:6, alignItems:'center', marginBottom:p.reasoning?4:0 }}>
-                            <span style={{ fontSize:10, padding:'1px 6px', borderRadius:10, background:urgencyColor+'20', color:urgencyColor, fontWeight:600 }}>{p.urgency}</span>
-                            <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{domainLabel(task.domain)}</span>
+                          <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{String(task.title ?? "")}</div>
+                          <div style={{ display:'flex', gap:6, alignItems:'center', marginBottom:Boolean(p.reasoning)?4:0 }}>
+                            <span style={{ fontSize:10, padding:'1px 6px', borderRadius:10, background:urgencyColor+'20', color:urgencyColor, fontWeight:600 }}>{String(p.urgency ?? "")}</span>
+                            <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{domainLabel(String(task?.domain ?? ''))}</span>
                           </div>
-                          {p.reasoning && <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5 }}>{p.reasoning}</div>}
+                          {Boolean(p.reasoning) && <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5 }}>{String(p.reasoning ?? "")}</div>}
                         </div>
                       </div>
                     )
@@ -219,14 +219,32 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
+
+type Task = {
+  id: string; title?: string; status?: string; priority?: string
+  deadline?: string; domain?: string; project_id?: string
+  project_name?: string; assigned_to?: string
+  created_at?: string; updated_at?: string; notes?: string
+  tags?: string; estimated_hours?: number; actual_hours?: number
+  due_date?: string; completed_at?: string
+}
+
+type DetectResult = {
+  detected?: boolean; message?: string; tasks?: Task[]
+  confidence?: number; source?: string
+  prioritised?: Array<{id:string;title?:string;priority?:string;reason?:string}>
+  focus_recommendation?: string
+  blocked_risks?: string[]
+}
+
 export default function TasksPage() {
-  const [tasks,      setTasks]      = useState<Record<string,unknown>[]>([])
+  const [tasks,      setTasks]      = useState<Task[]>([])
   const [loading,    setLoading]    = useState(true)
   const [domainFilter,  setDomainFilter]  = useState('all')
   const [sourceFilter,  setSourceFilter]  = useState('all')
   const [overdueOnly,   setOverdueOnly]   = useState(false)
   const [statusFilter, setStatusFilter] = useState('open')
-  const [selectedTask, setSelectedTask] = useState<Record<string,unknown>|null>(null)
+  const [selectedTask, setSelectedTask] = useState<Task|null>(null)
   const [showAI,     setShowAI]     = useState(false)
   const [showAdd,    setShowAdd]    = useState(false)
   const [saving,     setSaving]     = useState(false)
@@ -254,9 +272,9 @@ export default function TasksPage() {
     setShowAdd(false); setSaving(false); load()
   }
 
-  async function updateTask(id:string, updates: unknown) {
-    await fetch('/api/tasks', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, ...updates }) })
-    setTasks(prev => prev.map((t: Record<string,unknown>) => (t as Record<string,unknown>).id===id ? { ...t, ...updates } : t))
+  async function updateTask(id:string, updates: Partial<Task> | Record<string,unknown> | unknown) {
+    await fetch('/api/tasks', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, ...(updates as Record<string,unknown>) }) })
+    setTasks(prev => prev.map((t: Task) => t.id===id ? { ...t, ...(updates as Record<string,unknown>) } as Task : t))
   }
 
   async function cycleStatus(id:string, current:string) {
@@ -266,21 +284,21 @@ export default function TasksPage() {
 
   async function deleteTask(id:string) {
     await fetch(`/api/tasks?id=${id}`, { method:'DELETE' })
-    setTasks(prev => prev.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).id !== id))
+    setTasks(prev => prev.filter((t: Record<string,unknown>) => t.id !== id))
   }
 
   // Filter displayed tasks
   const visibleTasks = tasks.filter(t => {
-    if (statusFilter === 'open')    return ['todo','in_progress','blocked'].includes(t.status)
-    if (statusFilter === 'done')    return t.status === 'done'
-    if (statusFilter === 'overdue') return t.due_date != null && t.due_date < today && t.status !== 'done'
-    if (statusFilter !== 'all')     return t.status === statusFilter
+    if (statusFilter === 'open')    return ['todo','in_progress','blocked'].includes(String(t.status ?? ''))
+    if (statusFilter === 'done')    return (t.status ?? '') === 'done'
+    if (statusFilter === 'overdue') return t.due_date != null && t.due_date < today && (t.status ?? '') !== 'done'
+    if (statusFilter !== 'all')     return String(t.status ?? '') === statusFilter
     return true
   })
 
   // Group by status for kanban
   const grouped = STATUSES.reduce((acc,s) => { acc[s] = visibleTasks.filter(t=>t.status===s); return acc }, {} as Record<string,any[]>)
-  const openCount    = tasks.filter(t=>['todo','in_progress','blocked'].includes(t.status)).length
+  const openCount    = tasks.filter(t=>['todo','in_progress','blocked'].includes(String(t.status ?? ''))).length
   const criticalCount = tasks.filter(t=>t.priority==='critical' && t.status!=='done').length
   const today = new Date().toISOString().slice(0,10)
   const overdueCount  = tasks.filter(t=>t.due_date && t.due_date < today && t.status!=='done').length
@@ -381,9 +399,9 @@ export default function TasksPage() {
         // Done list
         <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
           {visibleTasks.map(t => (
-            <div key={(t as Record<string,unknown>).id as string} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10, opacity:0.65, cursor:'pointer' }} onClick={()=>setSelectedTask(t)}>
+            <div key={t.id as string} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10, opacity:0.65, cursor:'pointer' }} onClick={()=>setSelectedTask(t as Task)}>
               <span style={{ fontSize:14, color:'#22c55e' }}>✓</span>
-              <span style={{ fontSize:13, textDecoration:'line-through', color:'var(--pios-dim)', flex:1 }}>{t.title}</span>
+              <span style={{ fontSize:13, textDecoration:'line-through', color:'var(--pios-dim)', flex:1 }}>{String(t.title ?? "")}</span>
               <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{t.completed_at?new Date(t.completed_at).toLocaleDateString('en-GB'):''}</span>
             </div>
           ))}
@@ -403,29 +421,29 @@ export default function TasksPage() {
                 </div>
                 <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
                   {col.map(t => (
-                    <div key={(t as Record<string,unknown>).id as string} style={{
+                    <div key={t.id as string} style={{
                       padding:'12px 14px', borderRadius:8, background:'var(--pios-surface)',
                       border:`1px solid ${t.priority==='critical'?'rgba(239,68,68,0.3)':'var(--pios-border)'}`,
                       cursor:'pointer', transition:'border-color 0.15s',
                     }}
-                    onClick={()=>setSelectedTask(t)}>
+                    onClick={()=>setSelectedTask(t as Task)}>
                       <div style={{ display:'flex', alignItems:'flex-start', gap:8, marginBottom:6 }}>
-                        <PriorityDot priority={t.priority} />
-                        <span style={{ fontSize:13, fontWeight:500, lineHeight:1.3, flex:1 }}>{t.title}</span>
+                        <PriorityDot priority={String(t.priority ?? "")} />
+                        <span style={{ fontSize:13, fontWeight:500, lineHeight:1.3, flex:1 }}>{String(t.title ?? "")}</span>
                       </div>
                       <div style={{ display:'flex', gap:6, flexWrap:'wrap' as const, alignItems:'center' }}>
-                        <span style={{ fontSize:10, padding:'1px 6px', borderRadius:3, background:domainColour(t.domain)+'20', color:domainColour(t.domain) }}>
-                          {domainLabel(t.domain)}
+                        <span style={{ fontSize:10, padding:'1px 6px', borderRadius:3, background:domainColour(String(t.domain ?? ''))+'20', color:domainColour(String(t.domain ?? '')) }}>
+                          {domainLabel(String(t.domain ?? ''))}
                         </span>
                         {t.due_date && (
                           <span style={{ fontSize:10, color: new Date(t.due_date) < new Date() ? '#ef4444' : 'var(--pios-dim)' }}>
-                            {formatRelative(t.due_date)}
+                            {formatRelative(String(t.due_date ?? ''))}
                           </span>
                         )}
                         {t.description && <span style={{ fontSize:10, color:'var(--pios-dim)' }}>📝</span>}
                       </div>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8 }}>
-                        <StatusPill status={t.status} onClick={()=>cycleStatus(t.id,t.status)} />
+                        <StatusPill status={String(t.status ?? "")} onClick={()=>cycleStatus(t.id,t.status)} />
                         <button onClick={e=>{e.stopPropagation?.();deleteTask(t.id)}} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--pios-dim)', fontSize:13, padding:'0 2px', lineHeight:1 }}>✕</button>
                       </div>
                     </div>

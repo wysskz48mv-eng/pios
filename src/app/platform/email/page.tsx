@@ -18,9 +18,11 @@ function priorityColor(score: number) {
 
 type EmailItem = {
   id: string; subject?: string; from?: string; to?: string
-  date?: string; body?: string; summary?: string; category?: string
-  priority_label?: string; priority_score?: number
+  date?: string; body?: string; snippet?: string; summary?: string
+  category?: string; priority_label?: string; priority_score?: number
   received_at?: string; provider?: string; is_read?: boolean
+  thread_id?: string; labels?: string[]; ai_category?: string
+  sentiment?: string; action_items?: string
   [key: string]: unknown
 }
 
@@ -31,12 +33,12 @@ type EmailAccount = {
 
 export default function EmailPage() {
   const [emails,   setEmails]   = useState<Record<string,unknown>[]>([])
-  const [selected, setSelected] = useState<Record<string,unknown>|null>(null)
+  const [selected, setSelected] = useState<EmailItem|null>(null)
   const [loading,  setLoading]  = useState(true)
   const [syncing,  setSyncing]  = useState(false)
   const [filter,      setFilter]      = useState('all')
   const [inboxFilter, setInboxFilter] = useState('all')
-  const [accounts,    setAccounts]    = useState<Record<string,unknown>[]>([])
+  const [accounts,    setAccounts]    = useState<EmailAccount[]>([])
   const [replyText, setReplyText] = useState('')
   const [replying,  setReplying]  = useState(false)
   const [showCompose, setShowCompose] = useState(false)
@@ -92,7 +94,7 @@ export default function EmailPage() {
       })
       const d = await res.json()
       if (d.sent) {
-        setSelected((p: unknown) => ({ ...p, status: 'actioned' }))
+        setSelected(p => p ? ({ ...p, status: 'actioned' } as EmailItem) : null)
         setEmails(prev => prev.map((e: Record<string,unknown>) => e.id === selected.id ? { ...(e as Record<string,unknown>), status: 'actioned' } : e))
         setReplyText('')
       } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
@@ -131,7 +133,7 @@ export default function EmailPage() {
       title: `Reply to: ${String(selected.subject ?? "")}`,
       domain: selected.domain_tag || 'personal',
       priority: (Number(Number(selected.priority_score ?? 0) ?? 0)) >= 7 ? 'high' : 'medium',
-      description: `From: ${selected.sender_name} <${selected.sender_email}>\n\n${selected.snippet?.slice(0,200)}`,
+      description: `From: ${String(selected.sender_name ?? "")} <${String(selected.sender_email ?? "")}>\n\n${selected.snippet?.slice(0,200)}`,
     })})
     setCreatingTask(false)
     setBanner({msg:'✓ Task created — check your Tasks page.', ok:true})
@@ -228,15 +230,15 @@ export default function EmailPage() {
                   <div style={{ flex:1,minWidth:0 }}>
                     <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:2 }}>
                       {(Number(Number(e.priority_score ?? 0) ?? 0))>=6&&<div style={{ width:6,height:6,borderRadius:'50%',background:priorityColor((Number(Number(e.priority_score ?? 0) ?? 0))),flexShrink:0 }} />}
-                      <span style={{ fontSize:12,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const }}>{e.sender_name||e.sender_email}</span>
+                      <span style={{ fontSize:12,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const }}>{String(e.sender_name ?? e.sender_email ?? "")}</span>
                       {e.status==='actioned'&&<span style={{ fontSize:9,color:'#22c55e',marginLeft:2 }}>✓</span>}
                     </div>
                     <div style={{ fontSize:12,color:'var(--pios-muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const }}>{String(e.subject ?? "")}</div>
-                    {e.action_required&&<div style={{ fontSize:11,color:'#6c8eff',marginTop:3 }}>⚡ {e.action_required}</div>}
+                    {Boolean(e.action_required)&&<div style={{ fontSize:11,color:'#6c8eff',marginTop:3 }}>⚡ {String(e.action_required ?? "")}</div>}
                   </div>
                   <div style={{ textAlign:'right' as const,flexShrink:0 }}>
-                    {e.inbox_label&&<span style={{ fontSize:9,padding:'1px 5px',borderRadius:3,background:'rgba(108,142,255,0.12)',color:'#6c8eff',marginRight:4 }}>{e.inbox_label}</span>}{e.domain_tag&&<div style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:`${domainColour(e.domain_tag)}20`,color:domainColour(e.domain_tag),marginBottom:4,display:'inline-block' }}>{DOMAIN_LABELS[e.domain_tag]??e.domain_tag}</div>}
-                    <div style={{ fontSize:10,color:'var(--pios-dim)' }}>{e.received_at?formatRelative(e.received_at):''}</div>
+                    {Boolean(e.inbox_label)&&<span style={{ fontSize:9,padding:'1px 5px',borderRadius:3,background:'rgba(108,142,255,0.12)',color:'#6c8eff',marginRight:4 }}>{String(e.inbox_label ?? "")}</span>}{Boolean(e.domain_tag)&&<div style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:`${domainColour(String(e.domain_tag ?? ''))}20`,color:domainColour(String(e.domain_tag ?? '')),marginBottom:4,display:'inline-block' }}>{(DOMAIN_LABELS as Record<string,string>)[String(e.domain_tag ?? "")] ?? String(e.domain_tag ?? "")}</div>}
+                    <div style={{ fontSize:10,color:'var(--pios-dim)' }}>{e.received_at?formatRelative(String(e.received_at ?? '')):''}</div>
                   </div>
                 </div>
               </div>
@@ -248,7 +250,7 @@ export default function EmailPage() {
             <div className="pios-card" style={{ padding:20,overflowY:'auto' as const,maxHeight:'80vh' }}>
               <div style={{ marginBottom:14,paddingBottom:14,borderBottom:'1px solid var(--pios-border)' }}>
                 <div style={{ fontSize:16,fontWeight:700,marginBottom:4 }}>{String(selected.subject ?? "")}</div>
-                <div style={{ fontSize:12,color:'var(--pios-muted)',marginBottom:8 }}>From: {selected.sender_name} &lt;{selected.sender_email}&gt;</div>
+                <div style={{ fontSize:12,color:'var(--pios-muted)',marginBottom:8 }}>From: {String(selected.sender_name ?? "")} &lt;{String(selected.sender_email ?? "")}&gt;</div>
                 {/* Action buttons */}
                 <div style={{ display:'flex',gap:8,flexWrap:'wrap' as const }}>
                   <button onClick={extractInvoice} disabled={extracting} style={{ fontSize:11,padding:'4px 10px',borderRadius:6,border:'1px solid #f59e0b40',background:'none',cursor:'pointer',color:'#f59e0b' }}>
@@ -263,36 +265,36 @@ export default function EmailPage() {
                 </div>
               </div>
 
-              {selected.action_required&&(
+              {Boolean(selected.action_required)&&(
                 <div style={{ padding:'10px 12px',borderRadius:8,background:'rgba(108,142,255,0.08)',marginBottom:12 }}>
                   <div style={{ fontSize:11,fontWeight:600,color:'#6c8eff',marginBottom:4 }}>⚡ AI Action Required</div>
-                  <div style={{ fontSize:12 }}>{selected.action_required}</div>
+                  <div style={{ fontSize:12 }}>{String(selected.action_required ?? "")}</div>
                 </div>
               )}
 
-              {selected.ai_draft_reply&&(
+              {Boolean(selected.ai_draft_reply)&&(
                 <div style={{ marginBottom:14 }}>
                   <div style={{ fontSize:11,fontWeight:600,color:'var(--pios-muted)',marginBottom:6,display:'flex',alignItems:'center',gap:4 }}>
                     <span style={{ width:6,height:6,borderRadius:'50%',background:'var(--ai)',display:'inline-block' }} />
                     AI Draft Reply
                   </div>
                   <div style={{ padding:'10px 12px',borderRadius:8,background:'var(--pios-surface2)',fontSize:12,lineHeight:1.65,whiteSpace:'pre-wrap' as const,cursor:'pointer' }}
-                    onClick={()=>setReplyText(selected.ai_draft_reply)}>
-                    {selected.ai_draft_reply}
+                    onClick={()=>setReplyText(String(selected.ai_draft_reply ?? ""))}>
+                    {String(selected.ai_draft_reply ?? "")}
                     <div style={{ fontSize:10,color:'#6c8eff',marginTop:6 }}>Click to use as reply →</div>
                   </div>
                 </div>
               )}
 
               <div style={{ fontSize:13,lineHeight:1.75,color:'var(--pios-muted)',marginBottom:16,whiteSpace:'pre-wrap' as const }}>
-                {selected.body_text||selected.snippet}
+                {String(selected.body_text ?? selected.snippet ?? "")}
               </div>
 
               {/* Reply box */}
               <div style={{ borderTop:'1px solid var(--pios-border)',paddingTop:14 }}>
                 <div style={{ fontSize:11,fontWeight:600,color:'var(--pios-muted)',marginBottom:8 }}>Reply</div>
                 <textarea value={replyText} onChange={e=>setReplyText(e.target.value)} className="pios-input"
-                  placeholder={`Reply to ${selected.sender_name}…`} rows={4}
+                  placeholder={`Reply to ${String(selected.sender_name ?? "")}…`} rows={4}
                   style={{ width:'100%',resize:'vertical' as const,fontFamily:'inherit',marginBottom:8 }} />
                 <div style={{ display:'flex',gap:8,alignItems:'center' }}>
                   <button className="pios-btn pios-btn-primary" onClick={sendReply} disabled={replying||!replyText.trim()} style={{ fontSize:12 }}>

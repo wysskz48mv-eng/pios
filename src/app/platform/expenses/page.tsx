@@ -113,12 +113,12 @@ export default function ExpensesPage() {
     })
     if (res.ok) {
       const { expense } = await res.json()
-      setExpenses(p => p.map((e: Record<string,unknown>) => e.id === editing ? expense : e))
+      setExpenses(p => p.map((e: Expense) => e.id === editing ? expense as Expense : e))
     }
     setEditing(null); setEditForm(null)
   }
 
-  function startEdit(e: unknown) {
+  function startEdit(e: Expense) {
     setEditing(e.id)
     setEditForm({ description:e.description, amount:String(e.amount), category:e.category||'', domain:e.domain||'personal', date:e.date||'', currency:e.currency||'GBP', billable:!!e.billable, client:e.client||'', notes:e.notes||'' })
   }
@@ -141,28 +141,28 @@ export default function ExpensesPage() {
 
   // Filter
   const filtered = expenses.filter(e => {
-    if (taxYear !== 'all' && getTaxYear(e.date) !== taxYear) return false
+    if (taxYear !== 'all' && getTaxYear(String(e.date ?? "")) !== taxYear) return false
     if (domainFilter !== 'all' && e.domain !== domainFilter) return false
     return true
   })
 
   // Tax years available
-  const taxYears = Array.from(new Set(expenses.map(e => getTaxYear(e.date)))).sort().reverse()
+  const taxYears = Array.from(new Set(expenses.map(e => getTaxYear(String(e.date ?? ""))))).sort().reverse()
 
   // Summaries
-  const total      = filtered.reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
-  const thisMonth  = filtered.filter(e=>e.date?.startsWith(new Date().toISOString().slice(0,7))).reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
-  const billable   = filtered.filter(e=>e.billable).reduce((s,e)=>s+(parseFloat(e.amount)||0),0)
+  const total      = filtered.reduce((s,e)=>s+(Number(e.amount ?? 0)||0),0)
+  const thisMonth  = filtered.filter(e=>e.date?.startsWith(new Date().toISOString().slice(0,7))).reduce((s,e)=>s+(Number(e.amount ?? 0)||0),0)
+  const billable   = filtered.filter(e=>e.billable).reduce((s,e)=>s+(Number(e.amount ?? 0)||0),0)
 
   // By category
   const byCat: Record<string,number> = {}
-  filtered.forEach(e => { const c=e.category||'other'; byCat[c]=(byCat[c]||0)+(parseFloat(e.amount)||0) })
-  const catEntries = Object.entries(byCat).sort((a,b)=>b[1]-a[1 as string])
+  filtered.forEach((e: Expense) => { const c=e.category||'other'; byCat[c]=(byCat[c]||0)+(Number(e.amount ?? 0)||0) })
+  const catEntries = Object.entries(byCat).sort((a,b)=>b[1]-a[1])
   const maxCat = catEntries[0]?.[1] ?? 1
 
   // By domain
   const byDomain: Record<string,number> = {}
-  filtered.forEach(e => { byDomain[e.domain]=(byDomain[e.domain]||0)+(parseFloat(e.amount)||0) })
+  filtered.forEach((e: Expense) => { const d=String(e.domain??'other'); byDomain[d]=(byDomain[d]||0)+(Number(e.amount??0)||0) })
 
   const currency = filtered[0]?.currency ?? 'GBP'
   const fmt = (n:number) => `${currency} ${n.toFixed(2)}`
@@ -255,7 +255,7 @@ export default function ExpensesPage() {
           <div style={{ fontSize:13,fontWeight:700,marginBottom:14 }}>By domain</div>
           {Object.keys(byDomain).length===0 ? <p style={{ fontSize:12,color:'var(--pios-dim)' }}>No data</p> : (
             <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
-              {Object.entries(byDomain).sort((a,b)=>b[1]-a[1 as string]).map(([dom,amt])=>(
+              {Object.entries(byDomain).sort((a,b)=>b[1]-a[1]).map(([dom,amt])=>(
                 <div key={dom}>
                   <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
                     <span style={{ fontSize:12,fontWeight:500 }}>{domainLabel(dom)}</span>
@@ -298,12 +298,12 @@ export default function ExpensesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((e,i)=>(
+              {filtered.map((e: Expense,i)=>(
                 <tr key={e.id as string} style={{ borderBottom:'1px solid var(--pios-border)',background:i%2===0?'transparent':'rgba(255,255,255,0.01)' }}>
                   <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)',whiteSpace:'nowrap' as const }}>{String(e.date ?? "")}</td>
                   <td style={{ padding:'10px 14px',fontSize:13 }}>
                     {editing === e.id ? (
-                      <input value={editForm.description} onChange={ev=>setEditForm((p: unknown)=>({...p,description:ev.target.value}))}
+                      <input value={String(editForm?.description ?? '')} onChange={ev=>setEditForm(p=>({...p,description:ev.target.value}))}
                         className="pios-input" style={{ fontSize:12,padding:'4px 8px',width:'100%' }} autoFocus onKeyDown={ev=>{if(ev.key==='Enter')saveEdit();if(ev.key==='Escape'){setEditing(null);setEditForm(null)}}} />
                     ) : (
                       <span onClick={()=>startEdit(e)} style={{ cursor:'text' }} title="Click to edit">{String(e.description ?? "")}</span>
@@ -312,7 +312,7 @@ export default function ExpensesPage() {
                   </td>
                   <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)' }}>{e.category?.replace('_',' ')||'—'}</td>
                   <td style={{ padding:'10px 14px' }}>
-                    <span style={{ fontSize:10,padding:'2px 8px',borderRadius:20,background:`${domainColour(e.domain)}20`,color:domainColour(e.domain) }}>{domainLabel(e.domain)}</span>
+                    <span style={{ fontSize:10,padding:'2px 8px',borderRadius:20,background:`${domainColour(String(e.domain ?? ''))}20`,color:domainColour(String(e.domain ?? '')) }}>{domainLabel(String(e.domain ?? ''))}</span>
                   </td>
                   <td style={{ padding:'10px 14px',fontSize:11,color:'var(--pios-dim)',maxWidth:200 }}><span style={{ overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'block' }}>{e.notes||'—'}</span></td>
                   <td style={{ padding:'10px 14px',fontSize:13,fontWeight:700,whiteSpace:'nowrap' as const }}>{String(e.currency ?? "")} {Number(e.amount ?? 0).toFixed(2)}</td>
