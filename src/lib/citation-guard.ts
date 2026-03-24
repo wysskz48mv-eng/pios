@@ -86,10 +86,10 @@ async function checkCrossRef(doi: string): Promise<{
     const w = data.message
     return {
       found:   true,
-      title:   w.title?.[0],
-      authors: w.author?.slice(0,4).map((a: Record<string, unknown>) => `${a.family ?? ''}, ${(a.given ?? '')[0] ?? ''}.`.trim()) ?? [],
-      year:    w.published?.['date-parts']?.[0]?.[0],
-      journal: w['container-title']?.[0],
+      title:   (w.title as any)?.[0],
+      authors: w.author?.slice(0,4).map((a: Record<string, unknown>) => `${a.family ?? ''}, ${(String(a.given ?? '') || '')[0] ?? ''}.`.trim()) ?? [],
+      year:    (w.published as any)?.['date-parts']?.[0]?.[0],
+      journal: (w as any)['container-title']?.[0],
     }
   } catch {
     return { found: false }

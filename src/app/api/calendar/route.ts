@@ -15,7 +15,7 @@ export const maxDuration = 30
 // POST { action:'ai_brief', id }    — generate pre-meeting AI brief
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function getGoogleToken(supabase: unknown, userId: string): Promise<string | null> {
+async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
   const { data: profile } = await supabase.from('user_profiles')
     .select('google_access_token, google_refresh_token, google_token_expiry')
     .eq('id', userId).single()

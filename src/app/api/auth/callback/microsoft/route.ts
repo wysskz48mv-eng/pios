@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  const { access_token, refresh_token, expires_in, id_token } = tokenData
+  const { access_token, refresh_token, expires_in, id_token } = tokenData as any
 
   // ── Fetch Microsoft Graph /me profile ────────────────────────────────────
   let msProfile: unknown

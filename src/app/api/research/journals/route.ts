@@ -28,7 +28,7 @@ export async function GET() {
 
     return NextResponse.json({ journals: data ?? [] })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 
@@ -107,10 +107,10 @@ Return ONLY valid JSON:
       }
 
       // Update DB with word limit if we have it
-      if (guidelines.word_limit && body.id) {
+      if ((guidelines as any)?.word_limit && body.id) {
         await supabase.from('journal_watchlist').update({
-          word_limit: guidelines.word_limit,
-          review_process: guidelines.blind_review?.includes('double') ? 'double_blind' : 'single_blind',
+          word_limit: (guidelines as any)?.word_limit,
+          review_process: (guidelines as any)?.blind_review?.includes('double') ? 'double_blind' : 'single_blind',
           updated_at: new Date().toISOString(),
         }).eq('id', body.id).eq('user_id', user.id)
       }
@@ -125,6 +125,6 @@ Return ONLY valid JSON:
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: unknown) {
     console.error('/api/research/journals:', err)
-    return NextResponse.json({ error: err.message ?? 'Request failed' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Request failed' }, { status: 500 })
   }
 }

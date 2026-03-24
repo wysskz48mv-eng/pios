@@ -29,7 +29,7 @@ export const maxDuration = 60
 export async function POST(request: Request) {
   try {
     // Rate limiting — ISO 27001 A.12.6
-    const ip = (request.headers as Record<string, {get?:(h:string)=>string|null}>).get?.('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
     const rl = await checkRateLimit({ key: `pios:ai:${ip}`, ...LIMITS.ai })
     if (rl) return rl
     const supabase = createClient()

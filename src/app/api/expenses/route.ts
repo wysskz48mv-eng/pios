@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
 
     // Filter by tax year client-side (derived field)
     if (taxYear && taxYear !== 'all') {
-      expenses = expenses.filter((e: Record<string, unknown>) => getTaxYear(e.date) === taxYear)
+      expenses = expenses.filter((e: Record<string, unknown>) => getTaxYear(String(e.date ?? "")) === taxYear)
     }
 
     // ── Summary stats ─────────────────────────────────────────────────────────
@@ -78,10 +78,10 @@ export async function GET(req: NextRequest) {
 
     for (const e of (expenses as any[])) {
       const amt = parseFloat(e.amount) || 0
-      if (e.category) byCategory[e.category] = (byCategory[e.category] ?? 0) + amt
-      if (e.domain)   byDomain[e.domain]     = (byDomain[e.domain]   ?? 0) + amt
-      if (e.currency) byCurrency[e.currency] = (byCurrency[e.currency] ?? 0) + amt
-      const ty = getTaxYear(e.date)
+      if (e.category) byCategory[String(e.category ?? "")] = (byCategory[e.category] ?? 0) + amt
+      if (e.domain)   byDomain[String(e.domain ?? "")]     = (byDomain[e.domain]   ?? 0) + amt
+      if (e.currency) byCurrency[String(e.currency ?? "")] = (byCurrency[e.currency] ?? 0) + amt
+      const ty = getTaxYear(String(e.date ?? ""))
       byTaxYear[ty] = (byTaxYear[ty] ?? 0) + amt
     }
 
@@ -139,15 +139,15 @@ export async function POST(req: NextRequest) {
       const header = ['date', 'description', 'amount', 'currency', 'category', 'domain', 'billable', 'client', 'notes', 'tax_year'].join(',')
       const lines  = rows.map((e: Record<string, unknown>) => [
         e.date ?? '',
-        `"${(e.description ?? '').replace(/"/g, '""')}"`,
+        `"${String(e.description ?? '').replace(/"/g, '""')}"`,
         e.amount ?? 0,
         e.currency ?? 'GBP',
         e.category ?? '',
         e.domain ?? '',
         e.billable ? 'yes' : 'no',
-        `"${(e.client ?? '').replace(/"/g, '""')}"`,
-        `"${(e.notes ?? '').replace(/"/g, '""')}"`,
-        getTaxYear(e.date ?? new Date().toISOString()),
+        `"${String(e.client ?? '').replace(/"/g, '""')}"`,
+        `"${String(e.notes ?? '').replace(/"/g, '""')}"`,
+        getTaxYear(String(e.date ?? new Date().toISOString())),
       ].join(','))
 
       const csv = [header, ...lines].join('\n')

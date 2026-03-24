@@ -106,7 +106,7 @@ export default function SignupPage() {
           {step === 1 && (
             <div style={{ display:'flex', gap:4, padding:4, borderRadius:10, background:'rgba(255,255,255,0.04)', marginBottom:20 }}>
               {[['google','Google'],['email','Email']].map(([m,l])=>(
-                <button key={m} onClick={()=>{ setMode(m as Record<string,unknown>); setError(null) }} style={{ flex:1, padding:'8px', borderRadius:7, border:'none', fontSize:13, fontWeight:mode===m?600:400, background:mode===m?'rgba(167,139,250,0.2)':'transparent', color:mode===m?'#a78bfa':'#64748b', cursor:'pointer', transition:'all 0.15s' }}>{l}</button>
+                <button key={m} onClick={()=>{ setMode(m as "google" | "email"); setError(null) }} style={{ flex:1, padding:'8px', borderRadius:7, border:'none', fontSize:13, fontWeight:mode===m?600:400, background:mode===m?'rgba(167,139,250,0.2)':'transparent', color:mode===m?'#a78bfa':'#64748b', cursor:'pointer', transition:'all 0.15s' }}>{l}</button>
               ))}
             </div>
           )}
@@ -167,7 +167,7 @@ export default function SignupPage() {
               ].map(field => (
                 <div key={field.key}>
                   <div style={{ fontSize:11, color:'#64748b', marginBottom:6 }}>{field.label}</div>
-                  <input placeholder={field.placeholder} value={(form as Record<string, unknown>)[field.key]} onChange={e=>f(field.key,e.target.value)} />
+                  <input placeholder={field.placeholder} value={String((form as Record<string, unknown>)[field.key] ?? "")} onChange={e=>f(field.key,e.target.value)} />
                 </div>
               ))}
               <div style={{ display:'flex', gap:8, marginTop:4 }}>

@@ -44,7 +44,7 @@ function Spinner() {
 }
 
 export default function AdminPage() {
-  const [status, setStatus]       = useState<unknown>({})
+  const [status, setStatus]       = useState<Record<string,any>>({})
   const [loading, setLoading]     = useState(true)
   const [running, setRunning]     = useState<string|null>(null)
   const [results, setResults]     = useState<Record<string,any>>({})
@@ -122,7 +122,7 @@ export default function AdminPage() {
     }
   }
 
-  const appliedCount = Object.values(status).filter((s: Record<string, unknown>) => s.applied).length
+  const appliedCount = (Object.values(status) as any[]).filter((s: any) => s?.applied).length
   const totalCount = Object.keys(MIGRATION_DETAILS).length
 
   return (

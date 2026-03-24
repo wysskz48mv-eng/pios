@@ -106,14 +106,14 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
         query,
         database_name: database,
         filters: { yearFrom, yearTo, subjectArea, maxResults },
-        result_count: parsed.results?.length ?? 0,
-        results: parsed.results ?? [],
-        notes: parsed.search_strategy,
+        result_count: (parsed as any)?.results?.length ?? 0,
+        results: (parsed as any)?.results ?? [],
+        notes: (parsed as any)?.search_strategy,
       }).select('id').single()
 
       // Run citation guard on DOI-bearing results (non-fatal)
       let guardSummary = null
-      const toVerify = (parsed.results ?? []).filter((r: Record<string, unknown>) => r.doi)
+      const toVerify = ((parsed as any)?.results ?? []).filter((r: Record<string, unknown>) => r.doi)
       if (toVerify.length > 0) {
         try {
           const { verifyCitations } = await import('@/lib/citation-guard')
@@ -122,7 +122,7 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
             journal: r.journal, doi: r.doi,
           })))
           // Stamp provenance onto each result
-          for (const r of (parsed.results ?? [])) {
+          for (const r of ((parsed as any)?.results ?? [])) {
             const vr = guardReport.results.find((v: unknown) =>
               (v as any).input.doi === r.doi && r.doi
             )
@@ -147,10 +147,10 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
       }
 
       return NextResponse.json({
-        results: parsed.results ?? [],
-        totalFound: parsed.total_found ?? 0,
-        searchStrategy: parsed.search_strategy,
-        aiGuidance: parsed.ai_guidance,
+        results: (parsed as any)?.results ?? [],
+        totalFound: (parsed as any)?.total_found ?? 0,
+        searchStrategy: (parsed as any)?.search_strategy,
+        aiGuidance: (parsed as any)?.ai_guidance,
         searchId: searchRecord?.id,
         database,
         query,

@@ -219,14 +219,14 @@ export async function POST(request: Request) {
       status: 'completed',
       completed_at: new Date().toISOString(),
       files_scanned: driveFiles.length,
-      files_classified: classifications.filter(c => c.ai_category && c.ai_category !== 'other').length,
+      files_classified: classifications.filter((c: any) => c?.ai_category && c?.ai_category !== 'other').length,
       invoices_found: invoicesFound,
     }).eq('id', scanId)
 
     return NextResponse.json({
       scanId,
       filesScanned: driveFiles.length,
-      filesClassified: classifications.filter(c => c.ai_category !== 'other').length,
+      filesClassified: classifications.filter((c: any) => c?.ai_category !== 'other').length,
       invoicesFound,
       items: items ?? [],
     })

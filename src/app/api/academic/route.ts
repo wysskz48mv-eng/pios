@@ -197,7 +197,7 @@ export async function DELETE(req: NextRequest) {
     if (!id || !entity) return NextResponse.json({ error: 'id and entity required' }, { status: 400 })
     const table = entity==='chapter'?'thesis_chapters':entity==='module'?'academic_modules':entity==='session'?'supervision_sessions':null
     if (!table) return NextResponse.json({ error: 'invalid entity' }, { status: 400 })
-    const { error } = await supabase.from(table as Record<string, unknown>).delete().eq('id',id).eq('user_id',user.id)
+    const { error } = await supabase.from(table as any).delete().eq('id',id).eq('user_id',user.id)
     if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ deleted: true })
   } catch (err: unknown) {

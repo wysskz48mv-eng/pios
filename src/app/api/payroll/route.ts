@@ -90,9 +90,9 @@ export async function POST(request: Request) {
     // Create payroll run
     if (action === 'create_run') {
       const { pay_period, pay_date, company_entity, currency, notes, lines, expected_by } = body
-      const totalGross = lines?.reduce((s: number, l: unknown) => s + (parseFloat(l.gross_pay) || 0), 0) ?? 0
-      const totalNet   = lines?.reduce((s: number, l: unknown) => s + (parseFloat(l.net_pay) || 0), 0) ?? 0
-      const totalTax   = lines?.reduce((s: number, l: unknown) => s + (parseFloat(l.tax_deduction) || 0) + (parseFloat(l.ni_deduction) || 0), 0) ?? 0
+      const totalGross = lines?.reduce((s: number, l: unknown) => s + (parseFloat((l as any)?.gross_pay) || 0), 0) ?? 0
+      const totalNet   = lines?.reduce((s: number, l: unknown) => s + (parseFloat((l as any)?.net_pay) || 0), 0) ?? 0
+      const totalTax   = lines?.reduce((s: number, l: unknown) => s + (parseFloat((l as any)?.tax_deduction) || 0) + (parseFloat((l as any)?.ni_deduction) || 0), 0) ?? 0
 
       const { data: run } = await supabase.from('payroll_runs').insert({
         user_id: user.id, pay_period, pay_date, status: 'pending_approval',
@@ -120,10 +120,10 @@ export async function POST(request: Request) {
           lines.map((l: Record<string, unknown>) => ({
             user_id: user.id,
             transfer_type: 'payroll',
-            payroll_line_id: l.id,
-            recipient_name: l.staff_name,
-            recipient_email: l.staff_email,
-            amount: l.net_pay,
+            payroll_line_id: (l as any)?.id,
+            recipient_name: (l as any)?.staff_name,
+            recipient_email: (l as any)?.staff_email,
+            amount: (l as any)?.net_pay,
             currency: run?.currency ?? 'GBP',
             reference: `Salary ${run?.pay_period ?? ''}`,
             status: 'queued',

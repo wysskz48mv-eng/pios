@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     .order('year', { ascending: false })
     .limit(100)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
 
   // Fetch thesis chapters for context
   const { data: chapters } = await supabase
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   ).join('\n')
 
   const chapSummary = (chapters ?? []).map(c =>
-    `Ch${c.chapter_num}: ${c.title ?? 'Untitled'} [${c.status}]`
+    `Ch${(c as any)?.chapter_num}: ${(c as any)?.title ?? 'Untitled'} [${(c as any)?.status}]`
   ).join(', ')
 
   const prompt = [

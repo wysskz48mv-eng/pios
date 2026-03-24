@@ -38,7 +38,7 @@ async function runCheck(
     return {
       id, name, critical,
       latency_ms: Date.now() - t0,
-      status: result.ok ? (result.warn ? 'warn' : 'pass') : 'fail',
+      status: result.ok ? ((result as any).warn ? 'warn' : 'pass') : 'fail',
       detail: result.detail,
     }
   } catch (err: unknown) {

@@ -18,7 +18,7 @@ interface RLResult { success: boolean; remaining: number; resetAt: number }
 const memStore = new Map<string, { count: number; resetAt: number }>()
 setInterval(() => {
   const now = Date.now()
-  for (const [k, e] of memStore.entries()) if (e.resetAt < now) memStore.delete(k)
+  for (const [k, e] of Array.from(memStore.entries())) if (e.resetAt < now) memStore.delete(k)
 }, 5 * 60 * 1000)
 
 function memRateLimit(key: string, max: number, windowMs: number): RLResult {

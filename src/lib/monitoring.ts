@@ -14,8 +14,8 @@ async function getSentry() {
   try {
     // @ts-ignore
     Sentry = await import('@sentry/nextjs').catch(() => null)
-    if (Sentry && !Sentry.isInitialized?.()) {
-      Sentry.init({
+    if (Sentry && !(Sentry as any).isInitialized?.()) {
+      (Sentry as any).init({
         dsn: process.env.SENTRY_DSN,
         environment: process.env.NODE_ENV ?? 'production',
         release: 'pios@1.0',
@@ -30,9 +30,9 @@ async function getSentry() {
 export async function captureError(error: unknown, context?: ErrorCtx) {
   console.error('[PIOS]', error, context ?? '')
   const s = await getSentry(); if (!s) return
-  s.withScope((scope: unknown) => {
+  (s as any).withScope((scope: unknown) => {
     if (context) (scope as any).setExtras(context)
     (scope as any).setTag('product', 'pios')
-    s.captureException(error)
+    (s as any).captureException(error)
   })
 }

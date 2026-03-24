@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     nps:          nps as number,
     cps,
     open_feedback:(openFeedback as string) ?? null,
-  }).catch(() => null)   // table created by M014
+  })// table created by M014
 
   return NextResponse.json({ ok: true, cps, nps, message: 'Thank you — your feedback shapes our roadmap.' })
 }

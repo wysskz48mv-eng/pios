@@ -45,13 +45,13 @@ export async function GET() {
     const usage  = usageR.data  ?? []
 
     // Org breakdowns
-    const trialing       = orgs.filter((o: Record<string, unknown>) => o.planStatus === 'trialing').length
-    const activeOrgs     = orgs.filter((o: Record<string, unknown>) => o.planStatus === 'active').length
+    const trialing       = orgs.filter((o: Record<string, unknown>) => (o as any)?.planStatus === 'trialing').length
+    const activeOrgs     = orgs.filter((o: Record<string, unknown>) => (o as any)?.planStatus === 'active').length
     const expiredTrials  = orgs.filter((o: Record<string, unknown>) => {
-      return o.planStatus === 'trialing' && o.trialEndsAt && new Date(o.trialEndsAt) <= now
+      return (o as any)?.planStatus === 'trialing' && (o as any)?.trialEndsAt && new Date((o as any)?.trialEndsAt) <= now
     }).length
     const activeTrial    = orgs.filter((o: Record<string, unknown>) => {
-      return o.planStatus === 'trialing' && o.trialEndsAt && new Date(o.trialEndsAt) > now
+      return (o as any)?.planStatus === 'trialing' && (o as any)?.trialEndsAt && new Date((o as any)?.trialEndsAt) > now
     }).length
     const planBreakdown  = orgs.reduce((acc: Record<string, number>, o: unknown) => {
       if ((o as any).planStatus === 'active') acc[(o as any).plan] = (acc[(o as any).plan] || 0) + 1

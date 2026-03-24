@@ -165,14 +165,14 @@ export async function GET() {
     const todayTasks   = tasks.filter((t: any) => (t as Record<string,unknown>).due_date === today)
     const criticalTasks = tasks.filter((t: any) => (t as Record<string,unknown>).priority === 'critical')
 
-    const totalWords   = chapters.reduce((s: number, c: unknown) => s + ((c as Record<string,unknown>).word_count ?? 0), 0)
-    const targetWords  = chapters.reduce((s: number, c: unknown) => s + ((c as Record<string,unknown>).target_words ?? 8000), 0)
+    const totalWords   = chapters.reduce((s: number, c: unknown) => s + Number((c as Record<string,unknown>).word_count ?? 0), 0)
+    const targetWords  = chapters.reduce((s: number, c: unknown) => s + Number((c as Record<string,unknown>).target_words ?? 8000), 0)
     const thesisProgress = targetWords > 0 ? Math.round((totalWords / targetWords) * 100) : 0
 
     const thisMonthSpend = expenses.reduce((s: number, e: unknown) => {
       // Sum GBP-equivalent (simplified — full multi-currency conversion not done here)
       const currencies: Record<string, number> = { GBP: 1, USD: 0.79, EUR: 0.86, AED: 0.21, SAR: 0.21 }
-      return s + (parseFloat((e as Record<string,unknown>).amount) || 0) * (currencies[(e as Record<string,unknown>).currency] ?? 1)
+      return s + (parseFloat(String((e as Record<string,unknown>).amount ?? "0")) || 0) * (currencies[String((e as Record<string,unknown>).currency ?? "GBP")] ?? 1)
     }, 0)
 
     const pendingMeetingActions = meetings.reduce((s: number, m: unknown) =>
@@ -215,14 +215,14 @@ export async function GET() {
         // Tasks
         tasks: {
           overdue: overdueTasks.slice(0, 10).map((t: Record<string, unknown>) => ({
-            id: t.id, title: t.title, domain: t.domain,
-            priority: t.priority, due_date: (t as Record<string,unknown>).due_date as string,
+            id: (t as any)?.id, title: (t as any)?.title, domain: (t as any)?.domain,
+            priority: (t as any)?.priority, due_date: (t as Record<string,unknown>).due_date as string,
           })),
           today: todayTasks.map((t: Record<string, unknown>) => ({
-            id: t.id, title: t.title, domain: t.domain, priority: t.priority,
+            id: (t as any)?.id, title: (t as any)?.title, domain: (t as any)?.domain, priority: (t as any)?.priority,
           })),
-          critical: criticalTasks.filter((t: Record<string, unknown>) => !(t as Record<string,unknown>).due_date as string || (t as Record<string,unknown>).due_date as string >= today).slice(0, 5).map((t: Record<string, unknown>) => ({
-            id: t.id, title: t.title, domain: t.domain, due_date: (t as Record<string,unknown>).due_date as string,
+          critical: criticalTasks.filter((t: Record<string, unknown>) => !(t as Record<string,unknown>).due_date || String((t as Record<string,unknown>).due_date ?? "") >= today).slice(0, 5).map((t: Record<string, unknown>) => ({
+            id: (t as any)?.id, title: (t as any)?.title, domain: (t as any)?.domain, due_date: (t as Record<string,unknown>).due_date as string,
           })),
           total_active: tasks.length,
         },
@@ -275,10 +275,10 @@ export async function GET() {
 
           recent_receipts: receipts.slice(0, 5).map((r: Record<string, unknown>) => ({
             subject:  r.subject,
-            vendor:   r.receipt_data?.vendor as string ?? r.sender_name,
-            amount:   r.receipt_data?.amount,
-            currency: r.receipt_data?.currency ?? 'GBP',
-            date:     r.received_at?.slice(0, 10),
+            vendor:   (r.receipt_data as any)?.vendor ?? r.sender_name,
+            amount:   (r.receipt_data as any)?.amount,
+            currency: (r.receipt_data as any)?.currency ?? 'GBP',
+            date:     String(r.received_at ?? "").slice(0, 10),
           })),
 
         meetings_pending: meetings.map((m: Record<string, unknown>) => ({

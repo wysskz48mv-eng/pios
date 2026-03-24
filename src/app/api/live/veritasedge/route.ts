@@ -57,7 +57,7 @@ export async function GET() {
       return acc
     }, {})
 
-    const recentAgents = agents.filter((r: Record<string, unknown>) => r.created_at >= sevenDaysAgo).length
+    const recentAgents = agents.filter((r: Record<string, unknown>) => (r as any)?.created_at >= sevenDaysAgo).length
 
     // Plan breakdown
     const planBreakdown = orgs.reduce((acc: Record<string, number>, o: unknown) => {

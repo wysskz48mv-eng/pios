@@ -50,11 +50,11 @@ export async function GET(req: NextRequest) {
     const now = new Date()
     const enriched = (data ?? []).map((m: Record<string, unknown>) => ({
       ...m,
-      days_until:  m.target_date
-        ? Math.ceil((new Date(String(m.target_date ?? "")).getTime() - now.getTime()) / 86400000)
+      days_until:  (m as any)?.target_date
+        ? Math.ceil((new Date(String((m as any)?.target_date ?? "")).getTime() - now.getTime()) / 86400000)
         : null,
-      is_overdue: m.target_date && new Date(String(m.target_date ?? "")) < now
-        && !['passed','waived','skipped'].includes(m.status),
+      is_overdue: (m as any)?.target_date && new Date(String((m as any)?.target_date ?? "")) < now
+        && !['passed','waived','skipped'].includes((m as any)?.status),
     }))
 
     // Summary counts
@@ -62,9 +62,9 @@ export async function GET(req: NextRequest) {
       total:       enriched.length,
       upcoming:    enriched.filter((m: any) => (m as Record<string,unknown>).status === 'upcoming').length,
       in_progress: enriched.filter((m: any) => (m as Record<string,unknown>).status === 'in_progress').length,
-      completed:   enriched.filter(m => ['passed','submitted'].includes(m.status)).length,
+      completed:   enriched.filter(m => ['passed','submitted'].includes((m as any)?.status)).length,
       overdue:     enriched.filter((m: any) => (m as Record<string,unknown>).is_overdue).length,
-      next:        enriched.find(m => m.status === 'upcoming' && m.target_date) ?? null,
+      next:        enriched.find(m => (m as any)?.status === 'upcoming' && (m as any)?.target_date) ?? null,
     }
 
     return NextResponse.json({ ok: true, milestones: enriched, summary })

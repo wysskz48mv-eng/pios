@@ -44,7 +44,7 @@ export async function GET() {
       tenant:  tenantR.data  ?? null,
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -80,9 +80,9 @@ export async function PATCH(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ profile: data })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }

@@ -20,9 +20,9 @@ export const maxDuration = 45
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchFeedContent(topic: Record<string,unknown>): Promise<any[]> {
-  const keywordsStr = topic.keywords?.length ? `Key terms: ${((topic.keywords as any[]) ?? []).join(', ')}.` : ''
-  const sourcesStr  = topic.sources?.length  ? `Prefer these sources: ${((topic.sources as any[]) ?? []).join(', ')}.` : ''
-  const excludeStr  = topic.exclude_terms?.length ? `Exclude: ${((topic.exclude_terms as any[]) ?? []).join(', ')}.` : ''
+  const keywordsStr = (topic as any)?.keywords?.length ? `Key terms: ${(topic.keywords as any[] ?? []).join(', ')}.` : ''
+  const sourcesStr  = (topic as any)?.sources?.length  ? `Prefer these sources: ${(topic.sources as any[] ?? []).join(', ')}.` : ''
+  const excludeStr  = (topic as any)?.exclude_terms?.length ? `Exclude: ${(topic.exclude_terms as any[] ?? []).join(', ')}.` : ''
 
   const today = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
 

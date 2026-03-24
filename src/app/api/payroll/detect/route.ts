@@ -75,9 +75,9 @@ Return ONLY valid JSON or null if this is not a payroll email:
 
       if (!extracted?.is_payroll || !extracted?.lines?.length) continue
 
-      const totalGross = extracted.lines.reduce((s: number, l: unknown) => s + (l.gross_pay || 0), 0)
-      const totalNet   = extracted.lines.reduce((s: number, l: unknown) => s + (l.net_pay || 0), 0)
-      const totalTax   = extracted.lines.reduce((s: number, l: unknown) => s + (l.tax_deduction || 0) + (l.ni_deduction || 0), 0)
+      const totalGross = extracted.lines.reduce((s: number, l: unknown) => s + ((l as any)?.gross_pay || 0), 0)
+      const totalNet   = extracted.lines.reduce((s: number, l: unknown) => s + ((l as any)?.net_pay || 0), 0)
+      const totalTax   = extracted.lines.reduce((s: number, l: unknown) => s + ((l as any)?.tax_deduction || 0) + ((l as any)?.ni_deduction || 0), 0)
 
       const { data: run } = await supabase.from('payroll_runs').insert({
         user_id: user.id,

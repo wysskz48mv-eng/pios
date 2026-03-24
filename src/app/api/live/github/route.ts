@@ -49,11 +49,11 @@ export async function GET() {
         defaultBranch: repoData.default_branch ?? 'main',
         openIssues: repoData.open_issues_count ?? 0,
         commits: commits.map((c: Record<string, unknown>) => ({
-          sha: c.sha?.slice(0, 7),
-          message: c.commit?.message?.split('\n')[0] ?? '',
-          author: c.commit?.author?.name ?? '',
-          date: c.commit?.author?.date ?? '',
-          url: c.html_url,
+          sha: (c as any)?.sha?.slice(0, 7),
+          message: (c as any)?.commit?.message?.split('\n')[0] ?? '',
+          author: (c as any)?.commit?.author?.name ?? '',
+          date: (c as any)?.commit?.author?.date ?? '',
+          url: (c as any)?.html_url,
         })),
       }
     } catch (err: unknown) {

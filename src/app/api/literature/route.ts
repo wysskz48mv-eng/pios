@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       reading: all.filter((i: any) => (i as Record<string,unknown>).read_status === 'reading').length,
       read:    all.filter((i: any) => (i as Record<string,unknown>).read_status === 'read').length,
       revisit: all.filter((i: any) => (i as Record<string,unknown>).read_status === 'revisit').length,
-      byType:  all.reduce((acc: Record<string,number>, i) => { acc[i.source_type] = (acc[i.source_type]||0)+1; return acc }, {}),
+      byType:  all.reduce((acc: Record<string,number>, i) => { acc[String(i.source_type ?? "")] = (acc[i.source_type]||0)+1; return acc }, {}),
     }
 
     return NextResponse.json({ items: all, stats })
@@ -162,20 +162,20 @@ Tags: ${item.tags?.join(', ') ?? 'none'}`
           guardResult = report.results[0]
           // Override AI-generated APA citation confidence with verified data
           if (guardResult?.crossref_title && guardResult.title_match === 'mismatch') {
-            parsed.citation_apa += ` [⚠ Title mismatch — CrossRef records: "${guardResult.crossref_title}"]`
+            (parsed as any).citation_apa += ` [⚠ Title mismatch — CrossRef records: "${guardResult.crossref_title}"]`
           }
           if (guardResult?.requires_hitl) {
-            parsed.citation_apa += ` [NEEDS MANUAL VERIFICATION]`
+            (parsed as any).citation_apa += ` [NEEDS MANUAL VERIFICATION]`
           }
         } catch { /* guard non-fatal */ }
       }
 
       // Save back to DB
       await supabase.from('literature_items').update({
-        ai_summary:   parsed.summary,
-        citation_apa: parsed.citation_apa,
-        themes:       parsed.suggested_themes ?? [],
-        relevance:    parsed.suggested_relevance_score ?? item.relevance,
+        ai_summary:   (parsed as any)?.summary,
+        citation_apa: (parsed as any)?.citation_apa,
+        themes:       (parsed as any)?.suggested_themes ?? [],
+        relevance:    (parsed as any)?.suggested_relevance_score ?? item.relevance,
         updated_at:   new Date().toISOString(),
       }).eq('id', id).eq('user_id', user.id)
 

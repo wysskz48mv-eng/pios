@@ -15,7 +15,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
   const [chatOpen, setChatOpen] = useState(false)
 
   const planStatus  = ((tenant as Record<string,unknown> | undefined)?.plan as string | undefined) ?? (tenant as Record<string,unknown> | undefined)?.subscription_status as string ?? 'active'
-  const trialEndsAt = tenant?.trial_ends_at ?? null
+  const trialEndsAt: string | null = String((tenant as any)?.trial_ends_at ?? "") || null
   const isTrialing  = planStatus === 'trialing'
   const isExpired   = planStatus === 'canceled' && !tenant?.stripe_subscription_id
 

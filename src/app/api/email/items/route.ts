@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     if (minPriority)                      q = q.gte('priority_score', parseInt(minPriority))
 
     const { data, error } = await q
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
 
     // Summary counts
     const emails = data ?? []
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       summary: { unread, receipts, high_priority: highPri, action_required: actionRequired },
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -73,10 +73,10 @@ export async function PATCH(req: NextRequest) {
 
     const { data, error } = await supabase.from('email_items')
       .update(safe).eq('id', id).eq('user_id', user.id).select().single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ email: data })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -95,6 +95,6 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ ignored: true })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }

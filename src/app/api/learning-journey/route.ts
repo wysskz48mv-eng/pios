@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
       body: bodyInfo,
       summary: { totalHours, verifiable, nonVerifiable, target, pct,
         verifiableTarget: bodyInfo.verifiableHours,
-        verifiablePct: bodyInfo.verifiableHours > 0 ? Math.round((verifiable / bodyInfo.verifiableHours) * 100) : 100,
+        verifiablePct: bodyInfo.verifiableHours > 0 ? Math.round((Number(verifiable) / bodyInfo.verifiableHours) * 100) : 100,
         onTrack: pct >= Math.round((new Date().getMonth() / 12) * 100),
       },
       activities: acts,

@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
         admin.from('thesis_weekly_snapshots')
           .select('total_words')
           .eq('user_id', uid)
-          .lt('week_start', win.from.slice(0, 10))
+          .lt('week_start', String(win.from ?? "").slice(0, 10))
           .order('week_start', { ascending: false })
           .limit(1),
 
@@ -134,8 +134,8 @@ export async function GET(req: NextRequest) {
         admin.from('expenses')
           .select('amount, currency')
           .eq('user_id', uid)
-          .gte('date', win.from.slice(0, 10))
-          .lte('date', win.to.slice(0, 10)),
+          .gte('date', String(win.from ?? "").slice(0, 10))
+          .lte('date', String(win.to ?? "").slice(0, 10)),
 
         // Academic modules updated this week
         admin.from('academic_modules')
@@ -153,12 +153,12 @@ export async function GET(req: NextRequest) {
           .limit(3),
       ])
 
-      const totalWords   = (thesisNow.data ?? []).reduce((s: number, c: unknown) => s + (c.word_count ?? 0), 0)
+      const totalWords   = (thesisNow.data ?? []).reduce((s: number, c: unknown) => s + ((c as any)?.word_count ?? 0), 0)
       const prevWords    = (thesisPrev.data?.[0] as Record<string,unknown>)?.total_words ?? null
-      const wordsWritten = prevWords !== null ? Math.max(0, totalWords - prevWords) : 0
+      const wordsWritten = prevWords !== null ? Math.max(0, Number(totalWords ?? 0) - Number(prevWords ?? 0)) : 0
 
       // Capture this week's snapshot (upsert — idempotent)
-      const weekStart = win.from.slice(0, 10)
+      const weekStart = String(win.from ?? "").slice(0, 10)
       await admin.from('thesis_weekly_snapshots').upsert({
         user_id:       uid,
         week_start:    weekStart,
@@ -169,7 +169,7 @@ export async function GET(req: NextRequest) {
       }, { onConflict: 'user_id,week_start' }).catch(() => {}) // non-fatal
 
       const expList      = expenses.data ?? []
-      const expTotal     = expList.reduce((s: number, e: unknown) => s + (e.amount ?? 0), 0)
+      const expTotal     = expList.reduce((s: number, e: unknown) => s + Number((e as any)?.amount ?? 0), 0)
       const expCurrency  = expList[0]?.currency ?? 'GBP'
 
       const headlines    = (fmNews.data ?? []).map((r: Record<string, unknown>) => String(r.headline ?? ''))

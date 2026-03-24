@@ -3,8 +3,8 @@
  * Closes the Otter.ai gap: transcript/notes → AI decisions + action items → tasks
  *
  * GET    ?domain=&status=&limit=  — list meeting notes
- * POST   { action: 'create' | 'process' | 'promote_tasks', ...body }
- * PATCH  { id, ...updates }
+ * POST   { action: 'create' | 'process' | 'promote_tasks', ...(body as Record<string,unknown>) }
+ * PATCH  { id, ...(updates as Record<string,unknown>) }
  * DELETE ?id=
  *
  * Flow:
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 
   // Strip raw_transcript from list view (large field — fetch on demand)
   const meetings = (data ?? []).map((m: Record<string, unknown>) => {
-    const { raw_transcript, ...rest } = m
+    const { raw_transcript, ...rest } = m as any
     return { ...rest, has_transcript: !!raw_transcript }
   })
 
@@ -197,7 +197,8 @@ export async function PATCH(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id, ...updates } = await req.json()
+  const body = await req.json() as any
+  const { id, ...updates } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const allowed = ['title','meeting_date','duration_mins','attendees','meeting_type',
@@ -233,7 +234,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 // ── AI Processing ──────────────────────────────────────────────────────────────
-async function processMeetingNotes(supabase: unknown, meeting: unknown, userId: string) {
+async function processMeetingNotes(supabase: any, meeting: unknown, userId: string) {
   const content = (meeting as any).raw_transcript || (meeting as any).raw_notes || ''
   if (!content.trim()) return meeting
 
@@ -278,11 +279,11 @@ Return ONLY valid JSON — no preamble, no markdown:
     const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
 
     const updates: any = {
-      ai_summary:      parsed.summary      ?? null,
-      ai_decisions:    parsed.decisions    ?? [],
-      ai_action_items: parsed.action_items ?? [],
-      ai_follow_ups:   parsed.follow_ups   ?? [],
-      ai_risks:        parsed.risks        ?? [],
+      ai_summary:      (parsed as any)?.summary      ?? null,
+      ai_decisions:    (parsed as any)?.decisions    ?? [],
+      ai_action_items: (parsed as any)?.action_items ?? [],
+      ai_follow_ups:   (parsed as any)?.follow_ups   ?? [],
+      ai_risks:        (parsed as any)?.risks        ?? [],
       ai_processed_at: new Date().toISOString(),
       status:          'processed',
       updated_at:      new Date().toISOString(),
@@ -291,7 +292,7 @@ Return ONLY valid JSON — no preamble, no markdown:
     const { data: updated } = await supabase.from('meeting_notes')
       .update(updates).eq('id', (meeting as any).id).select().single()
 
-    return updated ?? { ...meeting, ...updates }
+    return updated ?? { ...(meeting as Record<string,unknown>), ...(updates as Record<string,unknown>) }
 
   } catch (err: unknown) {
     await supabase.from('meeting_notes').update({

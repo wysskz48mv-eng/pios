@@ -123,7 +123,7 @@ export default function AiPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'title', id, messages: msgs }),
       }).then(r => r.json()).then(d => {
-        if (d.title) setSessions(prev => prev.map(s => (s as any).id === id ? { ...s, title: d.title } : s))
+        if (d.title) setSessions(prev => prev.map(s => (s as any).id === id ? { ...(s as object), title: d.title } : s))
       })
     }
   }

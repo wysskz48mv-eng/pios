@@ -86,14 +86,14 @@ Return ONLY valid JSON:
     }
 
     return NextResponse.json({
-      calls: parsed.calls ?? [],
-      count: parsed.calls?.length ?? 0,
+      calls: (parsed as any)?.calls ?? [],
+      count: (parsed as any)?.calls?.length ?? 0,
       generatedAt: new Date().toISOString(),
       disclaimer: 'AI-generated CFP digest. Verify deadlines and submission details at the journal website before submitting.',
     })
   } catch (err: unknown) {
     console.error('/api/research/cfp:', err)
-    return NextResponse.json({ error: err.message ?? 'CFP fetch failed' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'CFP fetch failed' }, { status: 500 })
   }
 }
 
@@ -111,6 +111,6 @@ export async function GET() {
 
     return NextResponse.json({ calls: data ?? [] })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

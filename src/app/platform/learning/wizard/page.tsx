@@ -76,7 +76,7 @@ export default function LearningWizardPage() {
       const d = await r.json()
       if (!d.ok) throw new Error(d.error ?? 'Setup failed')
       router.push('/platform/learning')
-    } catch(e: unknown) { setError(e.message) }
+    } catch(e: unknown) { setError((e as Error).message) }
     finally { setSaving(false) }
   }
 
@@ -129,7 +129,7 @@ export default function LearningWizardPage() {
               {([['programme_name','Programme name','e.g. DBA — Strategy & Innovation','text'],['university','Institution','e.g. University of Portsmouth','text'],['expected_graduation','Expected completion','','date']] as [string,string,string,string][]).map(([k,l,ph,t]) => (
                 <div key={k}>
                   <label style={{ fontSize:11, color:C.sub, display:'block', marginBottom:4 }}>{l}</label>
-                  <input type={t} placeholder={ph} value={(form as Record<string, unknown>)[k]} onChange={e => setForm(p => ({...p,[k]:e.target.value}))} style={inp} />
+                  <input type={t} placeholder={ph} value={String((form as Record<string, unknown>)[k] ?? "")} onChange={e => setForm(p => ({...p,[k]:e.target.value}))} style={inp} />
                 </div>
               ))}
               <div>
@@ -163,7 +163,7 @@ export default function LearningWizardPage() {
               {([['supervisor_name','Supervisor name','Prof. Jane Smith'],['supervisor_email','Supervisor email','jane@university.ac.uk']] as [string,string,string][]).map(([k,l,ph]) => (
                 <div key={k}>
                   <label style={{ fontSize:11, color:C.sub, display:'block', marginBottom:4 }}>{l}</label>
-                  <input type="text" placeholder={ph} value={(form as Record<string, unknown>)[k]} onChange={e => setForm(p => ({...p,[k]:e.target.value}))} style={inp} />
+                  <input type="text" placeholder={ph} value={String((form as Record<string, unknown>)[k] ?? "")} onChange={e => setForm(p => ({...p,[k]:e.target.value}))} style={inp} />
                 </div>
               ))}
             </div>

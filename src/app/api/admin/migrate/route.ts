@@ -77,10 +77,10 @@ const MIGRATIONS: Record<string, {
   },
 }
 
-async function checkTableExists(supabase: unknown, tableName: string): Promise<boolean> {
+async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {
   try {
     const { error } = await supabase.from(tableName).select('id').limit(1)
-    return !error || !error.message.includes('does not exist')
+    return !error || !(error as Error).message.includes('does not exist')
   } catch {
     return false
   }
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
           const { error } = await supabase.rpc('exec_sql', { sql_text: sql })
           if (error) {
             // Try direct execute for DDL
-            const { error: e2 } = await (supabase as Record<string, unknown>).from('_dummy_').select().limit(0)
+            const { error: e2 } = await (supabase as any).from('_dummy_').select().limit(0)
             results.push({ id, name: m.name, status: 'applied', note: 'Executed (DDL — verify in Supabase dashboard)' })
           } else {
             results.push({ id, name: m.name, status: 'applied' })
@@ -177,7 +177,7 @@ export async function POST(request: Request) {
       // Try exec_sql RPC (available if Supabase has pg_execute or custom function)
       const { error } = await supabase.rpc('exec_sql', { sql_text: sql.slice(0, 65535) })
       if (!error) executed = true
-      else execError = error.message
+      else execError = (error as Error).message
     } catch (e: unknown) {
       execError = (e as Error).message
     }

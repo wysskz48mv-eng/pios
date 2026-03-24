@@ -76,7 +76,7 @@ Return ONLY valid JSON, no markdown:
       return NextResponse.json({ error: 'News digest parsing failed' }, { status: 500 })
     }
 
-    const items = parsed.items ?? []
+    const items = (parsed as any)?.items ?? []
     if (items.length === 0) return NextResponse.json({ error: 'No news items generated' }, { status: 500 })
 
     // Delete old unsaved news items older than 7 days
@@ -88,7 +88,7 @@ Return ONLY valid JSON, no markdown:
         .lt('fetched_at', new Date(Date.now() - 7 * 86400000).toISOString())
 
       // Insert fresh items
-      const inserts = items.map((item: Record<string, unknown>) => ({
+      const inserts = items.map((item: any) => ({
         user_id: user.id,
         headline: item.headline,
         summary: item.summary,
@@ -109,12 +109,12 @@ Return ONLY valid JSON, no markdown:
       })
     } catch (err: unknown) {
       console.error('/api/research/fm-news:', err)
-      return NextResponse.json({ error: err.message ?? 'News fetch failed' }, { status: 500 })
+      return NextResponse.json({ error: (err as Error).message ?? 'News fetch failed' }, { status: 500 })
     }
 
   } catch (err: unknown) {
-    console.error('[PIOS] research/fm-news POST:', err.message)
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    console.error('[PIOS] research/fm-news POST:', (err as Error).message)
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }}
 
 export async function GET() {
@@ -131,6 +131,6 @@ export async function GET() {
 
     return NextResponse.json({ items: data ?? [], count: data?.length ?? 0 })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

@@ -17,7 +17,7 @@ export const runtime = 'nodejs'
 // }
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function getGoogleToken(supabase: unknown, userId: string): Promise<string | null> {
+async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('google_access_token, google_refresh_token, google_token_expiry, google_email')
