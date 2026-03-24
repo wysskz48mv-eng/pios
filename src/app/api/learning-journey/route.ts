@@ -163,14 +163,14 @@ export async function GET(req: NextRequest) {
 
   const ms     = (milestones ?? []) as unknown[]
   const now    = new Date()
-  const passed = ms.filter(m => m.status === 'passed').length
+  const passed = ms.filter((m: Record<string,unknown>) => (m as Record<string,unknown>).status === 'passed').length
   const total  = ms.length
   const overdue = ms.filter(m =>
     (m.status === 'upcoming' || m.status === 'in_progress') &&
     m.target_date && new Date(m.target_date) < now
   ).length
   const nextDue = ms
-    .filter(m => m.status === 'upcoming' || m.status === 'in_progress')
+    .filter((m: Record<string,unknown>) => (m as Record<string,unknown>).status === 'upcoming' || m.status === 'in_progress')
     .sort((a, b) => new Date(a.target_date ?? '9999').getTime() - new Date(b.target_date ?? '9999').getTime())[0] ?? null
 
   return NextResponse.json({
@@ -297,7 +297,7 @@ ${content.slice(0, 2000)}` }],
       )
       return NextResponse.json({ ok: true, reflection })
     } catch (err: unknown) {
-      return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'AI reflection failed' })
+      return NextResponse.json({ ok: false, error: err instanceof Error ? (err as Error).message : 'AI reflection failed' })
     }
   }
 

@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ projects, tasks: tasksR.data ?? [] })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Internal server error'
+    const msg = err instanceof Error ? (err as Error).message : 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ project: data }, { status: 201 })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Internal server error'
+    const msg = err instanceof Error ? (err as Error).message : 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
@@ -108,7 +108,7 @@ export async function PATCH(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ project: data })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Internal server error'
+    const msg = err instanceof Error ? (err as Error).message : 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
@@ -131,7 +131,7 @@ export async function DELETE(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ cancelled: true })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Internal server error'
+    const msg = err instanceof Error ? (err as Error).message : 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

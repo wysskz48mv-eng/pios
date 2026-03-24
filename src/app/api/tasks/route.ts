@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     const { data } = await q
     return NextResponse.json({ tasks: data ?? [] })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -82,12 +82,12 @@ Return ONLY valid JSON:
       if (error) return NextResponse.json({ error: error.message }, { status: 400 })
       return NextResponse.json({ task: data })
     } catch (err: unknown) {
-      return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+      return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
     }
 
   } catch (err: unknown) {
-    console.error('[PIOS] tasks POST:', err.message)
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    console.error('[PIOS] tasks POST:', (err as Error).message)
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }}
 
 export async function PATCH(request: Request) {
@@ -131,7 +131,7 @@ export async function PATCH(request: Request) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ task: data })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -146,6 +146,6 @@ export async function DELETE(request: Request) {
     await supabase.from('tasks').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', id).eq('user_id', user.id)
     return NextResponse.json({ cancelled: true })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }

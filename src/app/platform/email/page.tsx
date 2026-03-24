@@ -16,13 +16,13 @@ function priorityColor(score: number) {
 }
 
 export default function EmailPage() {
-  const [emails,   setEmails]   = useState<unknown[]>([])
-  const [selected, setSelected] = useState<unknown>(null)
+  const [emails,   setEmails]   = useState<Record<string,unknown>[]>([])
+  const [selected, setSelected] = useState<Record<string,unknown>|null>(null)
   const [loading,  setLoading]  = useState(true)
   const [syncing,  setSyncing]  = useState(false)
   const [filter,      setFilter]      = useState('all')
   const [inboxFilter, setInboxFilter] = useState('all')
-  const [accounts,    setAccounts]    = useState<unknown[]>([])
+  const [accounts,    setAccounts]    = useState<Record<string,unknown>[]>([])
   const [replyText, setReplyText] = useState('')
   const [replying,  setReplying]  = useState(false)
   const [showCompose, setShowCompose] = useState(false)
@@ -78,8 +78,8 @@ export default function EmailPage() {
       })
       const d = await res.json()
       if (d.sent) {
-        setSelected((p: unknown) => ({ ...p, status: 'actioned' }))
-        setEmails(prev => prev.map(e => e.id === selected.id ? { ...e, status: 'actioned' } : e))
+        setSelected((p: unknown) => ({ ...(p as Record<string,unknown>), status: 'actioned' }))
+        setEmails(prev => prev.map((e: Record<string,unknown>) => (e as Record<string,unknown>).id === selected.id ? { ...(e as Record<string,unknown>), status: 'actioned' } : e))
         setReplyText('')
       } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
         setBanner({msg:`⚠ ${d.error}\n\nGo to Settings → Connect Google Account to grant Gmail access.`, ok:false})
@@ -87,7 +87,7 @@ export default function EmailPage() {
         setBanner({msg:`Send failed: ${d.error ?? 'Unknown error'}`, ok:false})
       }
     } catch (err: unknown) {
-      setBanner({msg:`Send failed: ${err.message}`, ok:false})
+      setBanner({msg:`Send failed: ${(err as Error).message}`, ok:false})
     }
     setReplying(false)
   }
@@ -149,9 +149,9 @@ export default function EmailPage() {
         <div className="pios-card" style={{ marginBottom:16,borderColor:'rgba(34,209,194,0.3)' }}>
           <div style={{ fontSize:13,fontWeight:600,marginBottom:12,color:'#22d3ee' }}>New message</div>
           <div style={{ display:'flex',flexDirection:'column' as const,gap:8,marginBottom:10 }}>
-            <input className="pios-input" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...p,to:e.target.value}))} />
-            <input className="pios-input" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...p,subject:e.target.value}))} />
-            <textarea className="pios-input" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
+            <input className="pios-input" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...(p as Record<string,unknown>),to:e.target.value}))} />
+            <input className="pios-input" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...(p as Record<string,unknown>),subject:e.target.value}))} />
+            <textarea className="pios-input" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...(p as Record<string,unknown>),body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
           </div>
           <div style={{ display:'flex',gap:8,alignItems:'center' }}>
             <button onClick={async()=>{
@@ -205,7 +205,7 @@ export default function EmailPage() {
           <div className="pios-card" style={{ padding:0,overflow:'hidden' }}>
             {loading ? <p style={{ textAlign:'center' as const,padding:'40px',color:'var(--pios-muted)' }}>Loading…</p>
             : emails.map((e,i)=>(
-              <div key={e.id} onClick={()=>setSelected(e)} style={{
+              <div key={(e as Record<string,unknown>).id as string} onClick={()=>setSelected(e)} style={{
                 padding:'12px 16px',borderBottom:'1px solid var(--pios-border)',cursor:'pointer',
                 background:selected?.id===e.id?'rgba(167,139,250,0.08)':e.status==='archived'?'rgba(255,255,255,0.02)':i%2===0?'transparent':'rgba(255,255,255,0.01)',
                 transition:'background 0.1s',opacity:e.status==='archived'?0.5:1,

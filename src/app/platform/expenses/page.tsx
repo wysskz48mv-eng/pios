@@ -26,13 +26,13 @@ function Bar({ pct, colour='#6c8eff' }: { pct:number; colour?:string }) {
 }
 
 export default function ExpensesPage() {
-  const [expenses,     setExpenses]     = useState<unknown[]>([])
+  const [expenses,     setExpenses]     = useState<Record<string,unknown>[]>([])
   const [loading,      setLoading]      = useState(true)
   const [saving,       setSaving]       = useState(false)
   const [showAdd,      setShowAdd]      = useState(false)
   const [deleting,     setDeleting]     = useState<string|null>(null)
   const [editing,      setEditing]      = useState<string|null>(null)
-  const [editForm,     setEditForm]     = useState<unknown>(null)
+  const [editForm,     setEditForm]     = useState<Record<string,unknown>|null>(null)
   const [taxYear,      setTaxYear]      = useState('all')
   const [domainFilter, setDomainFilter] = useState('all')
   const [aiLoading,    setAiLoading]    = useState(false)
@@ -60,7 +60,7 @@ export default function ExpensesPage() {
     })
     if (res.ok) {
       const { suggestion } = await res.json()
-      if (suggestion?.category) setForm(p => ({ ...p, category: suggestion.category, domain: suggestion.domain ?? p.domain, billable: suggestion.billable ?? p.billable }))
+      if (suggestion?.category) setForm(p => ({ ...(p as Record<string,unknown>), category: suggestion.category, domain: suggestion.domain ?? p.domain, billable: suggestion.billable ?? p.billable }))
     }
     setAiLoading(false)
   }
@@ -71,7 +71,7 @@ export default function ExpensesPage() {
     const res = await fetch('/api/expenses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', ...form }),
+      body: JSON.stringify({ action: 'create', ...(form as Record<string,unknown>) }),
     })
     if (res.ok) {
       // Notify on large expenses
@@ -91,7 +91,7 @@ export default function ExpensesPage() {
   async function del(id: string) {
     setDeleting(id)
     await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' })
-    setExpenses(p => p.filter(e => e.id !== id))
+    setExpenses(p => p.filter((e: Record<string,unknown>) => (e as Record<string,unknown>).id !== id))
     setDeleting(null)
   }
 
@@ -104,7 +104,7 @@ export default function ExpensesPage() {
     })
     if (res.ok) {
       const { expense } = await res.json()
-      setExpenses(p => p.map(e => e.id === editing ? expense : e))
+      setExpenses(p => p.map((e: Record<string,unknown>) => (e as Record<string,unknown>).id === editing ? expense : e))
     }
     setEditing(null); setEditForm(null)
   }
@@ -148,7 +148,7 @@ export default function ExpensesPage() {
   // By category
   const byCat: Record<string,number> = {}
   filtered.forEach(e => { const c=e.category||'other'; byCat[c]=(byCat[c]||0)+(parseFloat(e.amount)||0) })
-  const catEntries = Object.entries(byCat).sort((a,b)=>b[1]-a[1])
+  const catEntries = Object.entries(byCat).sort((a,b)=>b[1]-a[1 as string])
   const maxCat = catEntries[0]?.[1] ?? 1
 
   // By domain
@@ -179,7 +179,7 @@ export default function ExpensesPage() {
           { label:'Billable',       value:fmt(billable),  colour:'#22c55e' },
           { label:'Entries',        value:filtered.length, colour:'#2dd4a0' },
         ].map(s=>(
-          <div key={s.label} className="pios-card-sm" style={{ padding:'12px 14px' }}>
+          <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
             <div style={{ fontSize:18,fontWeight:800,color:s.colour,lineHeight:1,marginBottom:3 }}>{s.value}</div>
             <div style={{ fontSize:11,color:'var(--pios-muted)' }}>{s.label}</div>
           </div>
@@ -190,25 +190,25 @@ export default function ExpensesPage() {
       {showAdd && (
         <div className="pios-card" style={{ marginBottom:16,borderColor:'rgba(167,139,250,0.3)' }}>
           <div style={{ display:'grid',gridTemplateColumns:'1fr auto auto auto auto',gap:8,marginBottom:8 }}>
-            <input className="pios-input" placeholder="Description *" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} />
-            <input type="number" className="pios-input" placeholder="Amount" style={{ width:100 }} value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...p,currency:e.target.value}))}>
+            <input className="pios-input" placeholder="Description *" value={form.description} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),description:e.target.value}))} />
+            <input type="number" className="pios-input" placeholder="Amount" style={{ width:100 }} value={form.amount} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),amount:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),currency:e.target.value}))}>
               {CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
-            <select className="pios-input" style={{ width:'auto' }} value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}>
+            <select className="pios-input" style={{ width:'auto' }} value={form.category} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),category:e.target.value}))}>
               <option value="">Category…</option>
               {CATEGORIES.map(c=><option key={c} value={c}>{c.replace('_',' ')}</option>)}
             </select>
-            <input type="date" className="pios-input" style={{ width:'auto' }} value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} />
+            <input type="date" className="pios-input" style={{ width:'auto' }} value={form.date} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),date:e.target.value}))} />
           </div>
           <div style={{ display:'grid',gridTemplateColumns:'auto 1fr 1fr auto',gap:8,marginBottom:8 }}>
-            <select className="pios-input" style={{ width:'auto' }} value={form.domain} onChange={e=>setForm(p=>({...p,domain:e.target.value}))}>
+            <select className="pios-input" style={{ width:'auto' }} value={form.domain} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),domain:e.target.value}))}>
               {DOMAINS.map(d=><option key={d} value={d}>{domainLabel(d)}</option>)}
             </select>
-            <input className="pios-input" placeholder="Client (if billable)" value={form.client} onChange={e=>setForm(p=>({...p,client:e.target.value}))} />
-            <input className="pios-input" placeholder="Notes" value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} />
+            <input className="pios-input" placeholder="Client (if billable)" value={form.client} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),client:e.target.value}))} />
+            <input className="pios-input" placeholder="Notes" value={form.notes} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),notes:e.target.value}))} />
             <label style={{ display:'flex',alignItems:'center',gap:6,fontSize:12,cursor:'pointer',whiteSpace:'nowrap' as const }}>
-              <input type="checkbox" checked={form.billable} onChange={e=>setForm(p=>({...p,billable:e.target.checked}))} />
+              <input type="checkbox" checked={form.billable} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),billable:e.target.checked}))} />
               Billable
             </label>
           </div>
@@ -246,7 +246,7 @@ export default function ExpensesPage() {
           <div style={{ fontSize:13,fontWeight:700,marginBottom:14 }}>By domain</div>
           {Object.keys(byDomain).length===0 ? <p style={{ fontSize:12,color:'var(--pios-dim)' }}>No data</p> : (
             <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
-              {Object.entries(byDomain).sort((a,b)=>b[1]-a[1]).map(([dom,amt])=>(
+              {Object.entries(byDomain).sort((a,b)=>b[1]-a[1 as string]).map(([dom,amt])=>(
                 <div key={dom}>
                   <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
                     <span style={{ fontSize:12,fontWeight:500 }}>{domainLabel(dom)}</span>
@@ -290,11 +290,11 @@ export default function ExpensesPage() {
             </thead>
             <tbody>
               {filtered.map((e,i)=>(
-                <tr key={e.id} style={{ borderBottom:'1px solid var(--pios-border)',background:i%2===0?'transparent':'rgba(255,255,255,0.01)' }}>
+                <tr key={(e as Record<string,unknown>).id as string} style={{ borderBottom:'1px solid var(--pios-border)',background:i%2===0?'transparent':'rgba(255,255,255,0.01)' }}>
                   <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)',whiteSpace:'nowrap' as const }}>{e.date}</td>
                   <td style={{ padding:'10px 14px',fontSize:13 }}>
                     {editing === e.id ? (
-                      <input value={editForm.description} onChange={ev=>setEditForm((p: unknown)=>({...p,description:ev.target.value}))}
+                      <input value={editForm.description} onChange={ev=>setEditForm((p: unknown)=>({...(p as Record<string,unknown>),description:ev.target.value}))}
                         className="pios-input" style={{ fontSize:12,padding:'4px 8px',width:'100%' }} autoFocus onKeyDown={ev=>{if(ev.key==='Enter')saveEdit();if(ev.key==='Escape'){setEditing(null);setEditForm(null)}}} />
                     ) : (
                       <span onClick={()=>startEdit(e)} style={{ cursor:'text' }} title="Click to edit">{e.description}</span>

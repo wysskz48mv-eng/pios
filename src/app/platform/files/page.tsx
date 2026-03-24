@@ -37,7 +37,7 @@ function TabBtn({ active, onClick, children }: { active:boolean; onClick:()=>voi
 // ── Folder tree ───────────────────────────────────────────────────────────────
 function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; all:any[]; depth?:number; onSelect:(s: unknown)=>void; selected:any }) {
   const [open, setOpen] = useState(depth < 1)
-  const children = all.filter(s => s.parent_id === space.id)
+  const children = all.filter((s: Record<string,unknown>) => (s as Record<string,unknown>).parent_id === space.id)
   const isSelected = selected?.id === space.id
   return (
     <div>
@@ -51,14 +51,14 @@ function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; al
         <span style={{ fontSize:13, fontWeight:depth===0?600:400, flex:1, color:space.colour??'var(--pios-text)' }}>{space.name}</span>
         {children.length > 0 && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{open?'▾':'▸'}</span>}
       </div>
-      {open && children.map(c => <FolderNode key={c.id} space={c} all={all} depth={depth+1} onSelect={onSelect} selected={selected} />)}
+      {open && children.map(c => <FolderNode key={(c as Record<string,unknown>).id as string} space={c} all={all} depth={depth+1} onSelect={onSelect} selected={selected} />)}
     </div>
   )
 }
 
 // ── Structure tab ─────────────────────────────────────────────────────────────
 function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:any[]; onScan:(folder:string)=>void; scanning:boolean; scanResult:any; stats:any }) {
-  const [selectedSpace, setSelectedSpace] = useState<unknown>(null)
+  const [selectedSpace, setSelectedSpace] = useState<Record<string,unknown>|null>(null)
   const [showAddSpace, setShowAddSpace] = useState(false)
   const [newSpace, setNewSpace] = useState({ name:'', space_type:'folder', icon:'📁', colour:'#6c8eff' })
   const roots = spaces.filter(s => !s.parent_id)
@@ -81,14 +81,14 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
         </div>
         {showAddSpace && (
           <div style={{ padding:'0 8px', marginBottom:12 }}>
-            <input className="pios-input" placeholder="Folder name…" value={newSpace.name} onChange={e=>setNewSpace(p=>({...p,name:e.target.value}))} style={{ marginBottom:6, fontSize:12 }} />
+            <input className="pios-input" placeholder="Folder name…" value={newSpace.name} onChange={e=>setNewSpace(p=>({...(p as Record<string,unknown>),name:e.target.value}))} style={{ marginBottom:6, fontSize:12 }} />
             <div style={{ display:'flex', gap:4 }}>
               <button onClick={addSpace} className="pios-btn pios-btn-primary" style={{ fontSize:11, flex:1 }}>Add</button>
               <button onClick={()=>setShowAddSpace(false)} className="pios-btn pios-btn-ghost" style={{ fontSize:11 }}>✕</button>
             </div>
           </div>
         )}
-        {roots.map(s => <FolderNode key={s.id} space={s} all={spaces} onSelect={setSelectedSpace} selected={selectedSpace} />)}
+        {roots.map(s => <FolderNode key={(s as Record<string,unknown>).id as string} space={s} all={spaces} onSelect={setSelectedSpace} selected={selectedSpace} />)}
       </div>
 
       {/* Right panel */}
@@ -101,7 +101,7 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
             { label:'Invoices found', value:stats?.invoices??0, colour:'#f59e0b' },
             { label:'Pending approval', value:stats?.invoicesPending??0, colour:'#ef4444' },
           ].map(s=>(
-            <div key={s.label} className="pios-card-sm" style={{ padding:'12px 14px' }}>
+            <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
               <div style={{ fontSize:20, fontWeight:800, color:s.colour, lineHeight:1, marginBottom:3 }}>{s.value}</div>
               <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{s.label}</div>
             </div>
@@ -156,7 +156,7 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
 
 // ── Files tab ─────────────────────────────────────────────────────────────────
 function FilesTab({ spaces }: { spaces:any[] }) {
-  const [items, setItems]     = useState<unknown[]>([])
+  const [items, setItems]     = useState<Record<string,unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('all')
   const [extracting, setExtracting] = useState<string|null>(null)
@@ -179,7 +179,7 @@ function FilesTab({ spaces }: { spaces:any[] }) {
     setExtracting(null)
     if (data.invoice_id) {
       setExtractMsg(`✓ Invoice extracted (ID: ${data.invoice_id}) — ${data.hitl_message}`)
-      setItems(prev => prev.map(i => i.id===itemId ? {...i, ai_category:'invoice'} : i))
+      setItems(prev => prev.map((i: Record<string,unknown>) => (i as Record<string,unknown>).id===itemId ? {...(i as Record<string,unknown>), ai_category:'invoice'} : i))
     } else {
       setExtractMsg(`✗ ${data.error ?? 'Extraction failed'}`)
     }
@@ -203,29 +203,29 @@ function FilesTab({ spaces }: { spaces:any[] }) {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
           {items.map(item => {
-            const space = item.space_id ? spaceMap[item.space_id] : null
+            const space = (item as Record<string,unknown>).space_id ? spaceMap[(item as Record<string,unknown>).space_id] : null
             return (
-              <div key={item.id} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'flex-start', gap:12 }}>
+              <div key={(item as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'flex-start', gap:12 }}>
                 <span style={{ fontSize:16, flexShrink:0, marginTop:1 }}>
-                  {item.file_type==='pdf'?'📄':item.file_type==='xlsx'||item.file_type==='csv'?'📊':item.file_type==='docx'?'📝':item.file_type?.match(/jpg|jpeg|png|gif/)?'🖼️':'📁'}
+                  {(item as Record<string,unknown>).file_type==='pdf'?'📄':(item as Record<string,unknown>).file_type==='xlsx'||(item as Record<string,unknown>).file_type==='csv'?'📊':(item as Record<string,unknown>).file_type==='docx'?'📝':(item as Record<string,unknown>).file_type?.match(/jpg|jpeg|png|gif/)?'🖼️':'📁'}
                 </span>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4, flexWrap:'wrap' as const }}>
-                    <span style={{ fontSize:13, fontWeight:600 }}>{item.name}</span>
-                    {item.ai_category && <Pill label={item.ai_category} colour={CAT_COLOURS[item.ai_category]??'#64748b'} />}
-                    {item.ai_project_tag && <Pill label={item.ai_project_tag} colour="#6c8eff" />}
-                    {item.filing_status && <Pill label={item.filing_status.replace('_',' ')} colour={item.filing_status==='filed'?'#22c55e':item.filing_status==='classified'?'#6c8eff':'#64748b'} />}
+                    <span style={{ fontSize:13, fontWeight:600 }}>{(item as Record<string,unknown>).name}</span>
+                    {(item as Record<string,unknown>).ai_category && <Pill label={(item as Record<string,unknown>).ai_category} colour={CAT_COLOURS[(item as Record<string,unknown>).ai_category]??'#64748b'} />}
+                    {(item as Record<string,unknown>).ai_project_tag && <Pill label={(item as Record<string,unknown>).ai_project_tag} colour="#6c8eff" />}
+                    {(item as Record<string,unknown>).filing_status && <Pill label={(item as Record<string,unknown>).filing_status.replace('_',' ')} colour={(item as Record<string,unknown>).filing_status==='filed'?'#22c55e':(item as Record<string,unknown>).filing_status==='classified'?'#6c8eff':'#64748b'} />}
                   </div>
-                  {item.ai_summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:4 }}>{item.ai_summary}</p>}
+                  {(item as Record<string,unknown>).ai_summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:4 }}>{(item as Record<string,unknown>).ai_summary}</p>}
                   <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' as const }}>
                     {space && <span style={{ fontSize:11, color:space.colour??'#6c8eff' }}>{space.icon} {space.name}</span>}
-                    {item.drive_web_url && <a href={item.drive_web_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#6c8eff' }}>Open in Drive →</a>}
-                    {item.ai_confidence && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>AI: {Math.round(item.ai_confidence*100)}% confident</span>}
+                    {(item as Record<string,unknown>).drive_web_url && <a href={(item as Record<string,unknown>).drive_web_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#6c8eff' }}>Open in Drive →</a>}
+                    {(item as Record<string,unknown>).ai_confidence && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>AI: {Math.round((item as Record<string,unknown>).ai_confidence*100)}% confident</span>}
                   </div>
                 </div>
-                {item.ai_category !== 'invoice' && (
-                  <button onClick={()=>extractInvoice(item.id)} disabled={extracting===item.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #f59e0b40', background:'none', cursor:'pointer', color:'#f59e0b', flexShrink:0 }}>
-                    {extracting===item.id ? '⟳' : '💰 Extract invoice'}
+                {(item as Record<string,unknown>).ai_category !== 'invoice' && (
+                  <button onClick={()=>extractInvoice((item as Record<string,unknown>).id)} disabled={extracting===(item as Record<string,unknown>).id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #f59e0b40', background:'none', cursor:'pointer', color:'#f59e0b', flexShrink:0 }}>
+                    {extracting===(item as Record<string,unknown>).id ? '⟳' : '💰 Extract invoice'}
                   </button>
                 )}
               </div>
@@ -239,7 +239,7 @@ function FilesTab({ spaces }: { spaces:any[] }) {
 
 // ── Invoices tab ──────────────────────────────────────────────────────────────
 function InvoicesTab() {
-  const [invoices, setInvoices] = useState<unknown[]>([])
+  const [invoices, setInvoices] = useState<Record<string,unknown>[]>([])
   const [loading, setLoading]   = useState(true)
   const [filter, setFilter]     = useState('all')
   const [updating, setUpdating] = useState<string|null>(null)
@@ -272,7 +272,7 @@ function InvoicesTab() {
             { label:'Overdue', value:`${invoices.filter(i=>i.status==='overdue').length} · ${invoices[0]?.currency??'GBP'} ${totalOverdue.toFixed(2)}`, colour:'#ef4444' },
             { label:'Total tracked', value:`${invoices.length} invoices`, colour:'#6c8eff' },
           ].map(s=>(
-            <div key={s.label} className="pios-card-sm" style={{ padding:'12px 14px' }}>
+            <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
               <div style={{ fontSize:13, fontWeight:700, color:s.colour, marginBottom:3 }}>{s.value}</div>
               <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{s.label}</div>
             </div>
@@ -295,7 +295,7 @@ function InvoicesTab() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {invoices.map(inv => (
-            <div key={inv.id} className="pios-card" style={{ padding:'14px 16px' }}>
+            <div key={(inv as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'14px 16px' }}>
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:4, flexWrap:'wrap' as const }}>
@@ -339,13 +339,13 @@ function InvoicesTab() {
 
 // ── Rules tab ─────────────────────────────────────────────────────────────────
 function RulesTab({ spaces }: { spaces:any[] }) {
-  const [rules, setRules]     = useState<unknown[]>([])
+  const [rules, setRules]     = useState<Record<string,unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
   const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string|null>(null)
   const [form, setForm] = useState({ name:'', trigger_type:'email_sender', trigger_value:'', trigger_match:'contains', action_type:'assign_project', action_value:'', priority:50 })
-  function f(k:string,v: unknown) { setForm(p=>({...p,[k]:v})) }
+  function f(k:string,v: unknown) { setForm(p=>({...(p as Record<string,unknown>),[k]:v})) }
 
   const load = () => {
     setLoading(true)
@@ -420,7 +420,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {rules.map(rule => (
-            <div key={rule.id} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
+            <div key={(rule as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ fontSize:12, fontWeight:700, color:'var(--pios-dim)', minWidth:24, textAlign:'center' as const }}>{rule.priority}</div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{rule.name}</div>
@@ -445,10 +445,10 @@ function RulesTab({ spaces }: { spaces:any[] }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function FilesPage() {
   const [tab, setTab]           = useState<Tab>('structure')
-  const [spaces, setSpaces]     = useState<unknown[]>([])
-  const [stats, setStats]       = useState<unknown>(null)
+  const [spaces, setSpaces]     = useState<Record<string,unknown>[]>([])
+  const [stats, setStats]       = useState<Record<string,unknown>|null>(null)
   const [scanning, setScanning] = useState(false)
-  const [scanResult, setScanResult] = useState<unknown>(null)
+  const [scanResult, setScanResult] = useState<Record<string,unknown>|null>(null)
 
   useEffect(() => {
     fetch('/api/files?type=spaces').then(r=>r.json()).then(d=>setSpaces(d.spaces??[]))

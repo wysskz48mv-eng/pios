@@ -32,9 +32,9 @@ function Bar({ value, max, colour = ACCENT }: { value:number; max:number; colour
 }
 
 export default function AcademicPage() {
-  const [modules,  setModules]  = useState<unknown[]>([])
-  const [chapters, setChapters] = useState<unknown[]>([])
-  const [sessions, setSessions] = useState<unknown[]>([])
+  const [modules,  setModules]  = useState<Record<string,unknown>[]>([])
+  const [chapters, setChapters] = useState<Record<string,unknown>[]>([])
+  const [sessions, setSessions] = useState<Record<string,unknown>[]>([])
   const [loading,  setLoading]  = useState(true)
   const [editingId,  setEditingId]   = useState<string|null>(null)
   const [editWords,  setEditWords]   = useState<Record<string,number>>({})
@@ -102,7 +102,7 @@ export default function AcademicPage() {
   const totalWords  = chapters.reduce((s,c)=>s+(c.word_count||0),0)
   const targetWords = chapters.reduce((s,c)=>s+(c.target_words||8000),0)
   const thesisPct   = targetWords>0?Math.round((totalWords/targetWords)*100):0
-  const [aiReview,      setAiReview]      = useState<unknown>(null)
+  const [aiReview,      setAiReview]      = useState<Record<string,unknown>|null>(null)
   const [weeklyDelta,   setWeeklyDelta]   = useState<number|null>(null)
   const [aiReviewLoading, setAiReviewLoading] = useState(false)
 
@@ -133,7 +133,7 @@ export default function AcademicPage() {
       body: JSON.stringify({ action: 'ai_thesis_review', chapters, modules }),
     })
     const d = res.ok ? await res.json() : {}
-    if (d.review) setAiReview(d.review)
+    if (d.review) setAiReview((d as Record<string,unknown>).review as Record<string,unknown>[])
     setAiReviewLoading(false)
   }
   const chapsDone   = chapters.filter(c=>['submitted','passed','draft_complete'].includes(c.status)).length
@@ -177,7 +177,7 @@ export default function AcademicPage() {
           { label:'Words/day needed', value: wordsPerDay ? wordsPerDay.toLocaleString() : '—', sub: daysToDeadline ? `${daysToDeadline} days to deadline` : 'no deadline set', colour: wordsPerDay && wordsPerDay > 500 ? '#ef4444' : wordsPerDay && wordsPerDay > 250 ? '#f59e0b' : '#22c55e' },
           { label:'Written this week', value: weeklyDelta !== null ? weeklyDelta.toLocaleString() : '—', sub: weeklyDelta !== null ? (weeklyDelta >= (wordsPerDay??0)*7 ? 'On pace ✓' : 'Below pace') : 'No snapshot yet', colour: weeklyDelta === null ? '#64748b' : weeklyDelta >= (wordsPerDay??0)*7 ? '#22c55e' : '#f59e0b' },
         ].map(s=>(
-          <div key={s.label} className="pios-card-sm" style={{ padding:'14px 16px' }}>
+          <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'14px 16px' }}>
             <div style={{ fontSize:22, fontWeight:800, color:s.colour, marginBottom:2, lineHeight:1 }}>{s.value}</div>
             <div style={{ fontSize:12, fontWeight:600, marginBottom:2 }}>{s.label}</div>
             <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{s.sub}</div>
@@ -190,14 +190,14 @@ export default function AcademicPage() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:ACCENT+'40' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:ACCENT }}>Add Thesis Chapter</div>
           <div style={{ display:'grid', gridTemplateColumns:'60px 1fr auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Ch #" type="number" value={chForm.chapter_num} onChange={e=>setChForm(p=>({...p,chapter_num:e.target.value}))} />
-            <input className="pios-input" placeholder="Chapter title…" value={chForm.title} onChange={e=>setChForm(p=>({...p,title:e.target.value}))} />
-            <input className="pios-input" placeholder="Words" type="number" style={{ width:100 }} value={chForm.word_count} onChange={e=>setChForm(p=>({...p,word_count:e.target.value}))} />
-            <input className="pios-input" placeholder="Target" type="number" style={{ width:100 }} value={chForm.target_words} onChange={e=>setChForm(p=>({...p,target_words:e.target.value}))} />
+            <input className="pios-input" placeholder="Ch #" type="number" value={chForm.chapter_num} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),chapter_num:e.target.value}))} />
+            <input className="pios-input" placeholder="Chapter title…" value={chForm.title} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),title:e.target.value}))} />
+            <input className="pios-input" placeholder="Words" type="number" style={{ width:100 }} value={chForm.word_count} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),word_count:e.target.value}))} />
+            <input className="pios-input" placeholder="Target" type="number" style={{ width:100 }} value={chForm.target_words} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),target_words:e.target.value}))} />
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Notes (optional)…" value={chForm.notes} onChange={e=>setChForm(p=>({...p,notes:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={chForm.status} onChange={e=>setChForm(p=>({...p,status:e.target.value}))}>
+            <input className="pios-input" placeholder="Notes (optional)…" value={chForm.notes} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),notes:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={chForm.status} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),status:e.target.value}))}>
               {['not_started','in_progress','draft_complete','under_review','submitted'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
             </select>
           </div>
@@ -213,15 +213,15 @@ export default function AcademicPage() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'#a78bfa' }}>Add Programme Module</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Module title…" value={modForm.title} onChange={e=>setModForm(p=>({...p,title:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={modForm.module_type} onChange={e=>setModForm(p=>({...p,module_type:e.target.value}))}>
+            <input className="pios-input" placeholder="Module title…" value={modForm.title} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),title:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={modForm.module_type} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),module_type:e.target.value}))}>
               {['taught','research','viva','conference','elective'].map(t=><option key={t} value={t}>{t}</option>)}
             </select>
-            <select className="pios-input" style={{ width:'auto' }} value={modForm.status} onChange={e=>setModForm(p=>({...p,status:e.target.value}))}>
+            <select className="pios-input" style={{ width:'auto' }} value={modForm.status} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),status:e.target.value}))}>
               {['enrolled','in_progress','submitted','passed','failed'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
             </select>
-            <input type="date" className="pios-input" style={{ width:'auto' }} value={modForm.deadline} onChange={e=>setModForm(p=>({...p,deadline:e.target.value}))} />
-            <input className="pios-input" placeholder="Credits" type="number" style={{ width:80 }} value={modForm.credits} onChange={e=>setModForm(p=>({...p,credits:e.target.value}))} />
+            <input type="date" className="pios-input" style={{ width:'auto' }} value={modForm.deadline} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),deadline:e.target.value}))} />
+            <input className="pios-input" placeholder="Credits" type="number" style={{ width:80 }} value={modForm.credits} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),credits:e.target.value}))} />
           </div>
           <div style={{ display:'flex', gap:8 }}>
             <button className="pios-btn pios-btn-primary" onClick={addModule} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Add Module'}</button>
@@ -235,15 +235,15 @@ export default function AcademicPage() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(245,158,11,0.3)' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'#f59e0b' }}>Log Supervision Session</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Supervisor name…" value={sesForm.supervisor} onChange={e=>setSesForm(p=>({...p,supervisor:e.target.value}))} />
-            <input type="date" className="pios-input" style={{ width:'auto' }} value={sesForm.session_date} onChange={e=>setSesForm(p=>({...p,session_date:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={sesForm.format} onChange={e=>setSesForm(p=>({...p,format:e.target.value}))}>
+            <input className="pios-input" placeholder="Supervisor name…" value={sesForm.supervisor} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),supervisor:e.target.value}))} />
+            <input type="date" className="pios-input" style={{ width:'auto' }} value={sesForm.session_date} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),session_date:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={sesForm.format} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),format:e.target.value}))}>
               {['online','in_person','phone','email'].map(f=><option key={f} value={f}>{f.replace('_',' ')}</option>)}
             </select>
-            <input className="pios-input" placeholder="Mins" type="number" style={{ width:70 }} value={sesForm.duration_mins} onChange={e=>setSesForm(p=>({...p,duration_mins:e.target.value}))} />
+            <input className="pios-input" placeholder="Mins" type="number" style={{ width:70 }} value={sesForm.duration_mins} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),duration_mins:e.target.value}))} />
           </div>
-          <textarea className="pios-input" placeholder="Session notes — what was discussed, feedback received…" rows={3} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.notes} onChange={e=>setSesForm(p=>({...p,notes:e.target.value}))} />
-          <textarea className="pios-input" placeholder="Action items (one per line)…" rows={2} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.action_items} onChange={e=>setSesForm(p=>({...p,action_items:e.target.value}))} />
+          <textarea className="pios-input" placeholder="Session notes — what was discussed, feedback received…" rows={3} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.notes} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),notes:e.target.value}))} />
+          <textarea className="pios-input" placeholder="Action items (one per line)…" rows={2} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.action_items} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),action_items:e.target.value}))} />
           <div style={{ display:'flex', gap:8 }}>
             <button className="pios-btn pios-btn-primary" onClick={addSession} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Log Session'}</button>
             <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAddSes(false)} style={{ fontSize:12 }}>Cancel</button>
@@ -311,7 +311,7 @@ export default function AcademicPage() {
           ) : chapters.map(ch => {
             const editing = editingId===ch.id
             return (
-              <div key={ch.id} style={{ padding:'12px 14px', borderRadius:8, background:editing?ACCENT10:'var(--pios-surface2)', border:`1px solid ${editing?ACCENT+'40':'transparent'}`, transition:'all 0.15s' }}>
+              <div key={(ch as Record<string,unknown>).id as string} style={{ padding:'12px 14px', borderRadius:8, background:editing?ACCENT10:'var(--pios-surface2)', border:`1px solid ${editing?ACCENT+'40':'transparent'}`, transition:'all 0.15s' }}>
                 <div style={{ display:'flex', gap:10 }}>
                   <div style={{ fontSize:11, color:'var(--pios-dim)', fontWeight:700, minWidth:28, paddingTop:2 }}>Ch.{ch.chapter_num}</div>
                   <div style={{ flex:1 }}>
@@ -322,8 +322,8 @@ export default function AcademicPage() {
                     <Bar value={editWords[ch.id]??ch.word_count??0} max={ch.target_words??8000} />
                     {editing ? (
                       <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto', gap:8, marginTop:10 }}>
-                        <input className="pios-input" type="number" placeholder="Word count" value={editWords[ch.id]??0} onChange={e=>setEditWords(p=>({...p,[ch.id]:parseInt(e.target.value)||0}))} autoFocus style={{ fontSize:13 }} />
-                        <select className="pios-input" style={{ width:'auto', fontSize:12 }} value={editStatus[ch.id]??ch.status} onChange={e=>setEditStatus(p=>({...p,[ch.id]:e.target.value}))}>
+                        <input className="pios-input" type="number" placeholder="Word count" value={editWords[ch.id]??0} onChange={e=>setEditWords(p=>({...(p as Record<string,unknown>),[ch.id]:parseInt(e.target.value)||0}))} autoFocus style={{ fontSize:13 }} />
+                        <select className="pios-input" style={{ width:'auto', fontSize:12 }} value={editStatus[ch.id]??ch.status} onChange={e=>setEditStatus(p=>({...(p as Record<string,unknown>),[ch.id]:e.target.value}))}>
                           {['not_started','in_progress','draft_complete','under_review','submitted','passed'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
                         </select>
                         <div style={{ display:'flex', gap:4 }}>
@@ -356,7 +356,7 @@ export default function AcademicPage() {
           {modules.length===0 ? <p style={{ color:'var(--pios-dim)', fontSize:12, textAlign:'center', padding:'20px 0' }}>No modules yet</p> : (
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {modules.map(m=>(
-                <div key={m.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)', gap:8 }}>
+                <div key={(m as Record<string,unknown>).id as string} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)', gap:8 }}>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:12, fontWeight:600, marginBottom:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.title}</div>
                     <div style={{ display:'flex', gap:6 }}>
@@ -379,7 +379,7 @@ export default function AcademicPage() {
           {sessions.length===0 ? <p style={{ color:'var(--pios-dim)', fontSize:12, textAlign:'center', padding:'20px 0' }}>No sessions logged yet</p> : (
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {sessions.map(s=>(
-                <div key={s.id} style={{ padding:'12px', borderRadius:8, background:'var(--pios-surface2)' }}>
+                <div key={(s as Record<string,unknown>).id as string} style={{ padding:'12px', borderRadius:8, background:'var(--pios-surface2)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
                     <span style={{ fontSize:12, fontWeight:600 }}>{s.supervisor||'Supervisor'}</span>
                     <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{formatDate(s.session_date)}</span>
@@ -431,8 +431,8 @@ const DBA_MILESTONES_TEMPLATE = [
 ]
 
 function MilestonesSection() {
-  const [milestones, setMilestones] = useState<unknown[]>([])
-  const [summary,    setSummary]    = useState<unknown>(null)
+  const [milestones, setMilestones] = useState<Record<string,unknown>[]>([])
+  const [summary,    setSummary]    = useState<Record<string,unknown>|null>(null)
   const [loading,    setLoading]    = useState(true)
   const [seeding,    setSeeding]    = useState(false)
   const [saving,     setSaving]     = useState<string|null>(null)
@@ -442,7 +442,7 @@ function MilestonesSection() {
     try {
       const r = await fetch('/api/milestones', { credentials: 'include' })
       const d = await r.json()
-      if (d.ok) { setMilestones(d.milestones); setSummary(d.summary) }
+      if (d.ok) { setMilestones((d as Record<string,unknown>).milestones as Record<string,unknown>[]); setSummary((d as Record<string,unknown>).summary as Record<string,unknown>[]) }
     } catch { /* silent — table may not exist until M011 runs */ }
     setLoading(false)
   }, [])
@@ -472,7 +472,7 @@ function MilestonesSection() {
         credentials: 'include',
         body: JSON.stringify({ id, status }),
       })
-      setMilestones(prev => prev.map(m => m.id === id ? { ...m, status } : m))
+      setMilestones(prev => prev.map((m: Record<string,unknown>) => (m as Record<string,unknown>).id === id ? { ...(m as Record<string,unknown>), status } : m))
     } catch { /* silent */ }
     setSaving(null)
   }
@@ -507,7 +507,7 @@ function MilestonesSection() {
       ) : (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8 }}>
           {milestones.map(m => (
-            <div key={m.id} style={{
+            <div key={(m as Record<string,unknown>).id as string} style={{
               padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)',
               borderLeft:`3px solid ${MILESTONE_STATUS_COLOURS[m.status]??'var(--pios-border)'}`,
               opacity: ['waived','skipped'].includes(m.status) ? 0.5 : 1,

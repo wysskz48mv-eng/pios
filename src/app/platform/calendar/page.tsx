@@ -33,7 +33,7 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
     setLoadingBrief(true)
     const res=await fetch('/api/calendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ai_brief',id:event.id})})
     const d=await res.json()
-    if(d.brief)setBrief(d.brief)
+    if(d.brief)setBrief((d as Record<string,unknown>).brief as Record<string,unknown>[])
     setLoadingBrief(false)
   }
 
@@ -79,7 +79,7 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
                 ...(event.location?[{ label:'Location',value:event.location }]:[]),
                 ...(event.attendees?.length?[{ label:'Attendees',value:`${event.attendees.length} people` }]:[]),
               ].map((fi: unknown)=>(
-                <div key={fi.label} style={{ padding:'8px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
+                <div key={(fi as Record<string,unknown>).label as string} style={{ padding:'8px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
                   <div style={{ fontSize:10,color:'var(--pios-dim)',textTransform:'uppercase' as const,letterSpacing:'0.05em',marginBottom:2 }}>{fi.label}</div>
                   <div style={{ fontSize:12,fontWeight:600 }}>{fi.value}</div>
                 </div>
@@ -152,7 +152,7 @@ function MonthGrid({ year,month,events,onDayClick,onEventClick }:{ year:number;m
               <div style={{ fontSize:12,fontWeight:isToday?700:400,color:isToday?'#22d3ee':'var(--pios-text)',marginBottom:4,lineHeight:1 }}>{date.getDate()}</div>
               <div style={{ display:'flex',flexDirection:'column' as const,gap:2 }}>
                 {de.slice(0,3).map(e=>(
-                  <div key={e.id} onClick={ev=>{ev.stopPropagation();onEventClick(e)}} style={{ fontSize:10,padding:'2px 5px',borderRadius:3,lineHeight:1.3,background:domainColour(e.domain||'personal')+'25',color:domainColour(e.domain||'personal'),overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,cursor:'pointer' }}>
+                  <div key={(e as Record<string,unknown>).id as string} onClick={ev=>{ev.stopPropagation();onEventClick(e)}} style={{ fontSize:10,padding:'2px 5px',borderRadius:3,lineHeight:1.3,background:domainColour(e.domain||'personal')+'25',color:domainColour(e.domain||'personal'),overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,cursor:'pointer' }}>
                     {!e.all_day&&<span style={{ marginRight:3,opacity:0.8 }}>{fmt(e.start_time)}</span>}{e.title}
                   </div>
                 ))}
@@ -170,12 +170,12 @@ export default function CalendarPage() {
   const today=new Date()
   const [year,setYear]=useState(today.getFullYear())
   const [month,setMonth]=useState(today.getMonth())
-  const [events,setEvents]=useState<unknown[]>([])
+  const [events,setEvents]=useState<Record<string,unknown>[]>([])
   const [loading,setLoading]=useState(true)
   const [syncing,setSyncing]=useState(false)
   const [syncMsg,setSyncMsg]=useState<string|null>(null)
   const [googleConnected,setGoogleConnected]=useState(false)
-  const [selectedEvent,setSelectedEvent]=useState<unknown>(null)
+  const [selectedEvent,setSelectedEvent]=useState<Record<string,unknown>|null>(null)
   const [addingDate,setAddingDate]=useState<Date|null>(null)
   const [view,setView]=useState<'month'|'list'>('month')
 
@@ -258,7 +258,7 @@ export default function CalendarPage() {
           ):(
             <div style={{ display:'flex',flexDirection:'column' as const,gap:8 }}>
               {upcoming.map(e=>(
-                <div key={e.id} onClick={()=>setSelectedEvent(e)} className="pios-card" style={{ padding:'12px 16px',cursor:'pointer',display:'flex',alignItems:'flex-start',gap:14,borderLeft:`3px solid ${domainColour(e.domain||'personal')}` }}>
+                <div key={(e as Record<string,unknown>).id as string} onClick={()=>setSelectedEvent(e)} className="pios-card" style={{ padding:'12px 16px',cursor:'pointer',display:'flex',alignItems:'flex-start',gap:14,borderLeft:`3px solid ${domainColour(e.domain||'personal')}` }}>
                   <div style={{ textAlign:'center' as const,minWidth:52,flexShrink:0 }}>
                     <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{new Date(e.start_time).toLocaleDateString('en-GB',{weekday:'short'})}</div>
                     <div style={{ fontSize:15,fontWeight:700 }}>{new Date(e.start_time).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>

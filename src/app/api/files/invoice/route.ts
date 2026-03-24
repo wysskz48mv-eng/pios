@@ -141,12 +141,12 @@ Return ONLY valid JSON:
       })
     } catch (err: unknown) {
       console.error('/api/files/invoice:', err)
-      return NextResponse.json({ error: err.message ?? 'Extraction failed' }, { status: 500 })
+      return NextResponse.json({ error: (err as Error).message ?? 'Extraction failed' }, { status: 500 })
     }
 
   } catch (err: unknown) {
-    console.error('[PIOS] files/invoice POST:', err.message)
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    console.error('[PIOS] files/invoice POST:', (err as Error).message)
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }}
 
 export async function GET() {
@@ -160,6 +160,6 @@ export async function GET() {
       .order('invoice_date', { ascending: false }).limit(50)
     return NextResponse.json({ invoices: data ?? [] })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

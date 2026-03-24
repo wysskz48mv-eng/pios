@@ -20,7 +20,7 @@ const PROVIDER_LABELS: Record<string, string> = { google:'Gmail / Google', micro
 const PROVIDER_COLOURS: Record<string, string> = { google:'#4285F4', microsoft:'#0078D4', imap:'#64748b' }
 
 function EmailAccountsSection() {
-  const [accounts, setAccounts]   = useState<unknown[]>([])
+  const [accounts, setAccounts]   = useState<Record<string,unknown>[]>([])
   const [loading, setLoading]     = useState(true)
   const [showAdd, setShowAdd]     = useState(false)
   const [addProvider, setAddProvider] = useState<'google'|'microsoft'|'imap'>('google')
@@ -147,7 +147,7 @@ function EmailAccountsSection() {
 
           {/* Context */}
           <label style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.05em', display:'block', marginBottom:4 }}>Context</label>
-          <select value={addCtx} onChange={e => setAddCtx(e.target.value)} style={{ ...inp, marginBottom:10 }}>
+          <select value={addCtx} onChange={e => setAddCtx(e.target.value)} style={{ ...(inp as Record<string,unknown>), marginBottom:10 }}>
             {Object.entries(CONTEXT_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
           </select>
 
@@ -201,8 +201,8 @@ function EmailAccountsSection() {
               <input placeholder="Email address" value={imapForm.email} onChange={e => setImapForm(p=>({...p,email:e.target.value}))} style={inp} />
               <input placeholder="IMAP host (e.g. outlook.office365.com)" value={imapForm.host} onChange={e => setImapForm(p=>({...p,host:e.target.value}))} style={inp} />
               <div style={{ display:'grid', gridTemplateColumns:'120px 1fr', gap:8 }}>
-                <input placeholder="Port (993)" value={imapForm.port} onChange={e => setImapForm(p=>({...p,port:e.target.value}))} style={{ ...inp, marginBottom:0 }} />
-                <input placeholder="IMAP username (usually email)" value={imapForm.username} onChange={e => setImapForm(p=>({...p,username:e.target.value}))} style={{ ...inp, marginBottom:0 }} />
+                <input placeholder="Port (993)" value={imapForm.port} onChange={e => setImapForm(p=>({...p,port:e.target.value}))} style={{ ...(inp as Record<string,unknown>), marginBottom:0 }} />
+                <input placeholder="IMAP username (usually email)" value={imapForm.username} onChange={e => setImapForm(p=>({...p,username:e.target.value}))} style={{ ...(inp as Record<string,unknown>), marginBottom:0 }} />
               </div>
               <div style={{ height:8 }} />
               <input type="password" placeholder="App password (not your main password)" value={imapForm.password} onChange={e => setImapForm(p=>({...p,password:e.target.value}))} style={inp} />
@@ -224,7 +224,7 @@ function EmailAccountsSection() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {accounts.map((acc: Record<string, unknown>) => (
-            <div key={acc.id} style={{ padding:'12px 14px', background:'var(--pios-surface2)', borderRadius:10, border:`1px solid var(--pios-border)` }}>
+            <div key={(acc as Record<string,unknown>).id as string} style={{ padding:'12px 14px', background:'var(--pios-surface2)', borderRadius:10, border:`1px solid var(--pios-border)` }}>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <div style={{ width:8, height:8, borderRadius:'50%', background: PROVIDER_COLOURS[acc.provider] ?? '#64748b', flexShrink:0 }} />
                 <div style={{ flex:1, minWidth:0 }}>
@@ -341,7 +341,7 @@ function PersonaSection() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
         {PERSONAS.map(p => (
-          <button key={p.key} onClick={() => updatePersona(p.key)} disabled={saving}
+          <button key={(p as Record<string,unknown>).key as string} onClick={() => updatePersona(p.key)} disabled={saving}
             style={{
               padding: '12px 14px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
               background: currentPersona === p.key ? 'rgba(167,139,250,0.12)' : 'rgba(255,255,255,0.03)',
@@ -359,10 +359,10 @@ function PersonaSection() {
 }
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<unknown>(null)
-  const [tenant,  setTenant]  = useState<unknown>(null)
-  const [user,    setUser]    = useState<unknown>(null)
-  const [feedSettings,   setFeedSettings]   = useState<unknown>(null)
+  const [profile, setProfile] = useState<Record<string,unknown>|null>(null)
+  const [tenant,  setTenant]  = useState<Record<string,unknown>|null>(null)
+  const [user,    setUser]    = useState<Record<string,unknown>|null>(null)
+  const [feedSettings,   setFeedSettings]   = useState<Record<string,unknown>|null>(null)
   const [billingNotice,  setBillingNotice]  = useState<{msg:string,ok:boolean}|null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -420,7 +420,7 @@ export default function SettingsPage() {
   async function updateFeedSetting(key: string, value: unknown) {
     const next = { ...(feedSettings??{}), [key]: value }
     setFeedSettings(next)
-    await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'settings', ...next }) })
+    await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'settings', ...(next as Record<string,unknown>) }) })
   }
 
   if (loading) return (
@@ -457,7 +457,7 @@ export default function SettingsPage() {
               ].map(([k,l]) => (
                 <div key={k}>
                   <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>{l}</div>
-                  <input className="pios-input" value={(form as Record<string, unknown>)[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
+                  <input className="pios-input" value={(form as Record<string, unknown>)[k]} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),[k]:e.target.value}))} />
                 </div>
               ))}
               <div style={{ display:'flex',gap:8,marginTop:4 }}>
@@ -546,7 +546,7 @@ export default function SettingsPage() {
             { name:'Zotero (Research Library)', connected:false, detail:'Add Zotero Key in Research Hub → Import & Connect', colour:'#CC2936' },
             { name:'Stripe (Billing)', connected:!!tenant?.stripe_customer_id, detail:'Managed automatically', colour:'#635BFF' },
           ].map(i => (
-            <div key={i.name} style={{ padding:'10px 0',borderBottom:'1px solid var(--pios-border)' }}>
+            <div key={(i as Record<string,unknown>).name as string} style={{ padding:'10px 0',borderBottom:'1px solid var(--pios-border)' }}>
               <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
                 <div style={{ flex:1,minWidth:0 }}>
                   <div style={{ fontSize:13,fontWeight:500,marginBottom:2 }}>{i.name}</div>
@@ -572,7 +572,7 @@ export default function SettingsPage() {
                 { key:'auto_refresh', label:'Auto-refresh feeds on Command Centre load', type:'checkbox' },
                 { key:'show_relevance', label:'Show AI relevance scores on feed items', type:'checkbox' },
               ].map(opt=>(
-                <label key={opt.key} style={{ display:'flex',alignItems:'center',gap:10,cursor:'pointer',fontSize:13 }}>
+                <label key={(opt as Record<string,unknown>).key as string} style={{ display:'flex',alignItems:'center',gap:10,cursor:'pointer',fontSize:13 }}>
                   <input type="checkbox" checked={!!(feedSettings as Record<string,unknown>)[opt.key]} onChange={e=>updateFeedSetting(opt.key, e.target.checked)} />
                   {opt.label}
                 </label>

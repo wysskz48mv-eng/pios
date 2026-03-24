@@ -118,7 +118,7 @@ function TaskDrawer({ task, onClose, onSave, onDelete }: { task:any; onClose:()=
                 { label:'Source', value:task.source || 'manual' },
                 { label:'Created', value:task.created_at ? new Date(task.created_at).toLocaleDateString('en-GB') : '—' },
               ].map(f=>(
-                <div key={f.label} style={{ padding:'10px', borderRadius:8, background:'var(--pios-surface2)' }}>
+                <div key={(f as Record<string,unknown>).label as string} style={{ padding:'10px', borderRadius:8, background:'var(--pios-surface2)' }}>
                   <div style={{ fontSize:10, color:'var(--pios-dim)', textTransform:'uppercase' as const, letterSpacing:'0.06em', marginBottom:3 }}>{f.label}</div>
                   <div style={{ fontSize:12, fontWeight:600 }}>{f.value}</div>
                 </div>
@@ -138,10 +138,10 @@ function TaskDrawer({ task, onClose, onSave, onDelete }: { task:any; onClose:()=
 // ── AI Prioritise panel ────────────────────────────────────────────────────────
 function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }) {
   const [loading, setLoading] = useState(true)
-  const [result, setResult]   = useState<unknown>(null)
+  const [result, setResult]   = useState<Record<string,unknown>|null>(null)
 
   useEffect(() => {
-    const openTasks = tasks.filter(t => t.status !== 'done')
+    const openTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).status !== 'done')
     fetch('/api/tasks', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -193,7 +193,7 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
                     if (!task) return null
                     const urgencyColor = { critical:'#ef4444', high:'#f59e0b', medium:'#6c8eff', low:'#64748b' }[p.urgency as string] ?? '#64748b'
                     return (
-                      <div key={p.id} style={{ display:'flex', gap:12, padding:'10px 14px', borderRadius:8, background:'var(--pios-surface2)', alignItems:'flex-start' }}>
+                      <div key={(p as Record<string,unknown>).id as string} style={{ display:'flex', gap:12, padding:'10px 14px', borderRadius:8, background:'var(--pios-surface2)', alignItems:'flex-start' }}>
                         <span style={{ fontSize:18, fontWeight:800, color:'var(--pios-dim)', minWidth:28, lineHeight:1.2 }}>#{p.rank}</span>
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{task.title}</div>
@@ -220,13 +220,13 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function TasksPage() {
-  const [tasks,      setTasks]      = useState<unknown[]>([])
+  const [tasks,      setTasks]      = useState<Record<string,unknown>[]>([])
   const [loading,    setLoading]    = useState(true)
   const [domainFilter,  setDomainFilter]  = useState('all')
   const [sourceFilter,  setSourceFilter]  = useState('all')
   const [overdueOnly,   setOverdueOnly]   = useState(false)
   const [statusFilter, setStatusFilter] = useState('open')
-  const [selectedTask, setSelectedTask] = useState<unknown>(null)
+  const [selectedTask, setSelectedTask] = useState<Record<string,unknown>|null>(null)
   const [showAI,     setShowAI]     = useState(false)
   const [showAdd,    setShowAdd]    = useState(false)
   const [saving,     setSaving]     = useState(false)
@@ -256,7 +256,7 @@ export default function TasksPage() {
 
   async function updateTask(id:string, updates: unknown) {
     await fetch('/api/tasks', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, ...updates }) })
-    setTasks(prev => prev.map(t => t.id===id ? { ...t, ...updates } : t))
+    setTasks(prev => prev.map((t: Record<string,unknown>) => (t as Record<string,unknown>).id===id ? { ...t, ...updates } : t))
   }
 
   async function cycleStatus(id:string, current:string) {
@@ -266,7 +266,7 @@ export default function TasksPage() {
 
   async function deleteTask(id:string) {
     await fetch(`/api/tasks?id=${id}`, { method:'DELETE' })
-    setTasks(prev => prev.filter(t => t.id !== id))
+    setTasks(prev => prev.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).id !== id))
   }
 
   // Filter displayed tasks
@@ -381,7 +381,7 @@ export default function TasksPage() {
         // Done list
         <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
           {visibleTasks.map(t => (
-            <div key={t.id} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10, opacity:0.65, cursor:'pointer' }} onClick={()=>setSelectedTask(t)}>
+            <div key={(t as Record<string,unknown>).id as string} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10, opacity:0.65, cursor:'pointer' }} onClick={()=>setSelectedTask(t)}>
               <span style={{ fontSize:14, color:'#22c55e' }}>✓</span>
               <span style={{ fontSize:13, textDecoration:'line-through', color:'var(--pios-dim)', flex:1 }}>{t.title}</span>
               <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{t.completed_at?new Date(t.completed_at).toLocaleDateString('en-GB'):''}</span>
@@ -403,7 +403,7 @@ export default function TasksPage() {
                 </div>
                 <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
                   {col.map(t => (
-                    <div key={t.id} style={{
+                    <div key={(t as Record<string,unknown>).id as string} style={{
                       padding:'12px 14px', borderRadius:8, background:'var(--pios-surface)',
                       border:`1px solid ${t.priority==='critical'?'rgba(239,68,68,0.3)':'var(--pios-border)'}`,
                       cursor:'pointer', transition:'border-color 0.15s',

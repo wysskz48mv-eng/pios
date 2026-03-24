@@ -144,7 +144,7 @@ export async function POST(request: Request) {
             results.push({ id, name: m.name, status: 'applied' })
           }
         } catch (e: unknown) {
-          results.push({ id, name: m.name, status: 'error', reason: e.message })
+          results.push({ id, name: m.name, status: 'error', reason: (e as Error).message })
         }
       }
       return NextResponse.json({ results, message: 'Run all complete — check Supabase dashboard to verify each table.' })
@@ -179,7 +179,7 @@ export async function POST(request: Request) {
       if (!error) executed = true
       else execError = error.message
     } catch (e: unknown) {
-      execError = e.message
+      execError = (e as Error).message
     }
 
     if (executed) {

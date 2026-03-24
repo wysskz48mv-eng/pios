@@ -45,8 +45,8 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
     if (project.id) setEditing(false); else onClose()
   }
 
-  const projTasks = tasks.filter(t => t.project_id === project.id)
-  const doneTasks = projTasks.filter(t => t.status === 'done').length
+  const projTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).project_id === project.id)
+  const doneTasks = projTasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).status === 'done').length
 
   return (
     <div style={{ position:'fixed',inset:0,zIndex:200,display:'flex',justifyContent:'flex-end' }}>
@@ -121,7 +121,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
                 { label:'Tasks',    value:projTasks.length>0?`${doneTasks}/${projTasks.length} done`:'No tasks linked' },
                 { label:'Domain',   value:domainLabel(project.domain) },
               ].map(fi=>(
-                <div key={fi.label} style={{ padding:'8px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
+                <div key={(fi as Record<string,unknown>).label as string} style={{ padding:'8px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
                   <div style={{ fontSize:10,color:'var(--pios-dim)',textTransform:'uppercase' as const,letterSpacing:'0.05em',marginBottom:2 }}>{fi.label}</div>
                   <div style={{ fontSize:12,fontWeight:600 }}>{fi.value}</div>
                 </div>
@@ -133,7 +133,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
                 <div style={{ fontSize:11,fontWeight:600,color:'var(--pios-muted)',marginBottom:8,textTransform:'uppercase' as const,letterSpacing:'0.06em' }}>Linked tasks ({projTasks.length})</div>
                 <div style={{ display:'flex',flexDirection:'column' as const,gap:5 }}>
                   {projTasks.slice(0,6).map(t=>(
-                    <div key={t.id} style={{ display:'flex',gap:8,alignItems:'center',padding:'6px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
+                    <div key={(t as Record<string,unknown>).id as string} style={{ display:'flex',gap:8,alignItems:'center',padding:'6px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
                       <span style={{ width:8,height:8,borderRadius:'50%',background:t.status==='done'?'#22c55e':t.status==='in_progress'?'#6c8eff':'#64748b',flexShrink:0,display:'inline-block' }} />
                       <span style={{ fontSize:12,flex:1,textDecoration:t.status==='done'?'line-through':'none',color:t.status==='done'?'var(--pios-dim)':'var(--pios-text)' }}>{t.title}</span>
                       {t.due_date&&<span style={{ fontSize:10,color:'var(--pios-dim)' }}>{formatRelative(t.due_date)}</span>}
@@ -155,12 +155,12 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<unknown[]>([])
-  const [tasks,    setTasks]    = useState<unknown[]>([])
+  const [projects, setProjects] = useState<Record<string,unknown>[]>([])
+  const [tasks,    setTasks]    = useState<Record<string,unknown>[]>([])
   const [loading,  setLoading]  = useState(true)
   const [filter,   setFilter]   = useState<'active'|'all'|'completed'>('active')
   const [domainFilter, setDomainFilter] = useState('all')
-  const [selected, setSelected] = useState<unknown>(null)
+  const [selected, setSelected] = useState<Record<string,unknown>|null>(null)
   const [adding,   setAdding]   = useState(false)
 
   const load = useCallback(async () => {
@@ -256,7 +256,7 @@ export default function ProjectsPage() {
             const pt = tasks.filter(t=>t.project_id===p.id)
             const done = pt.filter(t=>t.status==='done').length
             return (
-              <div key={p.id} onClick={()=>setSelected(p)} className="pios-card" style={{ cursor:'pointer',borderTop:`3px solid ${p.colour||domainColour(p.domain)}`,padding:'14px 16px',transition:'border-color 0.15s' }}>
+              <div key={(p as Record<string,unknown>).id as string} onClick={()=>setSelected(p)} className="pios-card" style={{ cursor:'pointer',borderTop:`3px solid ${p.colour||domainColour(p.domain)}`,padding:'14px 16px',transition:'border-color 0.15s' }}>
                 <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:8 }}>
                   <div style={{ flex:1,minWidth:0 }}>
                     <div style={{ fontSize:14,fontWeight:700,marginBottom:4,lineHeight:1.3 }}>{p.title}</div>

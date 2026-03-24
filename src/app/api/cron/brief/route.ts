@@ -100,8 +100,8 @@ export async function GET(req: NextRequest) {
       ])
 
       const tasks     = tasksR.data ?? []
-      const overdue   = tasks.filter(t => t.due_date && t.due_date < today)
-      const dueToday  = tasks.filter(t => t.due_date === today)
+      const overdue   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && t.due_date < today)
+      const dueToday  = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date === today)
       const upcoming  = tasks.filter(t => !t.due_date || t.due_date > today)
 
       // Skip users with nothing to brief on
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
       const chapters    = chaptersR.data ?? []
       const totalWords  = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
       const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
-      const nearestDl   = (modulesR.data ?? []).map(m => m.deadline).filter(Boolean).sort()[0]
+      const nearestDl   = (modulesR.data ?? []).map((m: Record<string,unknown>) => (m as Record<string,unknown>).deadline).filter(Boolean).sort()[0]
       const daysLeft    = nearestDl ? Math.max(1, Math.round((new Date(nearestDl).getTime() - now.getTime()) / 86400000)) : null
       const wordsPerDay = daysLeft ? Math.ceil(Math.max(0, targetWords - totalWords) / daysLeft) : null
 
@@ -244,7 +244,7 @@ export async function GET(req: NextRequest) {
 
       generated++
     } catch (err: unknown) {
-      console.error(`[cron/brief] Failed for user ${uid}:`, err.message)
+      console.error(`[cron/brief] Failed for user ${uid}:`, (err as Error).message)
       failed++
     }
   }

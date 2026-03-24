@@ -159,12 +159,12 @@ Context: DBA research on AI-enabled forecasting in GCC FM, STS theory, sensemaki
       })
     } catch (err: unknown) {
       console.error('/api/research/search:', err)
-      return NextResponse.json({ error: err.message ?? 'Search failed' }, { status: 500 })
+      return NextResponse.json({ error: (err as Error).message ?? 'Search failed' }, { status: 500 })
     }
 
   } catch (err: unknown) {
-    console.error('[PIOS] research/search POST:', err.message)
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    console.error('[PIOS] research/search POST:', (err as Error).message)
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }}
 
 export async function GET(request: Request) {
@@ -176,6 +176,6 @@ export async function GET(request: Request) {
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
     return NextResponse.json({ searches: data ?? [], history: data ?? [] })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

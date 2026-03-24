@@ -117,6 +117,6 @@ Return ONLY valid JSON or null if this is not a payroll email:
     return NextResponse.json({ detected: false, message: 'Payroll emails found but no extractable pay data. Review manually.' })
   } catch (err: unknown) {
     console.error('/api/payroll/detect:', err)
-    return NextResponse.json({ error: err.message ?? 'Detection failed' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Detection failed' }, { status: 500 })
   }
 }

@@ -55,7 +55,7 @@ export async function GET() {
       },
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -182,7 +182,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ error: `Unknown entity: ${entity}` }, { status: 400 })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -201,6 +201,6 @@ export async function DELETE(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
     return NextResponse.json({ deleted: true })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }

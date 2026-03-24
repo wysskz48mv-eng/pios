@@ -43,15 +43,15 @@ const HITL_BANNER = (
 
 // ── Payroll runs tab ──────────────────────────────────────────────────────────
 function RunsTab() {
-  const [runs, setRuns]           = useState<unknown[]>([])
+  const [runs, setRuns]           = useState<Record<string,unknown>[]>([])
   const [loading, setLoading]     = useState(true)
   const [detecting, setDetecting] = useState(false)
-  const [detectResult, setDetectResult] = useState<unknown>(null)
-  const [selectedRun, setSelectedRun]   = useState<unknown>(null)
-  const [lines, setLines]         = useState<unknown[]>([])
+  const [detectResult, setDetectResult] = useState<Record<string,unknown>|null>(null)
+  const [selectedRun, setSelectedRun]   = useState<Record<string,unknown>|null>(null)
+  const [lines, setLines]         = useState<Record<string,unknown>[]>([])
   const [linesLoading, setLinesLoading] = useState(false)
   const [remitting, setRemitting] = useState(false)
-  const [remitPreview, setRemitPreview] = useState<unknown>(null)
+  const [remitPreview, setRemitPreview] = useState<Record<string,unknown>|null>(null)
   const [banner, setBanner] = useState<{msg:string;ok:boolean}|null>(null)
 
   const loadRuns = useCallback(async () => {
@@ -66,7 +66,7 @@ function RunsTab() {
 
   async function selectRun(run: unknown) {
     setSelectedRun(run); setLinesLoading(true); setRemitPreview(null)
-    const res = await fetch(`/api/payroll?type=lines&run_id=${run.id}`)
+    const res = await fetch(`/api/payroll?type=lines&run_id=${String((run as Record<string,unknown>).id ?? "")}`)
     const d = await res.json()
     setLines(d.lines ?? []); setLinesLoading(false)
   }
@@ -81,7 +81,7 @@ function RunsTab() {
 
   async function approveRun(runId: string) {
     await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'approve_run', run_id:runId }) })
-    loadRuns(); if (selectedRun?.id === runId) setSelectedRun((p: unknown) => p ? {...p, status:'approved'} : p)
+    loadRuns(); if (selectedRun?.id === runId) setSelectedRun((p: unknown) => p ? {...(p as Record<string,unknown>), status:'approved'} : p)
   }
 
   async function previewRemit() {
@@ -141,23 +141,23 @@ function RunsTab() {
           ) : (
             <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
               {runs.map(run => (
-                <div key={run.id} onClick={()=>selectRun(run)} className="pios-card" style={{ padding:'14px 16px', cursor:'pointer', border:`1px solid ${selectedRun?.id===run.id?'rgba(167,139,250,0.4)':'var(--pios-border)'}`, background:selectedRun?.id===run.id?'rgba(167,139,250,0.05)':'var(--pios-surface)' }}>
+                <div key={(run as Record<string,unknown>).id as string} onClick={()=>selectRun(run)} className="pios-card" style={{ padding:'14px 16px', cursor:'pointer', border:`1px solid ${selectedRun?.id===(run as Record<string,unknown>).id?'rgba(167,139,250,0.4)':'var(--pios-border)'}`, background:selectedRun?.id===(run as Record<string,unknown>).id?'rgba(167,139,250,0.05)':'var(--pios-surface)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                     <div>
-                      <div style={{ fontSize:14, fontWeight:700, marginBottom:3 }}>{run.pay_period ?? 'Payroll Run'}</div>
+                      <div style={{ fontSize:14, fontWeight:700, marginBottom:3 }}>{(run as Record<string,unknown>).pay_period ?? 'Payroll Run'}</div>
                       <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                        <Badge label={run.status} colour={RUN_STATUS[run.status]??'#64748b'} />
-                        {run.company_entity && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{run.company_entity}</span>}
+                        <Badge label={String((run as Record<string,unknown>).status ?? "")} colour={RUN_STATUS[(run as Record<string,unknown>).status]??'#64748b'} />
+                        {(run as Record<string,unknown>).company_entity && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{String((run as Record<string,unknown>).company_entity ?? "")}</span>}
                       </div>
                     </div>
                     <div style={{ textAlign:'right' as const }}>
-                      <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{run.currency} {parseFloat(run.total_net??0).toFixed(2)}</div>
-                      <div style={{ fontSize:11, color:'var(--pios-dim)' }}>net · {run.payroll_lines?.length??0} staff</div>
+                      <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{String((run as Record<string,unknown>).currency ?? "")} {parseFloat((run as Record<string,unknown>).total_net??0).toFixed(2)}</div>
+                      <div style={{ fontSize:11, color:'var(--pios-dim)' }}>net · {(run as Record<string,unknown>).payroll_lines?.length??0} staff</div>
                     </div>
                   </div>
-                  {run.status === 'draft' && (
+                  {(run as Record<string,unknown>).status === 'draft' && (
                     <div style={{ marginTop:10 }}>
-                      <button onClick={e=>{e.stopPropagation();approveRun(run.id)}} style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>
+                      <button onClick={e=>{e.stopPropagation();approveRun((run as Record<string,unknown>).id)}} style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>
                         ✓ Approve run
                       </button>
                     </div>
@@ -189,7 +189,7 @@ function RunsTab() {
                   <div style={{ fontSize:11, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase' as const, letterSpacing:'0.06em', marginBottom:8 }}>Pay lines</div>
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
                     {lines.map(l => (
-                      <div key={l.id} style={{ display:'flex', justifyContent:'space-between', padding:'8px 10px', borderRadius:6, background:'var(--pios-surface2)', alignItems:'center' }}>
+                      <div key={(l as Record<string,unknown>).id as string} style={{ display:'flex', justifyContent:'space-between', padding:'8px 10px', borderRadius:6, background:'var(--pios-surface2)', alignItems:'center' }}>
                         <div>
                           <div style={{ fontSize:13, fontWeight:600 }}>{l.staff_name}</div>
                           {l.staff_email && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{l.staff_email}</div>}
@@ -243,7 +243,7 @@ function RunsTab() {
 
 // ── Transfer queue tab ────────────────────────────────────────────────────────
 function TransfersTab() {
-  const [transfers, setTransfers] = useState<unknown[]>([])
+  const [transfers, setTransfers] = useState<Record<string,unknown>[]>([])
   const [loading, setLoading]     = useState(true)
   const [filter, setFilter]       = useState('queued')
   const [actioning, setActioning] = useState<string|null>(null)
@@ -281,7 +281,7 @@ function TransfersTab() {
             { label:'Approved — ready', value:`${transfers.filter(t=>t.status==='approved').length} · ${transfers[0]?.currency??'GBP'} ${totalApproved.toFixed(2)}`, colour:'#f59e0b' },
             { label:'Completed', value:transfers.filter(t=>t.status==='completed').length, colour:'#22c55e' },
           ].map(s=>(
-            <div key={s.label} className="pios-card-sm" style={{ padding:'12px 14px' }}>
+            <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
               <div style={{ fontSize:13, fontWeight:700, color:s.colour, marginBottom:3 }}>{s.value}</div>
               <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{s.label}</div>
             </div>
@@ -302,7 +302,7 @@ function TransfersTab() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {transfers.map(t => (
-            <div key={t.id} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+            <div key={(t as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3, flexWrap:'wrap' as const }}>
                   <span style={{ fontSize:13, fontWeight:600 }}>{t.recipient_name}</span>
@@ -338,7 +338,7 @@ function TransfersTab() {
 
 // ── Expense claims tab ────────────────────────────────────────────────────────
 function ClaimsTab() {
-  const [claims, setClaims]   = useState<unknown[]>([])
+  const [claims, setClaims]   = useState<Record<string,unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('submitted')
   const [actioning, setActioning] = useState<string|null>(null)
@@ -372,7 +372,7 @@ function ClaimsTab() {
   async function submitClaim() {
     if (!form.claimant_name.trim() || !form.amount) return
     setSaving(true)
-    await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'submit_claim', claim: { ...form, amount:parseFloat(form.amount) } }) })
+    await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'submit_claim', claim: { ...(form as Record<string,unknown>), amount:parseFloat(form.amount) } }) })
     setForm({ claimant_name:'', claimant_email:'', amount:'', currency:'GBP', description:'', claim_period:'', category:'' })
     setShowAdd(false); setSaving(false); load('submitted')
   }
@@ -393,18 +393,18 @@ function ClaimsTab() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'#a78bfa' }}>Submit Expense Claim</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Claimant name *" value={form.claimant_name} onChange={e=>setForm(p=>({...p,claimant_name:e.target.value}))} />
-            <input className="pios-input" placeholder="Email" value={form.claimant_email} onChange={e=>setForm(p=>({...p,claimant_email:e.target.value}))} />
-            <input className="pios-input" placeholder="Amount *" type="number" value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} />
+            <input className="pios-input" placeholder="Claimant name *" value={form.claimant_name} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),claimant_name:e.target.value}))} />
+            <input className="pios-input" placeholder="Email" value={form.claimant_email} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),claimant_email:e.target.value}))} />
+            <input className="pios-input" placeholder="Amount *" type="number" value={form.amount} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),amount:e.target.value}))} />
             <div style={{ display:'flex', gap:6 }}>
-              <select className="pios-input" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...p,currency:e.target.value}))}>
+              <select className="pios-input" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),currency:e.target.value}))}>
                 {['GBP','USD','SAR','AED','EUR'].map(c=><option key={c} value={c}>{c}</option>)}
               </select>
-              <input className="pios-input" placeholder="Claim period (e.g. March 2026)" value={form.claim_period} onChange={e=>setForm(p=>({...p,claim_period:e.target.value}))} />
+              <input className="pios-input" placeholder="Claim period (e.g. March 2026)" value={form.claim_period} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),claim_period:e.target.value}))} />
             </div>
           </div>
-          <input className="pios-input" placeholder="Category (travel / software / equipment…)" value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))} style={{ marginBottom:8 }} />
-          <input className="pios-input" placeholder="Description" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} style={{ marginBottom:10 }} />
+          <input className="pios-input" placeholder="Category (travel / software / equipment…)" value={form.category} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),category:e.target.value}))} style={{ marginBottom:8 }} />
+          <input className="pios-input" placeholder="Description" value={form.description} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),description:e.target.value}))} style={{ marginBottom:10 }} />
           <div style={{ display:'flex', gap:8 }}>
             <button className="pios-btn pios-btn-primary" onClick={submitClaim} disabled={saving} style={{ fontSize:12 }}>{saving?'Submitting…':'Submit claim'}</button>
             <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
@@ -420,7 +420,7 @@ function ClaimsTab() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {claims.map(c => (
-            <div key={c.id} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+            <div key={(c as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3, flexWrap:'wrap' as const }}>
                   <span style={{ fontSize:13, fontWeight:600 }}>{c.claimant_name}</span>
@@ -450,7 +450,7 @@ function ClaimsTab() {
 
 // ── Staff tab ─────────────────────────────────────────────────────────────────
 function StaffTab() {
-  const [staff, setStaff]     = useState<unknown[]>([])
+  const [staff, setStaff]     = useState<Record<string,unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -465,7 +465,7 @@ function StaffTab() {
   async function addStaff() {
     if (!form.full_name.trim() || !form.email.trim()) return
     setSaving(true)
-    await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'add_staff', staff: { ...form, monthly_salary: parseFloat(form.monthly_salary)||null } }) })
+    await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'add_staff', staff: { ...(form as Record<string,unknown>), monthly_salary: parseFloat(form.monthly_salary)||null } }) })
     setForm({ full_name:'', email:'', role:'', company_entity:'VeritasIQ Technologies Ltd', employment_type:'employee', salary_currency:'GBP', monthly_salary:'', bank_account:'', payment_method:'bank_transfer' })
     setShowAdd(false); setSaving(false); load()
   }
@@ -481,23 +481,23 @@ function StaffTab() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'#a78bfa' }}>Add Staff Member</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Full name *" value={form.full_name} onChange={e=>setForm(p=>({...p,full_name:e.target.value}))} />
-            <input className="pios-input" placeholder="Email *" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} />
-            <input className="pios-input" placeholder="Role / job title" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))} />
-            <select className="pios-input" value={form.company_entity} onChange={e=>setForm(p=>({...p,company_entity:e.target.value}))}>
+            <input className="pios-input" placeholder="Full name *" value={form.full_name} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),full_name:e.target.value}))} />
+            <input className="pios-input" placeholder="Email *" value={form.email} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),email:e.target.value}))} />
+            <input className="pios-input" placeholder="Role / job title" value={form.role} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),role:e.target.value}))} />
+            <select className="pios-input" value={form.company_entity} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),company_entity:e.target.value}))}>
               {['VeritasIQ Technologies Ltd','Sustain International UK Ltd'].map(e=><option key={e} value={e}>{e}</option>)}
             </select>
-            <select className="pios-input" value={form.employment_type} onChange={e=>setForm(p=>({...p,employment_type:e.target.value}))}>
+            <select className="pios-input" value={form.employment_type} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),employment_type:e.target.value}))}>
               {['employee','contractor','consultant','director'].map(t=><option key={t} value={t}>{t}</option>)}
             </select>
             <div style={{ display:'flex', gap:6 }}>
-              <select className="pios-input" style={{ width:'auto' }} value={form.salary_currency} onChange={e=>setForm(p=>({...p,salary_currency:e.target.value}))}>
+              <select className="pios-input" style={{ width:'auto' }} value={form.salary_currency} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),salary_currency:e.target.value}))}>
                 {['GBP','USD','SAR','AED','EUR'].map(c=><option key={c} value={c}>{c}</option>)}
               </select>
-              <input className="pios-input" placeholder="Monthly salary" type="number" value={form.monthly_salary} onChange={e=>setForm(p=>({...p,monthly_salary:e.target.value}))} />
+              <input className="pios-input" placeholder="Monthly salary" type="number" value={form.monthly_salary} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),monthly_salary:e.target.value}))} />
             </div>
           </div>
-          <input className="pios-input" placeholder="Bank account (last 4 digits only — never store full number)" value={form.bank_account} onChange={e=>setForm(p=>({...p,bank_account:e.target.value.slice(0,4)}))} style={{ marginBottom:10 }} maxLength={4} />
+          <input className="pios-input" placeholder="Bank account (last 4 digits only — never store full number)" value={form.bank_account} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),bank_account:e.target.value.slice(0,4)}))} style={{ marginBottom:10 }} maxLength={4} />
           <div style={{ display:'flex', gap:8 }}>
             <button className="pios-btn pios-btn-primary" onClick={addStaff} disabled={saving} style={{ fontSize:12 }}>{saving?'Adding…':'Add staff member'}</button>
             <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
@@ -513,7 +513,7 @@ function StaffTab() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {staff.map(s => (
-            <div key={s.id} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
+            <div key={(s as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(167,139,250,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>{s.full_name.charAt(0)}</div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{s.full_name}</div>
@@ -538,8 +538,8 @@ function StaffTab() {
 // ── Chase tab ─────────────────────────────────────────────────────────────────
 function ChaseTab() {
   const [checking, setChecking]   = useState(false)
-  const [chaseResult, setChaseResult] = useState<unknown>(null)
-  const [log, setLog]             = useState<unknown[]>([])
+  const [chaseResult, setChaseResult] = useState<Record<string,unknown>|null>(null)
+  const [log, setLog]             = useState<Record<string,unknown>[]>([])
   const [accountantEmail, setAccountantEmail] = useState('')
   const [expectedDate, setExpectedDate] = useState('')
 
@@ -604,12 +604,12 @@ function ChaseTab() {
         </div>
       )}
 
-      {log.length > 0 && (
+      {(log as Record<string,unknown>).length > 0 && (
         <div>
           <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-muted)', marginBottom:10, textTransform:'uppercase' as const, letterSpacing:'0.06em' }}>Chase history</div>
           <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
-            {log.map(l => (
-              <div key={l.id} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10 }}>
+            {(log as Record<string,unknown>).map(l => (
+              <div key={(l as Record<string,unknown>).id as string} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10 }}>
                 <Badge label={l.chase_level} colour={(levelColour as Record<string,unknown>)[l.chase_level]??'#f59e0b'} />
                 <span style={{ fontSize:12, flex:1 }}>Payroll {l.days_overdue}d overdue — expected {l.expected_date}</span>
                 <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{new Date(l.sent_at).toLocaleDateString('en-GB')}</span>

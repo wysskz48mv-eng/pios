@@ -50,27 +50,27 @@ function FeedItem({ item, showRelevance }: { item: unknown; showRelevance: boole
     <div style={{ padding:'12px 0', borderBottom:'1px solid var(--pios-border)', cursor:'pointer' }} onClick={() => setExpanded(!expanded)}>
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:13, fontWeight:600, lineHeight:1.4, marginBottom:3 }}>{item.headline}</div>
+          <div style={{ fontSize:13, fontWeight:600, lineHeight:1.4, marginBottom:3 }}>{String((item as Record<string,unknown>).headline ?? "")}</div>
           <div style={{ fontSize:11, color:'var(--pios-dim)', display:'flex', gap:10, flexWrap:'wrap' as const, alignItems:'center' }}>
-            <span>{item.source}</span>
+            <span>{String((item as Record<string,unknown>).source ?? "")}</span>
             <span>·</span>
-            <span>{item.published_relative ?? 'Recent'}</span>
-            {item.category_tag && <Pill color="#64748b">{item.category_tag}</Pill>}
-            {showRelevance && item.relevance >= 4 && <Pill color="#22c55e">High relevance</Pill>}
+            <span>{(item as Record<string,unknown>).published_relative ?? 'Recent'}</span>
+            {(item as Record<string,unknown>).category_tag && <Pill color="#64748b">{String((item as Record<string,unknown>).category_tag ?? "")}</Pill>}
+            {showRelevance && ((item as Record<string,unknown>).relevance as number) >= 4 && <Pill color="#22c55e">High relevance</Pill>}
           </div>
         </div>
         <span style={{ fontSize:16, marginTop:1, flexShrink:0 }}>{expanded ? '▲' : '▼'}</span>
       </div>
       {expanded && (
         <div style={{ marginTop:10, paddingTop:10, borderTop:'1px solid var(--pios-border)' }}>
-          {item.summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.6, marginBottom:8 }}>{typeof item.summary === 'string' ? item.summary : String(item.summary ?? '')}</p>}
-          {item.insight && (
+          {(item as Record<string,unknown>).summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.6, marginBottom:8 }}>{typeof (item as Record<string,unknown>).summary === 'string' ? (item as Record<string,unknown>).summary : String((item as Record<string,unknown>).summary ?? '')}</p>}
+          {(item as Record<string,unknown>).insight && (
             <div style={{ padding:'8px 12px', borderRadius:6, background:'rgba(108,142,255,0.08)', borderLeft:'2px solid #6c8eff', fontSize:12, color:'var(--pios-text)' }}>
-              💡 {item.insight}
+              💡 {String((item as Record<string,unknown>).insight ?? "")}
             </div>
           )}
-          {item.source_url && (
-            <a href={item.source_url} target="_blank" rel="noopener noreferrer"
+          {(item as Record<string,unknown>).source_url && (
+            <a href={String((item as Record<string,unknown>).source_url ?? "")} target="_blank" rel="noopener noreferrer"
               style={{ display:'inline-block', marginTop:8, fontSize:11, color:'#6c8eff' }}
               onClick={e => e.stopPropagation()}>
               Read source →
@@ -90,32 +90,32 @@ function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   const [fetching, setFetching]   = useState(false)
-  const [items, setItems]         = useState<unknown[]>(feed.cached_items ?? [])
-  const accentColor = CATEGORY_COLOURS[feed.category] ?? '#94a3b8'
+  const [items, setItems]         = useState<Record<string,unknown>[]>((feed as Record<string,unknown>).cached_items ?? [])
+  const accentColor = CATEGORY_COLOURS[(feed as Record<string,unknown>).category] ?? '#94a3b8'
 
   async function refresh() {
     setFetching(true)
     const res = await fetch('/api/feeds', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'fetch', id: feed.id }),
+      body: JSON.stringify({ action: 'fetch', id: (feed as Record<string,unknown>).id }),
     })
     const data = await res.json()
     if (data.items) setItems(data.items)
     setFetching(false)
-    onRefresh(feed.id)
+    onRefresh((feed as Record<string,unknown>).id)
   }
 
   return (
-    <div style={{ ...CARD, borderTop: `3px solid ${accentColor}`, padding:0, overflow:'hidden' }}>
+    <div style={{ ...(CARD as Record<string,unknown>), borderTop: `3px solid ${accentColor}`, padding:0, overflow:'hidden' }}>
       {/* Feed header */}
       <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--pios-border)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }}>
         <div style={{ display:'flex', alignItems:'center', gap:10, flex:1, minWidth:0 }}>
-          <span style={{ fontSize:20 }}>{feed.emoji}</span>
+          <span style={{ fontSize:20 }}>{String((feed as Record<string,unknown>).emoji ?? "")}</span>
           <div style={{ minWidth:0 }}>
-            <div style={{ fontSize:14, fontWeight:700, marginBottom:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{feed.label}</div>
-            {feed.last_fetched && (
-              <div style={{ fontSize:10, color:'var(--pios-dim)' }}>Updated {timeAgo(feed.last_fetched)}</div>
+            <div style={{ fontSize:14, fontWeight:700, marginBottom:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{String((feed as Record<string,unknown>).label ?? "")}</div>
+            {(feed as Record<string,unknown>).last_fetched && (
+              <div style={{ fontSize:10, color:'var(--pios-dim)' }}>Updated {timeAgo((feed as Record<string,unknown>).last_fetched)}</div>
             )}
           </div>
         </div>
@@ -124,7 +124,7 @@ function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
             {fetching ? '⟳' : '↻ Refresh'}
           </button>
           <button onClick={() => onEdit(feed)} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--pios-border)', background:'none', color:'var(--pios-muted)', cursor:'pointer' }}>✎</button>
-          <button onClick={() => onDelete(feed.id)} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', color:'#ef4444', cursor:'pointer' }}>✕</button>
+          <button onClick={() => onDelete((feed as Record<string,unknown>).id)} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', color:'#ef4444', cursor:'pointer' }}>✕</button>
         </div>
       </div>
 
@@ -139,14 +139,14 @@ function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
               Fetch now →
             </button>
           </div>
-        ) : items.map((item, i) => (
+        ) : items.map((item: Record<string,unknown>, i) => (
           <FeedItem key={i} item={item} showRelevance={showRelevance} />
         ))}
       </div>
 
-      {feed.description && (
+      {(feed as Record<string,unknown>).description && (
         <div style={{ padding:'8px 20px', borderTop:'1px solid var(--pios-border)', fontSize:11, color:'var(--pios-dim)' }}>
-          {feed.description}
+          {String((feed as Record<string,unknown>).description ?? "")}
         </div>
       )}
     </div>
@@ -158,20 +158,20 @@ const DEFAULT_FORM = { label:'', description:'', emoji:'📰', topic:'', keyword
 
 function FeedFormModal({ feed, onSave, onClose }: { feed: Record<string,unknown>|null; onSave: (data: unknown) => void; onClose: () => void }) {
   const [form, setForm] = useState(feed ? {
-    ...feed,
-    keywords: (feed.keywords ?? []).join(', '),
-    sources:  (feed.sources  ?? []).join(', '),
-    exclude_terms: (feed.exclude_terms ?? []).join(', '),
+    ...(feed as Record<string,unknown>),
+    keywords: ((feed as Record<string,unknown>).keywords ?? []).join(', '),
+    sources:  ((feed as Record<string,unknown>).sources  ?? []).join(', '),
+    exclude_terms: ((feed as Record<string,unknown>).exclude_terms ?? []).join(', '),
   } : DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
 
-  function f(k: string, v: unknown) { setForm((p: unknown) => ({ ...p, [k]: v })) }
+  function f(k: string, v: unknown) { setForm((p: unknown) => ({ ...(p as Record<string,unknown>), [k]: v })) }
 
   async function save() {
     if (!form.label.trim() || !form.topic.trim()) return
     setSaving(true)
     const payload = {
-      ...form,
+      ...(form as Record<string,unknown>),
       keywords:      form.keywords.split(',').map((s: string) => s.trim()).filter(Boolean),
       sources:       form.sources.split(',').map((s: string) => s.trim()).filter(Boolean),
       exclude_terms: form.exclude_terms.split(',').map((s: string) => s.trim()).filter(Boolean),
@@ -260,10 +260,10 @@ function FeedFormModal({ feed, onSave, onClose }: { feed: Record<string,unknown>
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function CommandPage() {
-  const [se, setSe]             = useState<unknown>(null)
-  const [is_, setIs]            = useState<unknown>(null)
-  const [gh, setGh]             = useState<unknown>(null)
-  const [feeds, setFeeds]       = useState<unknown[]>([])
+  const [se, setSe]             = useState<Record<string,unknown>|null>(null)
+  const [is_, setIs]            = useState<Record<string,unknown>|null>(null)
+  const [gh, setGh]             = useState<Record<string,unknown>|null>(null)
+  const [feeds, setFeeds]       = useState<Record<string,unknown>[]>([])
   const [feedSettings, setFeedSettings] = useState<unknown>({ command_layout:'grid', brief_include_feeds:true, show_relevance:true })
   const [loading, setLoading]   = useState(true)
   const [feedsLoading,       setFeedsLoading]       = useState(true)
@@ -303,7 +303,7 @@ export default function CommandPage() {
   }
 
   async function handleEditFeed(data: unknown) {
-    await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'update', id: editingFeed.id, ...data }) })
+    await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'update', id: editingFeed.id, ...(data as Record<string,unknown>) }) })
     loadFeeds()
   }
 
@@ -311,7 +311,7 @@ export default function CommandPage() {
     if (deleteFeedConfirm !== id) { setDeleteFeedConfirm(id); return }
     setDeleteFeedConfirm(null)
     await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete', id }) })
-    setFeeds(prev => prev.filter(f => f.id !== id))
+    setFeeds(prev => prev.filter((f: Record<string,unknown>) => (f as Record<string,unknown>).id !== id))
   }
 
   async function refreshAllFeeds() {
@@ -322,13 +322,13 @@ export default function CommandPage() {
   async function updateFeedSetting(key: string, value: unknown) {
     const next = { ...feedSettings, [key]: value }
     setFeedSettings(next)
-    await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'settings', ...next }) })
+    await fetch('/api/feeds', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'settings', ...(next as Record<string,unknown>) }) })
   }
 
   const seData = se?.snapshot
   const isData = is_?.snapshot
   const ghRepos = gh?.repos ?? {}
-  const activeFeeds = feeds.filter(f => f.is_active)
+  const activeFeeds = feeds.filter((f: Record<string,unknown>) => (f as Record<string,unknown>).is_active)
 
   return (
     <div className="fade-in">
@@ -362,7 +362,7 @@ export default function CommandPage() {
       {activeTab === 'platforms' && (
         <>
           {/* Connection bar */}
-          <div style={{ ...CARD, marginBottom:20, padding:'12px 20px', display:'flex', gap:24, flexWrap:'wrap' as const }}>
+          <div style={{ ...(CARD as Record<string,unknown>), marginBottom:20, padding:'12px 20px', display:'flex', gap:24, flexWrap:'wrap' as const }}>
             {[{ label:'VeritasEdge™ DB', ok:se?.connected },{ label:'InvestiScript DB', ok:is_?.connected },{ label:'GitHub', ok:gh?.connected }]
               .map(({ label, ok }) => (
               <div key={label} style={{ display:'flex', alignItems:'center', fontSize:13 }}>
@@ -376,7 +376,7 @@ export default function CommandPage() {
           {/* VeritasEdge™ */}
           <div style={{ marginBottom:8 }}><div style={{ ...LABEL, fontSize:12, marginBottom:12 }}>⚡ VeritasEdge™ · Service Charge Platform</div></div>
           {!se?.connected ? (
-            <div style={{ ...CARD, marginBottom:20, color:'var(--pios-muted)', fontSize:13 }}>{loading ? <Spinner /> : <>Configure <code>SUPABASE_SE_SERVICE_KEY</code> in Vercel to connect.</>}</div>
+            <div style={{ ...(CARD as Record<string,unknown>), marginBottom:20, color:'var(--pios-muted)', fontSize:13 }}>{loading ? <Spinner /> : <>Configure <code>SUPABASE_SE_SERVICE_KEY</code> in Vercel to connect.</>}</div>
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:12, marginBottom:20 }}>
               {[
@@ -387,9 +387,9 @@ export default function CommandPage() {
                 { label:'AI Agents',      big:seData?.agents?.recentRuns??'—',                sub:`${seData?.agents?.total??0} total · ${seData?.agents?.byType?Object.keys(seData.agents.byType).length:0} types` },
                 { label:'Allocations',    big:seData?.allocations?.total??'—',                sub:`${seData?.allocations?.pending??0} pending JCV` },
               ].map(s => (
-                <div key={s.label} style={CARD}>
+                <div key={(s as Record<string,unknown>).label as string} style={CARD}>
                   <div style={LABEL}>{s.label}</div>
-                  <div style={s.big?.toString().length>6?{...BIG,fontSize:18}:BIG}>{s.big}</div>
+                  <div style={s.big?.toString().length>6?{...(BIG as Record<string,unknown>),fontSize:18}:BIG}>{s.big}</div>
                   <div style={SUB}>{s.sub}</div>
                 </div>
               ))}
@@ -399,7 +399,7 @@ export default function CommandPage() {
           {/* InvestiScript */}
           <div style={{ marginBottom:8 }}><div style={{ ...LABEL, fontSize:12, marginBottom:12 }}>🔍 InvestiScript · AI Investigative Journalism</div></div>
           {!is_?.connected ? (
-            <div style={{ ...CARD, marginBottom:20, color:'var(--pios-muted)', fontSize:13 }}>{loading ? <Spinner /> : <>Configure <code>SUPABASE_IS_SERVICE_KEY</code> in Vercel to connect.</>}</div>
+            <div style={{ ...(CARD as Record<string,unknown>), marginBottom:20, color:'var(--pios-muted)', fontSize:13 }}>{loading ? <Spinner /> : <>Configure <code>SUPABASE_IS_SERVICE_KEY</code> in Vercel to connect.</>}</div>
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:12, marginBottom:20 }}>
               {[
@@ -410,7 +410,7 @@ export default function CommandPage() {
                 { label:'Users',           big:isData?.users?.total??'—',                  sub:`${isData?.users?.recentSignups??0} last 30 days` },
                 { label:'AI Tokens (30d)', big:isData?.apiUsage?.totalTokens!=null?`${(isData.apiUsage.totalTokens/1000).toFixed(0)}K`:'—', sub:isData?.apiUsage?.costUsd!=null?`$${isData.apiUsage.costUsd} cost`:'tokens used' },
               ].map(s => (
-                <div key={s.label} style={CARD}><div style={LABEL}>{s.label}</div><div style={BIG}>{s.big}</div><div style={SUB}>{s.sub}</div></div>
+                <div key={(s as Record<string,unknown>).label as string} style={CARD}><div style={LABEL}>{s.label}</div><div style={BIG}>{s.big}</div><div style={SUB}>{s.sub}</div></div>
               ))}
             </div>
           )}
@@ -418,7 +418,7 @@ export default function CommandPage() {
           {/* GitHub */}
           <div style={{ marginBottom:8 }}><div style={{ ...LABEL, fontSize:12, marginBottom:12 }}>⬡ GitHub · Recent Commits</div></div>
           {!gh?.connected ? (
-            <div style={{ ...CARD, marginBottom:20, color:'var(--pios-muted)', fontSize:13 }}>{loading ? <Spinner /> : <>Configure <code>GITHUB_PAT</code> in Vercel to connect.</>}</div>
+            <div style={{ ...(CARD as Record<string,unknown>), marginBottom:20, color:'var(--pios-muted)', fontSize:13 }}>{loading ? <Spinner /> : <>Configure <code>GITHUB_PAT</code> in Vercel to connect.</>}</div>
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:12, marginBottom:20 }}>
               {Object.entries(ghRepos).map(([key, repo]: [string, any]) => (
@@ -432,7 +432,7 @@ export default function CommandPage() {
                   </div>
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:10 }}>
                     {(repo.commits ?? []).map((c: Record<string, unknown>) => (
-                      <div key={c.sha} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                      <div key={(c as Record<string,unknown>).sha as string} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
                         <code style={{ fontSize:10, color:'#a78bfa', flexShrink:0, marginTop:2 }}>{c.sha}</code>
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{c.message}</div>
@@ -448,7 +448,7 @@ export default function CommandPage() {
           )}
 
           {(!se?.connected || !is_?.connected || !gh?.connected) && !loading && (
-            <div style={{ ...CARD, marginTop:8, borderColor:'rgba(167,139,250,0.3)', background:'rgba(167,139,250,0.05)' }}>
+            <div style={{ ...(CARD as Record<string,unknown>), marginTop:8, borderColor:'rgba(167,139,250,0.3)', background:'rgba(167,139,250,0.05)' }}>
               <div style={{ fontWeight:700, fontSize:13, marginBottom:12, color:'#a78bfa' }}>⚙ Vercel Environment Variables Needed</div>
               <div style={{ display:'flex', flexDirection:'column' as const, gap:8, fontSize:12 }}>
                 {!se?.connected && <div><code style={{ color:'#f59e0b' }}>SUPABASE_SE_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ VeritasEdge™ service role key (Project oxqqzxvuksgzeeyhufhp)</span></div>}
@@ -493,7 +493,7 @@ export default function CommandPage() {
           {feedsLoading ? (
             <div style={{ padding:'40px 0', textAlign:'center' as const }}><Spinner label="Loading feeds…" /></div>
           ) : feeds.length === 0 ? (
-            <div style={{ ...CARD, textAlign:'center' as const, padding:'48px 24px' }}>
+            <div style={{ ...(CARD as Record<string,unknown>), textAlign:'center' as const, padding:'48px 24px' }}>
               <div style={{ fontSize:32, marginBottom:16 }}>📡</div>
               <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>No feeds configured</div>
               <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:20, maxWidth:400, margin:'0 auto 20px' }}>
@@ -507,9 +507,9 @@ export default function CommandPage() {
               gridTemplateColumns: feedSettings.command_layout === 'list' ? '1fr' : 'repeat(auto-fill,minmax(380px,1fr))',
               gap: 16,
             }}>
-              {feeds.filter(f => f.is_active).map(feed => (
+              {feeds.filter((f: Record<string,unknown>) => (f as Record<string,unknown>).is_active).map(feed => (
                 <FeedCard
-                  key={feed.id}
+                  key={(feed as Record<string,unknown>).id as string}
                   feed={feed}
                   showRelevance={feedSettings.show_relevance}
                   onRefresh={loadFeeds}
@@ -526,7 +526,7 @@ export default function CommandPage() {
               <div style={{ ...LABEL, marginBottom:12 }}>Inactive feeds</div>
               <div style={{ display:'flex', flexWrap:'wrap' as const, gap:8 }}>
                 {feeds.filter(f => !f.is_active).map(f => (
-                  <button key={f.id} onClick={() => setEditingFeed(f)} style={{ padding:'6px 14px', borderRadius:20, border:'1px solid var(--pios-border)', background:'none', cursor:'pointer', fontSize:12, color:'var(--pios-muted)', display:'flex', alignItems:'center', gap:6 }}>
+                  <button key={(f as Record<string,unknown>).id as string} onClick={() => setEditingFeed(f)} style={{ padding:'6px 14px', borderRadius:20, border:'1px solid var(--pios-border)', background:'none', cursor:'pointer', fontSize:12, color:'var(--pios-muted)', display:'flex', alignItems:'center', gap:6 }}>
                     {f.emoji} {f.label} <span style={{ color:'var(--pios-dim)' }}>· tap to edit</span>
                   </button>
                 ))}

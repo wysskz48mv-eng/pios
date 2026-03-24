@@ -35,9 +35,9 @@ function PriorityDot({ p }: { p: string }) {
 }
 
 export default function MeetingsPage() {
-  const [meetings,   setMeetings]   = useState<unknown[]>([])
+  const [meetings,   setMeetings]   = useState<Record<string,unknown>[]>([])
   const [loading,    setLoading]    = useState(true)
-  const [selected,   setSelected]   = useState<unknown>(null)
+  const [selected,   setSelected]   = useState<Record<string,unknown>|null>(null)
   const [showNew,    setShowNew]    = useState(false)
   const [saving,     setSaving]     = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -59,7 +59,7 @@ export default function MeetingsPage() {
     const date    = searchParams.get('date')
     if (prefill || date) {
       setForm(p => ({
-        ...p,
+        ...(p as Record<string,unknown>),
         title:        prefill ? decodeURIComponent(prefill) : p.title,
         meeting_date: date ?? p.meeting_date,
       }))
@@ -85,7 +85,7 @@ export default function MeetingsPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ...form,
+        ...(form as Record<string,unknown>),
         duration_mins: form.duration_mins ? parseInt(form.duration_mins) : null,
         attendees: form.attendees ? form.attendees.split(',').map((s:string) => s.trim()).filter(Boolean) : [],
         auto_process: form.auto_process && !!(form.raw_transcript || form.raw_notes),
@@ -125,7 +125,7 @@ export default function MeetingsPage() {
     if (res.ok) {
       const { tasks_created } = await res.json()
       await load()
-      const updated = meetings.find(m => m.id === id)
+      const updated = meetings.find((m: Record<string,unknown>) => (m as Record<string,unknown>).id === id)
       if (updated) setSelected({ ...selected, tasks_created: true })
       alert(`✓ ${tasks_created} task${tasks_created !== 1 ? 's' : ''} created in your task list.`)
     }
@@ -142,7 +142,7 @@ export default function MeetingsPage() {
     width:'100%', background:'var(--pios-surface2)', border:'1px solid var(--pios-border)',
     borderRadius:6, padding:'7px 10px', color:'var(--pios-text)', fontSize:13, marginBottom:10,
   }
-  const sel: React.CSSProperties = { ...inp }
+  const sel: React.CSSProperties = { ...(inp as Record<string,unknown>) }
 
   const actionItems: unknown[] = selected?.ai_action_items ?? []
   const decisions:   any[] = selected?.ai_decisions    ?? []
@@ -185,33 +185,33 @@ export default function MeetingsPage() {
           {showNew && (
             <div style={{ background:'var(--pios-surface)', border:`1px solid rgba(167,139,250,0.3)`, borderRadius:10, padding:14, marginBottom:12, flexShrink:0 }}>
               <div style={{ fontSize:12, fontWeight:700, color:ACCENT, marginBottom:10 }}>New meeting note</div>
-              <input style={inp} placeholder="Meeting title *" value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} />
+              <input style={inp} placeholder="Meeting title *" value={form.title} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),title:e.target.value}))} />
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                <input type="date" style={{ ...inp, marginBottom:0 }} value={form.meeting_date} onChange={e=>setForm(p=>({...p,meeting_date:e.target.value}))} />
-                <input type="number" style={{ ...inp, marginBottom:0 }} placeholder="Duration (mins)" value={form.duration_mins} onChange={e=>setForm(p=>({...p,duration_mins:e.target.value}))} />
+                <input type="date" style={{ ...(inp as Record<string,unknown>), marginBottom:0 }} value={form.meeting_date} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),meeting_date:e.target.value}))} />
+                <input type="number" style={{ ...(inp as Record<string,unknown>), marginBottom:0 }} placeholder="Duration (mins)" value={form.duration_mins} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),duration_mins:e.target.value}))} />
               </div>
               <div style={{ height:10 }} />
-              <select style={sel} value={form.meeting_type} onChange={e=>setForm(p=>({...p,meeting_type:e.target.value}))}>
+              <select style={sel} value={form.meeting_type} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),meeting_type:e.target.value}))}>
                 {TYPES.map(t=><option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
               </select>
-              <select style={sel} value={form.domain} onChange={e=>setForm(p=>({...p,domain:e.target.value}))}>
+              <select style={sel} value={form.domain} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),domain:e.target.value}))}>
                 {DOMAINS.map(d=><option key={d} value={d}>{domainLabel(d)}</option>)}
               </select>
-              <input style={inp} placeholder="Attendees (comma-separated)" value={form.attendees} onChange={e=>setForm(p=>({...p,attendees:e.target.value}))} />
+              <input style={inp} placeholder="Attendees (comma-separated)" value={form.attendees} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),attendees:e.target.value}))} />
               <textarea
-                style={{ ...inp, height:80, resize:'vertical' as const, fontFamily:'inherit' }}
+                style={{ ...(inp as Record<string,unknown>), height:80, resize:'vertical' as const, fontFamily:'inherit' }}
                 placeholder="Paste transcript here (Zoom, Teams, Meet, Otter export…)"
                 value={form.raw_transcript}
-                onChange={e=>setForm(p=>({...p,raw_transcript:e.target.value}))}
+                onChange={e=>setForm(p=>({...(p as Record<string,unknown>),raw_transcript:e.target.value}))}
               />
               <textarea
-                style={{ ...inp, height:60, resize:'vertical' as const, fontFamily:'inherit' }}
+                style={{ ...(inp as Record<string,unknown>), height:60, resize:'vertical' as const, fontFamily:'inherit' }}
                 placeholder="Or write manual notes"
                 value={form.raw_notes}
-                onChange={e=>setForm(p=>({...p,raw_notes:e.target.value}))}
+                onChange={e=>setForm(p=>({...(p as Record<string,unknown>),raw_notes:e.target.value}))}
               />
               <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:'var(--pios-muted)', marginBottom:10, cursor:'pointer' }}>
-                <input type="checkbox" checked={form.auto_process} onChange={e=>setForm(p=>({...p,auto_process:e.target.checked}))} />
+                <input type="checkbox" checked={form.auto_process} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),auto_process:e.target.checked}))} />
                 Auto-extract with AI after saving
               </label>
               <div style={{ display:'flex', gap:8 }}>
@@ -232,7 +232,7 @@ export default function MeetingsPage() {
                 No meetings yet. Add your first one above.
               </p>
             ) : meetings.map(m => (
-              <div key={m.id}
+              <div key={(m as Record<string,unknown>).id as string}
                 onClick={() => { setSelected(m); setSelectedItems([]) }}
                 style={{
                   padding:'10px 12px', borderRadius:8, cursor:'pointer',
@@ -333,17 +333,17 @@ export default function MeetingsPage() {
                       }}>
                         {!selected.tasks_created && (
                           <input type="checkbox" checked={selectedItems.includes(i)}
-                            onChange={e => setSelectedItems(prev => e.target.checked ? [...prev, i] : prev.filter(x => x !== i))}
+                            onChange={e => setSelectedItems(prev => e.target.checked ? [...(prev as Record<string,unknown>), i] : prev.filter(x => x !== i))}
                             style={{ marginTop:2, flexShrink:0 }} />
                         )}
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:12, fontWeight:500 }}>
-                            <PriorityDot p={item.priority ?? 'medium'} />{item.action ?? item.description}
+                            <PriorityDot p={(item as Record<string,unknown>).priority ?? 'medium'} />{(item as Record<string,unknown>).action ?? (item as Record<string,unknown>).description}
                           </div>
                           <div style={{ display:'flex', gap:8, marginTop:3 }}>
-                            {item.owner && <span style={{ fontSize:10, color:'var(--pios-muted)' }}>→ {item.owner}</span>}
-                            {item.due_date && <span style={{ fontSize:10, color:'var(--pios-muted)' }}>Due: {item.due_date}</span>}
-                            {item.domain && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: domainColour(item.domain)+'15', color: domainColour(item.domain) }}>{domainLabel(item.domain)}</span>}
+                            {(item as Record<string,unknown>).owner && <span style={{ fontSize:10, color:'var(--pios-muted)' }}>→ {String((item as Record<string,unknown>).owner ?? "")}</span>}
+                            {(item as Record<string,unknown>).due_date && <span style={{ fontSize:10, color:'var(--pios-muted)' }}>Due: {String((item as Record<string,unknown>).due_date ?? "")}</span>}
+                            {(item as Record<string,unknown>).domain && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: domainColour((item as Record<string,unknown>).domain)+'15', color: domainColour((item as Record<string,unknown>).domain) }}>{domainLabel((item as Record<string,unknown>).domain)}</span>}
                           </div>
                         </div>
                       </label>
