@@ -485,7 +485,7 @@ function StaffTab() {
             <input className="pios-input" placeholder="Email *" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} />
             <input className="pios-input" placeholder="Role / job title" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))} />
             <select className="pios-input" value={form.company_entity} onChange={e=>setForm(p=>({...p,company_entity:e.target.value}))}>
-              {['VeritasIQ Technologies Ltd','Sustain International UK Ltd'].map(e=><option key={e} value={e}>{e}</option>)}
+              {['VeritasIQ Technologies Ltd','VeritasIQ Technologies Ltd'].map(e=><option key={e} value={e}>{e}</option>)}
             </select>
             <select className="pios-input" value={form.employment_type} onChange={e=>setForm(p=>({...p,employment_type:e.target.value}))}>
               {['employee','contractor','consultant','director'].map(t=><option key={t} value={t}>{t}</option>)}
@@ -525,7 +525,7 @@ function StaffTab() {
               </div>
               <div style={{ textAlign:'right' as const }}>
                 <div style={{ fontSize:13, fontWeight:700 }}>{(s as Record<string,unknown>).salary_currency} {parseFloat((s as Record<string,unknown>).monthly_salary??0).toFixed(0)}/mo</div>
-                <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{(s as Record<string,unknown>).company_entity?.replace('VeritasIQ Technologies Ltd','VIQ').replace('Sustain International UK Ltd','SI UK')}</div>
+                <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{(s as Record<string,unknown>).company_entity?.replace('VeritasIQ Technologies Ltd','VIQ').replace('VeritasIQ Technologies Ltd','SI UK')}</div>
               </div>
             </div>
           ))}

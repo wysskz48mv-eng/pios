@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 export const runtime = 'nodejs'
 
 const REPOS = [
-  { key: 'veritasedge',  repo: 'wysskz48mv-eng/sustainedge',   label: 'VeritasEdge™' },  // GitHub repo slug preserved (Railway/Vercel deployment)
+  { key: 'veritasedge',  repo: 'wysskz48mv-eng/veritasedge',   label: 'VeritasEdge™' },  // GitHub repo slug preserved (Railway/Vercel deployment)
   { key: 'investiscript', repo: 'wysskz48mv-eng/investiscript', label: 'InvestiScript' },
   { key: 'pios',          repo: 'wysskz48mv-eng/pios',          label: 'PIOS' },
 ]

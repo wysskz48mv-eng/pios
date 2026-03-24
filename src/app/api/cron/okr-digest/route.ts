@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
   if (!authOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabase  = createClient(SUPABASE_URL, SERVICE_KEY)
-  const appUrl    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.sustain-intl.com'
+  const appUrl    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.tech'
   const weekLabel = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
   let sent = 0, skipped = 0, errors = 0

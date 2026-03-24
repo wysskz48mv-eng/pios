@@ -96,7 +96,7 @@ Our total liability to you for any claim shall not exceed the amount you paid us
             title: '12. Contact',
             body: `VeritasIQ Technologies Ltd
 Fujairah Creative City Free Zone, UAE
-Email: info@sustain-intl.com`
+Email: info@veritasiq.tech`
           },
         ].map(section => (
           <div key={section.title} style={{ marginBottom:28 }}>

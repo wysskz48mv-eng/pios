@@ -78,7 +78,7 @@ async function checkCrossRef(doi: string): Promise<{
   try {
     const clean = doi.replace(/^https?:\/\/doi\.org\//i, '').trim()
     const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(clean)}`, {
-      headers: { 'User-Agent': 'PIOS-CitationGuard/1.0 (mailto:info@sustain-intl.com)' },
+      headers: { 'User-Agent': 'PIOS-CitationGuard/1.0 (mailto:info@veritasiq.tech)' },
       signal: AbortSignal.timeout(6000),
     })
     if (!res.ok) return { found: false }
