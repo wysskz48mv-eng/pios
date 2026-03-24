@@ -1,3 +1,16 @@
+## [v2.4.4] -- 2026-03-24 -- Sprint 57 -- multi-region + observability
+
+Multi-region (SRAF A-01):
+  vercel.json: regions [lhr1, iad1]
+
+SRAF A-05 Observability:
+  /api/health: observability section added
+    sentry / resend_email / cron_secret / upstash / sla_target
+
+package.json: 2.4.3 -> 2.4.4 | Sprint 57 | VeritasIQ
+
+---
+
 ## [v2.4.3] -- 2026-03-24 -- Sprint 56 -- T17 NPS survey (SRAF D-02)
 
 /api/nps: POST submit + GET aggregate for pilot CPS tracking
