@@ -19,6 +19,7 @@ const STATUS_META: Record<string,{ label:string; colour:string; next:string }> =
 
 function StatusPill({ status, onClick }: { status: string; onClick?: () => void }) {
   const m = STATUS_META[status] ?? STATUS_META.todo
+
   return (
     <button onClick={onClick} style={{
       fontSize:10, padding:'2px 10px', borderRadius:20, border:'none', cursor:onClick?'pointer':'default',
@@ -247,6 +248,7 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task|null>(null)
   const [showAI,     setShowAI]     = useState(false)
   const [showAdd,    setShowAdd]    = useState(false)
+  const [sortBy,     setSortBy]     = useState<'priority'|'due_date'|'domain'|'created_at'>('priority')
   const [saving,     setSaving]     = useState(false)
   const [newTask,    setNewTask]    = useState({ title:'', description:'', domain:'personal', priority:'medium', due_date:'', duration_mins:30 })
 
@@ -303,6 +305,19 @@ export default function TasksPage() {
   const today = new Date().toISOString().slice(0,10)
   const overdueCount  = tasks.filter(t=>t.due_date && t.due_date < today && t.status!=='done').length
 
+  const sortedTasks = [...tasks].sort((a, b) => {
+    if (sortBy === 'priority') {
+      const order = { critical: 0, high: 1, medium: 2, low: 3 }
+      return (order[a.priority as keyof typeof order] ?? 2) - (order[b.priority as keyof typeof order] ?? 2)
+    }
+    if (sortBy === 'due_date' || sortBy === 'created_at') {
+      const aDate = a.due_date ? new Date(a.due_date as string).getTime() : Infinity
+      const bDate = b.due_date ? new Date(b.due_date as string).getTime() : Infinity
+      return aDate - bDate
+    }
+    return new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()
+  })
+
   return (
     <div className="fade-in">
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -346,7 +361,16 @@ export default function TasksPage() {
 
       {/* Filters */}
       <div style={{ display:'flex', gap:12, marginBottom:16, flexWrap:'wrap' as const, alignItems:'center' }}>
-        {/* Domain filter */}
+  
+        {/* Sort */}
+        <div style={{ display:'flex', gap:4, alignItems:'center', marginLeft:'auto' }}>
+          <span style={{ fontSize:10, color:'var(--pios-dim)', fontWeight:600, letterSpacing:'0.06em' }}>SORT</span>
+          {([['due_date','Due date'],['priority','Priority'],['created_at','Recent']] as const).map(([v,l])=>(
+            <button key={v} onClick={()=>setSortBy(v)} style={{ padding:'3px 8px', borderRadius:6, fontSize:11, border:'1px solid var(--pios-border)', background:sortBy===v?'var(--pios-surface2)':'transparent', color:sortBy===v?'var(--pios-text)':'var(--pios-dim)', cursor:'pointer', fontWeight:sortBy===v?600:400 }}>{l}</button>
+          ))}
+        </div>
+
+      {/* Domain filter */}
         <div style={{ display:'flex', gap:4, flexWrap:'wrap' as const }}>
           {(['all',...DOMAINS] as const).map(d => (
             <button key={d} onClick={()=>setDomainFilter(d)} style={{

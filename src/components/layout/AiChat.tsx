@@ -16,7 +16,7 @@ export function AiChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   async function send() {
     if (!input.trim() || loading) return
     const userMsg: Message = { role: 'user', content: input }
-    setMessages(prev => [...prev, userMsg])
+    setMessages(prev => [...prev, userMsg].slice(-50))
     setInput('')
     setLoading(true)
     try {
@@ -26,7 +26,7 @@ export function AiChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         body: JSON.stringify({ messages: [...messages, userMsg] })
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply || 'Sorry, I encountered an error.' }])
+      setMessages(prev => [...prev.slice(-49), { role: 'assistant', content: data.reply || 'Sorry, I encountered an error.' }])
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please try again.' }])
     }

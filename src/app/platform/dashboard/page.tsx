@@ -72,6 +72,8 @@ export default function DashboardPage() {
   const [meetingActions, setMeetingActions] = useState<number>(0)
   const [receipts48h,    setReceipts48h]    = useState<number>(0)
   const [emailAccounts,  setEmailAccounts]  = useState<number>(0)
+  const [overdueCount,   setOverdueCount]   = useState(0)
+  const [dueTodayCount,  setDueTodayCount]  = useState(0)
   const [persona,        setPersona]        = useState<string>('')
   const [execSnap,       setExecSnap]       = useState<Record<string,unknown>|null>(null)
 
@@ -86,7 +88,12 @@ export default function DashboardPage() {
       dashRes.ok ? dashRes.json() : {},
       notifsRes.ok ? notifsRes.json() : { notifications: [] },
     ])
-    setTasks([...(d.tasks?.overdue ?? []), ...(d.tasks?.due_today ?? []), ...(d.tasks?.upcoming ?? [])])
+    const overdueList  = d.tasks?.overdue  ?? []
+    const dueTodayList = d.tasks?.due_today ?? []
+    const upcomingList = d.tasks?.upcoming  ?? []
+    setTasks([...overdueList, ...dueTodayList, ...upcomingList])
+    setOverdueCount(overdueList.length)
+    setDueTodayCount(dueTodayList.length)
     setProjects(d.projects ?? [])
     setModules(d.modules ?? [])
     setBrief(d.brief ?? null)
@@ -281,6 +288,38 @@ export default function DashboardPage() {
           <a href="/platform/setup" style={{ display:'inline-block', marginTop:14, fontSize:11, color:'var(--ai)', textDecoration:'underline' }}>
             Or follow the full Setup Guide →
           </a>
+        </div>
+      )}
+
+
+      {/* ── Stats strip ─────────────────────────────────────────── */}
+      {!loading && (overdueCount > 0 || dueTodayCount > 0 || notifs.length > 0 || pendingTransfers > 0) && (
+        <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' as const }}>
+          {overdueCount > 0 && (
+            <a href="/platform/tasks" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', cursor:'pointer' }}>
+              <span style={{ fontSize:11, fontWeight:700, color:'#ef4444' }}>⚠ {overdueCount} OVERDUE</span>
+            </a>
+          )}
+          {dueTodayCount > 0 && (
+            <a href="/platform/tasks" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)', cursor:'pointer' }}>
+              <span style={{ fontSize:11, fontWeight:700, color:'#f59e0b' }}>⏱ {dueTodayCount} DUE TODAY</span>
+            </a>
+          )}
+          {notifs.length > 0 && (
+            <a href="/platform/notifications" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(167,139,250,0.08)', border:'1px solid rgba(167,139,250,0.2)', cursor:'pointer' }}>
+              <span style={{ fontSize:11, fontWeight:700, color:'#a78bfa' }}>🔔 {notifs.length} UNREAD</span>
+            </a>
+          )}
+          {meetingActions > 0 && (
+            <a href="/platform/meetings" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(34,211,170,0.08)', border:'1px solid rgba(34,211,170,0.2)', cursor:'pointer' }}>
+              <span style={{ fontSize:11, fontWeight:700, color:'#2dd4a0' }}>✓ {meetingActions} ACTIONS PENDING</span>
+            </a>
+          )}
+          {pendingTransfers > 0 && (
+            <a href="/platform/payroll" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(108,142,255,0.08)', border:'1px solid rgba(108,142,255,0.2)', cursor:'pointer' }}>
+              <span style={{ fontSize:11, fontWeight:700, color:'#6c8eff' }}>💳 {pendingTransfers} TRANSFERS QUEUED</span>
+            </a>
+          )}
         </div>
       )}
 
