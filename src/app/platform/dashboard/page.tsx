@@ -21,6 +21,8 @@ export default function DashboardPage() {
   const [meetingActions, setMeetingActions] = useState<number>(0)
   const [receipts48h,    setReceipts48h]    = useState<number>(0)
   const [emailAccounts,  setEmailAccounts]  = useState<number>(0)
+  const [persona,        setPersona]        = useState<string>('')
+  const [execSnap,       setExecSnap]       = useState<Record<string,unknown>|null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -285,6 +287,28 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Executive OS strip — visible for exec/founder/professional persona */}
+      {isExecPersona && execSnap && (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:16 }}>
+          {[
+            { dot:'#4ade80', label:'OKR Pulse', value:`${(execSnap.okr_summary as Record<string,unknown>)?.avg_prog ?? 0}%`, sub:`${(execSnap.okr_summary as Record<string,unknown>)?.total ?? 0} active · ${(execSnap.okr_summary as Record<string,unknown>)?.at_risk ?? 0} at risk`, href:'/platform/executive' },
+            { dot:'#fbbf24', label:'Open Decisions', value:String(execSnap.open_decisions_count ?? 0), sub:'requiring action', href:'/platform/executive?tab=decisions' },
+            { dot:'#60a5fa', label:'Stakeholders Due', value:String(execSnap.stakeholders_due_count ?? 0), sub:'need contact this week', href:'/platform/executive?tab=stakeholders' },
+          ].map(s => (
+            <a key={s.label} href={s.href} style={{ textDecoration:'none' }}>
+              <div className="pios-card-sm" style={{ padding:'14px 16px', cursor:'pointer' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
+                  <div style={{ width:6, height:6, borderRadius:'50%', background:s.dot, flexShrink:0 }} />
+                  <span style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</span>
+                </div>
+                <div style={{ fontSize:22, fontWeight:700, color:'var(--pios-text)' }}>{s.value}</div>
+                <div style={{ fontSize:11, color:'var(--pios-muted)', marginTop:2 }}>{s.sub}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* Notifications strip — show if any unread */}
       {notifs.length > 0 && (

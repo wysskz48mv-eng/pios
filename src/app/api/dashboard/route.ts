@@ -22,6 +22,12 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const today      = new Date().toISOString().slice(0, 10)
+
+    // Fetch persona to decide what extra data to load
+    const { data: profileData } = await supabase
+      .from('user_profiles').select('persona_type,full_name').eq('id', user.id).single()
+    const persona = (profileData as Record<string,unknown> | null)?.persona_type as string ?? 'individual'
+    const isExec  = ['executive','founder','professional'].includes(persona)
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
     const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)
     const ago48h     = new Date(Date.now() - 48 * 3600000).toISOString()
@@ -109,11 +115,47 @@ export async function GET() {
     const overdueTasks  = tasks.filter((t: Record<string, unknown>) => t.due_date && t.due_date < today)
     const dueTodayTasks = tasks.filter((t: Record<string, unknown>) => t.due_date === today)
     const upcomingTasks = tasks.filter((t: Record<string, unknown>) => !t.due_date || t.due_date > today)
-    const totalWords    = chapters.reduce((s: number, c: unknown) => s + (c.word_count   ?? 0), 0)
-    const targetWords   = chapters.reduce((s: number, c: unknown) => s + (c.target_words ?? 8000), 0)
+    const totalWords    = chapters.reduce((s: number, c: unknown) => s + (((c as Record<string,unknown>).word_count   as number) ?? 0), 0)
+    const targetWords   = chapters.reduce((s: number, c: unknown) => s + (((c as Record<string,unknown>).target_words as number) ?? 8000), 0)
     const pendingMeetingActions = meetings.filter((m: Record<string, unknown>) => m.status === 'processed' && !m.tasks_created).length
     const tenantData = tenantR.status === 'fulfilled' ? (tenantR.value?.data ?? null) : null
     const briefContent = briefR.status === 'fulfilled' ? ((briefR.value?.data as Record<string,unknown>)?.content ?? null) : null
+
+    // Exec persona — load OKR + decision + stakeholder snapshots
+    let execSnapshot: Record<string,unknown> | null = null
+    if (isExec) {
+      const [okrsR2, decisionsR2, stakeR2] = await Promise.allSettled([
+        supabase.from('exec_okrs')
+          .select('id,title,health,progress,period')
+          .eq('user_id', user.id).eq('status', 'active').limit(5),
+        supabase.from('exec_decisions')
+          .select('id,title,framework_used,status')
+          .eq('user_id', user.id).eq('status', 'open').limit(5),
+        supabase.from('exec_stakeholders')
+          .select('id,name,importance,next_touchpoint')
+          .eq('user_id', user.id)
+          .lte('next_touchpoint', new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0])
+          .order('importance').limit(5),
+      ])
+      const okrs2      = okrsR2.status      === 'fulfilled' ? (okrsR2.value?.data      ?? []) : []
+      const decisions2 = decisionsR2.status === 'fulfilled' ? (decisionsR2.value?.data ?? []) : []
+      const stakes2    = stakeR2.status     === 'fulfilled' ? (stakeR2.value?.data     ?? []) : []
+      const atRisk = (okrs2 as Record<string,unknown>[]).filter(o => o.health !== 'on_track').length
+      execSnapshot = {
+        okrs: okrs2,
+        okr_summary: {
+          total:    (okrs2 as unknown[]).length,
+          at_risk:  atRisk,
+          avg_prog: (okrs2 as Record<string,unknown>[]).length
+            ? Math.round((okrs2 as Record<string,unknown>[]).reduce((s, o) => s + ((o.progress as number) ?? 0), 0) / (okrs2 as unknown[]).length)
+            : 0,
+        },
+        open_decisions:          decisions2,
+        open_decisions_count:    (decisions2 as unknown[]).length,
+        stakeholders_due:        stakes2,
+        stakeholders_due_count:  (stakes2 as unknown[]).length,
+      }
+    }
 
     return NextResponse.json({
       tasks: { overdue: overdueTasks, due_today: dueTodayTasks, upcoming: upcomingTasks.slice(0, 8), total_open: tasks.length },
@@ -132,16 +174,18 @@ export async function GET() {
       },
       meetings:       { recent: meetings, pending_actions: pendingMeetingActions },
       email_accounts: accounts,
+      persona,
+      exec:  execSnapshot,
       thesis: {
         chapters,
         total_words:   totalWords,
         target_words:  targetWords,
         pct_complete:  targetWords > 0 ? Math.round(totalWords / targetWords * 100) : 0,
-        chapters_done: chapters.filter((c: Record<string, unknown>) => ['submitted','passed','draft_complete'].includes(c.status)).length,
+        chapters_done: chapters.filter((c: Record<string, unknown>) => ['submitted','passed','draft_complete'].includes(c.status as string)).length,
       },
     })
 
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }

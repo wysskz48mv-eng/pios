@@ -39,6 +39,12 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const force = new URL(req.url).searchParams.get('force') === '1'
+
+    // Check persona — exec users get EOSA-style brief
+    const { data: bProfile } = await supabase
+      .from('user_profiles').select('persona_type,full_name,job_title,organisation').eq('id', user.id).single()
+    const bPersona = (bProfile as Record<string,unknown> | null)?.persona_type as string ?? 'individual'
+    const isExecPersona = ['executive','founder','professional'].includes(bPersona)
     const today = new Date().toISOString().slice(0, 10)
     const now   = new Date()
 
@@ -48,6 +54,16 @@ export async function POST(req: NextRequest) {
         .from('daily_briefs').select('content').eq('user_id', user.id).eq('brief_date', today).single()
       if (cached?.content) return NextResponse.json({ content: cached.content, brief_date: today, cached: true })
     }
+
+    // Exec persona: fetch OKR/decision/stakeholder data in parallel with standard data
+    const execDataPromise = isExecPersona ? Promise.all([
+      supabase.from('exec_okrs').select('title,health,progress,period').eq('user_id', user.id).eq('status','active').limit(6),
+      supabase.from('exec_decisions').select('title,framework_used,context').eq('user_id', user.id).eq('status','open').limit(5),
+      supabase.from('exec_stakeholders').select('name,importance,next_touchpoint,open_commitments')
+        .eq('user_id', user.id)
+        .lte('next_touchpoint', new Date(Date.now() + 7*86400000).toISOString().split('T')[0])
+        .limit(4),
+    ]) : Promise.resolve(null)
 
     // Gather all context in parallel
     const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR] = await Promise.all([
@@ -216,6 +232,21 @@ export async function POST(req: NextRequest) {
     const qiddiyaDaysLeft = Math.max(0, Math.ceil((new Date('2026-04-14').getTime() - Date.now()) / 86400000))
     const qiddiyaUrgency = qiddiyaDaysLeft <= 7 ? 'CRITICAL' : qiddiyaDaysLeft <= 14 ? 'URGENT' : 'ACTIVE'
 
+    // Resolve exec data for executive persona brief
+    const execData = isExecPersona ? await execDataPromise : null
+    let execBriefSection = ''
+    if (isExecPersona && execData) {
+      const [okrBR, decBR, stakeBR] = execData
+      const okrLines   = (okrBR.data   ?? []).map((o:Record<string,unknown>) => `- ${o.title}: ${o.progress}% (${o.health})`).join('\n')
+      const decLines   = (decBR.data   ?? []).map((d:Record<string,unknown>) => `- ${d.title} [${(d.framework_used as string) ?? '?'}™]`).join('\n')
+      const stakeLines = (stakeBR.data ?? []).map((s:Record<string,unknown>) => `- ${s.name} [${s.importance}]`).join('\n')
+      execBriefSection = [
+        okrLines   ? `\n\nACTIVE OKRs:\n${okrLines}` : '',
+        decLines   ? `\nOPEN DECISIONS:\n${decLines}` : '',
+        stakeLines ? `\nSTAKEHOLDERS DUE THIS WEEK:\n${stakeLines}` : '',
+      ].join('')
+    }
+
     const system = `You are the PIOS AI Companion for Douglas Masuku — founder CEO of VeritasIQ Technologies Ltd, DBA candidate at University of Portsmouth, FM consultant building VeritasEdge™ (service charge SaaS), InvestiScript (investigative journalism AI), and PIOS.
 
 COMMERCIAL PRIORITY: Qiddiya RFP QPMO-410-CT-07922 — ${qiddiyaDaysLeft} days remaining (${qiddiyaUrgency}). Submission deadline 14 April 2026. This must be referenced if ${qiddiyaDaysLeft} <= 21.
@@ -234,7 +265,7 @@ Rules:
 - Max 350 words. Plain prose, no bullet points, no lists.`
 
     const content = await callClaude(
-      [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${liveCtx ? '\n\nPLATFORM STATUS:' + liveCtx : ''}` }],
+      [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${execBriefSection}${liveCtx ? '\n\nPLATFORM STATUS:' + liveCtx : ''}` }],
       system, 700
     )
 

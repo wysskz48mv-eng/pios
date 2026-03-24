@@ -52,6 +52,12 @@ export async function POST(request: Request) {
     const today = new Date().toISOString().slice(0, 10)
 
     // Gather live context in parallel
+    // Fetch persona first (cheap)
+    const { data: aiProfile } = await supabase
+      .from('user_profiles').select('persona_type,full_name,job_title,organisation').eq('id', user.id).single()
+    const aiPersona = (aiProfile as Record<string,unknown> | null)?.persona_type as string ?? 'individual'
+    const aiIsExec  = ['executive','founder','professional'].includes(aiPersona)
+
     const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR] = await Promise.all([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
         .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
@@ -70,6 +76,27 @@ export async function POST(request: Request) {
     ])
 
     const tasks    = tasksR.data ?? []
+
+    // Exec persona — fetch live OKR/decision/stakeholder state for AI context
+    let execCtxStr = ''
+    if (aiIsExec) {
+      const [okrAiR, decAiR, stakeAiR] = await Promise.all([
+        supabase.from('exec_okrs').select('title,health,progress').eq('user_id', user.id).eq('status','active').limit(5),
+        supabase.from('exec_decisions').select('title,framework_used').eq('user_id', user.id).eq('status','open').limit(4),
+        supabase.from('exec_stakeholders').select('name,importance,next_touchpoint')
+          .eq('user_id', user.id)
+          .lte('next_touchpoint', new Date(Date.now() + 7*86400000).toISOString().split('T')[0])
+          .limit(3),
+      ])
+      const okrLines   = (okrAiR.data  ?? []).map((o:Record<string,unknown>) => `${o.title}: ${o.progress}% (${o.health})`).join(', ')
+      const decLines   = (decAiR.data  ?? []).map((d:Record<string,unknown>) => `${d.title} [${d.framework_used ?? '?'}™]`).join(', ')
+      const stakeLines = (stakeAiR.data ?? []).map((s:Record<string,unknown>) => `${s.name} [${s.importance}]`).join(', ')
+      execCtxStr = [
+        okrLines   ? `ACTIVE OKRs: ${okrLines}` : null,
+        decLines   ? `OPEN DECISIONS: ${decLines}` : null,
+        stakeLines ? `STAKEHOLDERS DUE: ${stakeLines}` : null,
+      ].filter(Boolean).join('\n')
+    }
     const overdue  = tasks.filter(t => t.due_date && t.due_date < today)
     const dueToday = tasks.filter(t => t.due_date === today)
     const upcoming = tasks.filter(t => !t.due_date || t.due_date > today)
@@ -119,6 +146,7 @@ export async function POST(request: Request) {
       (notifsR.data ?? []).length > 0
         ? `ALERTS: ` + (notifsR.data ?? []).map(n => `${n.title} [${n.type}]`).join('; ')
         : null,
+      execCtxStr || null,
     ].filter(Boolean).join('\n')
 
     // Include today's brief if it exists — it's the richest single-page summary
@@ -130,18 +158,25 @@ export async function POST(request: Request) {
       ? `\nCONVERSATION DOMAIN FOCUS:\n${domainContext}`
       : ''
 
-    const system = `You are PIOS AI — Douglas Masuku's personal intelligent operating system companion.
+    const pName = (aiProfile as Record<string,unknown> | null)?.full_name as string ?? 'Douglas'
+    const pTitle = (aiProfile as Record<string,unknown> | null)?.job_title as string ?? 'CEO'
+    const pOrg   = (aiProfile as Record<string,unknown> | null)?.organisation as string ?? 'VeritasIQ Technologies Ltd'
 
-DOUGLAS'S PROFILE:
-- Group CEO, VeritasIQ Technologies Ltd (UAE/UK holding company)
-- DBA candidate, University of Portsmouth (AI-enabled forecasting in GCC FM contexts; STS + sensemaking theory)
-- FM consultant — Qiddiya RFP QPMO-410-CT-07922 active, KSP reference deployment SAR 229.6M annual SC budget
-- SaaS founder:
-    · VeritasEdge™ v6.0 — service charge platform for GCC master communities (live at app.veritasedge.io)
-    · InvestiScript™ v3.5 — AI investigative journalism platform (live at app.investiscript.ai)
-    · PIOS v2.2 — this personal AI operating system (live at pios-*.vercel.app)
-- Key IP: HDCA™ (patent pending), VE-CAFX™ climate adjustment factors, VE-PMF™ methodology, VE-BENCH™ benchmarking
-- Working with Claude as primary technical implementer — non-technical founder
+    const system = `You are PIOS AI — ${pName}'s personal intelligent operating system companion.
+
+USER PROFILE:
+- Name: ${pName} | Role: ${pTitle} | Organisation: ${pOrg}
+- Persona: ${aiPersona}
+- SaaS founder: VeritasEdge™ v6.0 (GCC FM platform) · InvestiScript™ v3.5 (AI journalism) · PIOS v2.6 (this OS)
+- Key IP: HDCA™ (patent pending), VE-CAFX™, VE-PMF™, VE-BENCH™
+- Proprietary consulting frameworks: POM™ · OAE™ · SDL™ · CVDM™ · CPA™ · SCE™ · AAM™
+- Non-technical founder working with Claude as primary technical implementer
+
+EXECUTIVE OS AWARENESS (when persona is executive/founder/professional):
+- EOSA™ executive brief · PAA™ OKR tracking · STIA™ stakeholder CRM
+- CSA™ consulting frameworks (7 proprietary) · DAA™ decision architecture
+- TSA™ time sovereignty · BICA™ board comms · SIA™ signal intelligence
+- All frameworks use PIOS proprietary names — never reference BCG, McKinsey, Porter, Kotter by nameWorking with Claude as primary technical implementer — non-technical founder
 
 BEHAVIOUR RULES:
 - Be direct, concise, action-oriented. No pleasantries.
@@ -158,6 +193,6 @@ ${liveCtx}${briefSection}${domainSection}`
 
   } catch (err: unknown) {
     console.error('AI chat error:', err)
-    return NextResponse.json({ error: err.message ?? 'AI unavailable. Please try again.' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'AI unavailable. Please try again.' }, { status: 500 })
   }
 }
