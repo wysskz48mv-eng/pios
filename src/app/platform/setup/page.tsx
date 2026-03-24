@@ -158,7 +158,7 @@ const STEPS: Step[] = [
     items: [
       {
         label:    'Register app in Azure Portal',
-        note:     'Go to portal.azure.com → Microsoft Entra ID → App registrations → New registration. Name: PIOS. Supported account types: Accounts in any organizational directory and personal Microsoft accounts. Redirect URI (Web): https://pios.sustain-intl.com/api/auth/callback/microsoft',
+        note:     'Go to portal.azure.com → Microsoft Entra ID → App registrations → New registration. Name: PIOS. Supported account types: Accounts in any organizational directory and personal Microsoft accounts. Redirect URI (Web): https://pios-wysskz48mv-engs-projects.vercel.app/api/auth/callback/microsoft',
         url:      'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
         urlLabel: 'Open Azure App Registrations →',
       },
