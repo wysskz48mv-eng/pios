@@ -1,3 +1,12 @@
+## [v2.2.4] — 2026-03-24 · Notifications Page + Sidebar
+
+### New
+- `/platform/notifications`: notification centre (143 lines)
+  Unread badge, mark-all-read, type icons, time-ago, action links
+- Sidebar: notifications link with live unread count badge
+
+---
+
 ## [v2.2.3] — 2026-03-24 · TypeScript Cleanup
 
 ### TypeScript — PI param-any: 15→11
