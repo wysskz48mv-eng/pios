@@ -1,10 +1,20 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export const metadata: Metadata = {
   title: 'PIOS — Personal Intelligent Operating System',
   description: 'Your AI-powered command centre. Academic, consulting, projects, and business — unified.',
   keywords: ['AI productivity', 'personal OS', 'academic management', 'consulting', 'postgraduate'],
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
   openGraph: {
     title: 'PIOS — Personal Intelligent Operating System',
     description: 'The AI operating system for multi-domain professionals.',

@@ -357,6 +357,35 @@ export default function AdminPage() {
           ))}
         </div>
       </div>
+
+      {/* ── Demo Data Seeder ────────────────────────── */}
+      <div className="mt-8 bg-card border border-amber-500/20 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold">Demo Data Seeder</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Seeds realistic CEO/founder demo data — tasks, OKRs, decisions, stakeholders, IP assets</p>
+          </div>
+          <button
+            onClick={async () => {
+              if (!confirm('This will add demo data to your account. Continue?')) return
+              const r = await fetch('/api/admin/seed-demo', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ confirm: 'SEED_DEMO' }),
+              })
+              const d = await r.json()
+              alert(d.message ?? d.error ?? 'Done')
+            }}
+            className="px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/15"
+          >
+            🌱 Seed Demo Data
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Seeded: 6 tasks · 3 OKRs · 3 decisions · 3 stakeholders · 5 IP assets · 3 knowledge entries · 3 contracts
+          (requires M019+M020 for IP/knowledge/contracts)
+        </p>
+      </div>
+
     </div>
   )
 }
