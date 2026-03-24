@@ -159,6 +159,8 @@ function FilesTab({ spaces }: { spaces:any[] }) {
   const [items, setItems]     = useState<FileItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('all')
+  const [uploading, setUploading]   = useState(false)
+  const [uploadMsg, setUploadMsg]   = useState<string|null>(null)
   const [extracting, setExtracting] = useState<string|null>(null)
   const [extractMsg,       setExtractMsg]       = useState<string|null>(null)
   const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string|null>(null)
@@ -185,6 +187,26 @@ function FilesTab({ spaces }: { spaces:any[] }) {
     }
   }
 
+
+  async function handleUpload(ev: React.ChangeEvent<HTMLInputElement>) {
+    const f = ev.target.files?.[0]
+    if (!f) return
+    setUploading(true); setUploadMsg(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', f); fd.append('domain', 'business')
+      const res = await fetch('/api/files/upload', { method:'POST', body:fd })
+      const d = await res.json()
+      if (d.error) { setUploadMsg('Upload failed: ' + String(d.error)) }
+      else {
+        setUploadMsg('✓ ' + f.name + ' uploaded')
+        fetch('/api/files').then(rr=>rr.json()).then(dd=>setItems(dd.items??[]))
+        setTimeout(() => setUploadMsg(null), 3000)
+      }
+    } catch (err: unknown) { setUploadMsg((err as Error).message) }
+    setUploading(false); ev.target.value = ''
+  }
+
   return (
     <div>
       <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' as const, alignItems:'center' }}>
@@ -192,6 +214,11 @@ function FilesTab({ spaces }: { spaces:any[] }) {
           <button key={v} onClick={()=>setFilter(v)} style={{ padding:'4px 12px', borderRadius:20, fontSize:11, border:'1px solid var(--pios-border)', background:filter===v?'var(--pios-surface)':'transparent', color:filter===v?'var(--pios-text)':'var(--pios-muted)', fontWeight:filter===v?600:400, cursor:'pointer' }}>{l}</button>
         ))}
         <span style={{ marginLeft:'auto', fontSize:11, color:'var(--pios-dim)' }}>{items.length} files</span>
+        <label style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', borderRadius:8, cursor:'pointer', fontSize:11, fontWeight:600, background:'rgba(108,142,255,0.12)', border:'1px solid rgba(108,142,255,0.3)', color:'#6c8eff', opacity:uploading?0.6:1 }}>
+          {uploading ? '⏳' : '⬆'} {uploading ? 'Uploading…' : 'Upload'}
+          <input type="file" onChange={handleUpload} disabled={uploading} accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.json,.png,.jpg,.jpeg" style={{ display:'none' }} />
+        </label>
+        {uploadMsg && <span style={{ fontSize:11, color:uploadMsg.startsWith('✓')?'#22c55e':'#ef4444' }}>{uploadMsg}</span>}
       </div>
 
       {loading ? <Spinner /> : items.length===0 ? (
