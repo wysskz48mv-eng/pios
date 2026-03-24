@@ -35,19 +35,40 @@ type AcademicModule = {
   id: string; title: string; status: string; deadline?: string
   module_type?: string; grade?: string; credits?: number
   start_date?: string; end_date?: string; notes?: string
-  [key: string]: unknown
 }
 type ThesisChapter = {
   id: string; chapter_num: number; title: string; status: string
   word_count?: number; target_words?: number; content?: string
   ai_feedback?: string; updated_at?: string
+}
+
+type SupervisorSession = {
+  id: string; supervisor?: string; session_date?: string; format?: string
+  duration_mins?: number; notes?: string; action_items?: string
+}
+
+type MilestoneRecord = {
+  id: string; title?: string; status?: string; deadline?: string
+  target_date?: string; days_until?: number | null; is_overdue?: boolean
+  category?: string; notes?: string
+}
+
+type AiReview = {
+  overall_assessment?: string; pace_detail?: string; pace_status?: string
+  risk?: string; immediate_actions?: string[]
   [key: string]: unknown
+}
+
+type AcademicSummary = {
+  total?: number; completed?: number; in_progress?: number; upcoming?: number
+  overdue?: number; totalCredits?: number; completedCredits?: number
+  title?: string; next?: {title?: string; deadline?: string}
 }
 
 export default function AcademicPage() {
   const [modules,  setModules]  = useState<AcademicModule[]>([])
-  const [chapters, setChapters] = useState<Record<string,unknown>[]>([])
-  const [sessions, setSessions] = useState<ThesisChapter[]>([])
+  const [chapters, setChapters] = useState<ThesisChapter[]>([])
+  const [sessions, setSessions] = useState<SupervisorSession[]>([])
   const [loading,  setLoading]  = useState(true)
   const [editingId,  setEditingId]   = useState<string|null>(null)
   const [editWords,  setEditWords]   = useState<Record<string,number>>({})
@@ -115,7 +136,7 @@ export default function AcademicPage() {
   const totalWords  = chapters.reduce((s,c)=>s+(c.word_count||0),0)
   const targetWords = chapters.reduce((s,c)=>s+(c.target_words||8000),0)
   const thesisPct   = targetWords>0?Math.round((totalWords/targetWords)*100):0
-  const [aiReview,      setAiReview]      = useState<Record<string,unknown>|null>(null)
+  const [aiReview,      setAiReview]      = useState<AiReview|null>(null)
   const [weeklyDelta,   setWeeklyDelta]   = useState<number|null>(null)
   const [aiReviewLoading, setAiReviewLoading] = useState(false)
 
@@ -146,7 +167,7 @@ export default function AcademicPage() {
       body: JSON.stringify({ action: 'ai_thesis_review', chapters, modules }),
     })
     const d = res.ok ? await res.json() : {}
-    if (d.review) setAiReview((d as Record<string,unknown>).review as Record<string,unknown>[])
+    if (d.review) setAiReview((d as Record<string,unknown>).review as AiReview)
     setAiReviewLoading(false)
   }
   const chapsDone   = chapters.filter(c=>['submitted','passed','draft_complete'].includes(c.status)).length
@@ -294,17 +315,17 @@ export default function AcademicPage() {
               <span style={{ marginLeft:8, padding:'2px 8px', borderRadius:10, fontSize:10,
                 background: aiReview.pace_status==='on_track'?'rgba(34,197,94,0.15)':aiReview.pace_status==='behind'||aiReview.pace_status==='at_risk'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)',
                 color: aiReview.pace_status==='on_track'?'#22c55e':aiReview.pace_status==='behind'||aiReview.pace_status==='at_risk'?'#ef4444':'#f59e0b',
-              }}>{aiReview.pace_status?.replace('_',' ').toUpperCase()}</span>
+              }}>{String(aiReview.pace_status ?? "").replace('_',' ').toUpperCase()}</span>
             </div>
-            <p style={{ fontSize:12, color:'var(--pios-text)', lineHeight:1.6, margin:'0 0 8px' }}>{aiReview.overall_assessment}</p>
-            <p style={{ fontSize:11, color:'var(--pios-muted)', margin:'0 0 6px' }}>{aiReview.pace_detail}</p>
-            {aiReview.risk && (
-              <p style={{ fontSize:11, color:'#f59e0b', margin:'0 0 6px' }}>⚠ {aiReview.risk}</p>
+            <p style={{ fontSize:12, color:'var(--pios-text)', lineHeight:1.6, margin:'0 0 8px' }}>{String(aiReview.overall_assessment ?? "")}</p>
+            <p style={{ fontSize:11, color:'var(--pios-muted)', margin:'0 0 6px' }}>{String(aiReview.pace_detail ?? "")}</p>
+            {Boolean(aiReview.risk) && (
+              <p style={{ fontSize:11, color:'#f59e0b', margin:'0 0 6px' }}>⚠ {String(aiReview.risk ?? "")}</p>
             )}
-            {Array.isArray(aiReview.immediate_actions) && aiReview.immediate_actions.length > 0 && (
+            {Array.isArray(aiReview.immediate_actions) && (aiReview.immediate_actions as string[] | undefined).length > 0 && (
               <div style={{ marginTop:8 }}>
                 <div style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', marginBottom:4 }}>IMMEDIATE ACTIONS</div>
-                {aiReview.immediate_actions.map((a:string, i:number) => (
+                {(aiReview.immediate_actions as string[]).map((a:string, i:number) => (
                   <div key={i} style={{ fontSize:11, color:'var(--pios-text)', padding:'3px 0',
                     borderTop:'1px solid rgba(167,139,250,0.1)', display:'flex', gap:8 }}>
                     <span style={{ color:'#a78bfa', minWidth:14 }}>{i+1}.</span>{a}
@@ -369,7 +390,7 @@ export default function AcademicPage() {
           {modules.length===0 ? <p style={{ color:'var(--pios-dim)', fontSize:12, textAlign:'center', padding:'20px 0' }}>No modules yet</p> : (
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {modules.map(m=>(
-                <div key={(m as Record<string,unknown>).id as string} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)', gap:8 }}>
+                <div key={m.id as string} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)', gap:8 }}>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:12, fontWeight:600, marginBottom:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{String(m.title ?? "")}</div>
                     <div style={{ display:'flex', gap:6 }}>
@@ -395,13 +416,13 @@ export default function AcademicPage() {
                 <div key={(s as Record<string,unknown>).id as string} style={{ padding:'12px', borderRadius:8, background:'var(--pios-surface2)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
                     <span style={{ fontSize:12, fontWeight:600 }}>{s.supervisor||'Supervisor'}</span>
-                    <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{formatDate(s.session_date)}</span>
+                    <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{formatDate(s.session_date ?? "")}</span>
                   </div>
                   <div style={{ fontSize:10, color:'var(--pios-dim)', marginBottom:s.notes?4:0 }}>{s.format?.replace('_',' ')} · {s.duration_mins}m</div>
                   {s.notes&&<p style={{ fontSize:11, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:s.action_items?.length?4:0 }}>{s.notes.slice(0,130)}{s.notes.length>130?'…':''}</p>}
                   {(Number(s.action_items?.length ?? 0) > 0)&&(
                     <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
-                      {(Array.isArray(s.action_items)?s.action_items:[]).slice(0,3).map((item:string,i:number)=>(
+                      {String(s.action_items ?? '').split('\n').filter(Boolean).slice(0,3).map((item:string,i:number)=>(
                         <div key={i} style={{ fontSize:10, color:'#f59e0b', display:'flex', gap:4 }}>
                           <span>▶</span><span style={{ lineHeight:1.4 }}>{item}</span>
                         </div>
@@ -444,7 +465,7 @@ const DBA_MILESTONES_TEMPLATE = [
 ]
 
 function MilestonesSection() {
-  const [milestones, setMilestones] = useState<Record<string,unknown>[]>([])
+  const [milestones, setMilestones] = useState<MilestoneRecord[]>([])
   const [summary,    setSummary]    = useState<Record<string,unknown>|null>(null)
   const [loading,    setLoading]    = useState(true)
   const [seeding,    setSeeding]    = useState(false)
@@ -455,7 +476,7 @@ function MilestonesSection() {
     try {
       const r = await fetch('/api/milestones', { credentials: 'include' })
       const d = await r.json()
-      if (d.ok) { setMilestones((d as Record<string,unknown>).milestones as Record<string,unknown>[]); setSummary((d as Record<string,unknown>).summary as Record<string,unknown>[]) }
+      if (d.ok) { setMilestones(((d as Record<string,unknown>).milestones ?? []) as MilestoneRecord[]); setSummary((d as Record<string,unknown>).summary as Record<string,unknown>[]) }
     } catch { /* silent — table may not exist until M011 runs */ }
     setLoading(false)
   }, [])
@@ -485,7 +506,7 @@ function MilestonesSection() {
         credentials: 'include',
         body: JSON.stringify({ id, status }),
       })
-      setMilestones(prev => prev.map((m: Record<string,unknown>) => (m as Record<string,unknown>).id === id ? { ...(m as Record<string,unknown>), status } : m))
+      setMilestones(prev => prev.map((m: MilestoneRecord) => m.id === id ? { ...m, status } : m) as MilestoneRecord[])
     } catch { /* silent */ }
     setSaving(null)
   }
@@ -499,9 +520,9 @@ function MilestonesSection() {
           <div style={{ fontSize:13, fontWeight:700 }}>DBA Programme Milestones</div>
           {summary && (
             <div style={{ fontSize:11, color:'var(--pios-dim)', marginTop:2 }}>
-              {summary.completed}/{summary.total} complete
-              {summary.overdue > 0 && <span style={{ color:'#f87171', marginLeft:6 }}>· {summary.overdue} overdue</span>}
-              {summary.next && <span style={{ color:'var(--pios-muted)', marginLeft:6 }}>· next: {summary.next.title}</span>}
+              {Number(summary?.completed ?? 0)}/{Number(summary?.total ?? 0)} complete
+              {Boolean((summary?.overdue ?? 0) > 0) && <span style={{ color:'#f87171', marginLeft:6 }}>· {(summary?.overdue ?? 0)} overdue</span>}
+              {Boolean(summary?.next) && <span style={{ color:'var(--pios-muted)', marginLeft:6 }}>· next: {summary?.next?.title}</span>}
             </div>
           )}
         </div>
@@ -520,7 +541,7 @@ function MilestonesSection() {
       ) : (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8 }}>
           {milestones.map(m => (
-            <div key={(m as Record<string,unknown>).id as string} style={{
+            <div key={m.id as string} style={{
               padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)',
               borderLeft:`3px solid ${MILESTONE_STATUS_COLOURS[m.status]??'var(--pios-border)'}`,
               opacity: ['waived','skipped'].includes(m.status) ? 0.5 : 1,
@@ -539,7 +560,7 @@ function MilestonesSection() {
                     <option key={s} value={s}>{s.replace(/_/g,' ')}</option>
                   )}
                 </select>
-                {m.target_date && (
+                {Boolean(m.target_date) && (
                   <span style={{ fontSize:9, color: m.is_overdue ? '#f87171' : 'var(--pios-dim)' }}>
                     {m.is_overdue ? '⚠ ' : ''}{m.days_until !== null ? (m.days_until < 0 ? `${Math.abs(m.days_until)}d overdue` : `${String(m.days_until ?? "")}d`) : ''}
                   </span>
