@@ -42,16 +42,16 @@ export async function GET(request: Request) {
     const all = data ?? []
     const stats = {
       total:   all.length,
-      unread:  all.filter(i => i.read_status === 'unread').length,
-      reading: all.filter(i => i.read_status === 'reading').length,
-      read:    all.filter(i => i.read_status === 'read').length,
-      revisit: all.filter(i => i.read_status === 'revisit').length,
+      unread:  all.filter((i: Record<string,unknown>) => (i as Record<string,unknown>).read_status === 'unread').length,
+      reading: all.filter((i: Record<string,unknown>) => (i as Record<string,unknown>).read_status === 'reading').length,
+      read:    all.filter((i: Record<string,unknown>) => (i as Record<string,unknown>).read_status === 'read').length,
+      revisit: all.filter((i: Record<string,unknown>) => (i as Record<string,unknown>).read_status === 'revisit').length,
       byType:  all.reduce((acc: Record<string,number>, i) => { acc[i.source_type] = (acc[i.source_type]||0)+1; return acc }, {}),
     }
 
     return NextResponse.json({ items: all, stats })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 
@@ -194,8 +194,8 @@ Tags: ${item.tags?.join(', ') ?? 'none'}`
 
       if (format === 'apa') {
         const list = items
-          .filter(i => i.citation_apa)
-          .map(i => i.citation_apa)
+          .filter((i: Record<string,unknown>) => (i as Record<string,unknown>).citation_apa)
+          .map((i: Record<string,unknown>) => (i as Record<string,unknown>).citation_apa)
           .join('\n\n')
         return NextResponse.json({ export: list, count: items.length, format: 'apa' })
       }
@@ -212,6 +212,6 @@ Tags: ${item.tags?.join(', ') ?? 'none'}`
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: unknown) {
     console.error('/api/literature:', err)
-    return NextResponse.json({ error: err.message ?? 'Request failed' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Request failed' }, { status: 500 })
   }
 }

@@ -104,7 +104,7 @@ export async function GET() {
   } catch (err: unknown) {
     return NextResponse.json({
       connected: false,
-      error: err.message ?? 'Unknown error',
+      error: (err as Error).message ?? 'Unknown error',
       snapshot: null,
     })
   }

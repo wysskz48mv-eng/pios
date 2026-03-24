@@ -161,9 +161,9 @@ export async function GET() {
     const receiptsCount = receiptsRes.count ?? 0
 
     // ── Derived stats ─────────────────────────────────────────────────────────
-    const overdueTasks = tasks.filter(t => t.due_date && t.due_date < today)
-    const todayTasks   = tasks.filter(t => t.due_date === today)
-    const criticalTasks = tasks.filter(t => t.priority === 'critical')
+    const overdueTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && t.due_date < today)
+    const todayTasks   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date === today)
+    const criticalTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).priority === 'critical')
 
     const totalWords   = chapters.reduce((s: number, c: unknown) => s + (c.word_count ?? 0), 0)
     const targetWords  = chapters.reduce((s: number, c: unknown) => s + (c.target_words ?? 8000), 0)
@@ -329,7 +329,7 @@ export async function GET() {
 
   } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message ?? 'Internal server error', authenticated: false },
+      { error: (err as Error).message ?? 'Internal server error', authenticated: false },
       { status: 500 }
     )
   }
