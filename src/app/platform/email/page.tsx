@@ -194,7 +194,7 @@ export default function EmailPage() {
       <div style={{ display:'flex',gap:6,marginBottom:16,flexWrap:'wrap' as const }}>
         {accounts.length > 1 && (
           <div style={{ display:'flex',gap:4,flexWrap:'wrap' as const,marginBottom:6 }}>
-            {[['all','All inboxes'],...accounts.map((a: unknown)=>[a.context,a.label||a.display_name||a.email_address])].map(([v,l])=>(
+            {[['all','All inboxes'],...accounts.map((a: EmailAccount)=>[a.id, String(a.email ?? a.name ?? '')])].map(([v,l])=>(
               <button key={v} onClick={()=>setInboxFilter(v)} style={{ padding:'3px 10px',borderRadius:20,fontSize:10,border:'none',cursor:'pointer',background:inboxFilter===v?'#6c8eff':'var(--pios-surface2)',color:inboxFilter===v?'#fff':'var(--pios-muted)',fontWeight:inboxFilter===v?600:400 }}>{l}</button>
             ))}
           </div>
@@ -219,7 +219,7 @@ export default function EmailPage() {
           <div className="pios-card" style={{ padding:0,overflow:'hidden' }}>
             {loading ? <p style={{ textAlign:'center' as const,padding:'40px',color:'var(--pios-muted)' }}>Loading…</p>
             : emails.map((e,i)=>(
-              <div key={e.id as string} onClick={()=>setSelected(e)} style={{
+              <div key={e.id as string} onClick={()=>setSelected(e as EmailItem)} style={{
                 padding:'12px 16px',borderBottom:'1px solid var(--pios-border)',cursor:'pointer',
                 background:selected?.id===e.id?'rgba(167,139,250,0.08)':e.status==='archived'?'rgba(255,255,255,0.02)':i%2===0?'transparent':'rgba(255,255,255,0.01)',
                 transition:'background 0.1s',opacity:e.status==='archived'?0.5:1,

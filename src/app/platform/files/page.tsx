@@ -58,7 +58,7 @@ function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; al
 
 // ── Structure tab ─────────────────────────────────────────────────────────────
 function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:any[]; onScan:(folder:string)=>void; scanning:boolean; scanResult:any; stats:any }) {
-  const [selectedSpace, setSelectedSpace] = useState<Record<string,unknown>|null>(null)
+  const [selectedSpace, setSelectedSpace] = useState<FileSpace|null>(null)
   const [showAddSpace, setShowAddSpace] = useState(false)
   const [newSpace, setNewSpace] = useState({ name:'', space_type:'folder', icon:'📁', colour:'#6c8eff' })
   const roots = spaces.filter(s => !s.parent_id)
@@ -88,7 +88,7 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
             </div>
           </div>
         )}
-        {roots.map(s => <FolderNode key={(s as Record<string,unknown>).id as string} space={s} all={spaces} onSelect={setSelectedSpace} selected={selectedSpace} />)}
+        {roots.map(s => <FolderNode key={(s as Record<string,unknown>).id as string} space={s} all={spaces} onSelect={(s) => setSelectedSpace(s as FileSpace | null)} selected={selectedSpace} />)}
       </div>
 
       {/* Right panel */}
@@ -179,7 +179,7 @@ function FilesTab({ spaces }: { spaces:any[] }) {
     setExtracting(null)
     if (data.invoice_id) {
       setExtractMsg(`✓ Invoice extracted (ID: ${data.invoice_id}) — ${data.hitl_message}`)
-      setItems(prev => prev.map((i: Record<string,unknown>) => (i as Record<string,unknown>).id===itemId ? {...(i as Record<string,unknown>), ai_category:'invoice'} : i))
+      setItems(prev => prev.map((i: FileItem) => i.id===itemId ? ({...i, ai_category:'invoice'} as FileItem) : i))
     } else {
       setExtractMsg(`✗ ${data.error ?? 'Extraction failed'}`)
     }
@@ -203,29 +203,29 @@ function FilesTab({ spaces }: { spaces:any[] }) {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
           {items.map(item => {
-            const space = (item as Record<string,unknown>).space_id ? spaceMap[(item as Record<string,unknown>).space_id] : null
+            const space = item.space_id ? spaceMap[item.space_id] : null
             return (
-              <div key={(item as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'flex-start', gap:12 }}>
+              <div key={item.id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'flex-start', gap:12 }}>
                 <span style={{ fontSize:16, flexShrink:0, marginTop:1 }}>
-                  {(item as Record<string,unknown>).file_type==='pdf'?'📄':(item as Record<string,unknown>).file_type==='xlsx'||(item as Record<string,unknown>).file_type==='csv'?'📊':(item as Record<string,unknown>).file_type==='docx'?'📝':(item as Record<string,unknown>).file_type?.match(/jpg|jpeg|png|gif/)?'🖼️':'📁'}
+                  {item.file_type==='pdf'?'📄':item.file_type==='xlsx'||item.file_type==='csv'?'📊':item.file_type==='docx'?'📝':item.file_type?.match(/jpg|jpeg|png|gif/)?'🖼️':'📁'}
                 </span>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4, flexWrap:'wrap' as const }}>
-                    <span style={{ fontSize:13, fontWeight:600 }}>{(item as Record<string,unknown>).name}</span>
-                    {(item as Record<string,unknown>).ai_category && <Pill label={(item as Record<string,unknown>).ai_category} colour={CAT_COLOURS[(item as Record<string,unknown>).ai_category]??'#64748b'} />}
-                    {(item as Record<string,unknown>).ai_project_tag && <Pill label={(item as Record<string,unknown>).ai_project_tag} colour="#6c8eff" />}
-                    {(item as Record<string,unknown>).filing_status && <Pill label={(item as Record<string,unknown>).filing_status.replace('_',' ')} colour={(item as Record<string,unknown>).filing_status==='filed'?'#22c55e':(item as Record<string,unknown>).filing_status==='classified'?'#6c8eff':'#64748b'} />}
+                    <span style={{ fontSize:13, fontWeight:600 }}>{String(item.name ?? "")}</span>
+                    {item.ai_category && <Pill label={item.ai_category} colour={CAT_COLOURS[item.ai_category]??'#64748b'} />}
+                    {item.ai_project_tag && <Pill label={item.ai_project_tag} colour="#6c8eff" />}
+                    {item.filing_status && <Pill label={item.filing_status.replace('_',' ')} colour={item.filing_status==='filed'?'#22c55e':item.filing_status==='classified'?'#6c8eff':'#64748b'} />}
                   </div>
-                  {(item as Record<string,unknown>).ai_summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:4 }}>{(item as Record<string,unknown>).ai_summary}</p>}
+                  {item.ai_summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:4 }}>{item.ai_summary}</p>}
                   <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' as const }}>
                     {space && <span style={{ fontSize:11, color:space.colour??'#6c8eff' }}>{String(space.icon ?? "")} {String(space.name ?? "")}</span>}
-                    {(item as Record<string,unknown>).drive_web_url && <a href={(item as Record<string,unknown>).drive_web_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#6c8eff' }}>Open in Drive →</a>}
-                    {(item as Record<string,unknown>).ai_confidence && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>AI: {Math.round((item as Record<string,unknown>).ai_confidence*100)}% confident</span>}
+                    {item.drive_web_url && <a href={item.drive_web_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#6c8eff' }}>Open in Drive →</a>}
+                    {item.ai_confidence && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>AI: {Math.round(item.ai_confidence*100)}% confident</span>}
                   </div>
                 </div>
-                {(item as Record<string,unknown>).ai_category !== 'invoice' && (
-                  <button onClick={()=>extractInvoice((item as Record<string,unknown>).id)} disabled={extracting===(item as Record<string,unknown>).id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #f59e0b40', background:'none', cursor:'pointer', color:'#f59e0b', flexShrink:0 }}>
-                    {extracting===(item as Record<string,unknown>).id ? '⟳' : '💰 Extract invoice'}
+                {item.ai_category !== 'invoice' && (
+                  <button onClick={()=>extractInvoice(item.id)} disabled={extracting===item.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #f59e0b40', background:'none', cursor:'pointer', color:'#f59e0b', flexShrink:0 }}>
+                    {extracting===item.id ? '⟳' : '💰 Extract invoice'}
                   </button>
                 )}
               </div>
@@ -259,8 +259,8 @@ function InvoicesTab() {
     setUpdating(null); load()
   }
 
-  const totalPending = invoices.filter(i=>i.status==='pending').reduce((s,i)=>s+(parseFloat(i.total_amount)||0),0)
-  const totalOverdue = invoices.filter(i=>i.status==='overdue').reduce((s,i)=>s+(parseFloat(i.amount_due)||0),0)
+  const totalPending = invoices.filter(i=>i.status==='pending').reduce((s,i)=>s+(Number(i.total_amount) || 0),0)
+  const totalOverdue = invoices.filter(i=>i.status==='overdue').reduce((s,i)=>s+(Number(i.amount_due) || 0),0)
 
   return (
     <div>
@@ -302,7 +302,7 @@ function InvoicesTab() {
                     <span style={{ fontSize:13, fontWeight:700 }}>
                       {inv.invoice_number ?? (inv.supplier_name ? `Invoice from ${inv.supplier_name}` : 'Invoice')}
                     </span>
-                    <Pill label={inv.status} colour={INV_STATUS[inv.status]??'#64748b'} />
+                    <Pill label={String(inv.status ?? '')} colour={(INV_STATUS as Record<string,string>)[String(inv.status ?? '')] ?? '#64748b'} />
                     <Pill label={inv.invoice_type?.replace('_',' ')??'payable'} colour="#a78bfa" />
                     {inv.ai_extracted && <span style={{ fontSize:10, color:'var(--pios-dim)' }}>AI extracted</span>}
                   </div>
@@ -314,12 +314,12 @@ function InvoicesTab() {
                     {inv.invoice_date && <span>Dated: {inv.invoice_date}</span>}
                     {inv.due_date && <span style={{ color: new Date(inv.due_date)<new Date()&&inv.status!=='paid'?'#ef4444':'inherit' }}>Due: {inv.due_date}</span>}
                   </div>
-                  {inv.file_items?.name && <div style={{ fontSize:11, color:'#6c8eff', marginTop:4 }}>📄 {inv.file_items.name}</div>}
-                  {inv.email_items?.subject && <div style={{ fontSize:11, color:'#22d3ee', marginTop:4 }}>✉ {inv.email_items.subject}</div>}
+                  {inv.name && <div style={{ fontSize:11, color:'#6c8eff', marginTop:4 }}>📄 {String(inv.name)}</div>}
+                  {Boolean((inv.email_items as unknown[])?.length) && <div style={{ fontSize:11, color:'#22d3ee', marginTop:4 }}>✉ linked email</div>}
                 </div>
                 <div style={{ textAlign:'right' as const, flexShrink:0 }}>
                   <div style={{ fontSize:17, fontWeight:800, marginBottom:4 }}>
-                    {inv.currency} {parseFloat(inv.total_amount).toFixed(2)}
+                    {inv.currency} {Number(inv.total_amount ?? 0).toFixed(2)}
                   </div>
                   {inv.status === 'pending' && (
                     <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
@@ -339,7 +339,7 @@ function InvoicesTab() {
 
 // ── Rules tab ─────────────────────────────────────────────────────────────────
 function RulesTab({ spaces }: { spaces:any[] }) {
-  const [rules, setRules]     = useState<FileItem[]>([])
+  const [rules, setRules]     = useState<FileRule[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -425,7 +425,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{String(rule.name ?? "")}</div>
                 <div style={{ fontSize:12, color:'var(--pios-muted)' }}>
-                  {triggerLabels[rule.trigger_type]} <strong>"{String(rule.trigger_value ?? "")}"</strong> ({rule.trigger_match}) → {actionLabels[rule.action_type]}
+                  {(triggerLabels as Record<string,string>)[String(rule.trigger_type ?? '')]} <strong>"{String(rule.trigger_value ?? "")}"</strong> ({rule.trigger_match}) → {(actionLabels as Record<string,string>)[String(rule.action_type ?? '')]}
                   {rule.action_value && <> <strong>"{String(rule.action_value ?? "")}"</strong></>}
                 </div>
               </div>
@@ -445,16 +445,27 @@ function RulesTab({ spaces }: { spaces:any[] }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 type FileItem = {
-  id: string; name: string; size?: number; type?: string
+  id: string; name: string; size?: number; type?: string; file_type?: string
   mime_type?: string; created_at?: string; updated_at?: string
   space_id?: string; space_name?: string; space_type?: string
   path?: string; url?: string; status?: string
+  ai_category?: string; ai_summary?: string; subject?: string
+  invoice_no?: string; vendor?: string; supplier_name?: string
+  amount?: number | string; currency?: string; invoice_date?: string
+  confidence?: number; filing_status?: string; due_date?: string
+  total_amount?: number | string; file_items?: unknown[]; email_items?: unknown[]
+  match?: Record<string,unknown>
+  drive_web_url?: string; company_entity?: string; client_name?: string
+  ai_project_tag?: string; ai_confidence?: number
+  amount_due?: number | string; invoice_number?: string; invoice_type?: string
+  ai_extracted?: boolean; project_id?: string; project_name?: string
   [key: string]: unknown
 }
 
 type FileSpace = {
   id: string; name: string; space_type?: string
   icon?: string; colour?: string; file_count?: number
+  path?: string; drive_folder_id?: string; description?: string
 }
 
 type FileRule = {
@@ -466,7 +477,7 @@ type FileRule = {
 
 export default function FilesPage() {
   const [tab, setTab]           = useState<Tab>('structure')
-  const [spaces, setSpaces]     = useState<Record<string,unknown>[]>([])
+  const [spaces, setSpaces]     = useState<FileSpace[]>([])
   const [stats, setStats]       = useState<Record<string,unknown>|null>(null)
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState<Record<string,unknown>|null>(null)

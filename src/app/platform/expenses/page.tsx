@@ -315,7 +315,7 @@ export default function ExpensesPage() {
                     <span style={{ fontSize:10,padding:'2px 8px',borderRadius:20,background:`${domainColour(e.domain)}20`,color:domainColour(e.domain) }}>{domainLabel(e.domain)}</span>
                   </td>
                   <td style={{ padding:'10px 14px',fontSize:11,color:'var(--pios-dim)',maxWidth:200 }}><span style={{ overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,display:'block' }}>{e.notes||'—'}</span></td>
-                  <td style={{ padding:'10px 14px',fontSize:13,fontWeight:700,whiteSpace:'nowrap' as const }}>{String(e.currency ?? "")} {parseFloat(e.amount).toFixed(2)}</td>
+                  <td style={{ padding:'10px 14px',fontSize:13,fontWeight:700,whiteSpace:'nowrap' as const }}>{String(e.currency ?? "")} {Number(e.amount ?? 0).toFixed(2)}</td>
                   <td style={{ padding:'10px 14px',textAlign:'right' as const,whiteSpace:'nowrap' as const }}>
                     {editing === e.id ? (
                       <div style={{ display:'flex',gap:4 }}>
