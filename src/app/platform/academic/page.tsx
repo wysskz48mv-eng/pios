@@ -31,10 +31,23 @@ function Bar({ value, max, colour = ACCENT }: { value:number; max:number; colour
   )
 }
 
+type AcademicModule = {
+  id: string; title: string; status: string; deadline?: string
+  module_type?: string; grade?: string; credits?: number
+  start_date?: string; end_date?: string; notes?: string
+  [key: string]: unknown
+}
+type ThesisChapter = {
+  id: string; chapter_num: number; title: string; status: string
+  word_count?: number; target_words?: number; content?: string
+  ai_feedback?: string; updated_at?: string
+  [key: string]: unknown
+}
+
 export default function AcademicPage() {
-  const [modules,  setModules]  = useState<Record<string,unknown>[]>([])
+  const [modules,  setModules]  = useState<AcademicModule[]>([])
   const [chapters, setChapters] = useState<Record<string,unknown>[]>([])
-  const [sessions, setSessions] = useState<Record<string,unknown>[]>([])
+  const [sessions, setSessions] = useState<ThesisChapter[]>([])
   const [loading,  setLoading]  = useState(true)
   const [editingId,  setEditingId]   = useState<string|null>(null)
   const [editWords,  setEditWords]   = useState<Record<string,number>>({})
@@ -358,14 +371,14 @@ export default function AcademicPage() {
               {modules.map(m=>(
                 <div key={(m as Record<string,unknown>).id as string} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)', gap:8 }}>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:12, fontWeight:600, marginBottom:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.title}</div>
+                    <div style={{ fontSize:12, fontWeight:600, marginBottom:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{String(m.title ?? "")}</div>
                     <div style={{ display:'flex', gap:6 }}>
-                      <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.module_type}</span>
-                      {m.credits&&<span style={{ fontSize:10, color:'var(--pios-dim)' }}>· {m.credits} cr</span>}
+                      <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{String(m.module_type ?? "")}</span>
+                      {m.credits&&<span style={{ fontSize:10, color:'var(--pios-dim)' }}>· {String(m.credits ?? "")} cr</span>}
                       {m.deadline&&<span style={{ fontSize:10, color:'var(--pios-dim)' }}>· {formatRelative(m.deadline)}</span>}
                     </div>
                   </div>
-                  <select value={m.status} onChange={e=>updateModuleStatus(m.id,e.target.value)} style={{ fontSize:10, padding:'2px 6px', borderRadius:12, border:'none', cursor:'pointer', background:(STATUS_COLOURS[m.status]??'var(--pios-dim)')+'20', color:STATUS_COLOURS[m.status]??'var(--pios-dim)', fontWeight:600, outline:'none', flexShrink:0 }}>
+                  <select value={String(m.status ?? "")} onChange={e=>updateModuleStatus(m.id,e.target.value)} style={{ fontSize:10, padding:'2px 6px', borderRadius:12, border:'none', cursor:'pointer', background:(STATUS_COLOURS[m.status]??'var(--pios-dim)')+'20', color:STATUS_COLOURS[m.status]??'var(--pios-dim)', fontWeight:600, outline:'none', flexShrink:0 }}>
                     {['enrolled','in_progress','submitted','passed','failed','complete'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
                   </select>
                 </div>
@@ -386,7 +399,7 @@ export default function AcademicPage() {
                   </div>
                   <div style={{ fontSize:10, color:'var(--pios-dim)', marginBottom:s.notes?4:0 }}>{s.format?.replace('_',' ')} · {s.duration_mins}m</div>
                   {s.notes&&<p style={{ fontSize:11, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:s.action_items?.length?4:0 }}>{s.notes.slice(0,130)}{s.notes.length>130?'…':''}</p>}
-                  {s.action_items?.length>0&&(
+                  {(Number(s.action_items?.length ?? 0) > 0)&&(
                     <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
                       {(Array.isArray(s.action_items)?s.action_items:[]).slice(0,3).map((item:string,i:number)=>(
                         <div key={i} style={{ fontSize:10, color:'#f59e0b', display:'flex', gap:4 }}>
@@ -512,10 +525,10 @@ function MilestonesSection() {
               borderLeft:`3px solid ${MILESTONE_STATUS_COLOURS[m.status]??'var(--pios-border)'}`,
               opacity: ['waived','skipped'].includes(m.status) ? 0.5 : 1,
             }}>
-              <div style={{ fontSize:11, fontWeight:600, marginBottom:4, lineHeight:1.3 }}>{m.title}</div>
+              <div style={{ fontSize:11, fontWeight:600, marginBottom:4, lineHeight:1.3 }}>{String(m.title ?? "")}</div>
               <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
                 <select
-                  value={m.status}
+                  value={String(m.status ?? "")}
                   disabled={saving === m.id}
                   onChange={e => updateStatus(m.id, e.target.value)}
                   style={{ fontSize:9, padding:'2px 5px', borderRadius:8, border:'none',
@@ -528,7 +541,7 @@ function MilestonesSection() {
                 </select>
                 {m.target_date && (
                   <span style={{ fontSize:9, color: m.is_overdue ? '#f87171' : 'var(--pios-dim)' }}>
-                    {m.is_overdue ? '⚠ ' : ''}{m.days_until !== null ? (m.days_until < 0 ? `${Math.abs(m.days_until)}d overdue` : `${m.days_until}d`) : ''}
+                    {m.is_overdue ? '⚠ ' : ''}{m.days_until !== null ? (m.days_until < 0 ? `${Math.abs(m.days_until)}d overdue` : `${String(m.days_until ?? "")}d`) : ''}
                   </span>
                 )}
               </div>

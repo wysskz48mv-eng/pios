@@ -48,7 +48,7 @@ function RunsTab() {
   const [detecting, setDetecting] = useState(false)
   const [detectResult, setDetectResult] = useState<Record<string,unknown>|null>(null)
   const [selectedRun, setSelectedRun]   = useState<Record<string,unknown>|null>(null)
-  const [lines, setLines]         = useState<Record<string,unknown>[]>([])
+  const [lines, setLines]         = useState<PayrollLine[]>([])
   const [linesLoading, setLinesLoading] = useState(false)
   const [remitting, setRemitting] = useState(false)
   const [remitPreview, setRemitPreview] = useState<Record<string,unknown>|null>(null)
@@ -58,17 +58,17 @@ function RunsTab() {
     setLoading(true)
     const res = await fetch('/api/payroll?type=runs')
     const d = await res.json()
-    setRuns(d.runs ?? [])
+    setRuns((d.runs ?? []) as PayrollRun[])
     setLoading(false)
   }, [])
 
   useEffect(() => { loadRuns() }, [loadRuns])
 
   async function selectRun(run: unknown) {
-    setSelectedRun(run); setLinesLoading(true); setRemitPreview(null)
+    setSelectedRun(run as PayrollRun); setLinesLoading(true); setRemitPreview(null)
     const res = await fetch(`/api/payroll?type=lines&run_id=${String((run as Record<string,unknown>).id ?? "")}`)
     const d = await res.json()
-    setLines(d.lines ?? []); setLinesLoading(false)
+    setLines((d.lines ?? []) as PayrollLine[]); setLinesLoading(false)
   }
 
   async function detect() {
@@ -191,8 +191,8 @@ function RunsTab() {
                     {lines.map(l => (
                       <div key={(l as Record<string,unknown>).id as string} style={{ display:'flex', justifyContent:'space-between', padding:'8px 10px', borderRadius:6, background:'var(--pios-surface2)', alignItems:'center' }}>
                         <div>
-                          <div style={{ fontSize:13, fontWeight:600 }}>{l.staff_name}</div>
-                          {l.staff_email && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{l.staff_email}</div>}
+                          <div style={{ fontSize:13, fontWeight:600 }}>{String(l.staff_name ?? "")}</div>
+                          {l.staff_email && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{String(l.staff_email ?? "")}</div>}
                         </div>
                         <div style={{ textAlign:'right' as const }}>
                           <div style={{ fontSize:13, fontWeight:700 }}>{selectedRun.currency} {parseFloat(l.net_pay??0).toFixed(2)}</div>
@@ -458,7 +458,7 @@ function StaffTab() {
 
   const load = () => {
     setLoading(true)
-    fetch('/api/payroll?type=staff').then(r=>r.json()).then(d=>{ setStaff(d.staff??[]); setLoading(false) })
+    fetch('/api/payroll?type=staff').then(r=>r.json()).then(d=>{ setStaff((d.staff ?? []) as StaffMember[]); setLoading(false) })
   }
   useEffect(() => { load() }, [])
 
@@ -610,8 +610,8 @@ function ChaseTab() {
           <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
             {(log as Record<string,unknown>).map(l => (
               <div key={(l as Record<string,unknown>).id as string} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10 }}>
-                <Badge label={l.chase_level} colour={(levelColour as Record<string,unknown>)[l.chase_level]??'#f59e0b'} />
-                <span style={{ fontSize:12, flex:1 }}>Payroll {l.days_overdue}d overdue — expected {l.expected_date}</span>
+                <Badge label={String(l.chase_level ?? "")} colour={(levelColour as Record<string,unknown>)[l.chase_level]??'#f59e0b'} />
+                <span style={{ fontSize:12, flex:1 }}>Payroll {String(l.days_overdue ?? "")}d overdue — expected {String(l.expected_date ?? "")}</span>
                 <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{new Date(l.sent_at).toLocaleDateString('en-GB')}</span>
               </div>
             ))}
@@ -623,6 +623,22 @@ function ChaseTab() {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
+type PayrollRun = {
+  id: string; run_date: string; status: string; total_gross?: number
+  total_net?: number; currency?: string; notes?: string
+  [key: string]: unknown
+}
+type PayrollLine = {
+  id: string; staff_id?: string; full_name: string; role?: string
+  gross: number; net: number; deductions?: number; currency?: string
+  [key: string]: unknown
+}
+type StaffMember = {
+  id: string; full_name: string; email: string; role: string
+  department?: string; salary?: number; currency?: string; status?: string
+  [key: string]: unknown
+}
+
 export default function PayrollPage() {
   const [tab, setTab] = useState<Tab>('runs')
 

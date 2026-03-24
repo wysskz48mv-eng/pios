@@ -82,7 +82,7 @@ function SearchTab() {
       body: JSON.stringify({ query, database, yearFrom: yearFrom || undefined, yearTo: yearTo || undefined, maxResults }),
     })
     const data = await res.json()
-    setResults(data.results ?? [])
+    setResults((data.results ?? []) as SearchResult[])
     if (data.guardSummary) setGuardSummary(data.guardSummary)
     setMeta(data)
     setLoading(false)
@@ -181,14 +181,14 @@ function SearchTab() {
               <div key={i} className="pios-card" style={{ padding: '16px 18px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 6 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, marginBottom: 4, color: 'var(--pios-text)' }}>{r.title}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, marginBottom: 4, color: 'var(--pios-text)' }}>{String(r.title ?? "")}</div>
                     <div style={{ fontSize: 11, color: 'var(--pios-muted)', display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
-                      <span>{r.authors?.slice(0, 3).join(', ')}{r.authors?.length > 3 ? ' et al.' : ''}</span>
+                      <span>{r.authors?.slice(0, 3).join(', ')}{(Number(r.authors?.length ?? 0) > 3) ? ' et al.' : ''}</span>
                       <span>·</span>
-                      <span style={{ fontStyle: 'italic' }}>{r.journal}</span>
+                      <span style={{ fontStyle: 'italic' }}>{String(r.journal ?? "")}</span>
                       <span>·</span>
-                      <span>{r.year}</span>
-                      {r.citations > 0 && <><span>·</span><span>{r.citations} citations</span></>}
+                      <span>{String(r.year ?? "")}</span>
+                      {(Number(r.citations) > 0) && <><span>·</span><span>{String(r.citations ?? "")} citations</span></>}
                       {r.open_access && <span style={{ color: '#22c55e', fontWeight: 600 }}>OA</span>}
                     </div>
                   </div>
@@ -213,10 +213,10 @@ function SearchTab() {
                 </div>
                 {expanded.has(i) && (
                   <div style={{ borderTop: '1px solid var(--pios-border)', paddingTop: 10, marginTop: 8 }}>
-                    {r.abstract && <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 10 }}>{typeof r.abstract === 'string' ? r.abstract : String(r.abstract ?? '')}</p>}
+                    {r.abstract && <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 10 }}>{String(r.abstract ?? "")}</p>}
                     {r.relevance_notes && (
                       <div style={{ padding: '8px 12px', borderRadius: 6, background: 'rgba(108,142,255,0.08)', fontSize: 12, color: 'var(--pios-text)', marginBottom: 10 }}>
-                        🎓 <strong>Relevance to your DBA:</strong> {r.relevance_notes}
+                        🎓 <strong>Relevance to your DBA:</strong> {String(r.relevance_notes ?? "")}
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
@@ -224,18 +224,18 @@ function SearchTab() {
                         <span key={k} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'var(--pios-surface2)', color: 'var(--pios-muted)' }}>{k}</span>
                       ))}
                       {r.doi && (
-                        <a href={`https://doi.org/${r.doi}`} target="_blank" rel="noopener noreferrer"
+                        <a href={`https://doi.org/${String(r.doi ?? "")}`} target="_blank" rel="noopener noreferrer"
                           style={{ fontSize: 11, color: ACCENT, marginLeft: 'auto' }}>
-                          DOI: {r.doi} →
+                          DOI: {String(r.doi ?? "")} →
                         </a>
                       )}
-                      {r.crossref_title && r.provenance_label === 'FABRICATED_RISK' && (
+                      {r.crossref_title && String(r.provenance_label) === 'FABRICATED_RISK' && (
                         <div style={{ width:'100%', marginTop:6, padding:'6px 10px', borderRadius:6, background:'rgba(239,68,68,0.08)', fontSize:11, color:'#ef4444' }}>
-                          ⚠ CrossRef title: "{r.crossref_title}" — differs from AI output. Verify before citing.
+                          ⚠ CrossRef title: &ldquo;{String(r.crossref_title ?? "")}&rdquo; — differs from AI output. Verify before citing.
                         </div>
                       )}
                       {r.requires_hitl && r.hitl_reason && (
-                        <div style={{ width:'100%', marginTop:4, fontSize:11, color:'#f59e0b' }}>HITL: {r.hitl_reason}</div>
+                        <div style={{ width:'100%', marginTop:4, fontSize:11, color:'#f59e0b' }}>HITL: {String(r.hitl_reason ?? "")}</div>
                       )}
                     </div>
                   </div>
@@ -444,7 +444,7 @@ function JournalsTab() {
                   </div>
                 )}
 
-                {guidelines.key_requirements?.length > 0 && (
+                {(Number(guidelines.key_requirements?.length ?? 0) > 0) && (
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Key requirements</div>
                     {guidelines.key_requirements.map((r: string, i: number) => (
@@ -455,7 +455,7 @@ function JournalsTab() {
                   </div>
                 )}
 
-                {guidelines.submission_checklist?.length > 0 && (
+                {(Number(guidelines.submission_checklist?.length ?? 0) > 0) && (
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Submission checklist</div>
                     {guidelines.submission_checklist.map((item: string, i: number) => (
@@ -677,8 +677,8 @@ function ImportTab() {
               { name: 'UoP Library E-Standards', url: 'https://library.port.ac.uk', desc: 'Search "standards" in the library portal' },
             ].map(r => (
               <div key={(r as Record<string,unknown>).name as string} style={{ padding: '8px 10px', borderRadius: 6, background: 'var(--pios-surface2)' }}>
-                <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', display: 'block', marginBottom: 2 }}>{r.name} →</a>
-                <span style={{ fontSize: 11, color: 'var(--pios-dim)' }}>{r.desc}</span>
+                <a href={String(r.url ?? "")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', display: 'block', marginBottom: 2 }}>{String(r.name ?? "")} →</a>
+                <span style={{ fontSize: 11, color: 'var(--pios-dim)' }}>{String(r.desc ?? "")}</span>
               </div>
             ))}
           </div>
@@ -884,7 +884,7 @@ function LibraryTab() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35, marginBottom: 3 }}>{String((item as Record<string,unknown>).title ?? "")}</div>
                       <div style={{ fontSize: 11, color: 'var(--pios-muted)', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
-                        {(item as Record<string,unknown>).authors?.length > 0 && <span>{((item as Record<string,unknown>).authors as string[]).slice(0,2).join(', ')}{((item as Record<string,unknown>).authors as Record<string,unknown>).length > 2 ? ' et al.' : ''}</span>}
+                        {(Number(((item as Record<string,unknown>).authors as unknown[])?.length ?? 0) > 0) && <span>{((item as Record<string,unknown>).authors as string[]).slice(0,2).join(', ')}{(((item as Record<string,unknown>).authors as string[])?.length ?? 0) > 2 ? ' et al.' : ''}</span>}
                         {(item as Record<string,unknown>).year && <><span>·</span><span>{String((item as Record<string,unknown>).year ?? "")}</span></>}
                         {(item as Record<string,unknown>).journal && <><span>·</span><span style={{ fontStyle: 'italic' }}>{String((item as Record<string,unknown>).journal ?? "")}</span></>}
                       </div>
@@ -1001,6 +1001,19 @@ function LibraryTab() {
 
 
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
+type SearchResult = {
+  title: string; authors: string; year: number; journal: string
+  doi?: string; abstract?: string; source?: string; citations?: number
+  relevance?: number; verified?: boolean; needs_review?: boolean
+  fabricated_risk?: number; warning?: string; provenance_label?: string
+  [key: string]: unknown
+}
+type GuardSummary = {
+  totalFound?: number; database?: string; aiGuidance?: string
+  fabricated_risk?: number; needs_review?: number; verified?: number
+  warning?: string; [key: string]: unknown
+}
+
 export default function ResearchPage() {
   const [tab, setTab] = useState<Tab>('search')
 

@@ -259,6 +259,28 @@ function FeedFormModal({ feed, onSave, onClose }: { feed: Record<string,unknown>
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
+type FeedTopic = {
+  id: string; label: string; description: string; emoji: string
+  topic: string; keywords: string[]; sources: string[]
+  exclude_terms: string[]; category: string; layout: string
+  refresh_freq: string; max_items: number; is_active: boolean
+  last_fetched?: string; cached_items?: FeedItem[]
+  [key: string]: unknown
+}
+type FeedItem = {
+  id: string; title?: string; headline?: string; summary?: string
+  source?: string; category?: string; url?: string; insight?: string
+  relevance?: number; category_tag?: string; published_relative?: string
+  [key: string]: unknown
+}
+type CommandData = {
+  organisations?: Record<string,unknown>[]
+  assets?: Record<string,unknown>
+  apiUsage?: Record<string,unknown>
+  agents?: Record<string,unknown>[]
+  [key: string]: unknown
+}
+
 export default function CommandPage() {
   const [se, setSe]             = useState<Record<string,unknown>|null>(null)
   const [is_, setIs]            = useState<Record<string,unknown>|null>(null)
@@ -478,12 +500,12 @@ export default function CommandPage() {
               </div>
               {/* Relevance toggle */}
               <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--pios-muted)', cursor:'pointer' }}>
-                <input type="checkbox" checked={feedSettings.show_relevance} onChange={e => updateFeedSetting('show_relevance', e.target.checked)} />
+                <input type="checkbox" checked={String(feedSettings.show_relevance ?? "")} onChange={e => updateFeedSetting('show_relevance', e.target.checked)} />
                 Show relevance
               </label>
               {/* Brief toggle */}
               <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--pios-muted)', cursor:'pointer' }}>
-                <input type="checkbox" checked={feedSettings.brief_include_feeds} onChange={e => updateFeedSetting('brief_include_feeds', e.target.checked)} />
+                <input type="checkbox" checked={String(feedSettings.brief_include_feeds ?? "")} onChange={e => updateFeedSetting('brief_include_feeds', e.target.checked)} />
                 Include in brief
               </label>
               <button onClick={() => setShowAddFeed(true)} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>+ Add feed</button>
@@ -504,14 +526,14 @@ export default function CommandPage() {
           ) : (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: feedSettings.command_layout === 'list' ? '1fr' : 'repeat(auto-fill,minmax(380px,1fr))',
+              gridTemplateColumns: ((feedSettings as Record<string,unknown>).command_layout === 'list' ? '1fr' : 'repeat(auto-fill,minmax(380px,1fr))'),
               gap: 16,
             }}>
               {feeds.filter((f: Record<string,unknown>) => (f as Record<string,unknown>).is_active).map(feed => (
                 <FeedCard
                   key={(feed as Record<string,unknown>).id as string}
                   feed={feed}
-                  showRelevance={feedSettings.show_relevance}
+                  showRelevance={!!(feedSettings as Record<string,unknown>).show_relevance}
                   onRefresh={loadFeeds}
                   onEdit={f => setEditingFeed(f)}
                   onDelete={handleDeleteFeed}
