@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       if (!topics?.length) return NextResponse.json({ results: [] })
 
       // Fetch all in parallel (max 3 at a time to avoid rate limits)
-      const results: unknown[]$1
+      const results: unknown[] = []
       const batchSize = 3
       for (let i = 0; i < topics.length; i += batchSize) {
         const batch = topics.slice(i, i + batchSize)

@@ -77,10 +77,10 @@ export async function auditLog(
   }
 ): Promise<void> {
   const ip = req
-    ? String((req.headers as Record<string, unknown>).get?.'x-forwarded-for' ?? 'unknown').split(',')[0].trim()
+    ? String((req.headers as Record<string, unknown>).get?.('x-forwarded-for') ?? 'unknown').split(',')[0].trim()
     : 'server'
   const ua = req
-    ? String((req.headers as Record<string, unknown>).get?.'user-agent' ?? '').slice(0, 200)
+    ? String((req.headers as Record<string, unknown>).get?.('user-agent') ?? '').slice(0, 200)
     : 'server'
 
   const entry = {

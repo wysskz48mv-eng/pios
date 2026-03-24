@@ -120,7 +120,7 @@ export async function POST(request: Request) {
 
     if (run_all) {
       // Run all unapplied migrations in order
-      const results: unknown[]$1
+      const results: unknown[] = []
       for (const id of ['001','002','003','004','005','006','007']) {
         const m = MIGRATIONS[id]
         const already = await checkTableExists(supabase, m.sentinel_table)

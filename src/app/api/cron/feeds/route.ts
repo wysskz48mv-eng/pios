@@ -64,7 +64,7 @@ Return ONLY valid JSON — an array of exactly 8 objects:
       prompt, 800
     )
 
-    let items: unknown[]$1
+    let items: unknown[] = []
     try {
       const cleaned = raw.replace(/```json|```/g, '').trim()
       items = JSON.parse(cleaned)

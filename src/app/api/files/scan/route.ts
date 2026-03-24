@@ -135,7 +135,7 @@ export async function POST(request: Request) {
 
     // Classify in batches of 20
     const BATCH = 20
-    const classifications: unknown[]$1
+    const classifications: unknown[] = []
     for (let i = 0; i < driveFiles.length; i += BATCH) {
       const batch = driveFiles.slice(i, i + BATCH)
       const classified = await classifyBatch(batch, spaces ?? [])
