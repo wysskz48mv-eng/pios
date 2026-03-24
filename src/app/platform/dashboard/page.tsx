@@ -64,12 +64,14 @@ export default function DashboardPage() {
   }, [])
 
   const domainCounts = tasks.reduce((acc: Record<string,number>, t) => {
-    acc[t.domain] = (acc[t.domain] || 0) + 1; return acc
+    acc[t.domain as string] = ((acc[t.domain as string] as number) || 0) + 1; return acc
   }, {})
+
+  const isExecPersona = ['executive','founder','professional'].includes(persona)
 
   const criticalCount  = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).priority === 'critical').length
   const weekDeadlines  = modules.filter((m: Record<string,unknown>) => (m as Record<string,unknown>).deadline &&
-    new Date(m.deadline) < new Date(Date.now() + 7 * 86400000)).length
+    new Date(m.deadline as string) < new Date(Date.now() + 7 * 86400000)).length
 
   async function generateBrief(force = false) {
     setBriefLoading(true)
@@ -85,7 +87,7 @@ export default function DashboardPage() {
   const DOMAINS = [
     { key: 'academic',      label: 'Academic',      icon: '🎓', extra: `${modules.length} active` },
     { key: 'fm_consulting', label: 'FM Consulting',  icon: '🏗',  extra: 'Qiddiya active' },
-    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: `${seSnap ? (seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0) + ' tenants' : 'SE · IS · PIOS'}` },
+    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: `${seSnap ? ((seSnap as Record<string,unknown>).tenants?.total ?? (seSnap as Record<string,unknown>).organisations?.total ?? 0) + ' tenants' : 'SE · IS · PIOS'}` },
     { key: 'business',      label: 'Business',       icon: '🏢',  extra: 'Group ops' },
     { key: 'personal',      label: 'Personal',       icon: '✦',   extra: `${projects.length} projects` },
   ]
@@ -126,9 +128,9 @@ export default function DashboardPage() {
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
                 {[
-                  { l:'Tenants', v: seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0 },
-                  { l:'Projects', v: seSnap.projects?.total ?? 0 },
-                  { l:'Assets', v: (seSnap.assets?.total ?? 0).toLocaleString() },
+                  { l:'Tenants', v: (seSnap as Record<string,unknown>).tenants?.total ?? (seSnap as Record<string,unknown>).organisations?.total ?? 0 },
+                  { l:'Projects', v: (seSnap as Record<string,unknown>).projects?.total ?? 0 },
+                  { l:'Assets', v: ((seSnap as Record<string,unknown>).assets?.total ?? 0).toLocaleString() },
                 ].map(m => (
                   <div key={(m as Record<string,unknown>).l as string}>
                     <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{m.v}</div>
@@ -136,9 +138,9 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-              {seSnap.obe?.totalBudgetSAR && (
+              {(seSnap as Record<string,unknown>).obe?.totalBudgetSAR && (
                 <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
-                  Last OBE: SAR {(seSnap.obe.totalBudgetSAR/1e6).toFixed(1)}M
+                  Last OBE: SAR {((seSnap as Record<string,unknown>).obe.totalBudgetSAR/1e6).toFixed(1)}M
                 </div>
               )}
             </div>
@@ -151,9 +153,9 @@ export default function DashboardPage() {
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
                 {[
-                  { l:'Newsrooms', v: isSnap.organisations?.total ?? 0 },
-                  { l:'Investigations', v: isSnap.investigations?.total ?? isSnap.topics?.total ?? 0 },
-                  { l:'Scripts', v: isSnap.scripts?.total ?? 0 },
+                  { l:'Newsrooms', v: (isSnap as Record<string,unknown>).organisations?.total ?? 0 },
+                  { l:'Investigations', v: (isSnap as Record<string,unknown>).investigations?.total ?? (isSnap as Record<string,unknown>).topics?.total ?? 0 },
+                  { l:'Scripts', v: (isSnap as Record<string,unknown>).scripts?.total ?? 0 },
                 ].map(m => (
                   <div key={(m as Record<string,unknown>).l as string}>
                     <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{m.v}</div>
@@ -161,11 +163,11 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-              {(isSnap.apiUsage?.costUsd != null || isSnap.usage?.thisMonth != null) && (
+              {((isSnap as Record<string,unknown>).apiUsage?.costUsd != null || (isSnap as Record<string,unknown>).usage?.thisMonth != null) && (
                 <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
-                  {isSnap.apiUsage?.costUsd != null
-                    ? `$${isSnap.apiUsage.costUsd.toFixed(2)} API cost (30d)`
-                    : `${isSnap.usage.thisMonth} AI calls this month`}
+                  {(isSnap as Record<string,unknown>).apiUsage?.costUsd != null
+                    ? `$${(isSnap as Record<string,unknown>).apiUsage.costUsd.toFixed(2)} API cost (30d)`
+                    : `${(isSnap as Record<string,unknown>).usage.thisMonth} AI calls this month`}
                 </div>
               )}
             </div>

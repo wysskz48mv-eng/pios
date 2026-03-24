@@ -339,19 +339,19 @@ function JournalsTab() {
         {showAdd && (
           <div className="pios-card" style={{ marginBottom: 14, borderColor: ACCENT + '40' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-              <input className="pios-input" placeholder="Journal name *" value={addForm.journal_name} onChange={e => setAddForm(p => ({ ...(p as Record<string,unknown>), journal_name: e.target.value }))} />
-              <input className="pios-input" placeholder="Publisher" value={addForm.publisher} onChange={e => setAddForm(p => ({ ...(p as Record<string,unknown>), publisher: e.target.value }))} />
-              <input className="pios-input" placeholder="Impact factor" type="number" step="0.1" value={addForm.impact_factor} onChange={e => setAddForm(p => ({ ...(p as Record<string,unknown>), impact_factor: e.target.value }))} />
-              <select className="pios-input" value={addForm.quartile} onChange={e => setAddForm(p => ({ ...(p as Record<string,unknown>), quartile: e.target.value }))}>
+              <input className="pios-input" placeholder="Journal name *" value={addForm.journal_name} onChange={e => setAddForm(p => ({ ...p, journal_name: e.target.value }))} />
+              <input className="pios-input" placeholder="Publisher" value={addForm.publisher} onChange={e => setAddForm(p => ({ ...p, publisher: e.target.value }))} />
+              <input className="pios-input" placeholder="Impact factor" type="number" step="0.1" value={addForm.impact_factor} onChange={e => setAddForm(p => ({ ...p, impact_factor: e.target.value }))} />
+              <select className="pios-input" value={addForm.quartile} onChange={e => setAddForm(p => ({ ...p, quartile: e.target.value }))}>
                 {['Q1', 'Q2', 'Q3', 'Q4', 'Unranked'].map(q => <option key={q} value={q}>{q}</option>)}
               </select>
-              <input className="pios-input" placeholder="Subject area" value={addForm.subject_area} onChange={e => setAddForm(p => ({ ...(p as Record<string,unknown>), subject_area: e.target.value }))} />
-              <select className="pios-input" value={addForm.priority} onChange={e => setAddForm(p => ({ ...(p as Record<string,unknown>), priority: e.target.value }))}>
+              <input className="pios-input" placeholder="Subject area" value={addForm.subject_area} onChange={e => setAddForm(p => ({ ...p, subject_area: e.target.value }))} />
+              <select className="pios-input" value={addForm.priority} onChange={e => setAddForm(p => ({ ...p, priority: e.target.value }))}>
                 {[['high', 'High priority'], ['medium', 'Medium'], ['low', 'Low'], ['watch', 'Watch']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
-            <input className="pios-input" placeholder="Submission URL" value={addForm.submission_url} onChange={e => setAddForm(p => ({ ...(p as Record<string,unknown>), submission_url: e.target.value }))} style={{ marginBottom: 8 }} />
-            <input className="pios-input" placeholder="Author guidelines URL" value={addForm.guidelines_url} onChange={e => setAddForm(p => ({ ...(p as Record<string,unknown>), guidelines_url: e.target.value }))} style={{ marginBottom: 8 }} />
+            <input className="pios-input" placeholder="Submission URL" value={addForm.submission_url} onChange={e => setAddForm(p => ({ ...p, submission_url: e.target.value }))} style={{ marginBottom: 8 }} />
+            <input className="pios-input" placeholder="Author guidelines URL" value={addForm.guidelines_url} onChange={e => setAddForm(p => ({ ...p, guidelines_url: e.target.value }))} style={{ marginBottom: 8 }} />
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="pios-btn pios-btn-primary" onClick={addJournal} disabled={saving} style={{ fontSize: 12 }}>{saving ? 'Adding…' : 'Add journal'}</button>
               <button className="pios-btn pios-btn-ghost" onClick={() => setShowAdd(false)} style={{ fontSize: 12 }}>Cancel</button>
@@ -710,19 +710,19 @@ function ImportTab() {
             <div style={{ padding: '8px 12px', borderRadius: 6, background: '#22c55e20', color: '#22c55e', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>{importResult}</div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-            <input className="pios-input" placeholder="Title *" value={manualForm.title} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), title: e.target.value }))} />
-            <input className="pios-input" placeholder="Authors (comma-separated)" value={manualForm.authors} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), authors: e.target.value }))} />
+            <input className="pios-input" placeholder="Title *" value={manualForm.title} onChange={e => setManualForm(p => ({ ...p, title: e.target.value }))} />
+            <input className="pios-input" placeholder="Authors (comma-separated)" value={manualForm.authors} onChange={e => setManualForm(p => ({ ...p, authors: e.target.value }))} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-              <input className="pios-input" placeholder="Year" type="number" value={manualForm.year} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), year: e.target.value }))} />
-              <select className="pios-input" value={manualForm.source_type} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), source_type: e.target.value }))}>
+              <input className="pios-input" placeholder="Year" type="number" value={manualForm.year} onChange={e => setManualForm(p => ({ ...p, year: e.target.value }))} />
+              <select className="pios-input" value={manualForm.source_type} onChange={e => setManualForm(p => ({ ...p, source_type: e.target.value }))}>
                 {['journal', 'book', 'conference', 'report', 'thesis', 'website', 'other'].map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-              <input className="pios-input" placeholder="DOI" value={manualForm.doi} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), doi: e.target.value }))} />
+              <input className="pios-input" placeholder="DOI" value={manualForm.doi} onChange={e => setManualForm(p => ({ ...p, doi: e.target.value }))} />
             </div>
-            <input className="pios-input" placeholder="Journal name" value={manualForm.journal} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), journal: e.target.value }))} />
-            <input className="pios-input" placeholder="URL" value={manualForm.url} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), url: e.target.value }))} />
-            <input className="pios-input" placeholder="Tags (comma-separated)" value={manualForm.tags} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), tags: e.target.value }))} />
-            <textarea className="pios-input" placeholder="Notes…" rows={2} style={{ resize: 'vertical' as const, fontFamily: 'inherit' }} value={manualForm.notes} onChange={e => setManualForm(p => ({ ...(p as Record<string,unknown>), notes: e.target.value }))} />
+            <input className="pios-input" placeholder="Journal name" value={manualForm.journal} onChange={e => setManualForm(p => ({ ...p, journal: e.target.value }))} />
+            <input className="pios-input" placeholder="URL" value={manualForm.url} onChange={e => setManualForm(p => ({ ...p, url: e.target.value }))} />
+            <input className="pios-input" placeholder="Tags (comma-separated)" value={manualForm.tags} onChange={e => setManualForm(p => ({ ...p, tags: e.target.value }))} />
+            <textarea className="pios-input" placeholder="Notes…" rows={2} style={{ resize: 'vertical' as const, fontFamily: 'inherit' }} value={manualForm.notes} onChange={e => setManualForm(p => ({ ...p, notes: e.target.value }))} />
             <button className="pios-btn pios-btn-primary" onClick={manualImport} disabled={importing || !manualForm.title.trim()} style={{ fontSize: 12 }}>
               {importing ? 'Adding…' : 'Add to library'}
             </button>
@@ -767,7 +767,7 @@ function LibraryTab() {
   async function updateItem(id: string, updates: unknown) {
     await fetch('/api/literature', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id, ...updates }) })
     setItems(prev => prev.map((i: Record<string,unknown>) => (i as Record<string,unknown>).id === id ? { ...(i as Record<string,unknown>), ...updates } : i))
-    if (selected?.id === id) setSelected((p: unknown) => ({ ...(p as Record<string,unknown>), ...updates }))
+    if (selected?.id === id) setSelected((p: unknown) => ({ ...p, ...updates }))
   }
 
   async function generateSummary(id: string) {
@@ -777,7 +777,7 @@ function LibraryTab() {
     if (d.summary) {
       const updates = { ai_summary: d.summary, citation_apa: d.citation_apa, themes: d.suggested_themes ?? [], relevance: d.suggested_relevance_score, _guard: d.guard ?? null }
       setItems(prev => prev.map((i: Record<string,unknown>) => (i as Record<string,unknown>).id === id ? { ...(i as Record<string,unknown>), ...updates } : i))
-      if (selected?.id === id) setSelected((p: unknown) => ({ ...(p as Record<string,unknown>), ...updates }))
+      if (selected?.id === id) setSelected((p: unknown) => ({ ...p, ...updates }))
     }
     setAiLoading(null)
   }

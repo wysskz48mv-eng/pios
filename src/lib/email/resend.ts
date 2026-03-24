@@ -60,8 +60,8 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
     }
     return { ok: true, id: data.id }
   } catch (err: unknown) {
-    console.error('[resend] Fetch error:', err.message)
-    return { ok: false, error: err.message }
+    console.error('[resend] Fetch error:', (err as Error).message)
+    return { ok: false, error: (err as Error).message }
   }
 }
 

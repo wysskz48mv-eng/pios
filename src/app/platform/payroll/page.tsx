@@ -81,7 +81,7 @@ function RunsTab() {
 
   async function approveRun(runId: string) {
     await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'approve_run', run_id:runId }) })
-    loadRuns(); if (selectedRun?.id === runId) setSelectedRun((p: unknown) => p ? {...(p as Record<string,unknown>), status:'approved'} : p)
+    loadRuns(); if (selectedRun?.id === runId) setSelectedRun((p: unknown) => p ? {...p, status:'approved'} : p)
   }
 
   async function previewRemit() {
@@ -393,18 +393,18 @@ function ClaimsTab() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'#a78bfa' }}>Submit Expense Claim</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Claimant name *" value={form.claimant_name} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),claimant_name:e.target.value}))} />
-            <input className="pios-input" placeholder="Email" value={form.claimant_email} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),claimant_email:e.target.value}))} />
-            <input className="pios-input" placeholder="Amount *" type="number" value={form.amount} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),amount:e.target.value}))} />
+            <input className="pios-input" placeholder="Claimant name *" value={form.claimant_name} onChange={e=>setForm(p=>({...p,claimant_name:e.target.value}))} />
+            <input className="pios-input" placeholder="Email" value={form.claimant_email} onChange={e=>setForm(p=>({...p,claimant_email:e.target.value}))} />
+            <input className="pios-input" placeholder="Amount *" type="number" value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} />
             <div style={{ display:'flex', gap:6 }}>
-              <select className="pios-input" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),currency:e.target.value}))}>
+              <select className="pios-input" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...p,currency:e.target.value}))}>
                 {['GBP','USD','SAR','AED','EUR'].map(c=><option key={c} value={c}>{c}</option>)}
               </select>
-              <input className="pios-input" placeholder="Claim period (e.g. March 2026)" value={form.claim_period} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),claim_period:e.target.value}))} />
+              <input className="pios-input" placeholder="Claim period (e.g. March 2026)" value={form.claim_period} onChange={e=>setForm(p=>({...p,claim_period:e.target.value}))} />
             </div>
           </div>
-          <input className="pios-input" placeholder="Category (travel / software / equipment…)" value={form.category} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),category:e.target.value}))} style={{ marginBottom:8 }} />
-          <input className="pios-input" placeholder="Description" value={form.description} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),description:e.target.value}))} style={{ marginBottom:10 }} />
+          <input className="pios-input" placeholder="Category (travel / software / equipment…)" value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))} style={{ marginBottom:8 }} />
+          <input className="pios-input" placeholder="Description" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} style={{ marginBottom:10 }} />
           <div style={{ display:'flex', gap:8 }}>
             <button className="pios-btn pios-btn-primary" onClick={submitClaim} disabled={saving} style={{ fontSize:12 }}>{saving?'Submitting…':'Submit claim'}</button>
             <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
@@ -481,23 +481,23 @@ function StaffTab() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'#a78bfa' }}>Add Staff Member</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Full name *" value={form.full_name} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),full_name:e.target.value}))} />
-            <input className="pios-input" placeholder="Email *" value={form.email} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),email:e.target.value}))} />
-            <input className="pios-input" placeholder="Role / job title" value={form.role} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),role:e.target.value}))} />
-            <select className="pios-input" value={form.company_entity} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),company_entity:e.target.value}))}>
+            <input className="pios-input" placeholder="Full name *" value={form.full_name} onChange={e=>setForm(p=>({...p,full_name:e.target.value}))} />
+            <input className="pios-input" placeholder="Email *" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} />
+            <input className="pios-input" placeholder="Role / job title" value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))} />
+            <select className="pios-input" value={form.company_entity} onChange={e=>setForm(p=>({...p,company_entity:e.target.value}))}>
               {['VeritasIQ Technologies Ltd','Sustain International UK Ltd'].map(e=><option key={e} value={e}>{e}</option>)}
             </select>
-            <select className="pios-input" value={form.employment_type} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),employment_type:e.target.value}))}>
+            <select className="pios-input" value={form.employment_type} onChange={e=>setForm(p=>({...p,employment_type:e.target.value}))}>
               {['employee','contractor','consultant','director'].map(t=><option key={t} value={t}>{t}</option>)}
             </select>
             <div style={{ display:'flex', gap:6 }}>
-              <select className="pios-input" style={{ width:'auto' }} value={form.salary_currency} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),salary_currency:e.target.value}))}>
+              <select className="pios-input" style={{ width:'auto' }} value={form.salary_currency} onChange={e=>setForm(p=>({...p,salary_currency:e.target.value}))}>
                 {['GBP','USD','SAR','AED','EUR'].map(c=><option key={c} value={c}>{c}</option>)}
               </select>
-              <input className="pios-input" placeholder="Monthly salary" type="number" value={form.monthly_salary} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),monthly_salary:e.target.value}))} />
+              <input className="pios-input" placeholder="Monthly salary" type="number" value={form.monthly_salary} onChange={e=>setForm(p=>({...p,monthly_salary:e.target.value}))} />
             </div>
           </div>
-          <input className="pios-input" placeholder="Bank account (last 4 digits only — never store full number)" value={form.bank_account} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),bank_account:e.target.value.slice(0,4)}))} style={{ marginBottom:10 }} maxLength={4} />
+          <input className="pios-input" placeholder="Bank account (last 4 digits only — never store full number)" value={form.bank_account} onChange={e=>setForm(p=>({...p,bank_account:e.target.value.slice(0,4)}))} style={{ marginBottom:10 }} maxLength={4} />
           <div style={{ display:'flex', gap:8 }}>
             <button className="pios-btn pios-btn-primary" onClick={addStaff} disabled={saving} style={{ fontSize:12 }}>{saving?'Adding…':'Add staff member'}</button>
             <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>

@@ -103,7 +103,7 @@ export async function PATCH(request: Request) {
     // Allowlist + validate
     const ALLOWED = ['title','description','domain','priority','status','due_date',
                      'duration_mins','notes','project_id','source','completed_at']
-    const safe: unknown = { updated_at: new Date().toISOString() }
+    const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
     for (const k of ALLOWED) { if (k in body) safe[k] = body[k] }
 
     if (safe.status   && !VALID_STATUSES.includes(safe.status))

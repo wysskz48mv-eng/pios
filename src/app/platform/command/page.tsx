@@ -165,7 +165,7 @@ function FeedFormModal({ feed, onSave, onClose }: { feed: Record<string,unknown>
   } : DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
 
-  function f(k: string, v: unknown) { setForm((p: unknown) => ({ ...(p as Record<string,unknown>), [k]: v })) }
+  function f(k: string, v: unknown) { setForm((p: unknown) => ({ ...p, [k]: v })) }
 
   async function save() {
     if (!form.label.trim() || !form.topic.trim()) return

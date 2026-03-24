@@ -14,7 +14,7 @@ interface PlatformShellProps {
 export function PlatformShell({ children, userProfile, tenant }: PlatformShellProps) {
   const [chatOpen, setChatOpen] = useState(false)
 
-  const planStatus  = tenant?.plan_status ?? tenant?.subscription_status ?? 'active'
+  const planStatus  = (tenant as Record<string,unknown> | undefined)?.plan as string | undefined_status ?? tenant?.subscription_status ?? 'active'
   const trialEndsAt = tenant?.trial_ends_at ?? null
   const isTrialing  = planStatus === 'trialing'
   const isExpired   = planStatus === 'canceled' && !tenant?.stripe_subscription_id

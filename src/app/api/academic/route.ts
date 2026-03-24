@@ -151,7 +151,7 @@ export async function PATCH(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { entity, id, ...updates } = await req.json()
     if (!id || !entity) return NextResponse.json({ error: 'id and entity required' }, { status: 400 })
-    const safe: unknown = { updated_at: new Date().toISOString() }
+    const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
 
     if (entity === 'chapter') {
       for (const k of ['title','chapter_num','status','word_count','target_words','notes']) { if (k in updates) safe[k] = updates[k] }

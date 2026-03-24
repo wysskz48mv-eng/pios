@@ -20,7 +20,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
     .single()
 
   return (
-    <PlatformShell userProfile={profile} tenant={tenant}>
+    <PlatformShell userProfile={profile as Record<string,unknown> | undefined} tenant={tenant as Record<string,unknown> | undefined}>
       {children}
     </PlatformShell>
   )

@@ -203,14 +203,14 @@ export default function AcademicPage() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:ACCENT+'40' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:ACCENT }}>Add Thesis Chapter</div>
           <div style={{ display:'grid', gridTemplateColumns:'60px 1fr auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Ch #" type="number" value={chForm.chapter_num} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),chapter_num:e.target.value}))} />
-            <input className="pios-input" placeholder="Chapter title…" value={chForm.title} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),title:e.target.value}))} />
-            <input className="pios-input" placeholder="Words" type="number" style={{ width:100 }} value={chForm.word_count} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),word_count:e.target.value}))} />
-            <input className="pios-input" placeholder="Target" type="number" style={{ width:100 }} value={chForm.target_words} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),target_words:e.target.value}))} />
+            <input className="pios-input" placeholder="Ch #" type="number" value={chForm.chapter_num} onChange={e=>setChForm(p=>({...p,chapter_num:e.target.value}))} />
+            <input className="pios-input" placeholder="Chapter title…" value={chForm.title} onChange={e=>setChForm(p=>({...p,title:e.target.value}))} />
+            <input className="pios-input" placeholder="Words" type="number" style={{ width:100 }} value={chForm.word_count} onChange={e=>setChForm(p=>({...p,word_count:e.target.value}))} />
+            <input className="pios-input" placeholder="Target" type="number" style={{ width:100 }} value={chForm.target_words} onChange={e=>setChForm(p=>({...p,target_words:e.target.value}))} />
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Notes (optional)…" value={chForm.notes} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),notes:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={chForm.status} onChange={e=>setChForm(p=>({...(p as Record<string,unknown>),status:e.target.value}))}>
+            <input className="pios-input" placeholder="Notes (optional)…" value={chForm.notes} onChange={e=>setChForm(p=>({...p,notes:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={chForm.status} onChange={e=>setChForm(p=>({...p,status:e.target.value}))}>
               {['not_started','in_progress','draft_complete','under_review','submitted'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
             </select>
           </div>
@@ -226,15 +226,15 @@ export default function AcademicPage() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'#a78bfa' }}>Add Programme Module</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Module title…" value={modForm.title} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),title:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={modForm.module_type} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),module_type:e.target.value}))}>
+            <input className="pios-input" placeholder="Module title…" value={modForm.title} onChange={e=>setModForm(p=>({...p,title:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={modForm.module_type} onChange={e=>setModForm(p=>({...p,module_type:e.target.value}))}>
               {['taught','research','viva','conference','elective'].map(t=><option key={t} value={t}>{t}</option>)}
             </select>
-            <select className="pios-input" style={{ width:'auto' }} value={modForm.status} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),status:e.target.value}))}>
+            <select className="pios-input" style={{ width:'auto' }} value={modForm.status} onChange={e=>setModForm(p=>({...p,status:e.target.value}))}>
               {['enrolled','in_progress','submitted','passed','failed'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
             </select>
-            <input type="date" className="pios-input" style={{ width:'auto' }} value={modForm.deadline} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),deadline:e.target.value}))} />
-            <input className="pios-input" placeholder="Credits" type="number" style={{ width:80 }} value={modForm.credits} onChange={e=>setModForm(p=>({...(p as Record<string,unknown>),credits:e.target.value}))} />
+            <input type="date" className="pios-input" style={{ width:'auto' }} value={modForm.deadline} onChange={e=>setModForm(p=>({...p,deadline:e.target.value}))} />
+            <input className="pios-input" placeholder="Credits" type="number" style={{ width:80 }} value={modForm.credits} onChange={e=>setModForm(p=>({...p,credits:e.target.value}))} />
           </div>
           <div style={{ display:'flex', gap:8 }}>
             <button className="pios-btn pios-btn-primary" onClick={addModule} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Add Module'}</button>
@@ -248,15 +248,15 @@ export default function AcademicPage() {
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(245,158,11,0.3)' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'#f59e0b' }}>Log Supervision Session</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Supervisor name…" value={sesForm.supervisor} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),supervisor:e.target.value}))} />
-            <input type="date" className="pios-input" style={{ width:'auto' }} value={sesForm.session_date} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),session_date:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={sesForm.format} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),format:e.target.value}))}>
+            <input className="pios-input" placeholder="Supervisor name…" value={sesForm.supervisor} onChange={e=>setSesForm(p=>({...p,supervisor:e.target.value}))} />
+            <input type="date" className="pios-input" style={{ width:'auto' }} value={sesForm.session_date} onChange={e=>setSesForm(p=>({...p,session_date:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={sesForm.format} onChange={e=>setSesForm(p=>({...p,format:e.target.value}))}>
               {['online','in_person','phone','email'].map(f=><option key={f} value={f}>{f.replace('_',' ')}</option>)}
             </select>
-            <input className="pios-input" placeholder="Mins" type="number" style={{ width:70 }} value={sesForm.duration_mins} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),duration_mins:e.target.value}))} />
+            <input className="pios-input" placeholder="Mins" type="number" style={{ width:70 }} value={sesForm.duration_mins} onChange={e=>setSesForm(p=>({...p,duration_mins:e.target.value}))} />
           </div>
-          <textarea className="pios-input" placeholder="Session notes — what was discussed, feedback received…" rows={3} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.notes} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),notes:e.target.value}))} />
-          <textarea className="pios-input" placeholder="Action items (one per line)…" rows={2} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.action_items} onChange={e=>setSesForm(p=>({...(p as Record<string,unknown>),action_items:e.target.value}))} />
+          <textarea className="pios-input" placeholder="Session notes — what was discussed, feedback received…" rows={3} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.notes} onChange={e=>setSesForm(p=>({...p,notes:e.target.value}))} />
+          <textarea className="pios-input" placeholder="Action items (one per line)…" rows={2} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.action_items} onChange={e=>setSesForm(p=>({...p,action_items:e.target.value}))} />
           <div style={{ display:'flex', gap:8 }}>
             <button className="pios-btn pios-btn-primary" onClick={addSession} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Log Session'}</button>
             <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAddSes(false)} style={{ fontSize:12 }}>Cancel</button>
@@ -335,8 +335,8 @@ export default function AcademicPage() {
                     <Bar value={editWords[ch.id]??ch.word_count??0} max={ch.target_words??8000} />
                     {editing ? (
                       <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto', gap:8, marginTop:10 }}>
-                        <input className="pios-input" type="number" placeholder="Word count" value={editWords[ch.id]??0} onChange={e=>setEditWords(p=>({...(p as Record<string,unknown>),[ch.id]:parseInt(e.target.value)||0}))} autoFocus style={{ fontSize:13 }} />
-                        <select className="pios-input" style={{ width:'auto', fontSize:12 }} value={editStatus[ch.id]??ch.status} onChange={e=>setEditStatus(p=>({...(p as Record<string,unknown>),[ch.id]:e.target.value}))}>
+                        <input className="pios-input" type="number" placeholder="Word count" value={editWords[ch.id]??0} onChange={e=>setEditWords(p=>({...p,[ch.id]:parseInt(e.target.value)||0}))} autoFocus style={{ fontSize:13 }} />
+                        <select className="pios-input" style={{ width:'auto', fontSize:12 }} value={editStatus[ch.id]??ch.status} onChange={e=>setEditStatus(p=>({...p,[ch.id]:e.target.value}))}>
                           {['not_started','in_progress','draft_complete','under_review','submitted','passed'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
                         </select>
                         <div style={{ display:'flex', gap:4 }}>

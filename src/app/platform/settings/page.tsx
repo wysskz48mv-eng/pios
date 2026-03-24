@@ -457,7 +457,7 @@ export default function SettingsPage() {
               ].map(([k,l]) => (
                 <div key={k}>
                   <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>{l}</div>
-                  <input className="pios-input" value={(form as Record<string, unknown>)[k]} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),[k]:e.target.value}))} />
+                  <input className="pios-input" value={(form as Record<string, unknown>)[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
                 </div>
               ))}
               <div style={{ display:'flex',gap:8,marginTop:4 }}>

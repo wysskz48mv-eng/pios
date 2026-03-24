@@ -13,7 +13,7 @@ export const maxDuration = 60
 
 const DOMAINS = ['academic','fm_consulting','saas','business','personal']
 
-async function refreshGoogleToken(supabase: unknown, account: unknown): Promise<string | null> {
+async function refreshGoogleToken(supabase: Record<string,unknown>, account: Record<string,unknown>): Promise<string | null> {
   if (!account.google_refresh_token) return null
   try {
     const res = await fetch('https://oauth2.googleapis.com/token', {
@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
               { synced: 0, receipts: 0, error: 'IMAP coming soon' }
     return { account_id: acc.id, email: acc.email_address, ...r }
   }))
-  const detail = results.map((r: Record<string,unknown>) => (r as Record<string,unknown>).status === 'fulfilled' ? r.value : { error: String((r as Record<string, unknown>).reason) })
+  const detail = results.map((r: Record<string,unknown>) => (r as Record<string,unknown>).status === 'fulfilled' ? (r as PromiseFulfilledResult<Record<string,unknown>>).value : { error: String((r as Record<string, unknown>).reason) })
   return NextResponse.json({
     synced:          detail.reduce((s: number, r: unknown) => s + (r.synced   ?? 0), 0),
     receipts:        detail.reduce((s: number, r: unknown) => s + (r.receipts ?? 0), 0),

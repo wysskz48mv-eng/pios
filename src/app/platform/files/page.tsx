@@ -81,7 +81,7 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
         </div>
         {showAddSpace && (
           <div style={{ padding:'0 8px', marginBottom:12 }}>
-            <input className="pios-input" placeholder="Folder name…" value={newSpace.name} onChange={e=>setNewSpace(p=>({...(p as Record<string,unknown>),name:e.target.value}))} style={{ marginBottom:6, fontSize:12 }} />
+            <input className="pios-input" placeholder="Folder name…" value={newSpace.name} onChange={e=>setNewSpace(p=>({...p,name:e.target.value}))} style={{ marginBottom:6, fontSize:12 }} />
             <div style={{ display:'flex', gap:4 }}>
               <button onClick={addSpace} className="pios-btn pios-btn-primary" style={{ fontSize:11, flex:1 }}>Add</button>
               <button onClick={()=>setShowAddSpace(false)} className="pios-btn pios-btn-ghost" style={{ fontSize:11 }}>✕</button>
@@ -345,7 +345,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
   const [saving, setSaving]   = useState(false)
   const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string|null>(null)
   const [form, setForm] = useState({ name:'', trigger_type:'email_sender', trigger_value:'', trigger_match:'contains', action_type:'assign_project', action_value:'', priority:50 })
-  function f(k:string,v: unknown) { setForm(p=>({...(p as Record<string,unknown>),[k]:v})) }
+  function f(k:string,v: unknown) { setForm(p=>({...p,[k]:v})) }
 
   const load = () => {
     setLoading(true)

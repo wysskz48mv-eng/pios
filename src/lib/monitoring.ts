@@ -14,8 +14,8 @@ async function getSentry() {
   try {
     // @ts-ignore
     Sentry = await import('@sentry/nextjs').catch(() => null)
-    if (Sentry && !Sentry.isInitialized?.()) {
-      Sentry.init({
+    if (Sentry && !(Sentry as Record<string, (...args: unknown[]) => unknown>).isInitialized?.()) {
+      (Sentry as Record<string, (...args: unknown[]) => unknown>).init({
         dsn: process.env.SENTRY_DSN,
         environment: process.env.NODE_ENV ?? 'production',
         release: 'pios@1.0',

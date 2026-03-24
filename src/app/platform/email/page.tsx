@@ -78,7 +78,7 @@ export default function EmailPage() {
       })
       const d = await res.json()
       if (d.sent) {
-        setSelected((p: unknown) => ({ ...(p as Record<string,unknown>), status: 'actioned' }))
+        setSelected((p: unknown) => ({ ...p, status: 'actioned' }))
         setEmails(prev => prev.map((e: Record<string,unknown>) => (e as Record<string,unknown>).id === selected.id ? { ...(e as Record<string,unknown>), status: 'actioned' } : e))
         setReplyText('')
       } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
@@ -149,9 +149,9 @@ export default function EmailPage() {
         <div className="pios-card" style={{ marginBottom:16,borderColor:'rgba(34,209,194,0.3)' }}>
           <div style={{ fontSize:13,fontWeight:600,marginBottom:12,color:'#22d3ee' }}>New message</div>
           <div style={{ display:'flex',flexDirection:'column' as const,gap:8,marginBottom:10 }}>
-            <input className="pios-input" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...(p as Record<string,unknown>),to:e.target.value}))} />
-            <input className="pios-input" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...(p as Record<string,unknown>),subject:e.target.value}))} />
-            <textarea className="pios-input" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...(p as Record<string,unknown>),body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
+            <input className="pios-input" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...p,to:e.target.value}))} />
+            <input className="pios-input" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...p,subject:e.target.value}))} />
+            <textarea className="pios-input" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
           </div>
           <div style={{ display:'flex',gap:8,alignItems:'center' }}>
             <button onClick={async()=>{

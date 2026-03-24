@@ -59,7 +59,7 @@ export default function MeetingsPage() {
     const date    = searchParams.get('date')
     if (prefill || date) {
       setForm(p => ({
-        ...(p as Record<string,unknown>),
+        ...p,
         title:        prefill ? decodeURIComponent(prefill) : p.title,
         meeting_date: date ?? p.meeting_date,
       }))
@@ -185,33 +185,33 @@ export default function MeetingsPage() {
           {showNew && (
             <div style={{ background:'var(--pios-surface)', border:`1px solid rgba(167,139,250,0.3)`, borderRadius:10, padding:14, marginBottom:12, flexShrink:0 }}>
               <div style={{ fontSize:12, fontWeight:700, color:ACCENT, marginBottom:10 }}>New meeting note</div>
-              <input style={inp} placeholder="Meeting title *" value={form.title} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),title:e.target.value}))} />
+              <input style={inp} placeholder="Meeting title *" value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} />
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                <input type="date" style={{ ...(inp as Record<string,unknown>), marginBottom:0 }} value={form.meeting_date} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),meeting_date:e.target.value}))} />
-                <input type="number" style={{ ...(inp as Record<string,unknown>), marginBottom:0 }} placeholder="Duration (mins)" value={form.duration_mins} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),duration_mins:e.target.value}))} />
+                <input type="date" style={{ ...(inp as Record<string,unknown>), marginBottom:0 }} value={form.meeting_date} onChange={e=>setForm(p=>({...p,meeting_date:e.target.value}))} />
+                <input type="number" style={{ ...(inp as Record<string,unknown>), marginBottom:0 }} placeholder="Duration (mins)" value={form.duration_mins} onChange={e=>setForm(p=>({...p,duration_mins:e.target.value}))} />
               </div>
               <div style={{ height:10 }} />
-              <select style={sel} value={form.meeting_type} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),meeting_type:e.target.value}))}>
+              <select style={sel} value={form.meeting_type} onChange={e=>setForm(p=>({...p,meeting_type:e.target.value}))}>
                 {TYPES.map(t=><option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
               </select>
-              <select style={sel} value={form.domain} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),domain:e.target.value}))}>
+              <select style={sel} value={form.domain} onChange={e=>setForm(p=>({...p,domain:e.target.value}))}>
                 {DOMAINS.map(d=><option key={d} value={d}>{domainLabel(d)}</option>)}
               </select>
-              <input style={inp} placeholder="Attendees (comma-separated)" value={form.attendees} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),attendees:e.target.value}))} />
+              <input style={inp} placeholder="Attendees (comma-separated)" value={form.attendees} onChange={e=>setForm(p=>({...p,attendees:e.target.value}))} />
               <textarea
                 style={{ ...(inp as Record<string,unknown>), height:80, resize:'vertical' as const, fontFamily:'inherit' }}
                 placeholder="Paste transcript here (Zoom, Teams, Meet, Otter export…)"
                 value={form.raw_transcript}
-                onChange={e=>setForm(p=>({...(p as Record<string,unknown>),raw_transcript:e.target.value}))}
+                onChange={e=>setForm(p=>({...p,raw_transcript:e.target.value}))}
               />
               <textarea
                 style={{ ...(inp as Record<string,unknown>), height:60, resize:'vertical' as const, fontFamily:'inherit' }}
                 placeholder="Or write manual notes"
                 value={form.raw_notes}
-                onChange={e=>setForm(p=>({...(p as Record<string,unknown>),raw_notes:e.target.value}))}
+                onChange={e=>setForm(p=>({...p,raw_notes:e.target.value}))}
               />
               <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:'var(--pios-muted)', marginBottom:10, cursor:'pointer' }}>
-                <input type="checkbox" checked={form.auto_process} onChange={e=>setForm(p=>({...(p as Record<string,unknown>),auto_process:e.target.checked}))} />
+                <input type="checkbox" checked={form.auto_process} onChange={e=>setForm(p=>({...p,auto_process:e.target.checked}))} />
                 Auto-extract with AI after saving
               </label>
               <div style={{ display:'flex', gap:8 }}>
@@ -333,7 +333,7 @@ export default function MeetingsPage() {
                       }}>
                         {!selected.tasks_created && (
                           <input type="checkbox" checked={selectedItems.includes(i)}
-                            onChange={e => setSelectedItems(prev => e.target.checked ? [...(prev as Record<string,unknown>), i] : prev.filter(x => x !== i))}
+                            onChange={e => setSelectedItems(prev => e.target.checked ? [...prev, i] : prev.filter(x => x !== i))}
                             style={{ marginTop:2, flexShrink:0 }} />
                         )}
                         <div style={{ flex:1, minWidth:0 }}>

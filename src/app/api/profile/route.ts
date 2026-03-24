@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
-    const safe: unknown = { updated_at: new Date().toISOString() }
+    const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
 
     for (const k of ALLOWED_FIELDS) {
       if (k in body) safe[k] = body[k]
