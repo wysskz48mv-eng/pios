@@ -4,6 +4,7 @@
  * PIOS Sprint 42 | VeritasIQ Technologies Ltd
  */
 'use client'
+import Image from 'next/image'
 import { useState, useEffect, useCallback } from 'react'
 import { Settings, Palette, Globe, Zap, Loader2, Check, Save, Eye, EyeOff, Shield } from 'lucide-react'
 
@@ -157,7 +158,7 @@ export default function OperatorPage() {
       {preview && (
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="p-4 flex items-center gap-3" style={{ background: form.primary_colour + '15', borderBottom: `1px solid ${form.primary_colour}30` }}>
-            {form.logo_url && <img src={form.logo_url} alt="logo" className="h-8 w-auto rounded" />}
+            {form.logo_url && <Image src={form.logo_url} alt="logo" width={80} height={32} className="h-8 w-auto rounded" unoptimized />}
             <div>
               <div className="font-bold text-base" style={{ color: form.primary_colour }}>{form.operator_name || 'Your Platform Name'}</div>
               {form.custom_domain && <div className="text-xs text-muted-foreground">{form.custom_domain}</div>}

@@ -426,7 +426,7 @@ export default function SettingsPage() {
       setProfile(((pR as Record<string,unknown>).profile ?? null) as any | null)
       setTenant(((pR as Record<string,unknown>).tenant ?? null) as any)
       setFeedSettings(fR.settings)
-      if ((pR as Record<string,unknown>).profile) setForm({  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      if ((pR as Record<string,unknown>).profile) setForm({
         full_name:      String(((pR as Record<string,unknown>).profile as any)?.full_name ?? ''),
         billing_email:  String(((pR as Record<string,unknown>).profile as any)?.billing_email ?? ''),
         programme_name: String(((pR as Record<string,unknown>).profile as any)?.programme_name ?? ''),

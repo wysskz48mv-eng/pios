@@ -81,7 +81,7 @@ const PERSONA_TEMPLATES: Record<string, Array<{
 }
 
 // ── CPD body requirements (annual hours) ─────────────────────────────────────
-export const CPD_BODIES: Record<string, {
+const CPD_BODIES: Record<string, {
   name: string; totalHours: number; verifiableHours: number;
   yearStart: string; declaration: string; ethicsRequired: boolean
 }> = {

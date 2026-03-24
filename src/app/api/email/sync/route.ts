@@ -12,8 +12,6 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 const DOMAINS = ['academic','fm_consulting','saas','business','personal']
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function refreshGoogleToken(supabase: any, account: any): Promise<string | null> {
   if (!account.google_refresh_token) return null
   try {
@@ -36,8 +34,6 @@ async function refreshGoogleToken(supabase: any, account: any): Promise<string |
     return data.access_token
   } catch { return null }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function refreshMicrosoftToken(supabase: any, account: any): Promise<string | null> {
   if (!account.ms_refresh_token) return null
   try {
@@ -61,8 +57,6 @@ async function refreshMicrosoftToken(supabase: any, account: any): Promise<strin
     return data.access_token
   } catch { return null }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getValidToken(supabase: any, account: any): Promise<string | null> {
   const buf = 5 * 60 * 1000
   if (account.provider === 'google') {
@@ -108,8 +102,6 @@ Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","prio
     return { domain: domainOverride ?? 'personal', priority_score: 3, action_required: null, ai_draft_reply: null, is_receipt: looksLikeReceipt, receipt_data: null }
   }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function autoCreateExpense(supabase: any, userId: string, rd: any, domain: string, subject: string) {
   if (!rd?.amount || parseFloat(rd.amount) <= 0) return
   const desc = `${rd.vendor ?? 'Unknown'} — auto from email`
@@ -125,8 +117,6 @@ async function autoCreateExpense(supabase: any, userId: string, rd: any, domain:
     updated_at: new Date().toISOString(),
   })
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function syncGmail(supabase: any, userId: string, account: any, token: string, max: number) {
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=is:unread+-category:promotions`,
@@ -164,8 +154,6 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
     .update({ last_synced_at: new Date().toISOString(), last_sync_error: null }).eq('id', account.id)
   return { synced, receipts }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function syncMicrosoft(supabase: any, userId: string, account: any, token: string, max: number) {
   const url = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=${max}&$filter=isRead eq false&$select=id,subject,from,receivedDateTime,bodyPreview,conversationId`
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })

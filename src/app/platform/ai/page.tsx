@@ -1,6 +1,4 @@
-import React from 'react'
 'use client'
-import { useState as useTrainState } from 'react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 
 // ─────────────────────────────────────────────────────────────────────────────
