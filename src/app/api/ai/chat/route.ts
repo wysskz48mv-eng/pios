@@ -58,6 +58,14 @@ export async function POST(request: Request) {
     const aiPersona = (aiProfile as Record<string,unknown> | null)?.persona_type as string ?? 'individual'
     const aiIsExec  = ['executive','founder','professional'].includes(aiPersona)
 
+    // Fetch user training config (NemoClaw context)
+    const { data: trainCfg } = await (supabase as any)
+      .from('exec_intelligence_config')
+      .select('persona_context,company_context,goals_context,custom_instructions,tone_preference,response_style')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const tc = trainCfg as any
+
     const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR] = await Promise.all([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
         .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
@@ -158,6 +166,26 @@ export async function POST(request: Request) {
       ? `\nCONVERSATION DOMAIN FOCUS:\n${domainContext}`
       : ''
 
+    // Build training context from exec_intelligence_config
+    const trainingCtx = tc ? [
+      tc.persona_context && `USER CONTEXT:\n${tc.persona_context}`,
+      tc.company_context && `COMPANY CONTEXT:\n${tc.company_context}`,
+      tc.goals_context   && `CURRENT GOALS:\n${tc.goals_context}`,
+      tc.custom_instructions && `CUSTOM INSTRUCTIONS (follow these precisely):\n${tc.custom_instructions}`,
+    ].filter(Boolean).join('\n\n') : ''
+
+    const trainingSection = trainingCtx ? `\n\n${trainingCtx}` : ''
+
+    // Tone/style from training config
+    const toneNote = tc?.tone_preference === 'direct'       ? 'Be blunt and direct. Skip preamble.'
+                   : tc?.tone_preference === 'consultative' ? 'Use a consultative, questioning tone.'
+                   : tc?.tone_preference === 'coaching'     ? 'Use a coaching style — guide rather than tell.'
+                   : 'Be professional and concise.'
+    const styleNote = tc?.response_style === 'bullets'   ? 'Prefer bullet points over prose.'
+                    : tc?.response_style === 'prose'     ? 'Respond in prose paragraphs, no bullet points.'
+                    : tc?.response_style === 'brief'     ? 'Keep responses short — 3-5 sentences max unless depth is needed.'
+                    : 'Use structured headers and bullet points.'
+
     const pName = (aiProfile as Record<string,unknown> | null)?.full_name as string ?? 'Douglas'
     const pTitle = (aiProfile as Record<string,unknown> | null)?.job_title as string ?? 'CEO'
     const pOrg   = (aiProfile as Record<string,unknown> | null)?.organisation as string ?? 'VeritasIQ Technologies Ltd'
@@ -166,17 +194,15 @@ export async function POST(request: Request) {
 
 USER PROFILE:
 - Name: ${pName} | Role: ${pTitle} | Organisation: ${pOrg}
-- Persona: ${aiPersona}
-- SaaS founder: VeritasEdge™ v6.0 (GCC FM platform) · InvestiScript™ v3.5 (AI journalism) · PIOS v2.6 (this OS)
-- Key IP: HDCA™ (patent pending), VE-CAFX™, VE-PMF™, VE-BENCH™
-- Proprietary consulting frameworks: POM™ · OAE™ · SDL™ · CVDM™ · CPA™ · SCE™ · AAM™
-- Non-technical founder working with Claude as primary technical implementer
+- Persona: ${aiPersona}${trainingSection}
 
 EXECUTIVE OS AWARENESS (when persona is executive/founder/professional):
 - EOSA™ executive brief · PAA™ OKR tracking · STIA™ stakeholder CRM
 - CSA™ consulting frameworks (7 proprietary) · DAA™ decision architecture
 - TSA™ time sovereignty · BICA™ board comms · SIA™ signal intelligence
 - All frameworks use PIOS proprietary names — never reference BCG, McKinsey, Porter, Kotter by nameWorking with Claude as primary technical implementer — non-technical founder
+
+TONE & STYLE: ${toneNote} ${styleNote}
 
 BEHAVIOUR RULES:
 - Be direct, concise, action-oriented. No pleasantries.

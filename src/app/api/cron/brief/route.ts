@@ -57,6 +57,14 @@ export async function GET(req: NextRequest) {
 
   for (const profile of (profiles as any[])) {
     const uid = profile.id
+
+    // Fetch user's NemoClaw training config for personalised brief
+    const { data: briefTcData } = await (admin as any)
+      .from('exec_intelligence_config')
+      .select('goals_context,custom_instructions,tone_preference')
+      .eq('user_id', uid)
+      .maybeSingle()
+    const briefTc = briefTcData as any
     try {
       // Gather full context for this user
       const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR] = await Promise.all([
@@ -188,7 +196,12 @@ export async function GET(req: NextRequest) {
 
       ].filter(Boolean).join('\n\n')
 
-      const system = `You are PIOS, a personal AI operating system for a DBA student and multi-domain entrepreneur. Generate a personalised morning brief. Be direct. Lead with overdue tasks if any. Flag thesis pace risk. If meeting action items are awaiting task promotion, name them and direct to /platform/meetings. If auto-captured receipts are present, prompt review. Spot cross-domain conflicts. Name 2-3 items needing personal action today. Max 300 words. Plain prose, no bullet points.`
+      const toneGuide = briefTc?.tone_preference === 'direct' ? 'Be blunt. No preamble.'
+        : briefTc?.tone_preference === 'coaching' ? 'Frame as coaching prompts.'
+        : 'Be professional and direct.'
+      const goalsNote = briefTc?.goals_context ? `\nUser goals: ${briefTc.goals_context}` : ''
+      const instrNote = briefTc?.custom_instructions ? `\nCustom brief instructions: ${briefTc.custom_instructions}` : ''
+      const system = `You are PIOS, a personal AI operating system. Generate a personalised morning brief for this user. ${toneGuide}${goalsNote}${instrNote} Lead with overdue tasks if any. Flag upcoming deadlines. Note pending meeting actions. Spot cross-domain conflicts. Name 2-3 priority actions for today. Max 300 words. Use ## Section Name headers for each section.`
 
       const content = await callClaude(
         [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}` }],

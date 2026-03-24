@@ -72,12 +72,38 @@ export function morningBriefHtml(briefContent: string, date: string, userName: s
   const dateFormatted = new Date(date).toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
-  // Convert plain text paragraphs to HTML paragraphs
-  const contentHtml = briefContent
-    .split('\n\n')
-    .filter(Boolean)
-    .map(p => `<p style="margin:0 0 14px;line-height:1.7;color:#c8cedd;">${p.replace(/\n/g, '<br/>')}</p>`)
-    .join('')
+
+  // Parse sections from brief content (## Section headers)
+  const sections = briefContent.split(/^##\s+/m).filter(Boolean)
+  const contentHtml = sections.length > 1
+    ? sections.map(section => {
+        const [title, ...bodyLines] = section.split('\n')
+        const body = bodyLines.join('\n').trim()
+        const bodyHtml = body
+          .split('\n\n').filter(Boolean)
+          .map(p => {
+            if (p.startsWith('•') || p.startsWith('-') || p.match(/^\d+\./)) {
+              // List items
+              const items = p.split('\n').filter(Boolean)
+              return `<ul style="margin:0 0 12px;padding-left:18px;">${
+                items.map(i => `<li style="color:#c8cedd;font-size:13px;line-height:1.7;margin-bottom:4px;">${
+                  i.replace(/^[•\-]\s*|^\d+\.\s*/, '')
+                }</li>`).join('')
+              }</ul>`
+            }
+            return `<p style="margin:0 0 10px;line-height:1.7;color:#c8cedd;font-size:13px;">${p.replace(/\n/g, '<br/>')}</p>`
+          }).join('')
+        return `<tr><td style="padding:0 0 20px;">
+          <div style="background:#0e1015;border-radius:8px;padding:16px 18px;border-left:3px solid #a78bfa;">
+            <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:1.5px;">${title.trim()}</p>
+            ${bodyHtml}
+          </div>
+        </td></tr>`
+      }).join('')
+    : `<tr><td>${briefContent
+        .split('\n\n').filter(Boolean)
+        .map(p => `<p style="margin:0 0 14px;line-height:1.7;color:#c8cedd;">${p.replace(/\n/g, '<br/>')}</p>`)
+        .join('')}</td></tr>`
 
   return `<!DOCTYPE html>
 <html>
@@ -97,8 +123,9 @@ export function morningBriefHtml(briefContent: string, date: string, userName: s
         <!-- Greeting -->
         <tr><td style="background:#111318;padding:28px 36px 0;">
           <p style="margin:0 0 20px;font-size:15px;font-weight:600;color:#a78bfa;">Good morning, ${userName.split(' ')[0]} 👋</p>
-          ${contentHtml}
         </td></tr>
+        <!-- Content sections -->
+        ${contentHtml}
         <!-- Footer -->
         <tr><td style="background:#0e1015;border-radius:0 0 12px 12px;padding:20px 36px;border-top:1px solid rgba(255,255,255,0.06);">
           <p style="margin:0;font-size:11px;color:#454d63;line-height:1.6;">

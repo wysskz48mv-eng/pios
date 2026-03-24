@@ -63,7 +63,7 @@ export async function GET(request: Request) {
         sendEmail({
           to:      data.user.email,
           subject: 'Welcome to PIOS — your intelligent operating system',
-          html:    welcomeHtml(name, 'Individual'),
+          html:    welcomeHtml(name, 'Student'),
         }).catch(() => {/* silent — email is non-critical */})
       }
 
