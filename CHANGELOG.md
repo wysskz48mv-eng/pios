@@ -1,3 +1,20 @@
+## [v2.2.2] — 2026-03-24 · Learning Journal + Documents + Intelligence
+
+### New Pages
+- `/platform/learning/journal`: AI-assisted reflective journal with mood, tags, AI reflection
+- `/platform/documents`: Document Intelligence Hub — AI analysis, tag extraction
+- `/platform/intelligence`: FM & Research Intelligence Feed
+
+### Learning Hub
+- `/api/learning-journey`: view=journal, action=journal_entry, action=ai_reflect
+- M012 updated: `learning_journal_entries` table
+- Learning page: journal tab + quick-link
+
+### TypeScript — PI now at ZERO
+- All 26 suppressions removed across 30+ files
+
+---
+
 ## [v2.2.1] — 2026-03-23 · Documents + Intelligence + TypeScript
 
 ### New Pages
