@@ -1,3 +1,23 @@
+## [v2.4.3] -- 2026-03-24 -- Sprint 56 -- T17 NPS survey (SRAF D-02)
+
+/api/nps: POST submit + GET aggregate for pilot CPS tracking
+  CPS = avg(stability + performance + featureFit) / 3
+  GA readiness gate: responses >= 5 AND avg_cps >= 4.0
+  GET returns ga_ready flag (owner-only: info@sustain-intl.com)
+
+supabase/migrations/014_nps_survey.sql:
+  nps_survey_responses table -- user_id FK, RLS (own read + insert any)
+
+/platform/admin: MIGRATION_DETAILS '014' added
+/api/admin/run-migration: M014 entry added to MIGRATIONS object
+  Inline SQL -- idempotent (IF NOT EXISTS, DO $$ guards)
+  Set NPS_SURVEY_URL env var + share link with pilot users
+
+SRAF D-02: infrastructure complete -- pending 5 responses with avg_cps >= 4.0
+package.json: 2.4.2 -> 2.4.3 | Sprint 56 | VeritasIQ
+
+---
+
 ## [v2.4.2] — 2026-03-24 · Sprint 56 — Security hardening (T10/T11/T12)
 
 ### T10 — MFA enforcement (admin routes)

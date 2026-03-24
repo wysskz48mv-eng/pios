@@ -20,6 +20,7 @@ const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
   '011': { file: '011_learning_journeys.sql',     tables: ['learning_journeys','learning_journey_steps','cpd_logs','programme_milestones'] },
   '012': { file: '012_trial_and_plan_status.sql',  tables: ['tenants(plan_status+seats_limit)','sync_plan_status trigger'] },
   '013': { file: '013_learning_hub_v2.sql',        tables: ['cpd_bodies','learning_journal_entries','learning_journeys(patched)'] },
+  '014': { file: '014_nps_survey.sql',               tables: ['nps_survey_responses'] },
 }
 
 const SUPABASE_URL = 'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new'
