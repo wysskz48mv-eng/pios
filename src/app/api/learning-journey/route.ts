@@ -114,6 +114,16 @@ export async function GET(req: NextRequest) {
     .select('persona,cpd_body,cpd_hours_target,cpd_hours_done,study_mode,supervisor_name,supervisor_email,wizard_completed,wizard_persona,programme_name,programme_type')
     .eq('id', user.id).single()
 
+  if (view === 'journal') {
+    const { data: entries } = await supabase
+      .from('learning_journal_entries')
+      .select('id, title, content, mood, tags, ai_reflection, created_at, updated_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    return NextResponse.json({ ok: true, view: 'journal', entries: entries ?? [] })
+  }
+
   if (view === 'cpd') {
     const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()))
     const { data: activities } = await supabase
@@ -247,6 +257,49 @@ export async function POST(req: NextRequest) {
 
   const { data: profile } = await supabase
     .from('user_profiles').select('persona').eq('id', user.id).single()
+
+  if (action === 'journal_entry') {
+    const { title, content, mood, tags } = body
+    if (!title?.trim() || !content?.trim()) {
+      return NextResponse.json({ ok: false, error: 'title and content required' }, { status: 400 })
+    }
+    // Try to insert — table may not exist yet (created by M012)
+    const { data: entry, error: entryErr } = await supabase
+      .from('learning_journal_entries')
+      .insert({
+        user_id:    user.id,
+        title:      title.trim(),
+        content:    content.trim(),
+        mood:       mood ?? null,
+        tags:       tags ?? [],
+      })
+      .select()
+      .single()
+    if (entryErr) {
+      // Graceful fallback if table doesn't exist yet
+      return NextResponse.json({ ok: false, error: 'Journal table not ready — run M012 migration', _pending: 'M012' })
+    }
+    return NextResponse.json({ ok: true, entry })
+  }
+
+  if (action === 'ai_reflect') {
+    const { content } = body
+    if (!content?.trim()) return NextResponse.json({ ok: false, error: 'content required' }, { status: 400 })
+    try {
+      const { callClaude } = await import('@/lib/ai/client')
+      const reflection = await callClaude(
+        [{ role: 'user', content: `Please provide a brief, thoughtful reflection on this learning journal entry. Identify key insights, suggest deeper questions to explore, and note any patterns or growth areas. Keep it to 3-4 sentences.
+
+Journal entry:
+${content.slice(0, 2000)}` }],
+        'You are a supportive learning coach helping a professional reflect on their learning journey. Be insightful, constructive and specific.',
+        300
+      )
+      return NextResponse.json({ ok: true, reflection })
+    } catch (err: unknown) {
+      return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'AI reflection failed' })
+    }
+  }
 
   const { data, error } = await supabase.from('programme_milestones').insert({
     user_id: user.id, persona: profile?.persona ?? 'student',

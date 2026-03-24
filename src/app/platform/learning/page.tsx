@@ -26,7 +26,7 @@ export default function LearningHubPage() {
   const [data,    setData]    = useState<unknown>(null)
   const [cpdData, setCpdData] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
-  const [tab,     setTab]     = useState<'milestones'|'cpd'|'activities'>('milestones')
+  const [tab,     setTab]     = useState<'milestones'|'cpd'|'activities'|'journal'>('milestones')
   const [marking, setMarking] = useState<string|null>(null)
   const [cpdForm, setCpdForm] = useState({ title:'', activity_type:'course', provider:'', hours_verifiable:'', hours_non_verifiable:'', completed_date:'', reflection:'' })
   const [savingCpd, setSavingCpd] = useState(false)

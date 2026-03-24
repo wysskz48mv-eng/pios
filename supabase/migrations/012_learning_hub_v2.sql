@@ -66,4 +66,28 @@ ALTER TABLE IF EXISTS cpd_bodies ENABLE ROW LEVEL SECURITY;
 CREATE POLICY IF NOT EXISTS "cpd_bodies_public_read"
   ON cpd_bodies FOR SELECT USING (true);
 
+
+-- Learning journal entries table
+CREATE TABLE IF NOT EXISTS learning_journal_entries (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title        TEXT NOT NULL,
+  content      TEXT NOT NULL,
+  mood         TEXT,
+  tags         TEXT[] DEFAULT '{}',
+  ai_reflection TEXT,
+  created_at   TIMESTAMPTZ DEFAULT now(),
+  updated_at   TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE learning_journal_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "journal_own_data"
+  ON learning_journal_entries
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS learning_journal_user_idx
+  ON learning_journal_entries(user_id, created_at DESC);
+
 SELECT 'M012: Learning Hub v2.0 + CPD bodies ready' AS result;
