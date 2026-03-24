@@ -49,7 +49,7 @@ export default function EmailPage() {
   const [banner, setBanner] = useState<{msg:string;ok:boolean}|null>(null)
   const supabase = createClient()
 
-  const load = useCallback(async () => {
+  const load = useCallback(async () => {  // eslint-disable-line react-hooks/exhaustive-deps
     setLoading(true)
     const { data:{ user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
@@ -62,7 +62,7 @@ export default function EmailPage() {
     const d   = res.ok ? await res.json() : {}
     setEmails(d.emails ?? d.items ?? [])
     setLoading(false)
-  }, [filter])
+  }, [filter, inboxFilter])  // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load() }, [load])
   useEffect(() => {

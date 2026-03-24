@@ -140,14 +140,14 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
   const [loading, setLoading] = useState(true)
   const [result, setResult]   = useState<DetectResult|null>(null)
 
-  useEffect(() => {
+  useEffect(() => {  // eslint-disable-line react-hooks/exhaustive-deps
     const openTasks = tasks.filter((t: Record<string,unknown>) => (t.status ?? '') !== 'done')
     fetch('/api/tasks', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'ai_prioritise', tasks: openTasks }),
     }).then(r=>r.json()).then(d=>{ setResult(d as DetectResult); setLoading(false) }).catch(()=>setLoading(false))
-  }, [])
+  }, [tasks.length])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const rankMap = Object.fromEntries((result?.prioritised ?? []).map((p: {id?:string;reasoning?:string;priority?:string;title?:string}) => [String(p.id ?? ""), p]))
 
