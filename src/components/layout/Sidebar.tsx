@@ -26,6 +26,7 @@ const NAV = [
   { href: '/platform/setup',     icon: '⚡',  label: 'Setup Guide',    colour: '#f59e0b' },
   { href: '/platform/smoke',     icon: '✓',  label: 'Smoke Test',     colour: '#22c55e' },
   { href: '/platform/admin',     icon: '⚙',  label: 'Admin',          colour: '#ef4444' },
+  { href: '/platform/study',     icon: '⏱', label: 'Study Timer',    colour: '#8b5cf6' },
   { href: '/platform/nps',       icon: '📊', label: 'Feedback',       colour: '#0ECFB0' },
 ]
 
