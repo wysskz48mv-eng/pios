@@ -101,6 +101,7 @@ export async function GET(req: NextRequest) {
         expenses,
         modules,
         fmNews,
+        okrsWeekly,
       ] = await Promise.all([
         // Tasks completed this week
         admin.from('tasks')
@@ -151,6 +152,14 @@ export async function GET(req: NextRequest) {
           .gte('created_at', win.from)
           .order('relevance', { ascending: false })
           .limit(3),
+
+        // Executive OKRs (health + progress for weekly review)
+        admin.from('exec_okrs')
+          .select('title,health,progress,period')
+          .eq('user_id', uid)
+          .eq('status', 'active')
+          .order('health')
+          .limit(6),
       ])
 
       const totalWords   = (thesisNow.data ?? []).reduce((s: number, c: unknown) => s + ((c as any)?.word_count ?? 0), 0)
@@ -173,11 +182,13 @@ export async function GET(req: NextRequest) {
       const expCurrency  = expList[0]?.currency ?? 'GBP'
 
       const headlines    = (fmNews.data ?? []).map((r: Record<string, unknown>) => String(r.headline ?? ''))
+      const okrList      = ((okrsWeekly as any)?.data ?? []) as any[]
+      const atRiskOkrs   = okrList.filter((o: any) => o.health === 'at_risk' || o.health === 'off_track')
 
       // ── AI insight (non-blocking, skip on error) ─────────────────────────
       let topInsight = ''
       try {
-        const insightPrompt = `You are PIOS, a personal intelligence operating system. Write ONE short, specific, actionable sentence (max 25 words) as a weekly insight for ${profile.full_name?.split(' ')[0] ?? 'the user'} based on: tasks completed=${tasksDone.count ?? 0}, overdue=${tasksOverdue.count ?? 0}, thesis total words=${totalWords}, expenses this week=${expList.length}. Be encouraging but honest. No filler phrases.`
+        const insightPrompt = `You are PIOS, a personal intelligence operating system. Write ONE short, specific, actionable sentence (max 25 words) as a weekly insight for ${profile.full_name?.split(' ')[0] ?? 'the user'} based on: tasks completed=${tasksDone.count ?? 0}, overdue=${tasksOverdue.count ?? 0}, thesis words=${totalWords}, expenses=${expList.length}, OKRs active=${okrList.length} (${atRiskOkrs.length} at risk). Be encouraging but honest. No filler phrases.`
         const resp = await callClaude([{ role: 'user', content: insightPrompt }], 'You are a concise, motivating weekly advisor. Output only the insight sentence — no quotes, no preamble.', 60)
         topInsight = resp.trim()
       } catch { /* non-blocking */ }
@@ -195,6 +206,9 @@ export async function GET(req: NextRequest) {
         modulesUpdated:   modules.count ?? 0,
         fmHeadlines:      headlines,
         topInsight,
+        okrCount:         okrList.length,
+        okrAtRisk:        atRiskOkrs.length,
+        okrHighlights:    okrList.slice(0, 3).map((o: any) => `${o.title}: ${o.progress ?? 0}% (${o.health ?? 'unknown'})`),
       }
 
       // ── Send email ────────────────────────────────────────────────────────

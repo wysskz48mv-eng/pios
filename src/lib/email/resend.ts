@@ -177,6 +177,9 @@ export interface WeeklyDigestData {
   modulesUpdated:    number
   fmHeadlines:       string[] // up to 3
   topInsight:        string   // AI-generated 1-sentence insight
+  okrCount?:         number
+  okrAtRisk?:        number
+  okrHighlights?:    string[]
 }
 
 /** Weekly digest email HTML */

@@ -311,15 +311,20 @@ export default function CommandPage() {
   const [editingFeed, setEditingFeed]   = useState<FeedTopic|null>(null)
   const [showAddFeed, setShowAddFeed]   = useState(false)
   const [activeTab, setActiveTab]       = useState<'platforms'|'feeds'>('platforms')
+  const [okrs, setOkrs]                 = useState<any[]>([])
+  const [decisions, setDecisions]       = useState<any[]>([])
 
   const loadPlatforms = useCallback(async () => {
     setLoading(true)
-    const [seR, isR, ghR] = await Promise.all([
+    const [seR, isR, ghR, execR] = await Promise.all([
       fetch('/api/live/veritasedge').then(r=>r.json()).catch(()=>({ connected:false })),
       fetch('/api/live/investiscript').then(r=>r.json()).catch(()=>({ connected:false })),
       fetch('/api/live/github').then(r=>r.json()).catch(()=>({ connected:false })),
+      fetch('/api/dashboard').then(r=>r.json()).catch(()=>null),
     ])
     setSe(seR); setIs(isR); setGh(ghR)
+    if (execR?.exec?.okrs) setOkrs(execR.exec.okrs ?? [])
+    if (execR?.exec?.open_decisions) setDecisions(execR.exec.open_decisions ?? [])
     setLastRefresh(new Date()); setLoading(false)
   }, [])
 
@@ -500,6 +505,43 @@ export default function CommandPage() {
       )}
 
       {/* ── INTELLIGENCE FEEDS TAB ──────────────────────────────────────────── */}
+
+          {/* ── Executive OKR Snapshot ───────────────────────────────────────── */}
+          {okrs.length > 0 && (
+            <div style={{ marginTop:20 }}>
+              <div style={{ ...LABEL, fontSize:12, marginBottom:12 }}>🎯 Executive OS · OKR Pulse</div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:10, marginBottom:20 }}>
+                {okrs.map((o: any, i: number) => {
+                  const isAtRisk = o.health === 'at_risk' || o.health === 'off_track'
+                  const bar = Math.min(100, Number(o.progress ?? 0))
+                  return (
+                    <div key={i} style={{ ...CARD, borderLeft: `3px solid ${isAtRisk ? '#ef4444' : '#22c55e'}` }}>
+                      <div style={{ fontSize:12, fontWeight:600, marginBottom:6, lineHeight:1.4, color:'var(--pios-text)' }}>{String(o.title ?? '')}</div>
+                      <div style={{ height:4, background:'var(--pios-surface2)', borderRadius:2, marginBottom:6 }}>
+                        <div style={{ height:'100%', width:`${bar}%`, background: isAtRisk ? '#ef4444' : '#22c55e', borderRadius:2, transition:'width 0.3s' }} />
+                      </div>
+                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:11 }}>
+                        <span style={{ color: isAtRisk ? '#ef4444' : '#22c55e', fontWeight:700 }}>{bar}%</span>
+                        <span style={{ color:'var(--pios-dim)' }}>{isAtRisk ? '⚠ At risk' : 'On track'} · {String(o.period ?? '')}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+                {decisions.length > 0 && (
+                  <div style={{ ...CARD, borderLeft:'3px solid #f59e0b' }}>
+                    <div style={{ ...LABEL, marginBottom:8 }}>Open Decisions</div>
+                    {decisions.slice(0,3).map((d: any, i: number) => (
+                      <div key={i} style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4, display:'flex', gap:6 }}>
+                        <span style={{ color:'#f59e0b', flexShrink:0 }}>·</span>
+                        <span>{String(d.title ?? '')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
       {activeTab === 'feeds' && (
         <>
           {/* Feeds toolbar */}
