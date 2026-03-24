@@ -272,9 +272,9 @@ function EmailAccountsSection() {
 
 
 const PLANS: Record<string,{name:string;price:number;credits:number}> = {
-  student:      { name:'Student',      price:9,    credits:5000 },
-  individual:   { name:'Individual',   price:19,   credits:15000 },
-  professional: { name:'Professional', price:49,   credits:50000 },
+  student:      { name:'Student',      price:9,    credits:2000 },
+  professional: { name:'Professional', price:24,   credits:10000 },
+  team:         { name:'Team',         price:0,    credits:999999 },
 }
 
 function Section({ title, children }: { title:string; children:React.ReactNode }) {
@@ -477,7 +477,7 @@ export default function SettingsPage() {
   )
 
   const plan = tenant?.plan ?? 'individual'
-  const planInfo = ((PLANS as Record<string,unknown>)[String(plan ?? '')] ?? (PLANS as Record<string,unknown>).individual) as Record<string,unknown>
+  const planInfo = ((PLANS as Record<string,unknown>)[String(plan ?? '')] ?? (PLANS as Record<string,unknown>).student) as Record<string,unknown>
   const creditsUsed: number = Number(tenant?.ai_credits_used ?? 0)
   const creditsLimit: number = Number(tenant?.ai_credits_limit ?? planInfo.credits ?? 0)
   const creditsPct = Math.min(100, (Number(creditsUsed ?? 0) / Number(creditsLimit ?? 1)) * 100)

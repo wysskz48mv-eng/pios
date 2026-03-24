@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         const { data: tenant } = await supabase.from('tenants').insert({
           name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'My PIOS',
           slug: data.user.id.substring(0, 8),
-          plan: 'individual',
+          plan: 'student',  // default plan on signup
           plan_status: 'trialing',
           subscription_status: 'trialing',
           trial_ends_at: trialEndsAt,

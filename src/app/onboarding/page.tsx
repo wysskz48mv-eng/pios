@@ -14,6 +14,23 @@ import { useRouter } from 'next/navigation'
 
 const PERSONAS = [
   {
+    key: 'executive',
+    icon: '⚡',
+    title: 'Founder / CEO',
+    subtitle: 'Running one or more companies, consulting practice, or executive role',
+    features: ['Command Centre + Daily AI Brief', 'Payroll & expense engine', '15 proprietary consulting frameworks', 'Executive OS + Decision Architecture', 'IP Vault + Group P&L'],
+    colour: '#0d9488',
+    badge: '★ Primary Mode',
+  },
+  {
+    key: 'professional',
+    icon: '💼',
+    title: 'Consultant / Advisor',
+    subtitle: 'Client-facing advisory, interim, or specialist consulting work',
+    features: ['Consulting Framework Engine (15 tools)', 'Client engagement tracker', 'SE-MIL Knowledge Base', 'Stakeholder Power Atlas', 'Proposal drafting AI'],
+    colour: '#7c3aed',
+  },
+  {
     key: 'student',
     icon: '🎓',
     title: 'Student / Researcher',
@@ -42,29 +59,29 @@ const PERSONAS = [
 
 const PLANS = [
   {
-    key: 'individual',
-    name: 'Starter',
-    price: '$19/mo',
-    colour: '#6c8eff',
-    description: 'Core PIOS for individuals',
-    features: ['All platform modules', 'Gmail autonomous triage', '5,000 AI credits/mo', 'Personal projects & tasks'],
+    key: 'student',
+    name: 'Student',
+    price: '$9/mo',
+    colour: '#0891b2',
+    description: 'Academic lifecycle + CPD tracking',
+    features: ['Academic Hub — thesis, chapters, milestones', 'CPD Tracker (12 bodies)', 'Supervisor session log + AI summaries', 'Research Hub + literature AI', '2,000 AI credits/mo'],
   },
   {
     key: 'professional',
     name: 'Professional',
-    price: '$39/mo',
-    colour: '#a78bfa',
-    description: 'Full platform + consulting engine',
+    price: '$24/mo',
+    colour: '#7c3aed',
+    description: 'Full CEO/Founder OS — all 41 modules',
     popular: true,
-    features: ['Everything in Starter', 'Consulting Strategist Agent™', 'Decision Architecture Agent™', '15,000 AI credits/mo', 'Priority support'],
+    features: ['Daily AI Brief (7am)', 'Payroll detect engine', '15 NemoClaw™ consulting frameworks', 'Executive OS + Decision Architecture', 'IP Vault + Contracts + Group P&L', 'SE-MIL Knowledge Base', '10,000 AI credits/mo'],
   },
   {
-    key: 'enterprise',
-    name: 'Executive',
-    price: '$79/mo',
-    colour: '#22d3ee',
-    description: 'Full Personal OS for senior leaders',
-    features: ['Everything in Professional', 'EOSA™ Executive Operating System', 'Stakeholder Intelligence Agent™', 'Board & investor comms', '40,000 AI credits/mo', 'White-glove onboarding'],
+    key: 'team',
+    name: 'Team / Institution',
+    price: 'Custom',
+    colour: '#0d9488',
+    description: 'Shared workspaces, SSO, dept admin',
+    features: ['Everything in Professional', 'Shared research workspaces', 'Department-level admin', 'SSO / institutional login', 'Cohort dashboard for supervisors', 'Unlimited AI credits', 'Dedicated support'],
   },
 ]
 

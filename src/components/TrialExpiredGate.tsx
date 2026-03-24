@@ -15,7 +15,7 @@ const PLANS = [
     features: ['Academic Lifecycle', 'AI Calendar', 'Personal Tasks', '2,000 AI credits/mo'],
   },
   {
-    key: 'individual',
+    key: 'student',
     name: 'Individual',
     price: '$19',
     colour: '#a78bfa',

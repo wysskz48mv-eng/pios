@@ -25,18 +25,18 @@ const PRODUCTS = [
     metadata:    { pios_plan: 'student' },
   },
   {
-    key:         'individual',
+    key:         'student',
     name:        'PIOS Individual',
     description: 'Full PIOS MVP — all three core modules + Gmail + expenses.',
-    amount:      1900,  // $19.00 USD
+    amount:      900,   // $9.00 USD (student)
     envKey:      'STRIPE_PRICE_INDIVIDUAL',
-    metadata:    { pios_plan: 'individual' },
+    metadata:    { pios_plan: 'student' },
   },
   {
     key:         'professional',
     name:        'PIOS Professional',
     description: 'Full platform + FM consulting engine + priority support.',
-    amount:      3900,  // $39.00 USD
+    amount:      2400,  // $24.00 USD (professional)
     envKey:      'STRIPE_PRICE_PROFESSIONAL',
     metadata:    { pios_plan: 'professional' },
   },

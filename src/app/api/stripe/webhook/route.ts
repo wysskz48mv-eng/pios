@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   if ((event as any).type === 'checkout.session.completed') {
     const session = (event as any).data.object
     const { user_id, plan } = session.metadata ?? {}
-    const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.individual
+    const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.student
 
     const { data: profile } = await supabase
       .from('user_profiles').select('tenant_id,full_name').eq('id', user_id).single()
