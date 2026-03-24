@@ -38,7 +38,7 @@ export default function LearningHubPage() {
       fetch('/api/learning-journey').then(r => r.json()),
       fetch('/api/learning-journey?view=cpd').then(r => r.json()),
     ])
-    setData(ms)
+    setData(ms as Record<string,unknown>)
     setCpdData(cpd)
     setLoading(false)
   }
@@ -46,7 +46,7 @@ export default function LearningHubPage() {
   useEffect(() => { load() }, [])
 
   // wizard_completed=false: show inline prompt, don't hard redirect
-  const showWizardPrompt = data && !loading && data.profile?.wizard_completed === false
+  const showWizardPrompt = data && !loading && (data as Record<string,unknown>)?.profile && !((data as Record<string,unknown>).profile as Record<string,unknown>)?.wizard_completed
 
   async function markDone(id: string) {
     setMarking(id)
@@ -141,7 +141,7 @@ export default function LearningHubPage() {
           ['milestones',  'Milestones'],
           ...(isCpd ? [['activities','CPD Log']] : []),
         ] as [string,string][]).map(([t,l]) => (
-          <button key={t} onClick={() => setTab(t as Record<string,unknown>)}
+          <button key={t} onClick={() => setTab(t as 'milestones' | 'cpd' | 'activities' | 'journal')}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${tab===t ? 'border-purple-500 text-purple-600' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
             {l}
           </button>

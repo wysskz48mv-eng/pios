@@ -45,7 +45,7 @@ export interface SecurityCheckResult {
 
 export function checkPromptSafety(input: string): SecurityCheckResult {
   if (!input || typeof input !== 'string') return { safe: true, category: 'clean' }
-  for (const p of INJECTION_PATTERNS) {
+  for (const p of Array.from(INJECTION_PATTERNS)) {
     if (p.test(input)) return { safe: false, reason: 'Prompt injection pattern detected.', category: 'injection' }
   }
   return { safe: true, category: 'clean' }

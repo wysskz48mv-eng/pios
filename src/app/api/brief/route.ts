@@ -111,9 +111,9 @@ export async function POST(req: NextRequest) {
     ])
 
     const tasks     = tasksR.data ?? []
-    const overdue   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && t.due_date < today)
+    const overdue   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
     const dueToday  = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date === today)
-    const upcoming  = tasks.filter(t => !t.due_date || t.due_date > today)
+    const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date as string || (t as Record<string,unknown>).due_date as string > today)
 
     // Thesis velocity
     const chapters    = chaptersR.data ?? []
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
 
       overdue.length > 0
         ? `OVERDUE TASKS — REQUIRES IMMEDIATE ATTENTION (${overdue.length}):\n` +
-          overdue.map(t => `- [${(t.priority ?? '').toUpperCase()}] ${t.title} (${t.domain}) — was due ${fmt(t.due_date)}`).join('\n')
+          overdue.map(t => `- [${(t.priority ?? '').toUpperCase()}] ${t.title} (${t.domain}) — was due ${fmt((t as Record<string,unknown>).due_date as string)}`).join('\n')
         : 'OVERDUE TASKS: none',
 
       dueToday.length > 0
@@ -139,11 +139,11 @@ export async function POST(req: NextRequest) {
 
       upcoming.length > 0
         ? `UPCOMING (${upcoming.length} open):\n` + upcoming.slice(0,6).map(t =>
-            `- [${t.priority}] ${t.title} (${t.domain}) — ${t.due_date ? fmt(t.due_date) : 'no date'}`).join('\n')
+            `- [${t.priority}] ${t.title} (${t.domain}) — ${(t as Record<string,unknown>).due_date as string ? fmt((t as Record<string,unknown>).due_date as string) : 'no date'}`).join('\n')
         : '',
 
       `ACADEMIC MODULES:\n` + ((modulesR.data ?? []).map(m =>
-        `- ${m.title} [${m.status}] — ${m.deadline ? fmt(m.deadline) : 'TBD'}`).join('\n') || 'none'),
+        `- ${(m as Record<string,unknown>).title} [${(m as Record<string,unknown>).status}] — ${(m as Record<string,unknown>).deadline ? fmt((m as Record<string,unknown>).deadline) : 'TBD'}`).join('\n') || 'none'),
 
       chapters.length > 0
         ? `THESIS: ${totalWords.toLocaleString()}/${targetWords.toLocaleString()} words (${Math.round(totalWords/Math.max(targetWords,1)*100)}%)` +
@@ -179,15 +179,15 @@ export async function POST(req: NextRequest) {
       (meetingsR.data ?? []).length > 0
         ? `RECENT MEETINGS (${meetingsR.data?.length}):\n` +
           (meetingsR.data ?? []).map((m: Record<string, unknown>) =>
-            `- [${m.meeting_type.toUpperCase()}] ${m.title} (${m.meeting_date}) — ${m.status}${m.ai_summary ? ': ' + m.ai_summary.slice(0, 120) + '…' : ''}${m.tasks_created ? ' [tasks created]' : ''}`
+            `- [${String((m as Record<string,unknown>).meeting_type).toUpperCase()}] ${(m as Record<string,unknown>).title} (${(m as Record<string,unknown>).meeting_date}) — ${(m as Record<string,unknown>).status}${(m as Record<string,unknown>).ai_summary ? ': ' + String((m as Record<string,unknown>).ai_summary).slice(0, 120) + '…' : ''}${(m as Record<string,unknown>).tasks_created ? ' [tasks created]' : ''}`
           ).join('\n')
         : '',
 
       (pendingActionsR.data ?? []).length > 0
         ? `MEETING ACTION ITEMS AWAITING TASK PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
           (pendingActionsR.data ?? []).flatMap((m: unknown) =>
-            ((m.ai_action_items ?? []) as unknown[]).slice(0,3).map((a: Record<string, unknown>) =>
-              `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${m.title}" (${m.meeting_date}). Go to /platform/meetings to promote.`
+            (((m as Record<string,unknown>).ai_action_items ?? []) as unknown[]).slice(0,3).map((a: Record<string, unknown>) =>
+              `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${(m as Record<string,unknown>).title}" (${(m as Record<string,unknown>).meeting_date}). Go to /platform/meetings to promote.`
             )
           ).join('\n')
         : '',
@@ -223,7 +223,7 @@ export async function POST(req: NextRequest) {
       }
       if (ghRes.status === 'fulfilled' && ghRes.value?.connected && ghRes.value.repos) {
         const commits = Object.values(ghRes.value.repos as Record<string,any>)
-          .map((r: Record<string,unknown>) => (r as Record<string,unknown>).commits?.[0] ? `${r.label}: ${(r.commits[0].message ?? '').slice(0,60)}` : null)
+          .map((r: Record<string,unknown>) => (r as Record<string,unknown>).commits?.[0] ? `${r.label}: ${(((r as Record<string,unknown>).commits as Record<string,unknown>[])?.[0].message ?? '').slice(0,60)}` : null)
           .filter(Boolean).slice(0,3).join(' | ')
         if (commits) liveCtx += `\nLATEST COMMITS: ${commits}`
       }

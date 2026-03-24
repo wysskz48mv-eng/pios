@@ -232,7 +232,7 @@ export async function POST(request: Request) {
     })
   } catch (err: unknown) {
     console.error('/api/files/scan:', err)
-    return NextResponse.json({ error: err.message ?? 'Scan failed' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Scan failed' }, { status: 500 })
   }
 }
 
@@ -262,6 +262,6 @@ export async function GET(request: Request) {
       .order('started_at', { ascending: false }).limit(5)
     return NextResponse.json({ scans: data ?? [] })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

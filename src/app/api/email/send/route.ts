@@ -147,6 +147,6 @@ export async function POST(request: Request) {
     })
   } catch (err: unknown) {
     console.error('/api/email/send:', err)
-    return NextResponse.json({ error: err.message ?? 'Send failed' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Send failed' }, { status: 500 })
   }
 }

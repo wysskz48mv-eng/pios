@@ -25,6 +25,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(session.url!)
   } catch (err: unknown) {
     console.error('[PIOS] stripe/checkout:', err)
-    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
   }
 }

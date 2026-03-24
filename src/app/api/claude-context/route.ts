@@ -161,18 +161,18 @@ export async function GET() {
     const receiptsCount = receiptsRes.count ?? 0
 
     // ── Derived stats ─────────────────────────────────────────────────────────
-    const overdueTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && t.due_date < today)
+    const overdueTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
     const todayTasks   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date === today)
     const criticalTasks = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).priority === 'critical')
 
-    const totalWords   = chapters.reduce((s: number, c: unknown) => s + (c.word_count ?? 0), 0)
-    const targetWords  = chapters.reduce((s: number, c: unknown) => s + (c.target_words ?? 8000), 0)
+    const totalWords   = chapters.reduce((s: number, c: unknown) => s + ((c as Record<string,unknown>).word_count ?? 0), 0)
+    const targetWords  = chapters.reduce((s: number, c: unknown) => s + ((c as Record<string,unknown>).target_words ?? 8000), 0)
     const thesisProgress = targetWords > 0 ? Math.round((totalWords / targetWords) * 100) : 0
 
     const thisMonthSpend = expenses.reduce((s: number, e: unknown) => {
       // Sum GBP-equivalent (simplified — full multi-currency conversion not done here)
       const currencies: Record<string, number> = { GBP: 1, USD: 0.79, EUR: 0.86, AED: 0.21, SAR: 0.21 }
-      return s + (parseFloat(e.amount) || 0) * (currencies[e.currency] ?? 1)
+      return s + (parseFloat((e as Record<string,unknown>).amount) || 0) * (currencies[(e as Record<string,unknown>).currency] ?? 1)
     }, 0)
 
     const pendingMeetingActions = meetings.reduce((s: number, m: unknown) =>
@@ -216,13 +216,13 @@ export async function GET() {
         tasks: {
           overdue: overdueTasks.slice(0, 10).map((t: Record<string, unknown>) => ({
             id: t.id, title: t.title, domain: t.domain,
-            priority: t.priority, due_date: t.due_date,
+            priority: t.priority, due_date: (t as Record<string,unknown>).due_date as string,
           })),
           today: todayTasks.map((t: Record<string, unknown>) => ({
             id: t.id, title: t.title, domain: t.domain, priority: t.priority,
           })),
-          critical: criticalTasks.filter((t: Record<string, unknown>) => !t.due_date || t.due_date >= today).slice(0, 5).map((t: Record<string, unknown>) => ({
-            id: t.id, title: t.title, domain: t.domain, due_date: t.due_date,
+          critical: criticalTasks.filter((t: Record<string, unknown>) => !(t as Record<string,unknown>).due_date as string || (t as Record<string,unknown>).due_date as string >= today).slice(0, 5).map((t: Record<string, unknown>) => ({
+            id: t.id, title: t.title, domain: t.domain, due_date: (t as Record<string,unknown>).due_date as string,
           })),
           total_active: tasks.length,
         },
@@ -230,9 +230,9 @@ export async function GET() {
         // Calendar
         calendar: {
           today_events: calendar.map((e: Record<string, unknown>) => ({
-            id: e.id, title: e.title, domain: e.domain,
-            start: e.start_time, end: e.end_time,
-            location: e.location, has_meet_link: !!e.google_meet_url,
+            id: (e as Record<string,unknown>).id, title: (e as Record<string,unknown>).title, domain: (e as Record<string,unknown>).domain,
+            start: (e as Record<string,unknown>).start_time, end: (e as Record<string,unknown>).end_time,
+            location: (e as Record<string,unknown>).location, has_meet_link: !!(e as Record<string,unknown>).google_meet_url,
           })),
           event_count: calendar.length,
         },
@@ -244,21 +244,21 @@ export async function GET() {
             target_words:   targetWords,
             progress_pct:   thesisProgress,
             chapters:       chapters.map((c: Record<string, unknown>) => ({
-              num: c.chapter_num, title: c.title, status: c.status,
-              words: c.word_count, target: c.target_words,
+              num: (c as Record<string,unknown>).chapter_num, title: (c as Record<string,unknown>).title, status: (c as Record<string,unknown>).status,
+              words: (c as Record<string,unknown>).word_count, target: (c as Record<string,unknown>).target_words,
             })),
           },
           active_modules: modules.slice(0, 5).map((m: Record<string, unknown>) => ({
-            title: m.title, type: m.module_type, status: m.status,
-            deadline: m.deadline,
+            title: (m as Record<string,unknown>).title, type: (m as Record<string,unknown>).module_type, status: (m as Record<string,unknown>).status,
+            deadline: (m as Record<string,unknown>).deadline,
           })),
         },
 
         // Email
         email: {
           action_required: emails.map((e: Record<string, unknown>) => ({
-            subject: e.action_required, domain: e.domain_tag,
-            priority: e.priority_score, inbox: e.inbox_label,
+            subject: (e as Record<string,unknown>).action_required, domain: (e as Record<string,unknown>).domain_tag,
+            priority: (e as Record<string,unknown>).priority_score, inbox: (e as Record<string,unknown>).inbox_label,
           })),
           total_needing_action: emails.length,
           sync_url: '/api/email/sync',
@@ -282,9 +282,9 @@ export async function GET() {
           })),
 
         meetings_pending: meetings.map((m: Record<string, unknown>) => ({
-          id: m.id, title: m.title, date: m.meeting_date, domain: m.domain,
+          id: (m as Record<string,unknown>).id, title: (m as Record<string,unknown>).title, date: (m as Record<string,unknown>).meeting_date, domain: (m as Record<string,unknown>).domain,
           action_item_count: (m.ai_action_items as unknown[])?.length ?? 0,
-          promote_url: `POST /api/meetings { action: 'promote_tasks', id: '${m.id}' }`,
+          promote_url: `POST /api/meetings { action: 'promote_tasks', id: '${(m as Record<string,unknown>).id}' }`,
         })),
 
         // Expenses

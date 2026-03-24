@@ -57,7 +57,7 @@ export async function GET() {
         })),
       }
     } catch (err: unknown) {
-      results[key] = { label, connected: false, error: err.message }
+      results[key] = { label, connected: false, error: (err as Error).message }
     }
   }))
 

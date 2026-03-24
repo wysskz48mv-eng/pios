@@ -100,9 +100,9 @@ export async function GET(req: NextRequest) {
       ])
 
       const tasks     = tasksR.data ?? []
-      const overdue   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && t.due_date < today)
+      const overdue   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
       const dueToday  = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date === today)
-      const upcoming  = tasks.filter(t => !t.due_date || t.due_date > today)
+      const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date as string || (t as Record<string,unknown>).due_date as string > today)
 
       // Skip users with nothing to brief on
       if (tasks.length + (modulesR.data?.length ?? 0) === 0) continue
@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
 
         overdue.length > 0
           ? `OVERDUE TASKS — REQUIRES IMMEDIATE ATTENTION (${overdue.length}):\n` +
-            overdue.map(t => `- [${(t.priority ?? '').toUpperCase()}] ${t.title} (${t.domain}) — was due ${fmt(t.due_date)}`).join('\n')
+            overdue.map(t => `- [${(t.priority ?? '').toUpperCase()}] ${t.title} (${t.domain}) — was due ${fmt((t as Record<string,unknown>).due_date as string)}`).join('\n')
           : 'OVERDUE TASKS: none',
 
         dueToday.length > 0
@@ -131,11 +131,11 @@ export async function GET(req: NextRequest) {
 
         upcoming.length > 0
           ? `UPCOMING (${upcoming.length}):\n` + upcoming.slice(0,5).map(t =>
-              `- [${t.priority}] ${t.title} (${t.domain}) — ${t.due_date ? fmt(t.due_date) : 'no date'}`).join('\n')
+              `- [${t.priority}] ${t.title} (${t.domain}) — ${(t as Record<string,unknown>).due_date as string ? fmt((t as Record<string,unknown>).due_date as string) : 'no date'}`).join('\n')
           : '',
 
         `ACADEMIC MODULES:\n` + ((modulesR.data ?? []).map(m =>
-          `- ${m.title} [${m.status}] — ${m.deadline ? fmt(m.deadline) : 'TBD'}`).join('\n') || 'none'),
+          `- ${(m as Record<string,unknown>).title} [${(m as Record<string,unknown>).status}] — ${(m as Record<string,unknown>).deadline ? fmt((m as Record<string,unknown>).deadline) : 'TBD'}`).join('\n') || 'none'),
 
         chapters.length > 0
           ? `THESIS: ${totalWords.toLocaleString()}/${targetWords.toLocaleString()} words (${Math.round(totalWords/Math.max(targetWords,1)*100)}%)` +
@@ -165,15 +165,15 @@ export async function GET(req: NextRequest) {
         (meetingsR.data ?? []).length > 0
           ? `RECENT MEETINGS (${meetingsR.data?.length}):\n` +
             (meetingsR.data ?? []).map((m: Record<string, unknown>) =>
-              `- [${m.meeting_type?.toUpperCase()}] ${m.title} (${m.meeting_date})${m.ai_summary ? ': ' + m.ai_summary.slice(0, 100) + '...' : ''}${m.tasks_created ? ' [tasks created]' : ''}`
+              `- [${(m as Record<string,unknown>).meeting_type?.toUpperCase()}] ${(m as Record<string,unknown>).title} (${(m as Record<string,unknown>).meeting_date})${(m as Record<string,unknown>).ai_summary ? ': ' + String((m as Record<string,unknown>).ai_summary).slice(0, 100) + '...' : ''}${(m as Record<string,unknown>).tasks_created ? ' [tasks created]' : ''}`
             ).join('\n')
           : '',
 
         (pendingActionsR.data ?? []).length > 0
           ? `MEETING ACTIONS AWAITING PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
             (pendingActionsR.data ?? []).flatMap((m: unknown) =>
-              ((m.ai_action_items ?? []) as unknown[]).slice(0,3).map((a: Record<string, unknown>) =>
-                `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${m.title}"`
+              (((m as Record<string,unknown>).ai_action_items ?? []) as unknown[]).slice(0,3).map((a: Record<string, unknown>) =>
+                `- [${(a.priority ?? 'medium').toUpperCase()}] ${a.action} — from "${(m as Record<string,unknown>).title}"`
               )
             ).join('\n')
           : '',
@@ -218,14 +218,14 @@ export async function GET(req: NextRequest) {
         // Task urgency alert — separate email if overdue or due tomorrow
         const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
         const urgentTasks = tasks.filter(t =>
-          (t.due_date && t.due_date < today) ||  // overdue
-          t.due_date === today ||                  // due today
-          t.due_date === tomorrow                  // due tomorrow
+          ((t as Record<string,unknown>).due_date as string && (t as Record<string,unknown>).due_date as string < today) ||  // overdue
+          (t as Record<string,unknown>).due_date as string === today ||                  // due today
+          (t as Record<string,unknown>).due_date as string === tomorrow                  // due tomorrow
         )
         if (urgentTasks.length > 0 && overdue.length > 0) {
           // Only send separate alert email if there are actually overdue tasks
           const overdueLines = overdue.map(t =>
-            `• [${(t.priority??'').toUpperCase()}] ${t.title} — was due ${t.due_date}`
+            `• [${(t.priority??'').toUpperCase()}] ${t.title} — was due ${(t as Record<string,unknown>).due_date as string}`
           ).join('\n')
           const dueTodayLines = dueToday.map(t => `• ${t.title} [${t.domain}]`).join('\n')
           await sendEmail({

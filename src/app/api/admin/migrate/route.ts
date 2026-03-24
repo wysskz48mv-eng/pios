@@ -103,7 +103,7 @@ export async function GET() {
 
     return NextResponse.json({ status, migrations: Object.keys(MIGRATIONS).length })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 
@@ -209,6 +209,6 @@ export async function POST(request: Request) {
       ],
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message ?? 'Migration failed' }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message ?? 'Migration failed' }, { status: 500 })
   }
 }

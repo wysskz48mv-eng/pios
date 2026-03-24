@@ -67,7 +67,7 @@ export default function SignupPage() {
       if (signUpError) { setError(signUpError.message); setLoading(false); return }
       router.push('/auth/verify?email=' + encodeURIComponent(form.email))
     } catch (err: unknown) {
-      setError(err.message ?? 'Sign up failed. Please try again.')
+      setError((err as Error).message ?? 'Sign up failed. Please try again.')
       setLoading(false)
     }
   }
@@ -136,15 +136,15 @@ export default function SignupPage() {
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               <div>
                 <div style={{ fontSize:11, color:'#64748b', marginBottom:6 }}>Full name *</div>
-                <input placeholder="Douglas Masuku" value={form.full_name} onChange={e=>f('full_name',e.target.value)} />
+                <input placeholder="Douglas Masuku" value={String(form.full_name ?? "")} onChange={e=>f('full_name',e.target.value)} />
               </div>
               <div>
                 <div style={{ fontSize:11, color:'#64748b', marginBottom:6 }}>Email address *</div>
-                <input type="email" placeholder="you@example.com" value={form.email} onChange={e=>f('email',e.target.value)} />
+                <input type="email" placeholder="you@example.com" value={String(form.email ?? "")} onChange={e=>f('email',e.target.value)} />
               </div>
               <div>
                 <div style={{ fontSize:11, color:'#64748b', marginBottom:6 }}>Password * (min. 8 characters)</div>
-                <input type="password" placeholder="••••••••" value={form.password} onChange={e=>f('password',e.target.value)} />
+                <input type="password" placeholder="••••••••" value={String(form.password ?? "")} onChange={e=>f('password',e.target.value)} />
               </div>
               <button onClick={signUpWithEmail} style={{ width:'100%', padding:'12px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#a78bfa,#6c8eff)', color:'#0a0b0d', fontSize:14, fontWeight:700, cursor:'pointer', marginTop:4 }}>
                 Continue →

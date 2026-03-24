@@ -81,7 +81,7 @@ function RunsTab() {
 
   async function approveRun(runId: string) {
     await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'approve_run', run_id:runId }) })
-    loadRuns(); if (selectedRun?.id === runId) setSelectedRun((p: unknown) => p ? {...p, status:'approved'} : p)
+    loadRuns(); if (selectedRun?.id === runId) setSelectedRun(p => p ? {...p, status:'approved'} : p)
   }
 
   async function previewRemit() {
@@ -282,8 +282,8 @@ function TransfersTab() {
             { label:'Completed', value:transfers.filter(t=>t.status==='completed').length, colour:'#22c55e' },
           ].map(s=>(
             <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
-              <div style={{ fontSize:13, fontWeight:700, color:s.colour, marginBottom:3 }}>{s.value}</div>
-              <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{s.label}</div>
+              <div style={{ fontSize:13, fontWeight:700, color:(s as Record<string,unknown>).colour, marginBottom:3 }}>{(s as Record<string,unknown>).value}</div>
+              <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{(s as Record<string,unknown>).label}</div>
             </div>
           ))}
         </div>
@@ -423,13 +423,13 @@ function ClaimsTab() {
             <div key={(c as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3, flexWrap:'wrap' as const }}>
-                  <span style={{ fontSize:13, fontWeight:600 }}>{c.claimant_name}</span>
+                  <span style={{ fontSize:13, fontWeight:600 }}>{String(c.claimant_name ?? "")}</span>
                   <Badge label={String(c.status ?? "")} colour={CLM_STATUS[c.status]??'#64748b'} />
-                  {c.category && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{c.category}</span>}
+                  {c.category && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{String(c.category ?? "")}</span>}
                 </div>
-                <div style={{ fontSize:12, color:'var(--pios-muted)' }}>{c.description}</div>
-                {c.claim_period && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{c.claim_period}</div>}
-                {c.rejection_reason && <div style={{ fontSize:11, color:'#ef4444' }}>Rejected: {c.rejection_reason}</div>}
+                <div style={{ fontSize:12, color:'var(--pios-muted)' }}>{String(c.description ?? "")}</div>
+                {c.claim_period && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{String(c.claim_period ?? "")}</div>}
+                {c.rejection_reason && <div style={{ fontSize:11, color:'#ef4444' }}>Rejected: {String(c.rejection_reason ?? "")}</div>}
               </div>
               <div style={{ textAlign:'right' as const, flexShrink:0 }}>
                 <div style={{ fontSize:16, fontWeight:800 }}>{String(c.currency ?? "")} {parseFloat(c.amount).toFixed(2)}</div>
@@ -514,18 +514,18 @@ function StaffTab() {
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {staff.map(s => (
             <div key={(s as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(167,139,250,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>{s.full_name.charAt(0)}</div>
+              <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(167,139,250,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>{(s as Record<string,unknown>).full_name.charAt(0)}</div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{String(s.full_name ?? "")}</div>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{String((s as Record<string,unknown>).full_name ?? "")}</div>
                 <div style={{ fontSize:11, color:'var(--pios-muted)', display:'flex', gap:8 }}>
-                  <span>{String(s.email ?? "")}</span>
-                  {s.role && <><span>·</span><span>{String(s.role ?? "")}</span></>}
-                  <span>·</span><span>{s.employment_type}</span>
+                  <span>{String((s as Record<string,unknown>).email ?? "")}</span>
+                  {(s as Record<string,unknown>).role && <><span>·</span><span>{String((s as Record<string,unknown>).role ?? "")}</span></>}
+                  <span>·</span><span>{(s as Record<string,unknown>).employment_type}</span>
                 </div>
               </div>
               <div style={{ textAlign:'right' as const }}>
-                <div style={{ fontSize:13, fontWeight:700 }}>{s.salary_currency} {parseFloat(s.monthly_salary??0).toFixed(0)}/mo</div>
-                <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{s.company_entity?.replace('VeritasIQ Technologies Ltd','VIQ').replace('Sustain International UK Ltd','SI UK')}</div>
+                <div style={{ fontSize:13, fontWeight:700 }}>{(s as Record<string,unknown>).salary_currency} {parseFloat((s as Record<string,unknown>).monthly_salary??0).toFixed(0)}/mo</div>
+                <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{(s as Record<string,unknown>).company_entity?.replace('VeritasIQ Technologies Ltd','VIQ').replace('Sustain International UK Ltd','SI UK')}</div>
               </div>
             </div>
           ))}

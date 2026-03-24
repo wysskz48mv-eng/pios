@@ -14,7 +14,7 @@ interface PlatformShellProps {
 export function PlatformShell({ children, userProfile, tenant }: PlatformShellProps) {
   const [chatOpen, setChatOpen] = useState(false)
 
-  const planStatus  = (tenant as Record<string,unknown> | undefined)?.plan as string | undefined_status ?? tenant?.subscription_status ?? 'active'
+  const planStatus  = ((tenant as Record<string,unknown> | undefined)?.plan as string | undefined) ?? (tenant as Record<string,unknown> | undefined)?.subscription_status as string ?? 'active'
   const trialEndsAt = tenant?.trial_ends_at ?? null
   const isTrialing  = planStatus === 'trialing'
   const isExpired   = planStatus === 'canceled' && !tenant?.stripe_subscription_id
@@ -26,7 +26,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
       <main style={{ flex: 1, overflowY: 'auto', background: 'var(--pios-bg)', display: 'flex', flexDirection: 'column' }}>
 
         {isTrialing && (
-          <TrialBanner trialEndsAt={trialEndsAt} planStatus={planStatus} />
+          <TrialBanner trialEndsAt={trialEndsAt} planStatus={String(planStatus ?? "active")} />
         )}
 
         <div style={{
@@ -74,7 +74,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
       </main>
 
       {isExpired && (
-        <TrialExpiredGate userName={userProfile?.full_name} />
+        <TrialExpiredGate userName={userProfile?.full_name as string | undefined} />
       )}
 
       {chatOpen && <AiChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />}

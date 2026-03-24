@@ -145,12 +145,12 @@ Staff count: unknown (accountant has the details)`
       })
     } catch (err: unknown) {
       console.error('/api/payroll/chase:', err)
-      return NextResponse.json({ error: err.message ?? 'Chase check failed' }, { status: 500 })
+      return NextResponse.json({ error: (err as Error).message ?? 'Chase check failed' }, { status: 500 })
     }
 
   } catch (persistErr: unknown) {
     console.error('[PIOS] payroll/chase:', persistErr)
-    return NextResponse.json({ error: persistErr.message ?? 'DB error' }, { status: 500 })
+    return NextResponse.json({ error: (persistErr as Error).message ?? 'DB error' }, { status: 500 })
   }}
 
 export async function GET() {
@@ -164,6 +164,6 @@ export async function GET() {
       .order('sent_at', { ascending: false }).limit(20)
     return NextResponse.json({ log: data ?? [] })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

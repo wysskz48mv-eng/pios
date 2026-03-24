@@ -215,7 +215,7 @@ export async function GET(req: NextRequest) {
 
     } catch (err: unknown) {
       failed++
-      console.error(`[cron/weekly] ✗✗ ${uid}:`, err.message)
+      console.error(`[cron/weekly] ✗✗ ${uid}:`, (err as Error).message)
     }
   }
 

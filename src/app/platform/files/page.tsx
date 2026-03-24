@@ -37,8 +37,8 @@ function TabBtn({ active, onClick, children }: { active:boolean; onClick:()=>voi
 // ── Folder tree ───────────────────────────────────────────────────────────────
 function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; all:any[]; depth?:number; onSelect:(s: unknown)=>void; selected:any }) {
   const [open, setOpen] = useState(depth < 1)
-  const children = all.filter((s: Record<string,unknown>) => (s as Record<string,unknown>).parent_id === space.id)
-  const isSelected = selected?.id === space.id
+  const children = all.filter((s: Record<string,unknown>) => (s as Record<string,unknown>).parent_id === (space as Record<string,unknown>).id)
+  const isSelected = selected?.id === (space as Record<string,unknown>).id
   return (
     <div>
       <div onClick={() => { setOpen(!open); onSelect(space) }} style={{
@@ -47,8 +47,8 @@ function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; al
         background: isSelected ? 'rgba(108,142,255,0.12)' : 'transparent',
         border: `1px solid ${isSelected ? 'rgba(108,142,255,0.3)' : 'transparent'}`,
       }}>
-        <span style={{ fontSize:14 }}>{space.icon}</span>
-        <span style={{ fontSize:13, fontWeight:depth===0?600:400, flex:1, color:space.colour??'var(--pios-text)' }}>{space.name}</span>
+        <span style={{ fontSize:14 }}>{String(space.icon ?? "")}</span>
+        <span style={{ fontSize:13, fontWeight:depth===0?600:400, flex:1, color:space.colour??'var(--pios-text)' }}>{String(space.name ?? "")}</span>
         {children.length > 0 && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{open?'▾':'▸'}</span>}
       </div>
       {open && children.map(c => <FolderNode key={(c as Record<string,unknown>).id as string} space={c} all={all} depth={depth+1} onSelect={onSelect} selected={selected} />)}
@@ -218,7 +218,7 @@ function FilesTab({ spaces }: { spaces:any[] }) {
                   </div>
                   {(item as Record<string,unknown>).ai_summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:4 }}>{(item as Record<string,unknown>).ai_summary}</p>}
                   <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' as const }}>
-                    {space && <span style={{ fontSize:11, color:space.colour??'#6c8eff' }}>{space.icon} {space.name}</span>}
+                    {space && <span style={{ fontSize:11, color:space.colour??'#6c8eff' }}>{String(space.icon ?? "")} {String(space.name ?? "")}</span>}
                     {(item as Record<string,unknown>).drive_web_url && <a href={(item as Record<string,unknown>).drive_web_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#6c8eff' }}>Open in Drive →</a>}
                     {(item as Record<string,unknown>).ai_confidence && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>AI: {Math.round((item as Record<string,unknown>).ai_confidence*100)}% confident</span>}
                   </div>
@@ -421,18 +421,18 @@ function RulesTab({ spaces }: { spaces:any[] }) {
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {rules.map(rule => (
             <div key={(rule as Record<string,unknown>).id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'var(--pios-dim)', minWidth:24, textAlign:'center' as const }}>{rule.priority}</div>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--pios-dim)', minWidth:24, textAlign:'center' as const }}>{(rule as Record<string,unknown>).priority}</div>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{rule.name}</div>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>{String(rule.name ?? "")}</div>
                 <div style={{ fontSize:12, color:'var(--pios-muted)' }}>
-                  {triggerLabels[rule.trigger_type]} <strong>"{rule.trigger_value}"</strong> ({rule.trigger_match}) → {actionLabels[rule.action_type]}
-                  {rule.action_value && <> <strong>"{rule.action_value}"</strong></>}
+                  {triggerLabels[(rule as Record<string,unknown>).trigger_type]} <strong>"{String(rule.trigger_value ?? "")}"</strong> ({(rule as Record<string,unknown>).trigger_match}) → {actionLabels[(rule as Record<string,unknown>).action_type]}
+                  {(rule as Record<string,unknown>).action_value && <> <strong>"{String(rule.action_value ?? "")}"</strong></>}
                 </div>
               </div>
               <div style={{ display:'flex', gap:8, flexShrink:0, alignItems:'center' }}>
-                {rule.times_fired > 0 && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>Fired {rule.times_fired}×</span>}
-                <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:rule.is_active?'#22c55e20':'rgba(255,255,255,0.05)', color:rule.is_active?'#22c55e':'var(--pios-dim)', fontWeight:600 }}>{rule.is_active?'Active':'Off'}</span>
-                <button onClick={()=>deleteRule(rule.id)} style={{ fontSize:11, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', cursor:'pointer', color:'#ef4444' }}>Delete</button>
+                {(rule as Record<string,unknown>).times_fired > 0 && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>Fired {(rule as Record<string,unknown>).times_fired}×</span>}
+                <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:(rule as Record<string,unknown>).is_active?'#22c55e20':'rgba(255,255,255,0.05)', color:(rule as Record<string,unknown>).is_active?'#22c55e':'var(--pios-dim)', fontWeight:600 }}>{(rule as Record<string,unknown>).is_active?'Active':'Off'}</span>
+                <button onClick={()=>deleteRule((rule as Record<string,unknown>).id)} style={{ fontSize:11, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', cursor:'pointer', color:'#ef4444' }}>Delete</button>
               </div>
             </div>
           ))}

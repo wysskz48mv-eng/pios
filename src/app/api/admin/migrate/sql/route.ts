@@ -36,6 +36,6 @@ export async function GET(request: Request) {
     const sql = readFileSync(filePath, 'utf8')
     return NextResponse.json({ id, sql, length: sql.length })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }

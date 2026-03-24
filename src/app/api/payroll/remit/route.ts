@@ -141,10 +141,10 @@ Company: ${run.company_entity ?? 'VeritasIQ Technologies Ltd'}`
       })
     } catch (err: unknown) {
       console.error('/api/payroll/remit:', err)
-      return NextResponse.json({ error: err.message ?? 'Remittance failed' }, { status: 500 })
+      return NextResponse.json({ error: (err as Error).message ?? 'Remittance failed' }, { status: 500 })
     }
 
   } catch (persistErr: unknown) {
     console.error('[PIOS] payroll/remit:', persistErr)
-    return NextResponse.json({ error: persistErr.message ?? 'DB error' }, { status: 500 })
+    return NextResponse.json({ error: (persistErr as Error).message ?? 'DB error' }, { status: 500 })
   }}

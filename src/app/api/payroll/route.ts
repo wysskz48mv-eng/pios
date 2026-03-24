@@ -74,7 +74,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ error: 'Unknown type' }, { status: 400 })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 

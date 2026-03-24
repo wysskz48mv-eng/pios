@@ -76,6 +76,6 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ ok: true, literature_count: (items ?? []).length, analysis: parsed })
   } catch (e: unknown) {
-    return NextResponse.json({ error: String(e.message) }, { status: 500 })
+    return NextResponse.json({ error: String((e as Error).message) }, { status: 500 })
   }
 }

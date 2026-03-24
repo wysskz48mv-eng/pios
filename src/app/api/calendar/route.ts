@@ -84,7 +84,7 @@ export async function GET(request: Request) {
       google_email: profile?.google_email ?? null,
     })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
 
@@ -287,6 +287,6 @@ Include: what the meeting is about, key things to cover or prepare, any relevant
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: unknown) {
     console.error('/api/calendar:', err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 }
