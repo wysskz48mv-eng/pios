@@ -24,6 +24,7 @@ const NAV = [
   { href: '/platform/ai',        icon: '◉',  label: 'AI Companion',   colour: '#a78bfa' },
   { href: '/platform/setup',     icon: '⚡',  label: 'Setup Guide',    colour: '#f59e0b' },
   { href: '/platform/admin',     icon: '⚙',  label: 'Admin',          colour: '#ef4444' },
+  { href: '/platform/nps',       icon: '📊', label: 'Feedback',       colour: '#0ECFB0' },
 ]
 
 interface SidebarProps {
