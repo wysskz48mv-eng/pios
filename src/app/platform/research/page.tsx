@@ -1050,13 +1050,13 @@ function LibraryTab() {
                   <p style={{ fontSize: 12, color: 'var(--pios-text)', lineHeight: 1.65, marginBottom: 8 }}>{String(selected.ai_summary ?? "")}</p>
                   {selected._guard && (
                     <div style={{ marginBottom:6, padding:'5px 10px', borderRadius:6, fontSize:11, fontWeight:600,
-                      background: selected._guard?.provenance_label==='AI_VERIFIED' ? 'rgba(34,197,94,0.08)' : selected._guard?.provenance_label==='FABRICATED_RISK' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
-                      color: selected._guard?.provenance_label==='AI_VERIFIED' ? '#22c55e' : selected._guard?.provenance_label==='FABRICATED_RISK' ? '#ef4444' : '#f59e0b',
+                      background: (selected._guard as {provenance_label?:string})?.provenance_label==='AI_VERIFIED' ? 'rgba(34,197,94,0.08)' : (selected._guard as {provenance_label?:string})?.provenance_label==='FABRICATED_RISK' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
+                      color: (selected._guard as {provenance_label?:string})?.provenance_label==='AI_VERIFIED' ? '#22c55e' : (selected._guard as {provenance_label?:string})?.provenance_label==='FABRICATED_RISK' ? '#ef4444' : '#f59e0b',
                     }}>
-                      {selected._guard?.provenance_label==='AI_VERIFIED' ? '✓ CrossRef verified' :
-                       selected._guard?.provenance_label==='FABRICATED_RISK' ? '✗ Not found in CrossRef — verify before citing' :
+                      {(selected._guard as {provenance_label?:string})?.provenance_label==='AI_VERIFIED' ? '✓ CrossRef verified' :
+                       (selected._guard as {provenance_label?:string})?.provenance_label==='FABRICATED_RISK' ? '✗ Not found in CrossRef — verify before citing' :
                        '⚠ Partial verification'}
-                      {selected._guard?.hitl_reason && <span style={{ fontWeight:400, marginLeft:6 }}>· {selected._guard?.hitl_reason}</span>}
+                      {(selected._guard as {hitl_reason?:string})?.hitl_reason && <span style={{ fontWeight:400, marginLeft:6 }}>· {(selected._guard as {hitl_reason?:string})?.hitl_reason}</span>}
                     </div>
                   )}
                   {Boolean(selected.citation_apa) && (
