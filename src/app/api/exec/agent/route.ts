@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const { mode, context } = body as {
-      mode: 'brief' | 'decision' | 'review' | 'okr_commentary' | 'stakeholder_brief' | 'time_audit'
+      mode: 'brief' | 'decision' | 'review' | 'okr_commentary' | 'stakeholder_brief' | 'time_audit' | 'report_pack'
       context: Record<string, unknown>
     }
 
@@ -101,7 +101,7 @@ Keep under 200 words.`,
     }
 
     const content = await callClaude(
-      [{ role: 'user', content: prompts[mode] ?? prompts.brief }],
+      [{ role: 'user', content: (prompts as any)[mode] ?? (prompts as any).brief }],
       systemPrompt,
       1200
     )

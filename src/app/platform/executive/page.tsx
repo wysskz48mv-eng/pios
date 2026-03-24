@@ -5,7 +5,7 @@
  */
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Zap, Target, Users, Clock, TrendingUp, Plus, ChevronRight, RefreshCw, BookOpen, AlertTriangle } from 'lucide-react'
+import { Zap, Target, Users, Clock, TrendingUp, Plus, ChevronRight, RefreshCw, BookOpen, AlertTriangle, Loader2, Check, Copy } from 'lucide-react'
 
 type OKR = { id: string; title: string; health: string; progress: number; period: string; exec_key_results: KR[] }
 type KR  = { id: string; title: string; current: number; target: number; unit: string; status: string; metric_type: string }
@@ -57,6 +57,9 @@ export default function ExecutivePage() {
   const [briefLoading, setBriefLoading] = useState(false)
   const [loading, setLoading]       = useState(true)
   const [activeTab, setActiveTab]   = useState<'overview'|'okrs'|'decisions'|'stakeholders'|'time'>('overview')
+  const [reportPack, setReportPack] = useState<string | null>(null)
+  const [genReport, setGenReport]   = useState(false)
+  const [reportCopied, setRepCopied] = useState(false)
 
   // Modals
   const [showOKRModal, setShowOKRModal]       = useState(false)
@@ -163,6 +166,27 @@ export default function ExecutivePage() {
     </div>
   )
 
+  async function generateReportPack() {
+    setGenReport(true)
+    try {
+      const r = await fetch('/api/exec/agent', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'report_pack',
+          context: {
+            okrSummary: summary,
+            openDecisions: decisions.filter((d: any) => d.status === 'open').slice(0, 5),
+            stakeholders: stakeholders.filter((s: any) => s.importance === 'critical').slice(0, 6),
+          },
+        }),
+      })
+      const d = await r.json()
+      setReportPack(d.content ?? null)
+    } catch { /* silent */ }
+    setGenReport(false)
+  }
+
+
   return (
     <div className="p-6 min-h-screen max-w-6xl">
       {/* Header */}
@@ -241,6 +265,30 @@ export default function ExecutivePage() {
             {okrs.length === 0 && <p className="text-xs text-muted-foreground">No active OKRs. Add one to start tracking.</p>}
           </div>
 
+          {/* Report Pack */}
+          <div className="col-span-full flex items-center justify-between p-4 bg-card border border-border rounded-xl">
+            <div>
+              <div className="text-sm font-semibold">Executive Report Pack</div>
+              <div className="text-xs text-muted-foreground mt-0.5">One-click board briefing — OKRs, decisions, stakeholders, risks, next 30-day actions</div>
+            </div>
+            <button onClick={generateReportPack} disabled={genReport}
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-xl text-sm font-medium hover:bg-cyan-500/15 disabled:opacity-50">
+              {genReport ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</> : <><TrendingUp className="w-3.5 h-3.5" /> Generate Report Pack</>}
+            </button>
+          </div>
+          {reportPack && (
+            <div className="col-span-full bg-card border border-border rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-cyan-400">Board Report Pack — AI Generated</span>
+                <button onClick={() => { navigator.clipboard.writeText(reportPack); setRepCopied(true); setTimeout(() => setRepCopied(false), 2000) }}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                  {reportCopied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                  {reportCopied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+              <pre className="text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap font-sans">{reportPack}</pre>
+            </div>
+          )}
           {/* Open decisions */}
           <div className="bg-card border border-border rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">

@@ -47,6 +47,7 @@ export default function IPVaultPage() {
   const [saving, setSaving]           = useState(false)
   const [activeType, setActiveType]   = useState('all')
   const [deleting, setDeleting]       = useState<string | null>(null)
+  const [seeding, setSeeding]         = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -95,6 +96,21 @@ export default function IPVaultPage() {
   const byType: Record<string, number> = {}
   assets.forEach(a => { byType[a.asset_type] = (byType[a.asset_type] ?? 0) + 1 })
 
+  async function seedFrameworks() {
+    setSeeding(true)
+    try {
+      const r = await fetch('/api/ip-vault', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'seed_frameworks' }),
+      })
+      const d = await r.json()
+      if (d.seeded > 0) await load()
+      alert(`Seeded ${d.seeded} frameworks. ${d.skipped} already existed.`)
+    } catch { alert('Seed failed — run M019 migration first.') }
+    setSeeding(false)
+  }
+
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       {/* Header */}
@@ -110,6 +126,9 @@ export default function IPVaultPage() {
           <button onClick={generateBrief} disabled={briefing || assets.length === 0} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-violet-500/10 text-violet-400 text-sm font-medium hover:bg-violet-500/15 disabled:opacity-50">
             {briefing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
             IP Brief
+          </button>
+          <button onClick={seedFrameworks} disabled={seeding} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-violet-500/30 text-violet-400 text-sm hover:bg-violet-500/10 disabled:opacity-50">
+            {seeding ? <Loader2 className="w-3 h-3 animate-spin" /> : '🧬'} Seed NemoClaw™
           </button>
           <button onClick={() => { setEditing(null); setForm({ ...BLANK }); setShowModal(true) }} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-500 text-white text-sm font-medium hover:bg-violet-600">
             <Plus className="w-3 h-3" /> Add Asset
