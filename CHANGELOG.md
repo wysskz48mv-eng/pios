@@ -1,3 +1,18 @@
+## [v2.3.0] — 2026-03-24 · Study Timer / Pomodoro
+
+### Study Timer
+- `/platform/study` (305L): Full Pomodoro timer
+  - Focus (25min), Short Break (5min), Long Break (15min)
+  - SVG circular progress with colour per mode
+  - Browser Notification API alerts on session complete
+  - Session history stored in localStorage (50 sessions)
+  - Completed focus sessions auto-logged to CPD via /api/learning-journey
+  - Configurable durations (1–90 min) with settings panel
+  - Today's count, total focus minutes, streak stats
+- Sidebar: Study Timer link added
+
+---
+
 ## [v2.2.4] — 2026-03-24 · Notifications Page + Sidebar
 
 ### New

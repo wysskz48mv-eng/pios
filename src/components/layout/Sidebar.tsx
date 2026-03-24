@@ -124,6 +124,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
                 )}
               </div>
             </Link>
+        
           )
         })}
       </nav>
