@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 // GET /api/live/github
 // Pulls recent commits from VeritasEdge™ and InvestiScript repos

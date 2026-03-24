@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 
 // GET /api/live/veritasedge
 // Pulls live metrics from the VeritasEdge™ Supabase project.
