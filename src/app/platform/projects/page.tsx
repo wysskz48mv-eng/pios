@@ -161,6 +161,7 @@ type Project = {
   colour?: string; client?: string; budget?: number | string
   start_date?: string; end_date?: string; created_at?: string
   task_count?: number; completed_tasks?: number
+  due_date?: string; title?: string
 }
 
 type ProjectTask = {
@@ -195,7 +196,7 @@ export default function ProjectsPage() {
       const res = await fetch('/api/projects', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...data }),
+        body: JSON.stringify({ id, ...(data as Record<string,unknown>) }),
       })
       if (res.ok) {
         const { project } = await res.json()
@@ -218,7 +219,7 @@ export default function ProjectsPage() {
   }
 
   const visible = projects.filter(p => {
-    if (filter==='active' && !['active','on_hold'].includes(p.status)) return false
+    if (filter==='active' && !['active','on_hold'].includes(String(p.status ?? ''))) return false
     if (filter==='completed' && p.status!=='completed') return false
     if (domainFilter!=='all' && p.domain!==domainFilter) return false
     return true
@@ -272,13 +273,13 @@ export default function ProjectsPage() {
             const pt = tasks.filter(t=>t.project_id===p.id)
             const done = pt.filter(t=>t.status==='done').length
             return (
-              <div key={p.id as string} onClick={()=>setSelected(p as Project)} className="pios-card" style={{ cursor:'pointer',borderTop:`3px solid ${p.colour||domainColour(p.domain)}`,padding:'14px 16px',transition:'border-color 0.15s' }}>
+              <div key={p.id as string} onClick={()=>setSelected(p as Project)} className="pios-card" style={{ cursor:'pointer',borderTop:`3px solid ${p.colour||domainColour(String(p.domain ?? ''))}`,padding:'14px 16px',transition:'border-color 0.15s' }}>
                 <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:8 }}>
                   <div style={{ flex:1,minWidth:0 }}>
                     <div style={{ fontSize:14,fontWeight:700,marginBottom:4,lineHeight:1.3 }}>{String(p.title ?? "")}</div>
                     <div style={{ display:'flex',gap:6,flexWrap:'wrap' as const,alignItems:'center' }}>
-                      <span style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:domainColour(p.domain)+'20',color:domainColour(p.domain) }}>{domainLabel(p.domain)}</span>
-                      <span style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:(STATUS_COLOUR[p.status]??'#64748b')+'20',color:STATUS_COLOUR[p.status]??'#64748b' }}>{p.status?.replace('_',' ')}</span>
+                      <span style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:domainColour(String(p.domain ?? ''))+'20',color:domainColour(String(p.domain ?? '')) }}>{domainLabel(String(p.domain ?? ''))}</span>
+                      <span style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:((STATUS_COLOUR as Record<string,string>)[String(p.status ?? '')] ?? '#64748b')+'20',color:(STATUS_COLOUR as Record<string,string>)[String(p.status ?? '')] ?? '#64748b' }}>{p.status?.replace('_',' ')}</span>
                     </div>
                   </div>
                 </div>
@@ -286,9 +287,9 @@ export default function ProjectsPage() {
                 <div style={{ marginBottom:8 }}>
                   <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
                     <span style={{ fontSize:11,color:'var(--pios-dim)' }}>Progress</span>
-                    <span style={{ fontSize:11,fontWeight:700,color:p.colour||domainColour(p.domain) }}>{p.progress}%</span>
+                    <span style={{ fontSize:11,fontWeight:700,color:p.colour||domainColour(String(p.domain ?? '')) }}>{p.progress}%</span>
                   </div>
-                  <ProgressBar value={p.progress} colour={p.colour||domainColour(p.domain)} />
+                  <ProgressBar value={Number(p.progress ?? 0)} colour={p.colour||domainColour(String(p.domain ?? ''))} />
                 </div>
                 <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:11,color:'var(--pios-dim)' }}>
                   {p.due_date ? <span>Due {formatRelative(p.due_date)}</span> : <span/>}

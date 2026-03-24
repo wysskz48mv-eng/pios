@@ -74,23 +74,23 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
           <div style={{ display:'flex',flexDirection:'column' as const,gap:12 }}>
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8 }}>
               {[
-                { label:'Start',value:`${new Date(event.start_time).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})} ${fmt(event.start_time)}` },
+                { label:'Start',value:`${new Date(String(event.start_time ?? "")).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})} ${fmt(event.start_time)}` },
                 { label:'Duration',value:dur(event.start_time,event.end_time) },
                 ...(event.location?[{ label:'Location',value:event.location }]:[]),
                 ...(event.attendees?.length?[{ label:'Attendees',value:`${event.attendees.length} people` }]:[]),
-              ].map((fi: unknown)=>(
-                <div key={(fi as Record<string,unknown>).label as string} style={{ padding:'8px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
-                  <div style={{ fontSize:10,color:'var(--pios-dim)',textTransform:'uppercase' as const,letterSpacing:'0.05em',marginBottom:2 }}>{fi.label}</div>
-                  <div style={{ fontSize:12,fontWeight:600 }}>{fi.value}</div>
+              ].map((fi: {label:string;value:string|number})=>(
+                <div key={String(fi.label)} style={{ padding:'8px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
+                  <div style={{ fontSize:10,color:'var(--pios-dim)',textTransform:'uppercase' as const,letterSpacing:'0.05em',marginBottom:2 }}>{String(fi.label ?? "")}</div>
+                  <div style={{ fontSize:12,fontWeight:600 }}>{String(fi.value ?? "")}</div>
                 </div>
               ))}
             </div>
             {event.description&&<div style={{ padding:'10px 12px',borderRadius:8,background:'var(--pios-surface2)',fontSize:12,color:'var(--pios-muted)',lineHeight:1.65 }}>{event.description}</div>}
-            {event.attendees?.length>0&&(
+            {event.attendees&&event.attendees.length>0&&(
               <div>
                 <div style={{ fontSize:11,fontWeight:600,color:'var(--pios-muted)',marginBottom:6,textTransform:'uppercase' as const,letterSpacing:'0.06em' }}>Attendees</div>
                 <div style={{ display:'flex',flexWrap:'wrap' as const,gap:6 }}>
-                  {event.attendees.map((a: unknown,i:number)=><span key={i} style={{ fontSize:11,padding:'3px 10px',borderRadius:20,background:'var(--pios-surface2)',color:'var(--pios-muted)' }}>{a.name??a.email}</span>)}
+                  {event.attendees.split(',').map((a: string,i:number)=><span key={i} style={{ fontSize:11,padding:'3px 10px',borderRadius:20,background:'var(--pios-surface2)',color:'var(--pios-muted)' }}>{a.trim()}</span>)}
                 </div>
               </div>
             )}
@@ -109,7 +109,7 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
               </div>
             )}
             {/* Meeting notes deep-link — shown for past events */}
-            {event.id && new Date(event.start_time) < new Date() && (
+            {event.id && new Date(String(event.start_time ?? "")) < new Date() && (
               <a
                 href={`/platform/meetings?prefill=${encodeURIComponent(event.title ?? '')}&date=${(event.start_time ?? '').slice(0,10)}`}
                 style={{ display:'block',width:'100%',padding:'8px',borderRadius:8,border:'1px dashed rgba(34,197,94,0.3)',background:'none',cursor:'pointer',color:'#22c55e',fontSize:12,textAlign:'center' as const,textDecoration:'none',marginTop:4 }}
@@ -136,7 +136,7 @@ function MonthGrid({ year,month,events,onDayClick,onEventClick }:{ year:number;m
     const n=i-startDow+1
     return n>=1&&n<=daysInMonth?new Date(year,month,n):null
   })
-  function dayEvents(d:Date){ return events.filter(e=>{const x=new Date(e.start_time);return x.getFullYear()===d.getFullYear()&&x.getMonth()===d.getMonth()&&x.getDate()===d.getDate()}) }
+  function dayEvents(d:Date){ return events.filter(e=>{const x=new Date(String(e.start_time ?? ""));return x.getFullYear()===d.getFullYear()&&x.getMonth()===d.getMonth()&&x.getDate()===d.getDate()}) }
   return (
     <div>
       <div style={{ display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:2 }}>
@@ -173,6 +173,7 @@ type CalEvent = {
   attendees?: string; location?: string; description?: string
   calendar_id?: string; status?: string; domain?: string
   all_day?: boolean; duration_mins?: number; color?: string
+  google_meet_url?: string; video_url?: string
   [key: string]: unknown
 }
 
@@ -212,7 +213,7 @@ export default function CalendarPage() {
   }
 
   async function saveEvent(id:string,data: unknown){
-    await fetch('/api/calendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(id?{action:'update',id,...data}:{action:'create',event:data})})
+    await fetch('/api/calendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(id?{action:'update',id,...(data as Record<string,unknown>)}:{action:'create',event:data})})
     load()
   }
   async function deleteEvent(id:string){
@@ -220,8 +221,8 @@ export default function CalendarPage() {
     setEvents(p=>p.filter(e=>e.id!==id))
   }
 
-  const upcoming=events.filter(e=>new Date(e.start_time)>=today).slice(0,20)
-  const todayCount=events.filter(e=>new Date(e.start_time).toDateString()===today.toDateString()).length
+  const upcoming=events.filter(e=>new Date(String(e.start_time ?? ""))>=today).slice(0,20)
+  const todayCount=events.filter(e=>new Date(String(e.start_time ?? "")).toDateString()===today.toDateString()).length
 
   return (
     <div className="fade-in">
@@ -270,18 +271,18 @@ export default function CalendarPage() {
               {upcoming.map(e=>(
                 <div key={(e as Record<string,unknown>).id as string} onClick={()=>setSelectedEvent(e)} className="pios-card" style={{ padding:'12px 16px',cursor:'pointer',display:'flex',alignItems:'flex-start',gap:14,borderLeft:`3px solid ${domainColour(e.domain||'personal')}` }}>
                   <div style={{ textAlign:'center' as const,minWidth:52,flexShrink:0 }}>
-                    <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{new Date(e.start_time).toLocaleDateString('en-GB',{weekday:'short'})}</div>
-                    <div style={{ fontSize:15,fontWeight:700 }}>{new Date(e.start_time).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
-                    <div style={{ fontSize:12,color:'var(--pios-muted)' }}>{e.all_day?'All day':fmt(e.start_time)}</div>
+                    <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{new Date(String(e.start_time ?? "")).toLocaleDateString('en-GB',{weekday:'short'})}</div>
+                    <div style={{ fontSize:15,fontWeight:700 }}>{new Date(String(e.start_time ?? "")).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+                    <div style={{ fontSize:12,color:'var(--pios-muted)' }}>{e.all_day?'All day':fmt(String(e.start_time ?? ''))}</div>
                   </div>
                   <div style={{ flex:1,minWidth:0 }}>
                     <div style={{ fontSize:13,fontWeight:600,marginBottom:3 }}>{e.title}</div>
                     <div style={{ display:'flex',gap:8,alignItems:'center',flexWrap:'wrap' as const }}>
                       <span style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:domainColour(e.domain||'personal')+'20',color:domainColour(e.domain||'personal') }}>{domainLabel(e.domain||'personal')}</span>
                       {e.location&&<span style={{ fontSize:11,color:'var(--pios-dim)' }}>📍 {e.location}</span>}
-                      {!e.all_day&&<span style={{ fontSize:11,color:'var(--pios-dim)' }}>{dur(e.start_time,e.end_time)}</span>}
-                      {e.attendees?.length>0&&<span style={{ fontSize:11,color:'var(--pios-dim)' }}>👥 {e.attendees.length}</span>}
-                      {e.google_meet_url&&<span style={{ fontSize:11,color:'#22c55e' }}>🎥 Meet</span>}
+                      {!e.all_day&&<span style={{ fontSize:11,color:'var(--pios-dim)' }}>{dur(String(e.start_time ?? ''),String(e.end_time ?? ''))}</span>}
+                      {(e.attendees?.length ?? 0) > 0 &&<span style={{ fontSize:11,color:'var(--pios-dim)' }}>👥 {e.attendees?.length}</span>}
+                      {Boolean(e.google_meet_url)&&<span style={{ fontSize:11,color:'#22c55e' }}>🎥 Meet</span>}
                     </div>
                   </div>
                 </div>
