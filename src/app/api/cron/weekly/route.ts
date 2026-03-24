@@ -207,7 +207,7 @@ export async function GET(req: NextRequest) {
 
       if (result.ok) {
         sent++
-        console.log(`[cron/weekly] ✓ ${profile.full_name ?? uid} → ${email}`)
+
       } else {
         failed++
         console.warn(`[cron/weekly] ✗ ${profile.full_name ?? uid}: ${result.error}`)
@@ -220,6 +220,6 @@ export async function GET(req: NextRequest) {
   }
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1)
-  console.log(`[cron/weekly] done in ${elapsed}s — sent=${sent} failed=${failed}`)
+
   return NextResponse.json({ ok: true, sent, failed, elapsed_s: Number(elapsed), week: win.label })
 }

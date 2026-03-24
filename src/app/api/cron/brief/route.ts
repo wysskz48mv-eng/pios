@@ -250,6 +250,6 @@ export async function GET(req: NextRequest) {
   }
 
   const elapsed = Math.round((Date.now() - start) / 1000)
-  console.log(`[cron/brief] ${generated} generated, ${failed} failed in ${elapsed}s`)
+
   return NextResponse.json({ date: today, generated, failed, elapsed_s: elapsed })
 }
