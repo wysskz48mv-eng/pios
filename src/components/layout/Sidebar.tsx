@@ -33,6 +33,7 @@ const NAV = [
   { href: '/platform/ai',        icon: '◉',  label: 'AI Companion',   colour: '#a78bfa' as string },
   { href: '/platform/setup',     icon: '⚡',  label: 'Setup Guide',    colour: '#f59e0b' as string },
   { href: '/platform/smoke',     icon: '✓',  label: 'Smoke Test',     colour: '#22c55e' as string },
+  { href: '/platform/operator',       icon: '🏷',  label: 'Operator Config',  colour: '#8b5cf6' as string },
   { href: '/platform/admin',          icon: '⚙',  label: 'Admin',            colour: '#ef4444' as string },
   { href: '/platform/study',     icon: '⏱', label: 'Study Timer',    colour: '#8b5cf6' as string },
   { href: '/platform/nps',       icon: '📊', label: 'Feedback',       colour: '#0ECFB0' as string },

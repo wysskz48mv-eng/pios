@@ -38,7 +38,13 @@ export async function GET(req: NextRequest) {
       .eq('active', true)
       .single()
 
-    return NextResponse.json({ operator: operator ?? null })
+    // Check if super admin
+    const { data: userProf } = await supabase.from('user_profiles')
+      .select('persona_type').eq('id', user.id).single()
+    const is_super_admin = (userProf as any)?.persona_type === 'super_admin' ||
+      (await supabase.from('tenants').select('plan').eq('id', prof?.tenant_id as string).single()).data?.plan === 'enterprise'
+
+    return NextResponse.json({ operator: operator ?? null, is_super_admin: !!is_super_admin })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
