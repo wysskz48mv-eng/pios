@@ -84,7 +84,7 @@ function FeedItem({ item, showRelevance }: { item: any; showRelevance: boolean }
 
 // ── Feed card ─────────────────────────────────────────────────────────────────
 function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
-  feed: any; showRelevance: boolean;
+  feed: unknown; showRelevance: boolean;
   onRefresh: (id: string) => void;
   onEdit: (feed: unknown) => void;
   onDelete: (id: string) => void;

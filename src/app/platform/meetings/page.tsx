@@ -144,7 +144,7 @@ export default function MeetingsPage() {
   }
   const sel: React.CSSProperties = { ...inp }
 
-  const actionItems: any[] = selected?.ai_action_items ?? []
+  const actionItems: unknown[] = selected?.ai_action_items ?? []
   const decisions:   any[] = selected?.ai_decisions    ?? []
   const followUps:   any[] = selected?.ai_follow_ups   ?? []
   const risks:       any[] = selected?.ai_risks        ?? []

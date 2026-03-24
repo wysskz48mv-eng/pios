@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       .select('*').eq('id', id).eq('user_id', user.id).single()
     if (!meeting) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const actionItems: any[] = meeting.ai_action_items ?? []
+    const actionItems: unknown[] = meeting.ai_action_items ?? []
     const toPromote = selected_items
       ? actionItems.filter((_: unknown, i: number) => selected_items.includes(i))
       : actionItems
