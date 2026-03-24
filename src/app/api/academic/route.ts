@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         `Ch${c.chapter_num} "${c.title}": ${c.word_count ?? 0}/${c.target_words ?? 8000} words [${c.status}]`
       ).join('\n')
       const system = `${PIOS_SYSTEM}\nYou are reviewing Douglas's DBA thesis at ${university ?? 'University of Portsmouth'}.\nReturn ONLY valid JSON:\n{"overall_assessment":"string","pace_status":"on_track|at_risk|behind|ahead","pace_detail":"string","chapter_flags":[{"chapter_num":1,"flag":"behind|on_track|ahead","note":"string"}],"immediate_actions":["string"],"risk":"string"}`
-      const raw = await callClaude([{ role:'user', content:`Review my DBA progress:\n\n${chapterSummary}\n\nModules:\n${(modules??[]).map((m:any)=>`- ${m.title} [${m.status}]${m.deadline?' · due '+m.deadline:''}`).join('\n')}` }], system, 600)
+      const raw = await callClaude([{ role:'user', content:`Review my DBA progress:\n\n${chapterSummary}\n\nModules:\n${(modules??[]).map((m: unknown)=>`- ${m.title} [${m.status}]${m.deadline?' · due '+m.deadline:''}`).join('\n')}` }], system, 600)
       try { return NextResponse.json({ review: JSON.parse(raw.replace(/```json|```/g,'').trim()) }) }
       catch { return NextResponse.json({ review: { overall_assessment: raw, pace_status: 'unknown' } }) }
     }

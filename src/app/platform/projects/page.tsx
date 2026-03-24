@@ -21,7 +21,7 @@ function ProgressBar({ value, colour }: { value:number; colour:string }) {
 }
 
 // Project detail drawer
-function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:any; tasks:any[]; onClose:()=>void; onSave:(id:string,d:any)=>void; onDelete:(id:string)=>void }) {
+function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:any; tasks:any[]; onClose:()=>void; onSave:(id:string,d: unknown)=>void; onDelete:(id:string)=>void }) {
   const [editing, setEditing] = useState(!project.id)
   const [saving,  setSaving]  = useState(false)
   const [form, setForm] = useState({
@@ -35,7 +35,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: { project:
     due_date:   project.due_date??'',
     colour:     project.colour??domainColour(project.domain??'personal'),
   })
-  function f(k:string,v:any) { setForm(p=>({...p,[k]:v})) }
+  function f(k:string,v: unknown) { setForm(p=>({...p,[k]:v})) }
 
   async function save() {
     if (!form.title.trim()) return

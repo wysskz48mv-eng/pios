@@ -39,11 +39,11 @@ function Spinner() {
 }
 
 // ── Task drawer (detail/edit panel) ───────────────────────────────────────────
-function TaskDrawer({ task, onClose, onSave, onDelete }: { task:any; onClose:()=>void; onSave:(id:string,updates:any)=>void; onDelete:(id:string)=>void }) {
+function TaskDrawer({ task, onClose, onSave, onDelete }: { task:any; onClose:()=>void; onSave:(id:string,updates: unknown)=>void; onDelete:(id:string)=>void }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ title:task.title, description:task.description||'', domain:task.domain, priority:task.priority, due_date:task.due_date?task.due_date.slice(0,10):'', status:task.status, duration_mins:task.duration_mins||30 })
   const [saving, setSaving] = useState(false)
-  function f(k:string,v:any) { setForm(p=>({...p,[k]:v})) }
+  function f(k:string,v: unknown) { setForm(p=>({...p,[k]:v})) }
 
   async function save() {
     setSaving(true)
@@ -149,7 +149,7 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
     }).then(r=>r.json()).then(d=>{ setResult(d); setLoading(false) }).catch(()=>setLoading(false))
   }, [])
 
-  const rankMap = Object.fromEntries((result?.prioritised ?? []).map((p:any) => [p.id, p]))
+  const rankMap = Object.fromEntries((result?.prioritised ?? []).map((p: unknown) => [p.id, p]))
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:200, display:'flex', justifyContent:'flex-end' }}>
@@ -188,7 +188,7 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
               <div>
                 <div style={{ fontSize:11, fontWeight:600, color:'var(--pios-muted)', marginBottom:10, textTransform:'uppercase' as const, letterSpacing:'0.06em' }}>Priority order for today</div>
                 <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
-                  {result.prioritised.slice(0,10).map((p:any) => {
+                  {result.prioritised.slice(0,10).map((p: unknown) => {
                     const task = tasks.find(t=>t.id===p.id)
                     if (!task) return null
                     const urgencyColor = { critical:'#ef4444', high:'#f59e0b', medium:'#6c8eff', low:'#64748b' }[p.urgency as string] ?? '#64748b'
@@ -254,7 +254,7 @@ export default function TasksPage() {
     setShowAdd(false); setSaving(false); load()
   }
 
-  async function updateTask(id:string, updates:any) {
+  async function updateTask(id:string, updates: unknown) {
     await fetch('/api/tasks', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, ...updates }) })
     setTasks(prev => prev.map(t => t.id===id ? { ...t, ...updates } : t))
   }

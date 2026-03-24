@@ -270,7 +270,7 @@ export default function AdminPage() {
           <div style={{ marginTop:16, padding:'14px 16px', borderRadius:8, background:'var(--pios-surface2)', border:'1px solid var(--pios-border)' }}>
             <div style={{ fontSize:13, fontWeight:700, marginBottom:10 }}>Run All Results</div>
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-              {results.all.results?.map((r:any) => (
+              {results.all.results?.map((r: unknown) => (
                 <div key={r.id} style={{ display:'flex', gap:10, alignItems:'center', fontSize:12 }}>
                   <span style={{ fontSize:10, padding:'1px 6px', borderRadius:4, fontFamily:'monospace', background:'var(--pios-surface)', border:'1px solid var(--pios-border)' }}>{r.id}</span>
                   <span style={{ flex:1 }}>{r.name}</span>

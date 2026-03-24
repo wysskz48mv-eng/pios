@@ -294,7 +294,7 @@ export default function ExpensesPage() {
                   <td style={{ padding:'10px 14px',fontSize:12,color:'var(--pios-muted)',whiteSpace:'nowrap' as const }}>{e.date}</td>
                   <td style={{ padding:'10px 14px',fontSize:13 }}>
                     {editing === e.id ? (
-                      <input value={editForm.description} onChange={ev=>setEditForm((p:any)=>({...p,description:ev.target.value}))}
+                      <input value={editForm.description} onChange={ev=>setEditForm((p: unknown)=>({...p,description:ev.target.value}))}
                         className="pios-input" style={{ fontSize:12,padding:'4px 8px',width:'100%' }} autoFocus onKeyDown={ev=>{if(ev.key==='Enter')saveEdit();if(ev.key==='Escape'){setEditing(null);setEditForm(null)}}} />
                     ) : (
                       <span onClick={()=>startEdit(e)} style={{ cursor:'text' }} title="Click to edit">{e.description}</span>

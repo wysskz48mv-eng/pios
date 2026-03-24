@@ -349,7 +349,7 @@ function ClaimsTab() {
   const load = useCallback((f=filter) => {
     setLoading(true)
     fetch('/api/payroll?type=claims').then(r=>r.json()).then(d=>{
-      const filtered = f === 'all' ? (d.claims??[]) : (d.claims??[]).filter((c:any) => c.status === f)
+      const filtered = f === 'all' ? (d.claims??[]) : (d.claims??[]).filter((c: unknown) => c.status === f)
       setClaims(filtered); setLoading(false)
     })
   }, [filter])

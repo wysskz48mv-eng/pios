@@ -14,14 +14,14 @@ function Spinner() {
 function fmt(iso:string){ return new Date(iso).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) }
 function dur(s:string,e:string){ const m=Math.round((new Date(e).getTime()-new Date(s).getTime())/60000); return m<60?`${m}m`:`${Math.floor(m/60)}h${m%60?` ${m%60}m`:''}` }
 
-function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=>void;onSave:(id:string,d:any)=>void;onDelete:(id:string)=>void }) {
+function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=>void;onSave:(id:string,d: unknown)=>void;onDelete:(id:string)=>void }) {
   const isNew = !event.id
   const [editing,setEditing]=useState(isNew)
   const [brief,setBrief]=useState(event.ai_brief??null)
   const [loadingBrief,setLoadingBrief]=useState(false)
   const [saving,setSaving]=useState(false)
   const [form,setForm]=useState({ title:event.title??'', description:event.description??'', domain:event.domain??'personal', start_time:event.start_time?event.start_time.slice(0,16):'', end_time:event.end_time?event.end_time.slice(0,16):'', location:event.location??'', all_day:event.all_day??false })
-  const f=(k:string,v:any)=>setForm(p=>({...p,[k]:v}))
+  const f=(k:string,v: unknown)=>setForm(p=>({...p,[k]:v}))
 
   async function save(){
     if(!form.title.trim())return
@@ -78,7 +78,7 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
                 { label:'Duration',value:dur(event.start_time,event.end_time) },
                 ...(event.location?[{ label:'Location',value:event.location }]:[]),
                 ...(event.attendees?.length?[{ label:'Attendees',value:`${event.attendees.length} people` }]:[]),
-              ].map((fi:any)=>(
+              ].map((fi: unknown)=>(
                 <div key={fi.label} style={{ padding:'8px 10px',borderRadius:6,background:'var(--pios-surface2)' }}>
                   <div style={{ fontSize:10,color:'var(--pios-dim)',textTransform:'uppercase' as const,letterSpacing:'0.05em',marginBottom:2 }}>{fi.label}</div>
                   <div style={{ fontSize:12,fontWeight:600 }}>{fi.value}</div>
@@ -90,7 +90,7 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
               <div>
                 <div style={{ fontSize:11,fontWeight:600,color:'var(--pios-muted)',marginBottom:6,textTransform:'uppercase' as const,letterSpacing:'0.06em' }}>Attendees</div>
                 <div style={{ display:'flex',flexWrap:'wrap' as const,gap:6 }}>
-                  {event.attendees.map((a:any,i:number)=><span key={i} style={{ fontSize:11,padding:'3px 10px',borderRadius:20,background:'var(--pios-surface2)',color:'var(--pios-muted)' }}>{a.name??a.email}</span>)}
+                  {event.attendees.map((a: unknown,i:number)=><span key={i} style={{ fontSize:11,padding:'3px 10px',borderRadius:20,background:'var(--pios-surface2)',color:'var(--pios-muted)' }}>{a.name??a.email}</span>)}
                 </div>
               </div>
             )}
@@ -201,7 +201,7 @@ export default function CalendarPage() {
     setTimeout(()=>setSyncMsg(null),4000)
   }
 
-  async function saveEvent(id:string,data:any){
+  async function saveEvent(id:string,data: unknown){
     await fetch('/api/calendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(id?{action:'update',id,...data}:{action:'create',event:data})})
     load()
   }

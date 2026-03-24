@@ -380,7 +380,7 @@ export default function CommandPage() {
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:12, marginBottom:20 }}>
               {[
-                { label:'SaaS Orgs',      big:seData?.tenants?.total??'—',                    sub:seData?.tenants?.list?.map((t:any)=>t.name).join(', ')||'No orgs yet' },
+                { label:'SaaS Orgs',      big:seData?.tenants?.total??'—',                    sub:seData?.tenants?.list?.map((t: unknown)=>t.name).join(', ')||'No orgs yet' },
                 { label:'Projects',       big:seData?.projects?.total??'—',                   sub:`${seData?.projects?.active??0} active · ${seData?.projects?.list?.join(', ')||''}` },
                 { label:'Asset Portfolio',big:seData?.assets?.totalValueSAR?formatSAR(seData.assets.totalValueSAR):'—', sub:`${seData?.assets?.total??0} assets · ${seData?.assets?.active??0} operational` },
                 { label:'OBE Engine',     big:seData?.obe?'✓ Live':'—',                       sub:seData?.obe?.lastRun?`Last run ${timeAgo(seData.obe.lastRun)}`:'No OBE runs yet' },

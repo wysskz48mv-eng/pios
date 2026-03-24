@@ -78,7 +78,7 @@ export default function EmailPage() {
       })
       const d = await res.json()
       if (d.sent) {
-        setSelected((p:any) => ({ ...p, status: 'actioned' }))
+        setSelected((p: unknown) => ({ ...p, status: 'actioned' }))
         setEmails(prev => prev.map(e => e.id === selected.id ? { ...e, status: 'actioned' } : e))
         setReplyText('')
       } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
@@ -180,7 +180,7 @@ export default function EmailPage() {
       <div style={{ display:'flex',gap:6,marginBottom:16,flexWrap:'wrap' as const }}>
         {accounts.length > 1 && (
           <div style={{ display:'flex',gap:4,flexWrap:'wrap' as const,marginBottom:6 }}>
-            {[['all','All inboxes'],...accounts.map((a:any)=>[a.context,a.label||a.display_name||a.email_address])].map(([v,l])=>(
+            {[['all','All inboxes'],...accounts.map((a: unknown)=>[a.context,a.label||a.display_name||a.email_address])].map(([v,l])=>(
               <button key={v} onClick={()=>setInboxFilter(v)} style={{ padding:'3px 10px',borderRadius:20,fontSize:10,border:'none',cursor:'pointer',background:inboxFilter===v?'#6c8eff':'var(--pios-surface2)',color:inboxFilter===v?'#fff':'var(--pios-muted)',fontWeight:inboxFilter===v?600:400 }}>{l}</button>
             ))}
           </div>

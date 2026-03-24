@@ -35,7 +35,7 @@ function TabBtn({ active, onClick, children }: { active:boolean; onClick:()=>voi
 }
 
 // ── Folder tree ───────────────────────────────────────────────────────────────
-function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; all:any[]; depth?:number; onSelect:(s:any)=>void; selected:any }) {
+function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; all:any[]; depth?:number; onSelect:(s: unknown)=>void; selected:any }) {
   const [open, setOpen] = useState(depth < 1)
   const children = all.filter(s => s.parent_id === space.id)
   const isSelected = selected?.id === space.id
@@ -345,7 +345,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
   const [saving, setSaving]   = useState(false)
   const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string|null>(null)
   const [form, setForm] = useState({ name:'', trigger_type:'email_sender', trigger_value:'', trigger_match:'contains', action_type:'assign_project', action_value:'', priority:50 })
-  function f(k:string,v:any) { setForm(p=>({...p,[k]:v})) }
+  function f(k:string,v: unknown) { setForm(p=>({...p,[k]:v})) }
 
   const load = () => {
     setLoading(true)
