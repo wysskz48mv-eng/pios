@@ -34,7 +34,7 @@ export async function POST() {
 
     const staffList = staff?.map(s => `${s.full_name} (${s.email}) — ${s.salary_currency} ${s.monthly_salary}/month`).join('\n') ?? 'No staff on record'
 
-    for (const email of emails) {
+    for (const email of (emails as any[])) {
       const text = email.body_text ?? email.snippet ?? ''
       const system = `You are a payroll data extraction AI. Extract payroll run data from this email.
 Known staff: ${staffList}
@@ -61,7 +61,7 @@ Return ONLY valid JSON or null if this is not a payroll email:
   "confidence": 0.0
 }`
 
-      let extracted: unknown = null
+      let extracted: any = null
       try {
         const raw = await callClaude(
           [{ role: 'user', content: `Email from: ${email.sender_name} <${email.sender_email}>\nSubject: ${email.subject}\n\n${text}` }],

@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       updated_at:  new Date().toISOString(),
     }).select().single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ project: data }, { status: 201 })
   } catch (err: unknown) {
     const msg = err instanceof Error ? (err as Error).message : 'Internal server error'
@@ -95,17 +95,17 @@ export async function PATCH(req: NextRequest) {
 
     const allowed = ['title','domain','status','description','deadline','progress','notes']
     const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
-    for (const k of allowed) { if (k in updates) safe[k] = updates[k] }
-    if (safe.domain)  { safe.colour = domainColour(safe.domain) }
-    if (safe.status && !VALID_STATUSES.includes(safe.status))
+    for (const k of (allowed as any[])) { if (k in updates) safe[k] = updates[k] }
+    if ((safe as any).domain)  { (safe as any).colour = domainColour((safe as any).domain) }
+    if ((safe as any).status && !VALID_STATUSES.includes((safe as any).status))
       return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-    if (safe.domain && !VALID_DOMAINS.includes(safe.domain))
+    if ((safe as any).domain && !VALID_DOMAINS.includes((safe as any).domain))
       return NextResponse.json({ error: 'invalid domain' }, { status: 400 })
-    if (safe.progress !== undefined) safe.progress = Math.min(100, Math.max(0, parseInt(safe.progress) || 0))
+    if ((safe as any).progress !== undefined) (safe as any).progress = Math.min(100, Math.max(0, parseInt((safe as any).progress) || 0))
 
     const { data, error } = await supabase.from('projects')
       .update(safe).eq('id', id).eq('user_id', user.id).select().single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ project: data })
   } catch (err: unknown) {
     const msg = err instanceof Error ? (err as Error).message : 'Internal server error'
@@ -128,7 +128,7 @@ export async function DELETE(req: NextRequest) {
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', id).eq('user_id', user.id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ cancelled: true })
   } catch (err: unknown) {
     const msg = err instanceof Error ? (err as Error).message : 'Internal server error'

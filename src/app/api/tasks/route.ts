@@ -67,7 +67,7 @@ Return ONLY valid JSON:
         [{ role: 'user', content: `Today is ${today}. Here are my tasks:\n${taskList}\n\nPrioritise these for today.` }],
         system, 1200
       )
-      let parsed: unknown = {}
+      let parsed: any = {}
       try { parsed = JSON.parse(raw.replace(/```json|```/g, '').trim()) } catch { parsed = { focus_recommendation: raw } }
       return NextResponse.json(parsed)
     }
@@ -79,7 +79,7 @@ Return ONLY valid JSON:
         user_id: user.id,
         updated_at: new Date().toISOString(),
       }).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ task: data })
     } catch (err: unknown) {
       return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
@@ -104,31 +104,31 @@ export async function PATCH(request: Request) {
     const ALLOWED = ['title','description','domain','priority','status','due_date',
                      'duration_mins','notes','project_id','source','completed_at']
     const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
-    for (const k of ALLOWED) { if (k in body) safe[k] = body[k] }
+    for (const k of (ALLOWED as any[])) { if (k in body) safe[k] = body[k] }
 
-    if (safe.status   && !VALID_STATUSES.includes(safe.status))
+    if ((safe as any).status   && !VALID_STATUSES.includes((safe as any).status))
       return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-    if (safe.priority && !VALID_PRIORITIES.includes(safe.priority))
+    if ((safe as any).priority && !VALID_PRIORITIES.includes((safe as any).priority))
       return NextResponse.json({ error: 'invalid priority' }, { status: 400 })
-    if (safe.domain   && !VALID_DOMAINS.includes(safe.domain))
+    if ((safe as any).domain   && !VALID_DOMAINS.includes((safe as any).domain))
       return NextResponse.json({ error: 'invalid domain' }, { status: 400 })
-    if (safe.source   && !VALID_SOURCES.includes(safe.source))
+    if ((safe as any).source   && !VALID_SOURCES.includes((safe as any).source))
       return NextResponse.json({ error: 'invalid source' }, { status: 400 })
 
     // Auto-set completed_at
-    if (safe.status === 'done' && !safe.completed_at) {
-      safe.completed_at = new Date().toISOString()
+    if ((safe as any).status === 'done' && !(safe as any).completed_at) {
+      (safe as any).completed_at = new Date().toISOString()
       const { data: t } = await supabase.from('tasks').select('title,domain').eq('id', id).maybeSingle()
       if (t) await createNotification({ userId: user.id, title: `✓ Task done: ${t.title}`, type: 'success', domain: t.domain, actionUrl: '/platform/tasks' })
     }
-    if (safe.status && safe.status !== 'done') safe.completed_at = null
+    if ((safe as any).status && (safe as any).status !== 'done') (safe as any).completed_at = null
 
     // Clamp duration
-    if (safe.duration_mins !== undefined) safe.duration_mins = Math.max(5, Math.min(480, parseInt(safe.duration_mins) || 30))
+    if ((safe as any).duration_mins !== undefined) (safe as any).duration_mins = Math.max(5, Math.min(480, parseInt((safe as any).duration_mins) || 30))
 
     const { data, error } = await supabase.from('tasks')
       .update(safe).eq('id', id).eq('user_id', user.id).select().single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ task: data })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })

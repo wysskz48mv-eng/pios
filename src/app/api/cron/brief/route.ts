@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 
   let generated = 0, failed = 0
 
-  for (const profile of profiles) {
+  for (const profile of (profiles as any[])) {
     const uid = profile.id
     try {
       // Gather full context for this user

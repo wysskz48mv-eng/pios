@@ -126,26 +126,26 @@ export async function POST(request: Request) {
       const items = calData.items ?? []
       let synced = 0
 
-      for (const item of items) {
-        if (!item.summary) continue
-        const startTime = item.start?.dateTime ?? item.start?.date + 'T00:00:00Z'
-        const endTime   = item.end?.dateTime   ?? item.end?.date   + 'T23:59:59Z'
-        const allDay    = !!item.start?.date && !item.start?.dateTime
+      for (const item of (items as any[])) {
+        if (!(item as any).summary) continue
+        const startTime = (item as any).start?.dateTime ?? (item as any).start?.date + 'T00:00:00Z'
+        const endTime   = (item as any).end?.dateTime   ?? (item as any).end?.date   + 'T23:59:59Z'
+        const allDay    = !!(item as any).start?.date && !(item as any).start?.dateTime
 
-        const domain = classifyDomain(item.summary, item.description ?? '')
+        const domain = classifyDomain((item as any).summary, (item as any).description ?? '')
 
         await supabase.from('calendar_events').upsert({
           user_id: user.id,
-          google_event_id: item.id,
-          title: item.summary,
-          description: item.description ?? null,
+          google_event_id: (item as any)?.id,
+          title: (item as any).summary,
+          description: (item as any).description ?? null,
           domain,
           start_time: startTime,
           end_time: endTime,
           all_day: allDay,
-          location: item.location ?? null,
-          attendees: item.attendees?.map((a: Record<string, unknown>) => ({ email: a.email, name: a.displayName })) ?? [],
-          google_meet_url: item.hangoutLink ?? null,
+          location: (item as any).location ?? null,
+          attendees: (item as any).attendees?.map((a: Record<string, unknown>) => ({ email: a.email, name: a.displayName })) ?? [],
+          google_meet_url: (item as any).hangoutLink ?? null,
           source: 'google',
           updated_at: new Date().toISOString(),
         }, { onConflict: 'google_event_id', ignoreDuplicates: false })
@@ -180,7 +180,7 @@ export async function POST(request: Request) {
           $top:          '100',
           $select:       'id,subject,bodyPreview,start,end,location,attendees,isOnlineMeeting,onlineMeetingUrl',
         }),
-        { headers: { Authorization: `Bearer ${account.ms_access_token}` } }
+        { headers: { Authorization: `Bearer ${(account as any).ms_access_token}` } }
       )
 
       if (!msRes.ok) {
@@ -191,29 +191,29 @@ export async function POST(request: Request) {
       const items  = msData.value ?? []
       let synced   = 0
 
-      for (const item of items) {
-        if (!item.subject) continue
-        const startTime = item.start?.dateTime ? new Date(item.start.dateTime).toISOString() : null
-        const endTime   = item.end?.dateTime   ? new Date(item.end.dateTime).toISOString()   : null
+      for (const item of (items as any[])) {
+        if (!(item as any).subject) continue
+        const startTime = (item as any).start?.dateTime ? new Date((item as any).start.dateTime).toISOString() : null
+        const endTime   = (item as any).end?.dateTime   ? new Date((item as any).end.dateTime).toISOString()   : null
         if (!startTime) continue
 
-        const domain = classifyDomain(item.subject, item.bodyPreview ?? '')
+        const domain = classifyDomain((item as any).subject, (item as any).bodyPreview ?? '')
 
         await supabase.from('calendar_events').upsert({
           user_id:         user.id,
-          google_event_id: `ms_${item.id}`,  // prefix to avoid collision with Google IDs
-          title:           item.subject,
-          description:     item.bodyPreview ?? null,
+          google_event_id: `ms_${(item as any)?.id}`,  // prefix to avoid collision with Google IDs
+          title:           (item as any).subject,
+          description:     (item as any).bodyPreview ?? null,
           domain,
           start_time:      startTime,
           end_time:        endTime,
           all_day:         false,
-          location:        item.location?.displayName ?? null,
-          attendees:       (item.attendees ?? []).map((a: Record<string,unknown>) => ({
+          location:        (item as any).location?.displayName ?? null,
+          attendees:       ((item as any).attendees ?? []).map((a: Record<string,unknown>) => ({
             email: (a.emailAddress as Record<string,string>)?.address,
             name:  (a.emailAddress as Record<string,string>)?.name,
           })),
-          google_meet_url: item.onlineMeetingUrl ?? null,
+          google_meet_url: (item as any).onlineMeetingUrl ?? null,
           source:          'microsoft',
           updated_at:      new Date().toISOString(),
         }, { onConflict: 'google_event_id', ignoreDuplicates: false })
@@ -235,7 +235,7 @@ export async function POST(request: Request) {
         source: 'manual',
         end_time: event.end_time ?? new Date(new Date(event.start_time).getTime() + 60 * 60 * 1000).toISOString(),
       }).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ event: data })
     }
 

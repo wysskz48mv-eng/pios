@@ -246,7 +246,7 @@ export async function POST(req: NextRequest) {
       tags:         tags ?? [],
     }).select('id,title,hours_verifiable,hours_non_verifiable,cpd_year').single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
     return NextResponse.json({ ok: true, activity: data })
   }
 
@@ -310,7 +310,7 @@ ${content.slice(0, 2000)}` }],
     notes: notes ?? null, alert_days_before: alert_days_before ?? 14,
   }).select('id,title,status,target_date').single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   return NextResponse.json({ ok: true, milestone: data })
 }
 
@@ -328,7 +328,7 @@ export async function PATCH(req: NextRequest) {
                    'completed_date','hours_credit','cpd_type','cpd_body',
                    'evidence_url','notes','alert_days_before','sort_order']
   const update: Record<string, any> = { updated_at: new Date().toISOString() }
-  for (const k of allowed) { if (k in body) update[k] = body[k] }
+  for (const k of (allowed as any[])) { if (k in body) update[k] = body[k] }
   if (body.status === 'passed' && !body.completed_date) {
     update.completed_date = new Date().toISOString().slice(0, 10)
   }
@@ -338,7 +338,7 @@ export async function PATCH(req: NextRequest) {
     .eq('id', id).eq('user_id', user.id)
     .select('id,title,status,completed_date').single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   return NextResponse.json({ ok: true, milestone: data })
 }
 

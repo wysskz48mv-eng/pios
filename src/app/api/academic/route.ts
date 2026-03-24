@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
         word_count: parseInt(word_count)||0, target_words: parseInt(target_words)||8000,
         notes: notes??null, updated_at: new Date().toISOString(),
       }).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ chapter: data }, { status: 201 })
     }
 
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
         module_type, status, deadline: deadline||null, credits: credits?parseInt(credits):null,
         sort_order: order, updated_at: new Date().toISOString(),
       }).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ module: data }, { status: 201 })
     }
 
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
         session_date, session_type, format: format??null, duration_mins: parseInt(duration_mins)||60,
         notes: notes??null, action_items: items, updated_at: new Date().toISOString(),
       }).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       // Auto-create tasks from action items
       if (items.length > 0) {
         await supabase.from('tasks').insert(items.map((item: string) => ({
@@ -155,28 +155,28 @@ export async function PATCH(req: NextRequest) {
 
     if (entity === 'chapter') {
       for (const k of ['title','chapter_num','status','word_count','target_words','notes']) { if (k in updates) safe[k] = updates[k] }
-      if (safe.status && !CHAPTER_STATUSES.includes(safe.status)) return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-      if (safe.word_count !== undefined)   safe.word_count   = parseInt(safe.word_count)   || 0
-      if (safe.target_words !== undefined) safe.target_words = parseInt(safe.target_words) || 8000
+      if ((safe as any).status && !CHAPTER_STATUSES.includes((safe as any).status)) return NextResponse.json({ error: 'invalid status' }, { status: 400 })
+      if ((safe as any).word_count !== undefined)   (safe as any).word_count   = parseInt((safe as any).word_count)   || 0
+      if ((safe as any).target_words !== undefined) (safe as any).target_words = parseInt((safe as any).target_words) || 8000
       const { data, error } = await supabase.from('thesis_chapters').update(safe).eq('id',id).eq('user_id',user.id).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ chapter: data })
     }
 
     if (entity === 'module') {
       for (const k of ['title','module_type','status','deadline','credits','sort_order','grade','notes']) { if (k in updates) safe[k] = updates[k] }
-      if (safe.status      && !MODULE_STATUSES.includes(safe.status))  return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-      if (safe.module_type && !MODULE_TYPES.includes(safe.module_type)) return NextResponse.json({ error: 'invalid module_type' }, { status: 400 })
+      if ((safe as any).status      && !MODULE_STATUSES.includes((safe as any).status))  return NextResponse.json({ error: 'invalid status' }, { status: 400 })
+      if ((safe as any).module_type && !MODULE_TYPES.includes((safe as any).module_type)) return NextResponse.json({ error: 'invalid module_type' }, { status: 400 })
       const { data, error } = await supabase.from('academic_modules').update(safe).eq('id',id).eq('user_id',user.id).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ module: data })
     }
 
     if (entity === 'session') {
       for (const k of ['supervisor','session_date','session_type','format','duration_mins','notes','action_items','agenda','next_session','ai_summary']) { if (k in updates) safe[k] = updates[k] }
-      if (safe.session_type && !SESSION_TYPES.includes(safe.session_type)) return NextResponse.json({ error: 'invalid session_type' }, { status: 400 })
+      if ((safe as any).session_type && !SESSION_TYPES.includes((safe as any).session_type)) return NextResponse.json({ error: 'invalid session_type' }, { status: 400 })
       const { data, error } = await supabase.from('supervision_sessions').update(safe).eq('id',id).eq('user_id',user.id).select().single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ session: data })
     }
 
@@ -198,7 +198,7 @@ export async function DELETE(req: NextRequest) {
     const table = entity==='chapter'?'thesis_chapters':entity==='module'?'academic_modules':entity==='session'?'supervision_sessions':null
     if (!table) return NextResponse.json({ error: 'invalid entity' }, { status: 400 })
     const { error } = await supabase.from(table as Record<string, unknown>).delete().eq('id',id).eq('user_id',user.id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ deleted: true })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })

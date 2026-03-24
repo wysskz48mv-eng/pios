@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
   if (status && status !== 'all') q = q.eq('status', status)
 
   const { data, error } = await q
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
 
   // Strip raw_transcript from list view (large field — fetch on demand)
   const meetings = (data ?? []).map((m: Record<string, unknown>) => {
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       updated_at:       new Date().toISOString(),
     }).select().single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
 
     // Auto-process if content provided and auto_process requested
     if (auto_process && (raw_transcript || raw_notes)) {
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       .select('*').eq('id', id).eq('user_id', user.id).single()
     if (!meeting) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const actionItems: unknown[] = meeting.ai_action_items ?? []
+    const actionItems: unknown[] = (meeting as any).ai_action_items ?? []
     const toPromote = selected_items
       ? actionItems.filter((_: unknown, i: number) => selected_items.includes(i))
       : actionItems
@@ -154,21 +154,21 @@ export async function POST(req: NextRequest) {
 
     const taskIds: string[] = []
 
-    for (const item of toPromote) {
-      const priority = item.priority === 'critical' ? 'critical'
-                     : item.priority === 'high'     ? 'high'
-                     : item.priority === 'low'      ? 'low'
+    for (const item of (toPromote as any[])) {
+      const priority = (item as any).priority === 'critical' ? 'critical'
+                     : (item as any).priority === 'high'     ? 'high'
+                     : (item as any).priority === 'low'      ? 'low'
                      : 'medium'
 
       const { data: task, error: taskErr } = await supabase.from('tasks').insert({
         user_id:     user.id,
         tenant_id:   profile?.tenant_id,
-        title:       item.action ?? item.description ?? 'Action from meeting',
-        description: `From meeting: ${meeting.title} (${meeting.meeting_date}). Attendees: ${(meeting.attendees ?? []).join(', ') || '—'}`,
-        domain:      item.domain ?? meeting.domain,
+        title:       (item as any).action ?? (item as any).description ?? 'Action from meeting',
+        description: `From meeting: ${(meeting as any).title} (${(meeting as any).meeting_date}). Attendees: ${((meeting as any).attendees ?? []).join(', ') || '—'}`,
+        domain:      (item as any).domain ?? (meeting as any).domain,
         priority,
         status:      'todo',
-        due_date:    item.due_date ?? null,
+        due_date:    (item as any).due_date ?? null,
         source:      'meeting_notes',
         updated_at:  new Date().toISOString(),
       }).select('id').single()
@@ -203,7 +203,7 @@ export async function PATCH(req: NextRequest) {
   const allowed = ['title','meeting_date','duration_mins','attendees','meeting_type',
     'domain','location','platform','raw_transcript','raw_notes','status','is_confidential']
   const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
-  for (const k of allowed) { if (k in updates) safe[k] = updates[k] }
+  for (const k of (allowed as any[])) { if (k in updates) safe[k] = updates[k] }
 
   if (updates.domain && !VALID_DOMAINS.includes(updates.domain))
     return NextResponse.json({ error: 'invalid domain' }, { status: 400 })
@@ -211,7 +211,7 @@ export async function PATCH(req: NextRequest) {
   const { data, error } = await supabase.from('meeting_notes')
     .update(safe).eq('id', id).eq('user_id', user.id).select().single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
   return NextResponse.json({ meeting: data })
 }
 
@@ -228,28 +228,28 @@ export async function DELETE(req: NextRequest) {
     .update({ status: 'archived', updated_at: new Date().toISOString() })
     .eq('id', id).eq('user_id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
   return NextResponse.json({ archived: true })
 }
 
 // ── AI Processing ──────────────────────────────────────────────────────────────
 async function processMeetingNotes(supabase: unknown, meeting: unknown, userId: string) {
-  const content = meeting.raw_transcript || meeting.raw_notes || ''
+  const content = (meeting as any).raw_transcript || (meeting as any).raw_notes || ''
   if (!content.trim()) return meeting
 
-  const contextHint = meeting.meeting_type === 'supervision'
+  const contextHint = (meeting as any).meeting_type === 'supervision'
     ? 'This is a DBA supervision session at University of Portsmouth.'
-    : meeting.meeting_type === 'client'
+    : (meeting as any).meeting_type === 'client'
     ? 'This is a client meeting in an FM consulting or SaaS context.'
-    : meeting.meeting_type === 'board'
+    : (meeting as any).meeting_type === 'board'
     ? 'This is a board or senior leadership meeting.'
-    : `This is a ${meeting.meeting_type} meeting.`
+    : `This is a ${(meeting as any).meeting_type} meeting.`
 
   const system = `${PIOS_SYSTEM}
 
 You are extracting structured intelligence from meeting notes or transcripts.
-${contextHint} Domain: ${meeting.domain}. Date: ${meeting.meeting_date}.
-Attendees: ${(meeting.attendees ?? []).join(', ') || 'not specified'}.
+${contextHint} Domain: ${(meeting as any).domain}. Date: ${(meeting as any).meeting_date}.
+Attendees: ${((meeting as any).attendees ?? []).join(', ') || 'not specified'}.
 
 Return ONLY valid JSON — no preamble, no markdown:
 {
@@ -270,14 +270,14 @@ Return ONLY valid JSON — no preamble, no markdown:
 
   try {
     const raw = await callClaude(
-      [{ role: 'user', content: `Meeting: ${meeting.title}\n\n${content.slice(0, 8000)}` }],
+      [{ role: 'user', content: `Meeting: ${(meeting as any).title}\n\n${content.slice(0, 8000)}` }],
       system,
       2000,
     )
 
     const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
 
-    const updates: unknown = {
+    const updates: any = {
       ai_summary:      parsed.summary      ?? null,
       ai_decisions:    parsed.decisions    ?? [],
       ai_action_items: parsed.action_items ?? [],
@@ -289,7 +289,7 @@ Return ONLY valid JSON — no preamble, no markdown:
     }
 
     const { data: updated } = await supabase.from('meeting_notes')
-      .update(updates).eq('id', meeting.id).select().single()
+      .update(updates).eq('id', (meeting as any).id).select().single()
 
     return updated ?? { ...meeting, ...updates }
 
@@ -298,7 +298,7 @@ Return ONLY valid JSON — no preamble, no markdown:
       status: 'processed',
       ai_summary: 'AI processing failed — review transcript manually.',
       updated_at: new Date().toISOString(),
-    }).eq('id', meeting.id)
+    }).eq('id', (meeting as any).id)
     return meeting
   }
 }

@@ -13,7 +13,8 @@ export const maxDuration = 60
 
 const DOMAINS = ['academic','fm_consulting','saas','business','personal']
 
-async function refreshGoogleToken(supabase: Record<string,unknown>, account: Record<string,unknown>): Promise<string | null> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function refreshGoogleToken(supabase: any, account: any): Promise<string | null> {
   if (!account.google_refresh_token) return null
   try {
     const res = await fetch('https://oauth2.googleapis.com/token', {
@@ -36,7 +37,8 @@ async function refreshGoogleToken(supabase: Record<string,unknown>, account: Rec
   } catch { return null }
 }
 
-async function refreshMicrosoftToken(supabase: unknown, account: unknown): Promise<string | null> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function refreshMicrosoftToken(supabase: any, account: any): Promise<string | null> {
   if (!account.ms_refresh_token) return null
   try {
     const res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
@@ -60,7 +62,8 @@ async function refreshMicrosoftToken(supabase: unknown, account: unknown): Promi
   } catch { return null }
 }
 
-async function getValidToken(supabase: unknown, account: unknown): Promise<string | null> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getValidToken(supabase: any, account: any): Promise<string | null> {
   const buf = 5 * 60 * 1000
   if (account.provider === 'google') {
     const exp = account.google_token_expiry ? new Date(account.google_token_expiry) : null
@@ -106,7 +109,8 @@ Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","prio
   }
 }
 
-async function autoCreateExpense(supabase: unknown, userId: string, rd: unknown, domain: string, subject: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function autoCreateExpense(supabase: any, userId: string, rd: any, domain: string, subject: string) {
   if (!rd?.amount || parseFloat(rd.amount) <= 0) return
   const desc = `${rd.vendor ?? 'Unknown'} — auto from email`
   const date = rd.date ?? new Date().toISOString().slice(0, 10)
@@ -122,7 +126,8 @@ async function autoCreateExpense(supabase: unknown, userId: string, rd: unknown,
   })
 }
 
-async function syncGmail(supabase: unknown, userId: string, account: unknown, token: string, max: number) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function syncGmail(supabase: any, userId: string, account: any, token: string, max: number) {
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=is:unread+-category:promotions`,
     { headers: { Authorization: `Bearer ${token}` } }
@@ -138,7 +143,7 @@ async function syncGmail(supabase: unknown, userId: string, account: unknown, to
     if (!dr.ok) continue
     const d = await dr.json()
     const h: Record<string, string> = {}
-    d.payload?.headers?.forEach((x: Record<string, unknown>) => { h[x.name] = x.value })
+    d.payload?.headers?.forEach((x: Record<string, unknown>) => { h[String(x.name ?? "")] = String(x.value ?? "") })
     const subject = h.Subject ?? '(no subject)', from = h.From ?? '', snippet = d.snippet ?? ''
     const t = await triageEmail(subject, from, snippet, account.context, account.ai_domain_override, account.receipt_scan_enabled, account.receipt_keywords ?? [])
     if (t.is_receipt) { receipts++; await autoCreateExpense(supabase, userId, t.receipt_data, t.domain, subject) }
@@ -160,7 +165,8 @@ async function syncGmail(supabase: unknown, userId: string, account: unknown, to
   return { synced, receipts }
 }
 
-async function syncMicrosoft(supabase: unknown, userId: string, account: unknown, token: string, max: number) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function syncMicrosoft(supabase: any, userId: string, account: any, token: string, max: number) {
   const url = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=${max}&$filter=isRead eq false&$select=id,subject,from,receivedDateTime,bodyPreview,conversationId`
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
   if (!res.ok) { const e = await res.text(); return { synced: 0, receipts: 0, error: `Graph ${res.status}: ${e.slice(0,100)}` } }
@@ -195,10 +201,10 @@ export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  let body: unknown = {}
+  let body: Record<string,unknown> = {}
   try { body = await req.json() } catch { /**/ }
   const targetId = body.account_id ?? null
-  const max = Math.min(parseInt(body.max_per_acct ?? '15'), 50)
+  const max = Math.min(parseInt(String(body.max_per_acct ?? '15')), 50)
   let q = supabase.from('connected_email_accounts').select('*')
     .eq('user_id', user.id).eq('is_active', true).eq('sync_enabled', true)
   if (targetId) q = q.eq('id', targetId)
@@ -213,7 +219,7 @@ export async function POST(req: NextRequest) {
     const r = await syncGmail(supabase, user.id, legacyAcc, token, max)
     return NextResponse.json({ ...r, accounts_synced: 1 })
   }
-  const results = await Promise.allSettled(accounts.map(async (acc: unknown) => {
+  const results = await Promise.allSettled(accounts.map(async (acc: any) => {
     const token = await getValidToken(supabase, acc)
     if (!token) { await supabase.from('connected_email_accounts').update({ last_sync_error: 'Token expired — reconnect' }).eq('id', acc.id); return { account_id: acc.id, email: acc.email_address, synced: 0, receipts: 0, error: 'Token expired' } }
     const r = acc.provider === 'google' ? await syncGmail(supabase, user.id, acc, token, max) :
@@ -221,10 +227,10 @@ export async function POST(req: NextRequest) {
               { synced: 0, receipts: 0, error: 'IMAP coming soon' }
     return { account_id: acc.id, email: acc.email_address, ...r }
   }))
-  const detail = results.map((r: Record<string,unknown>) => (r as Record<string,unknown>).status === 'fulfilled' ? (r as PromiseFulfilledResult<Record<string,unknown>>).value : { error: String((r as Record<string, unknown>).reason) })
+  const detail = results.map((r: any) => r.status === 'fulfilled' ? (r as any).value : { error: String(r.reason) })
   return NextResponse.json({
-    synced:          detail.reduce((s: number, r: unknown) => s + (r.synced   ?? 0), 0),
-    receipts:        detail.reduce((s: number, r: unknown) => s + (r.receipts ?? 0), 0),
+    synced:          detail.reduce((s: number, r: any) => s + (r?.synced ?? 0), 0),
+    receipts:        detail.reduce((s: number, r: any) => s + (r?.receipts ?? 0), 0),
     accounts_synced: accounts.length,
     detail,
   })

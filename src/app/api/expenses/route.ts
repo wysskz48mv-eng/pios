@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     if (currency && currency !== 'all') q = q.eq('currency', currency)
 
     const { data, error } = await q
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
 
     let expenses = data ?? []
 
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
     const byCurrency: Record<string, number> = {}
     const byTaxYear:  Record<string, number> = {}
 
-    for (const e of expenses) {
+    for (const e of (expenses as any[])) {
       const amt = parseFloat(e.amount) || 0
       if (e.category) byCategory[e.category] = (byCategory[e.category] ?? 0) + amt
       if (e.domain)   byDomain[e.domain]     = (byDomain[e.domain]   ?? 0) + amt
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
         system,
         300,
       )
-      let parsed: unknown = {}
+      let parsed: any = {}
       try { parsed = JSON.parse(raw.replace(/```json|```/g, '').trim()) } catch { parsed = {} }
       return NextResponse.json({ suggestion: parsed })
     }
@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ expense: data }, { status: 201 })
 
   } catch (err: unknown) {
@@ -226,7 +226,7 @@ export async function PATCH(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ expense: data })
 
   } catch (err: unknown) {
@@ -250,7 +250,7 @@ export async function DELETE(req: NextRequest) {
       .eq('id', id)
       .eq('user_id', user.id)   // ownership enforced — cannot delete other users' records
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ deleted: true })
 
   } catch (err: unknown) {

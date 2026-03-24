@@ -113,7 +113,7 @@ Staff count: unknown (accountant has the details)`
       system, 800
     )
 
-    let draft: unknown = {}
+    let draft: any = {}
     try {
       draft = JSON.parse(raw.replace(/```json|```/g, '').trim())
     } catch {
