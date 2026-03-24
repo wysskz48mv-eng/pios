@@ -1,3 +1,12 @@
+## [v2.2.3] — 2026-03-24 · TypeScript Cleanup
+
+### TypeScript — PI param-any: 15→11
+- microsoft callback: tokenData, profileData typed
+- literature/gap-analysis: paper typed
+- stripe webhook: event typed
+
+---
+
 ## [v2.2.2] — 2026-03-24 · Learning Journal + Documents + Intelligence
 
 ### New Pages
