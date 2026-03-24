@@ -40,6 +40,7 @@ const MS_SCOPES = [
 ].join(' ')
 
 export async function GET(req: NextRequest) {
+  try {
   const clientId  = process.env.AZURE_CLIENT_ID
   const appUrl    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'
 
@@ -80,4 +81,8 @@ export async function GET(req: NextRequest) {
   authoriseUrl.searchParams.set('prompt',        'select_account')
 
   return NextResponse.redirect(authoriseUrl.toString())
+  } catch (e: unknown) {
+    console.error("[connect-microsoft]", e)
+    return NextResponse.redirect(new URL('/platform/settings?error=oauth_failed', req.url))
+  }
 }

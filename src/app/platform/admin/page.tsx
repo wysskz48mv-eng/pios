@@ -25,6 +25,8 @@ const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
   '016': { file: '016_consulting_decision_time.sql', tables: ['consulting_engagements','exec_decision_analyses','exec_time_audits'] },
   '017': { file: '017_sia_bica.sql',                 tables: ['sia_signal_briefs','bica_comms'] },
   '018': { file: '018_operator_whitelabel.sql',      tables: ['operator_configs','okr_notification_prefs'] },
+  '019': { file: '019_ip_vault_contracts_financials.sql', tables: ['ip_assets','contracts','financial_snapshots','exec_intelligence_config','exec_board_comms','exec_stakeholder_interactions'] },
+  '020': { file: '020_ip_vault_seed.sql',                 tables: ['knowledge_entries'] },
 }
 
 const SUPABASE_URL = 'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new'
