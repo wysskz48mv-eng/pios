@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     // For IMAP: store the app password (in production this should be encrypted)
     // We store as-is here; encryption at rest is handled by Supabase's encrypted columns
     // or a KMS in production. The field name `imap_password_enc` signals intent.
-    const insertData: any = {
+    const insertData: unknown = {
       user_id: user.id,
       tenant_id: profile?.tenant_id,
       provider,
@@ -189,7 +189,7 @@ export async function PATCH(req: NextRequest) {
       'imap_host','imap_port','imap_username','imap_password_enc','imap_use_tls',
       'sync_lookback_days',
     ]
-    const safe: any = { updated_at: new Date().toISOString() }
+    const safe: unknown = { updated_at: new Date().toISOString() }
     for (const k of allowed) {
       if (k in updates) safe[k] = updates[k]
     }

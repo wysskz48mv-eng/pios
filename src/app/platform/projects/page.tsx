@@ -227,7 +227,7 @@ export default function ProjectsPage() {
       <div style={{ display:'flex',gap:10,marginBottom:20,flexWrap:'wrap' as const,alignItems:'center' }}>
         <div style={{ display:'flex',gap:4 }}>
           {[['active','Active'],['all','All'],['completed','Completed']].map(([v,l])=>(
-            <button key={v} onClick={()=>setFilter(v as any)} style={{ padding:'5px 12px',borderRadius:20,fontSize:11,border:'1px solid var(--pios-border)',background:filter===v?'var(--pios-surface)':'transparent',color:filter===v?'var(--pios-text)':'var(--pios-muted)',fontWeight:filter===v?600:400,cursor:'pointer' }}>{l}</button>
+            <button key={v} onClick={()=>setFilter(v as Record<string,unknown>)} style={{ padding:'5px 12px',borderRadius:20,fontSize:11,border:'1px solid var(--pios-border)',background:filter===v?'var(--pios-surface)':'transparent',color:filter===v?'var(--pios-text)':'var(--pios-muted)',fontWeight:filter===v?600:400,cursor:'pointer' }}>{l}</button>
           ))}
         </div>
         <div style={{ width:'1px',height:20,background:'var(--pios-border)' }} />

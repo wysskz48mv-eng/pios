@@ -5,7 +5,7 @@
  */
 type ErrorCtx = Record<string, string | number | boolean | null | undefined>
 
-let initialized = false, Sentry: any = null
+let initialized = false, Sentry: unknown = null
 
 async function getSentry() {
   if (initialized) return Sentry

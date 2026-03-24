@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
       ])
 
       const totalWords   = (thesisNow.data ?? []).reduce((s: number, c: unknown) => s + (c.word_count ?? 0), 0)
-      const prevWords    = (thesisPrev.data?.[0] as any)?.total_words ?? null
+      const prevWords    = (thesisPrev.data?.[0] as Record<string,unknown>)?.total_words ?? null
       const wordsWritten = prevWords !== null ? Math.max(0, totalWords - prevWords) : 0
 
       // Capture this week's snapshot (upsert — idempotent)

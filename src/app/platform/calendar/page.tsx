@@ -227,7 +227,7 @@ export default function CalendarPage() {
         <div style={{ display:'flex',gap:8,alignItems:'center' }}>
           <div style={{ display:'flex',gap:2,padding:2,borderRadius:8,border:'1px solid var(--pios-border)',background:'var(--pios-surface2)' }}>
             {[['month','⊞'],['list','☰']].map(([v,icon])=>(
-              <button key={v} onClick={()=>setView(v as any)} style={{ padding:'4px 10px',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',background:view===v?'var(--pios-surface)':'transparent',color:view===v?'var(--pios-text)':'var(--pios-dim)' }}>{icon}</button>
+              <button key={v} onClick={()=>setView(v as Record<string,unknown>)} style={{ padding:'4px 10px',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',background:view===v?'var(--pios-surface)':'transparent',color:view===v?'var(--pios-text)':'var(--pios-dim)' }}>{icon}</button>
             ))}
           </div>
           <button className="pios-btn pios-btn-ghost" onClick={syncGoogle} disabled={syncing} style={{ fontSize:12 }}>{syncing?'⟳ Syncing…':'↻ Sync Google'}</button>

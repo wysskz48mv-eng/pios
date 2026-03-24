@@ -98,7 +98,7 @@ Return ONLY valid JSON:
         1500
       )
 
-      let guidelines: any = {}
+      let guidelines: unknown = {}
       try {
         const clean = raw.replace(/```json|```/g, '').trim()
         guidelines = JSON.parse(clean)

@@ -132,7 +132,7 @@ export async function POST(request: Request) {
         .select('full_name,id').eq('tenant_id', tenant.id).limit(1).single()
 
       // Get email from Stripe customer
-      const customer: any = await stripe.customers.retrieve(sub.customer as string)
+      const customer: unknown = await stripe.customers.retrieve(sub.customer as string)
       const email = customer?.email
       if (email) {
         await getResend()?.emails.send({

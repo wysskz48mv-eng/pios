@@ -113,7 +113,7 @@ export async function GET() {
     const targetWords   = chapters.reduce((s: number, c: unknown) => s + (c.target_words ?? 8000), 0)
     const pendingMeetingActions = meetings.filter((m: Record<string, unknown>) => m.status === 'processed' && !m.tasks_created).length
     const tenantData = tenantR.status === 'fulfilled' ? (tenantR.value?.data ?? null) : null
-    const briefContent = briefR.status === 'fulfilled' ? ((briefR.value?.data as any)?.content ?? null) : null
+    const briefContent = briefR.status === 'fulfilled' ? ((briefR.value?.data as Record<string,unknown>)?.content ?? null) : null
 
     return NextResponse.json({
       tasks: { overdue: overdueTasks, due_today: dueTodayTasks, upcoming: upcomingTasks.slice(0, 8), total_open: tasks.length },

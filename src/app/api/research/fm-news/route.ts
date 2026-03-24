@@ -68,7 +68,7 @@ Return ONLY valid JSON, no markdown:
       2500
     )
 
-    let parsed: any = {}
+    let parsed: unknown = {}
     try {
       const clean = raw.replace(/```json|```/g, '').trim()
       parsed = JSON.parse(clean)

@@ -80,7 +80,7 @@ export default function LearningHubPage() {
 
   const profile  = data?.profile
   const summary  = data?.summary
-  const ms       = (data?.milestones ?? []) as any[]
+  const ms       = (data?.milestones ?? []) as unknown[]
   const cpdSum   = cpdData?.summary
   const isCpd    = profile?.persona === 'cpd_professional'
 
@@ -138,7 +138,7 @@ export default function LearningHubPage() {
           ['milestones',  'Milestones'],
           ...(isCpd ? [['activities','CPD Log']] : []),
         ] as [string,string][]).map(([t,l]) => (
-          <button key={t} onClick={() => setTab(t as any)}
+          <button key={t} onClick={() => setTab(t as Record<string,unknown>)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${tab===t ? 'border-purple-500 text-purple-600' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
             {l}
           </button>

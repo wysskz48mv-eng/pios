@@ -16,7 +16,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
   const { data: tenant } = await supabase
     .from('tenants')
     .select('plan, plan_status, subscription_status, ai_credits_used, ai_credits_limit, trial_ends_at, stripe_subscription_id')
-    .eq('id', (profile as any)?.tenant_id ?? '')
+    .eq('id', (profile as Record<string,unknown>)?.tenant_id ?? '')
     .single()
 
   return (

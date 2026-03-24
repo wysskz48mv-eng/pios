@@ -241,8 +241,8 @@ Rules:
     if (!force) {
       const { data: profile } = await supabase
         .from('user_profiles').select('billing_email, google_email, full_name').eq('id', user.id).single()
-      const userEmail = (profile as any)?.billing_email ?? (profile as any)?.google_email
-      const userName  = (profile as any)?.full_name ?? 'there'
+      const userEmail = (profile as Record<string,unknown>)?.billing_email ?? (profile as Record<string,unknown>)?.google_email
+      const userName  = (profile as Record<string,unknown>)?.full_name ?? 'there'
       if (userEmail) {
         sendEmail({
           to:      userEmail,

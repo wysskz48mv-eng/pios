@@ -67,7 +67,7 @@ Return ONLY valid JSON:
         [{ role: 'user', content: `Today is ${today}. Here are my tasks:\n${taskList}\n\nPrioritise these for today.` }],
         system, 1200
       )
-      let parsed: any = {}
+      let parsed: unknown = {}
       try { parsed = JSON.parse(raw.replace(/```json|```/g, '').trim()) } catch { parsed = { focus_recommendation: raw } }
       return NextResponse.json(parsed)
     }
@@ -103,7 +103,7 @@ export async function PATCH(request: Request) {
     // Allowlist + validate
     const ALLOWED = ['title','description','domain','priority','status','due_date',
                      'duration_mins','notes','project_id','source','completed_at']
-    const safe: any = { updated_at: new Date().toISOString() }
+    const safe: unknown = { updated_at: new Date().toISOString() }
     for (const k of ALLOWED) { if (k in body) safe[k] = body[k] }
 
     if (safe.status   && !VALID_STATUSES.includes(safe.status))

@@ -10,7 +10,7 @@ export function createClient() {
       cookies: {
         getAll() { return cookieStore.getAll() },
         setAll(cs: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          try { cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options as any)) } catch {}
+          try { cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options as Record<string,unknown>)) } catch {}
         },
       } as CookieMethodsServer,
     }

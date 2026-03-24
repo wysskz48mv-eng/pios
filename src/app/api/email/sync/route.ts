@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  let body: any = {}
+  let body: unknown = {}
   try { body = await req.json() } catch { /**/ }
   const targetId = body.account_id ?? null
   const max = Math.min(parseInt(body.max_per_acct ?? '15'), 50)

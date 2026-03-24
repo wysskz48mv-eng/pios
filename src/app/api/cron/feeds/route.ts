@@ -125,7 +125,7 @@ export async function GET(req: NextRequest) {
       if (recent?.length) {
         skipped++
       } else {
-        const count = await generateFMNews(admin as any, uid)
+        const count = await generateFMNews(admin as unknown, uid)
         if (count > 0) fmNewsRefreshed++
       }
 

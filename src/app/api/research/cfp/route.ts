@@ -77,7 +77,7 @@ Return ONLY valid JSON:
       2000
     )
 
-    let parsed: any = {}
+    let parsed: unknown = {}
     try {
       const clean = raw.replace(/```json|```/g, '').trim()
       parsed = JSON.parse(clean)

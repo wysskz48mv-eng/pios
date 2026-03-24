@@ -80,7 +80,7 @@ Return ONLY valid JSON:
       system, 1200
     )
 
-    let extracted: any = {}
+    let extracted: unknown = {}
     try {
       extracted = JSON.parse(raw.replace(/```json|```/g, '').trim())
     } catch {

@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
         system,
         300,
       )
-      let parsed: any = {}
+      let parsed: unknown = {}
       try { parsed = JSON.parse(raw.replace(/```json|```/g, '').trim()) } catch { parsed = {} }
       return NextResponse.json({ suggestion: parsed })
     }

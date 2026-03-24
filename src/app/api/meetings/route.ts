@@ -202,7 +202,7 @@ export async function PATCH(req: NextRequest) {
 
   const allowed = ['title','meeting_date','duration_mins','attendees','meeting_type',
     'domain','location','platform','raw_transcript','raw_notes','status','is_confidential']
-  const safe: any = { updated_at: new Date().toISOString() }
+  const safe: unknown = { updated_at: new Date().toISOString() }
   for (const k of allowed) { if (k in updates) safe[k] = updates[k] }
 
   if (updates.domain && !VALID_DOMAINS.includes(updates.domain))
@@ -277,7 +277,7 @@ Return ONLY valid JSON — no preamble, no markdown:
 
     const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
 
-    const updates: any = {
+    const updates: unknown = {
       ai_summary:      parsed.summary      ?? null,
       ai_decisions:    parsed.decisions    ?? [],
       ai_action_items: parsed.action_items ?? [],

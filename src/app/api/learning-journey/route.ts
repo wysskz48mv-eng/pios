@@ -123,7 +123,7 @@ export async function GET(req: NextRequest) {
       .eq('cpd_year', year)
       .order('completed_date', { ascending: false })
 
-    const acts = (activities ?? []) as any[]
+    const acts = (activities ?? []) as unknown[]
     const bodyInfo = CPD_BODIES[profile?.cpd_body ?? 'OTHER'] ?? CPD_BODIES.OTHER
     const verifiable    = acts.reduce((s, a) => s + (Number(a.hours_verifiable)     || 0), 0)
     const nonVerifiable = acts.reduce((s, a) => s + (Number(a.hours_non_verifiable) || 0), 0)
@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
     .eq('user_id', user.id)
     .order('sort_order').order('target_date', { ascending: true, nullsFirst: false })
 
-  const ms     = (milestones ?? []) as any[]
+  const ms     = (milestones ?? []) as unknown[]
   const now    = new Date()
   const passed = ms.filter(m => m.status === 'passed').length
   const total  = ms.length

@@ -61,7 +61,7 @@ Return ONLY valid JSON or null if this is not a payroll email:
   "confidence": 0.0
 }`
 
-      let extracted: any = null
+      let extracted: unknown = null
       try {
         const raw = await callClaude(
           [{ role: 'user', content: `Email from: ${email.sender_name} <${email.sender_email}>\nSubject: ${email.subject}\n\n${text}` }],

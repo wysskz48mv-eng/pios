@@ -94,7 +94,7 @@ export async function PATCH(req: NextRequest) {
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
     const allowed = ['title','domain','status','description','deadline','progress','notes']
-    const safe: any = { updated_at: new Date().toISOString() }
+    const safe: unknown = { updated_at: new Date().toISOString() }
     for (const k of allowed) { if (k in updates) safe[k] = updates[k] }
     if (safe.domain)  { safe.colour = domainColour(safe.domain) }
     if (safe.status && !VALID_STATUSES.includes(safe.status))

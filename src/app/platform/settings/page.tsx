@@ -309,7 +309,7 @@ export default function SettingsPage() {
   useEffect(() => {
     async function load() {
       const [pR, fR] = await Promise.all([
-        fetch('/api/profile').then(r => r.ok ? r.json() : {}) as Promise<any>,
+        fetch('/api/profile').then(r => r.ok ? r.json() : {}) as Promise<unknown>,
         fetch('/api/feeds').then(r => r.json()).catch(() => ({ settings: null })),
       ])
       setUser(pR.user ?? null)

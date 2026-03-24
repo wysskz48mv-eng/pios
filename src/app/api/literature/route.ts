@@ -139,7 +139,7 @@ Existing notes: ${item.notes ?? 'none'}
 Tags: ${item.tags?.join(', ') ?? 'none'}`
 
       const raw = await callClaude([{ role: 'user', content: prompt }], system, 1000)
-      let parsed: any = {}
+      let parsed: unknown = {}
       try {
         parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
       } catch {
