@@ -63,6 +63,8 @@ export default function ExecutivePage() {
   const [showDecisionModal, setShowDecisionModal] = useState(false)
   const [showStakeModal, setShowStakeModal]   = useState(false)
   const [saving, setSaving] = useState(false)
+  const [daaLoading, setDaaLoading] = useState<string|null>(null)
+  const [daaAnalysis, setDaaAnalysis] = useState<Record<string,string>>({})
 
   // Forms
   const [okrForm, setOkrForm]   = useState({ title: '', period: `Q${Math.ceil((new Date().getMonth()+1)/3)} ${new Date().getFullYear()}`, description: '' })
@@ -136,6 +138,20 @@ export default function ExecutivePage() {
     setStakeForm({ name: '', role: '', organisation: '', importance: 'high', relationship_type: 'professional' })
     setSaving(false)
     load()
+  }
+
+  async function analyseDecision(d: Decision) {
+    setDaaLoading(d.id)
+    try {
+      const r = await fetch('/api/exec/decision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'structure', title: d.title, context: d.context ?? '', framework: d.framework_used ?? 'POM' }),
+      })
+      const res = await r.json()
+      if (res.analysis) setDaaAnalysis(prev => ({...prev, [d.id]: res.analysis}))
+    } catch { /* silent */ }
+    setDaaLoading(null)
   }
 
   const inp = "w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-violet-500/50 mb-3"
@@ -346,16 +362,31 @@ export default function ExecutivePage() {
           <div className="space-y-3">
             {decisions.map(d => (
               <div key={d.id} className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4 mb-2">
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-foreground mb-1">{d.title}</div>
                     {d.context && <div className="text-xs text-muted-foreground line-clamp-2">{d.context}</div>}
                     {d.framework_used && <div className="text-xs text-violet-400 mt-1">{d.framework_used}™</div>}
                   </div>
-                  <div className={`text-xs px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${d.status === 'open' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
-                    {d.status}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className={`text-xs px-2 py-0.5 rounded-full border font-medium ${d.status === 'open' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
+                      {d.status}
+                    </div>
+                    {d.status === 'open' && (
+                      <button onClick={() => analyseDecision(d)}
+                        disabled={daaLoading === d.id}
+                        className="text-xs px-2 py-0.5 rounded-full border border-violet-500/20 text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 disabled:opacity-50 flex items-center gap-1 transition-colors">
+                        {daaLoading === d.id ? '…' : '⚡ DAA™'}
+                      </button>
+                    )}
                   </div>
                 </div>
+                {daaAnalysis[d.id] && (
+                  <div className="mt-2 bg-violet-500/5 border border-violet-500/15 rounded-lg p-3">
+                    <div className="text-xs font-semibold text-violet-400 mb-1.5">DAA™ Analysis</div>
+                    <div className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">{daaAnalysis[d.id]}</div>
+                  </div>
+                )}
               </div>
             ))}
             {decisions.length === 0 && (

@@ -18,6 +18,7 @@ const NAV = [
   { href: '/platform/documents',  icon: '📄', label: 'Documents',       colour: '#8B5CF6' },
   { href: '/platform/executive',        icon: '⚡', label: 'Executive OS',     colour: '#22d3ee', badge: 'EOSA™' },
   { href: '/platform/consulting',       icon: '◎', label: 'Consulting',        colour: '#a78bfa', badge: 'CSA™' },
+  { href: '/platform/comms',            icon: '📡', label: 'Comms Hub',          colour: '#3b82f6', badge: 'BICA™' },
   { href: '/platform/time-sovereignty', icon: '⏱', label: 'Time Sovereignty',  colour: '#22d3ee', badge: 'TSA™' },
   { href: '/platform/intelligence',icon: '📡',label: 'Intelligence',     colour: '#22d3ee' },
   { href: '/platform/payroll',   icon: '💳', label: 'Payroll',        colour: '#a78bfa' },
