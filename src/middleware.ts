@@ -1,4 +1,3 @@
-import crypto from 'crypto'
 /**
  * PIOS — Edge Middleware
  * Security headers · Rate limiting · Session protection · Auth routing
@@ -67,14 +66,14 @@ export async function middleware(request: NextRequest) {
   // Build base response and apply security headers to everything
   // ── CSP Nonce (A.14.2) — per-request nonce eliminates unsafe-inline risk
   // Set on response as x-nonce header so layout.tsx can inject into <script> tags
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const nonce = btoa(globalThis.crypto.randomUUID())
   const noncedCSP = SEC_HEADERS['Content-Security-Policy']
     .replace("script-src 'self' 'unsafe-eval' 'unsafe-inline'",
              `script-src 'self' 'unsafe-eval' 'nonce-${nonce}'`)
     .replace("style-src 'self' 'unsafe-inline'",
              `style-src 'self' 'nonce-${nonce}'`)
 
-    let response = NextResponse.next({ request })
+  let response = NextResponse.next({ request })
   for (const [k, v] of Object.entries(SEC_HEADERS)) response.headers.set(k, v)
   response.headers.set('Content-Security-Policy', noncedCSP)
   response.headers.set('x-nonce', nonce)
