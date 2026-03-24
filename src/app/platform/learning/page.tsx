@@ -103,6 +103,7 @@ export default function LearningHubPage() {
             <RefreshCw size={12} /> Refresh
           </button>
           <Link href="/platform/learning/wizard" className="flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs text-muted-foreground hover:bg-accent">
+          <Link href="/platform/learning/journal" className="flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs text-muted-foreground hover:bg-accent">
             Edit setup
           </Link>
         </div>
