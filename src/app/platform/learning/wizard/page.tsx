@@ -7,12 +7,17 @@ import {
 } from 'lucide-react'
 
 const PERSONAS = [
-  { id:'doctoral',        label:'Doctoral Researcher',       sub:'DBA, PhD, EdD, DProf',                       color:'#8B5CF6', features:['Thesis word count','Supervisor session log','Viva preparation','Weekly writing snapshots','AI research assistant'],         milestones:'14 milestones' },
-  { id:'masters',         label:"Master's Student",           sub:'MBA, MSc, MA, LLM, MArch',                   color:'#0EA5E9', features:['Module tracking','Dissertation progress','Assignment calendar','Research log','Grade tracker'],                              milestones:'11 milestones' },
-  { id:'undergraduate',   label:'Undergraduate',              sub:'BA, BSc, BEng, LLB + Placement',             color:'#10B981', features:['Year planner','Module grades','Final year project tracker','Placement coordinator','Assignment deadlines'],                   milestones:'8 milestones' },
-  { id:'cpd_professional',label:'CPD Professional',           sub:'RICS, ICAEW, ACCA, CIPD, CIMA, ICE…',       color:'#F59E0B', features:['CPD hours tracker','Annual declaration reminders','Ethics CPD flag','Certificate log','Multi-body support'],                  milestones:'8 CPD checkpoints' },
-  { id:'short_course',    label:'Short Course / Cert',        sub:'Online course, bootcamp, certification',     color:'#F97316', features:['Course tracker','Certificate portfolio','Learning streak','Skills log','Quick milestones'],                                    milestones:'5 milestones' },
-  { id:'apprentice',      label:'Apprentice',                 sub:'Degree or Higher Apprenticeship',            color:'#06B6D4', features:['Training log','Portfolio builder','EPA prep','Knowledge modules','Employer coordination'],                                     milestones:'6 milestones' },
+  // ── PROFESSIONAL PERSONAS (PRIMARY) ──────────────────────────────────────
+  { id:'founder',         label:'Founder / CEO',             sub:'Running one or more companies',              color:'#0d9488', features:['Daily AI Brief (7am)','Command Centre cockpit','Payroll detect engine','IP Vault + frameworks','Group strategy roadmap'],      milestones:'Professional OS', professional:true },
+  { id:'consultant',      label:'Consultant / Advisor',      sub:'Client-facing advisory or interim work',     color:'#4f46e5', features:['Consulting framework engine (15 tools)','Client engagement tracker','Proposal generator','SE-MIL knowledge base','Stakeholder atlas'], milestones:'Consulting OS', professional:true },
+  { id:'executive',       label:'Executive / Manager',       sub:'C-suite, director, or senior manager',       color:'#7c3aed', features:['Executive OS (EOSA™)','OKR + KPI tracker','Decision architecture','Stakeholder CRM','Board report pack'],                        milestones:'Executive OS', professional:true },
+  // ── ACADEMIC / CPD PERSONAS (SECONDARY) ──────────────────────────────────
+  { id:'doctoral',        label:'Doctoral Researcher',       sub:'DBA, PhD, EdD, DProf',                       color:'#8B5CF6', features:['Thesis word count','Supervisor session log','Viva preparation','Weekly writing snapshots','AI research assistant'],         milestones:'14 milestones', professional:false },
+  { id:'masters',         label:"Master's Student",           sub:'MBA, MSc, MA, LLM, MArch',                   color:'#0EA5E9', features:['Module tracking','Dissertation progress','Assignment calendar','Research log','Grade tracker'],                              milestones:'11 milestones', professional:false },
+  { id:'undergraduate',   label:'Undergraduate',              sub:'BA, BSc, BEng, LLB + Placement',             color:'#10B981', features:['Year planner','Module grades','Final year project tracker','Placement coordinator','Assignment deadlines'],                   milestones:'8 milestones', professional:false },
+  { id:'cpd_professional',label:'CPD Professional',           sub:'RICS, ICAEW, ACCA, CIPD, CIMA, ICE…',       color:'#F59E0B', features:['CPD hours tracker','Annual declaration reminders','Ethics CPD flag','Certificate log','Multi-body support'],                  milestones:'8 CPD checkpoints', professional:false },
+  { id:'short_course',    label:'Short Course / Cert',        sub:'Online course, bootcamp, certification',     color:'#F97316', features:['Course tracker','Certificate portfolio','Learning streak','Skills log','Quick milestones'],                                    milestones:'5 milestones', professional:false },
+  { id:'apprentice',      label:'Apprentice',                 sub:'Degree or Higher Apprenticeship',            color:'#06B6D4', features:['Training log','Portfolio builder','EPA prep','Knowledge modules','Employer coordination'],                                     milestones:'6 milestones', professional:false },
 ] as const
 
 const CPD_BODIES = [
@@ -31,6 +36,7 @@ const CPD_BODIES = [
 ]
 
 type PersonaId = typeof PERSONAS[number]['id']
+type PersonaEntry = typeof PERSONAS[number]
 
 export default function LearningWizardPage() {
   const router   = useRouter()
@@ -45,11 +51,13 @@ export default function LearningWizardPage() {
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState<string|null>(null)
 
-  const isCpd  = persona === 'cpd_professional'
+  const isCpd         = persona === 'cpd_professional'
+  const isProfessional = ['founder','consultant','executive'].includes(persona as string)
   const isDba  = persona === 'doctoral'
-  const steps  = isCpd ? ['Persona','Body','Target','Review','Launch']
-               : isDba  ? ['Persona','Programme','Supervision','Review','Launch']
-               :           ['Persona','Programme','Review','Launch']
+  const steps  = isProfessional ? ['Persona','Business','Review','Launch']
+               : isCpd           ? ['Persona','Body','Target','Review','Launch']
+               : isDba           ? ['Persona','Programme','Supervision','Review','Launch']
+               :                   ['Persona','Programme','Review','Launch']
 
   const sel = PERSONAS.find(p => p.id === persona)
   const bod = CPD_BODIES.find(b => b.id === cpdBody)
@@ -63,7 +71,7 @@ export default function LearningWizardPage() {
       const r = await fetch('/api/learning-journey', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          action: 'complete_wizard', persona,
+          action: isProfessional ? 'complete_professional_wizard' : 'complete_wizard', persona,
           cpd_body:         isCpd ? cpdBody : null,
           cpd_hours_target: form.cpd_hours_target ? parseInt(form.cpd_hours_target) : 0,
           study_mode:       form.study_mode,
@@ -75,7 +83,7 @@ export default function LearningWizardPage() {
       })
       const d = await r.json()
       if (!d.ok) throw new Error(d.error ?? 'Setup failed')
-      router.push('/platform/learning')
+      router.push(d.redirect ?? (isProfessional ? '/platform/dashboard' : '/platform/learning'))
     } catch(e: unknown) { setError((e as Error).message) }
     finally { setSaving(false) }
   }
@@ -109,20 +117,74 @@ export default function LearningWizardPage() {
 
         {/* ── STEP 0: Persona ── */}
         {step===0 && (
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-            {PERSONAS.map(p => (
-              <button key={p.id} onClick={() => { setPersona(p.id); setStep(1) }}
-                style={{ background: persona===p.id ? p.color+'20' : C.card, border:`2px solid ${persona===p.id ? p.color : C.bd}`, borderRadius:12, padding:'14px 12px', cursor:'pointer', textAlign:'left' }}>
-                <p style={{ fontSize:13, fontWeight:700, color:C.text, margin:'0 0 3px' }}>{p.label}</p>
-                <p style={{ fontSize:10, color:C.sub, margin:'0 0 6px' }}>{p.sub}</p>
-                <p style={{ fontSize:10, color:p.color, margin:0 }}>{p.milestones}</p>
-              </button>
-            ))}
+          <div>
+            {/* Professional (PRIMARY) */}
+            <div style={{ marginBottom:16 }}>
+              <p style={{ fontSize:10, fontWeight:700, color:C.teal, textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 8px' }}>
+                ★ Professional — Primary Mode
+              </p>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
+                {PERSONAS.filter(p => (p as any).professional).map(p => (
+                  <button key={p.id} onClick={() => { setPersona(p.id); setStep(1) }}
+                    style={{ background: persona===p.id ? p.color+'25' : C.card, border:`2px solid ${persona===p.id ? p.color : C.teal+'40'}`, borderRadius:12, padding:'14px 12px', cursor:'pointer', textAlign:'left' }}>
+                    <p style={{ fontSize:13, fontWeight:700, color:C.text, margin:'0 0 2px' }}>{p.label}</p>
+                    <p style={{ fontSize:10, color:C.sub, margin:'0 0 6px' }}>{p.sub}</p>
+                    <p style={{ fontSize:10, color:p.color, margin:0, fontWeight:600 }}>{p.milestones}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Academic / CPD (SECONDARY) */}
+            <div>
+              <p style={{ fontSize:10, fontWeight:700, color:C.sub, textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 8px' }}>
+                Academic / CPD — Secondary Module Cluster
+              </p>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                {PERSONAS.filter(p => !(p as any).professional).map(p => (
+                  <button key={p.id} onClick={() => { setPersona(p.id); setStep(1) }}
+                    style={{ background: persona===p.id ? p.color+'20' : C.card, border:`2px solid ${persona===p.id ? p.color : C.bd}`, borderRadius:12, padding:'14px 12px', cursor:'pointer', textAlign:'left' }}>
+                    <p style={{ fontSize:13, fontWeight:700, color:C.text, margin:'0 0 2px' }}>{p.label}</p>
+                    <p style={{ fontSize:10, color:C.sub, margin:'0 0 6px' }}>{p.sub}</p>
+                    <p style={{ fontSize:10, color:p.color, margin:0 }}>{p.milestones}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+
+        {/* ── STEP 1: Business (Professional path) ── */}
+        {step===1 && isProfessional && (
+          <div style={{ background:C.card, border:`1px solid ${C.bd}`, borderRadius:14, padding:22 }}>
+            <h3 style={{ fontSize:14, fontWeight:700, color:C.text, margin:'0 0 6px' }}>Business profile</h3>
+            <p style={{ fontSize:11, color:C.sub, margin:'0 0 18px' }}>PIOS uses this to configure your Command Centre, Daily Brief, and Payroll Engine</p>
+            <div style={{ display:'grid', gap:12 }}>
+              {([
+                ['programme_name','Company / trading name','e.g. VeritasIQ Technologies Ltd','text'],
+                ['university','Industry / sector','e.g. SaaS, FM Consulting, Professional Services','text'],
+              ] as [string,string,string,string][]).map(([k,l,ph,t]) => (
+                <div key={k}>
+                  <label style={{ fontSize:11, color:C.sub, display:'block', marginBottom:4 }}>{l}</label>
+                  <input type={t} placeholder={ph} value={String((form as Record<string, unknown>)[k] ?? '')} onChange={e => setForm(p => ({...p,[k]:e.target.value}))} style={inp} />
+                </div>
+              ))}
+              <div>
+                <label style={{ fontSize:11, color:C.sub, display:'block', marginBottom:4 }}>Primary currency</label>
+                <select value={form.study_mode} onChange={e => setForm(p => ({...p,study_mode:e.target.value}))} style={{ ...inp, padding:'9px 12px' }}>
+                  <option value='GBP'>GBP — British Pound</option>
+                  <option value='USD'>USD — US Dollar</option>
+                  <option value='EUR'>EUR — Euro</option>
+                  <option value='AED'>AED — UAE Dirham</option>
+                  <option value='SAR'>SAR — Saudi Riyal</option>
+                </select>
+              </div>
+            </div>
           </div>
         )}
 
         {/* ── STEP 1: Programme (non-CPD) ── */}
-        {step===1 && !isCpd && (
+        {step===1 && !isCpd && !isProfessional && (
           <div style={{ background:C.card, border:`1px solid ${C.bd}`, borderRadius:14, padding:22 }}>
             <h3 style={{ fontSize:14, fontWeight:700, color:C.text, margin:'0 0 18px' }}>Programme details</h3>
             <div style={{ display:'grid', gap:12 }}>
@@ -186,9 +248,13 @@ export default function LearningWizardPage() {
         {/* ── Features review step ── */}
         {step===steps.length-2 && sel && (
           <div style={{ background:C.card, border:`1px solid ${C.bd}`, borderRadius:14, padding:22 }}>
-            <h3 style={{ fontSize:14, fontWeight:700, color:C.text, margin:'0 0 14px' }}>What PIOS will track for you</h3>
+            <h3 style={{ fontSize:14, fontWeight:700, color:C.text, margin:'0 0 6px' }}>{isProfessional ? 'Your Professional OS is ready' : 'What PIOS will track for you'}</h3>
+            {isProfessional && <p style={{ fontSize:11, color:C.sub, margin:'0 0 14px' }}>Your Command Centre, Daily Brief, and all 15 NemoClaw™ consulting frameworks will be activated.</p>}
             <div style={{ display:'grid', gap:8 }}>
-              {[...sel.features, 'AI Morning Brief', 'Smart Calendar', 'Task Manager', 'File Storage', 'Research Library'].map((f,i) => (
+              {(isProfessional
+                ? [...sel.features, 'Email AI (6 templates)', 'Payroll Engine', 'SE-MIL Knowledge Base', 'Group P&L Dashboard', 'Contract Register']
+                : [...sel.features, 'AI Morning Brief', 'Smart Calendar', 'Task Manager', 'File Storage', 'Research Library']
+              ).map((f,i) => (
                 <div key={f} style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <Check size={13} style={{ color: i < sel.features.length ? C.teal : C.muted, flexShrink:0 }} />
                   <span style={{ fontSize:13, color: i < sel.features.length ? C.text : C.sub }}>{f}</span>

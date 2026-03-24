@@ -21,6 +21,8 @@ const NAV = [
   { href: '/platform/comms',            icon: '📡', label: 'Comms Hub',          colour: '#3b82f6' as string, badge: 'BICA™' },
   { href: '/platform/time-sovereignty', icon: '⏱', label: 'Time Sovereignty',  colour: '#22d3ee' as string, badge: 'TSA™' },
   { href: '/platform/ip-vault',          icon: '🔐', label: 'IP Vault',           colour: '#a78bfa' as string },
+  { href: '/platform/knowledge',         icon: '🧠', label: 'SE-MIL',             colour: '#0d9488' as string },
+  { href: '/platform/notifications',     icon: '🔔', label: 'Notifications',      colour: '#f59e0b' as string },
   { href: '/platform/contracts',         icon: '📑', label: 'Contracts',          colour: '#3b82f6' as string },
   { href: '/platform/financials',        icon: '📈', label: 'Group P&L',          colour: '#22c55e' as string },
   { href: '/platform/intelligence',icon: '📡',label: 'Intelligence',     colour: '#22d3ee' as string },

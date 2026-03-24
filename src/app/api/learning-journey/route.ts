@@ -193,6 +193,22 @@ export async function POST(req: NextRequest) {
   const { action } = body
 
   // ── Wizard completion + persona seed ─────────────────────────────────────
+  // ── Professional wizard (founder / consultant / executive) ────────────────
+  if (action === 'complete_professional_wizard') {
+    const { persona, programme_name } = body as any
+
+    // Update profile with professional persona type
+    await (supabase as any).from('user_profiles').update({
+      persona_type:  persona ?? 'founder',
+      organisation:  programme_name ?? null,
+      job_title:     persona === 'founder' ? 'Founder / CEO'
+                   : persona === 'consultant' ? 'Consultant / Advisor'
+                   : 'Executive',
+    }).eq('id', user.id)
+
+    return NextResponse.json({ ok: true, redirect: '/platform/dashboard' })
+  }
+
   if (action === 'complete_wizard') {
     const { persona, cpd_body, cpd_hours_target, study_mode, supervisor_name, supervisor_email,
             programme_name, programme_type, wizard_persona } = body
