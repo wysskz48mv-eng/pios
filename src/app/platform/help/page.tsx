@@ -9,6 +9,11 @@ import Link from 'next/link'
 import { BookOpen, Keyboard, Zap, MessageSquare, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react'
 
 const SHORTCUTS = [
+
+  {
+    q: 'How do I search across all my data?',
+    a: 'Press ⌘K (Mac) or Ctrl+K (Windows) from anywhere in PIOS to open global search. Type to search across tasks, projects, meetings, files, knowledge entries, expenses, contracts, and IP assets in real-time. Click any result to navigate directly to that module.',
+  },
   { key: 'Ctrl + K', action: 'Open AI Companion chat' },
   { key: 'G then D', action: 'Go to Dashboard' },
   { key: 'G then T', action: 'Go to Tasks' },

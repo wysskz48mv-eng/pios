@@ -100,15 +100,25 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
         }}>
           {/* Mobile: hamburger */}
           {isMobile && (
-            <button onClick={() => setMenuOpen(true)} style={{
-              background: 'none', border: '1px solid var(--pios-border)',
-              borderRadius: 8, padding: '6px 10px',
-              color: 'var(--pios-muted)', cursor: 'pointer', fontSize: 14,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <span style={{ fontSize: 16 }}>☰</span>
-              <span style={{ fontSize: 11 }}>Menu</span>
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setMenuOpen(true)} style={{
+                background: 'none', border: '1px solid var(--pios-border)',
+                borderRadius: 8, padding: '6px 10px',
+                color: 'var(--pios-muted)', cursor: 'pointer', fontSize: 14,
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <span style={{ fontSize: 16 }}>☰</span>
+                <span style={{ fontSize: 11 }}>Menu</span>
+              </button>
+              <a href="/platform/dashboard#brief" style={{
+                background: 'none', border: '1px solid var(--pios-border)',
+                borderRadius: 8, padding: '6px 10px',
+                color: 'var(--pios-muted)', cursor: 'pointer', fontSize: 11,
+                display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none',
+              }}>
+                <span>✦</span> PIOS
+              </a>
+            </div>
           )}
 
           {/* Desktop: spacer */}
