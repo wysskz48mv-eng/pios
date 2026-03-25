@@ -177,7 +177,7 @@ export default function IPVaultPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-sm text-muted-foreground">
           <Shield className="w-8 h-8 mx-auto mb-3 opacity-20" />
-          <p>No IP assets registered yet.</p>
+          <p>No IP assets registered yet. Use the Seed NemoClaw™ button above to register all 15 proprietary frameworks.</p>
           <p className="mt-1 text-xs">Start by adding your proprietary frameworks, trademarks, and methodologies.</p>
         </div>
       ) : (

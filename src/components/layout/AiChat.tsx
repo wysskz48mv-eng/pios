@@ -34,10 +34,10 @@ export function AiChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   }
 
   const QUICK = [
-    'What\'s my single most important task today?',
-    'Any cross-domain conflicts I should know about?',
-    'Summarise my DBA thesis progress',
-    'What has changed in VeritasEdge™ this sprint?',
+    "What should I focus on today?",
+    "Summarise my open decisions",
+    "What are my at-risk OKRs?",
+    "Draft a brief using POM™ framework",
   ]
 
   if (!isOpen) return null

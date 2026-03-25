@@ -88,7 +88,7 @@ export default function IntelligencePage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground text-sm">
           <Rss className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          No items yet. Click Refresh to populate the feed.
+          No intelligence items yet. Add feeds in the Command Centre, then refresh.
         </div>
       ) : (
         <div className="space-y-3">

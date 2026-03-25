@@ -262,7 +262,12 @@ export default function ExecutivePage() {
                 <ProgressBar value={o.progress} color={o.health === 'on_track' ? 'bg-green-500' : o.health === 'at_risk' ? 'bg-amber-500' : 'bg-red-500'} />
               </div>
             ))}
-            {okrs.length === 0 && <p className="text-xs text-muted-foreground">No active OKRs. Add one to start tracking.</p>}
+            {okrs.length === 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">No active OKRs. Add one to start tracking.</p>
+                <button onClick={() => { setActiveTab('okrs') }} className="pios-btn pios-btn-ghost" style={{ fontSize:11, marginTop:8 }}>+ Add OKR</button>
+              </div>
+            )}
           </div>
 
           {/* Report Pack */}
