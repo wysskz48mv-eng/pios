@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -51,7 +51,25 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
   const router   = useRouter()
   const supabase = createClient()
   const [collapsed, setCollapsed] = useState(false)
+  const [searchOpen, setSearchOpen]     = useState(false)
+  const [searchQ, setSearchQ]           = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searching, setSearching]       = useState(false)
+  const searchRef                        = useRef<HTMLInputElement>(null)
   const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+        setTimeout(() => searchRef.current?.focus(), 50)
+      }
+      if (e.key === 'Escape') { setSearchOpen(false); setSearchQ(''); setSearchResults([]) }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   useEffect(() => {
     // Poll notifications every 60s
@@ -64,6 +82,17 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
     const interval = setInterval(load, 60000)
     return () => clearInterval(interval)
   }, [])
+
+  const doSearch = async (q: string) => {
+    if (q.length < 2) { setSearchResults([]); return }
+    setSearching(true)
+    try {
+      const r = await fetch('/api/search?q=' + encodeURIComponent(q))
+      const d = await r.json()
+      setSearchResults(d.results ?? [])
+    } catch { setSearchResults([]) }
+    setSearching(false)
+  }
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -111,6 +140,75 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
           </div>
         )}
       </div>
+
+
+      {/* ── Search ── */}
+      {!collapsed && (
+        <div style={{ padding: '0 8px 8px' }}>
+          <button onClick={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 50) }}
+            style={{ width:'100%', display:'flex', alignItems:'center', gap:8, padding:'7px 10px',
+              borderRadius:8, background:'var(--pios-surface2)', border:'1px solid var(--pios-border)',
+              color:'var(--pios-dim)', cursor:'pointer', fontSize:12, textAlign:'left' as const }}>
+            <span style={{ fontSize:14 }}>🔍</span>
+            <span style={{ flex:1 }}>Search…</span>
+            <span style={{ fontSize:10, opacity:0.5 }}>⌘K</span>
+          </button>
+        </div>
+      )}
+
+      {/* ── Search overlay ── */}
+      {searchOpen && (
+        <div style={{ position:'fixed' as const, inset:0, zIndex:200, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:80 }}
+          onClick={e => { if (e.target === e.currentTarget) { setSearchOpen(false); setSearchQ(''); setSearchResults([]) } }}>
+          <div style={{ width:'100%', maxWidth:560, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:14, overflow:'hidden', boxShadow:'0 20px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', borderBottom:'1px solid var(--pios-border)' }}>
+              <span style={{ fontSize:16, color:'var(--pios-dim)' }}>🔍</span>
+              <input ref={searchRef} value={searchQ}
+                onChange={e => { setSearchQ(e.target.value); doSearch(e.target.value) }}
+                placeholder="Search tasks, projects, meetings, files, knowledge…"
+                style={{ flex:1, background:'none', border:'none', outline:'none', fontSize:14, color:'var(--pios-text)', fontFamily:'inherit' }} />
+              {searching && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>⟳</span>}
+              <button onClick={() => { setSearchOpen(false); setSearchQ(''); setSearchResults([]) }}
+                style={{ background:'none', border:'1px solid var(--pios-border)', borderRadius:4, padding:'2px 6px', fontSize:10, color:'var(--pios-dim)', cursor:'pointer' }}>ESC</button>
+            </div>
+            {searchResults.length > 0 ? (
+              <div style={{ maxHeight:360, overflowY:'auto' }}>
+                {searchResults.map((r: any, i: number) => {
+                  const typeColors: Record<string,string> = {
+                    task:'#a78bfa', project:'#22d3ee', meeting:'#2dd4a0', file:'#f59e0b',
+                    knowledge:'#0d9488', expense:'#f59e0b', contract:'#3b82f6', ip_asset:'#e05a7a',
+                  }
+                  const color = typeColors[r.type] ?? '#64748b'
+                  return (
+                    <a key={i} href={r.href} onClick={() => { setSearchOpen(false); setSearchQ(''); setSearchResults([]) }}
+                      style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'10px 16px',
+                        borderBottom:'1px solid var(--pios-border)', textDecoration:'none',
+                        cursor:'pointer', transition:'background 0.1s' }}
+                      onMouseEnter={e => (e.currentTarget.style.background='var(--pios-surface2)')}
+                      onMouseLeave={e => (e.currentTarget.style.background='transparent')}>
+                      <span style={{ fontSize:9, fontWeight:700, padding:'2px 6px', borderRadius:4, background:color+'20', color, flexShrink:0, marginTop:3, letterSpacing:'0.05em', textTransform:'uppercase' as const }}>
+                        {r.type.replace('_',' ')}
+                      </span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:13, fontWeight:600, color:'var(--pios-text)', marginBottom:2 }}>{r.title}</div>
+                        {r.subtitle && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{r.subtitle}</div>}
+                      </div>
+                    </a>
+                  )
+                })}
+              </div>
+            ) : searchQ.length >= 2 && !searching ? (
+              <div style={{ padding:'32px 16px', textAlign:'center' as const, color:'var(--pios-muted)', fontSize:13 }}>
+                No results for "{searchQ}"
+              </div>
+            ) : searchQ.length < 2 ? (
+              <div style={{ padding:'20px 16px', color:'var(--pios-dim)', fontSize:12 }}>
+                Type at least 2 characters to search across tasks, projects, meetings, files, knowledge, expenses, contracts, and IP assets.
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
