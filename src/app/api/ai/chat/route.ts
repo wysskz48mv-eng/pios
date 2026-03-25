@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       .maybeSingle()
     const tc = trainCfg as any
 
-    const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR] = await Promise.all([
+    const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR, calendarR] = await Promise.all([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
         .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
         .order('due_date', { ascending: true }).limit(15),
@@ -81,6 +81,11 @@ export async function POST(request: Request) {
         .order('created_at', { ascending: false }).limit(5),
       supabase.from('daily_briefs').select('content')
         .eq('user_id', user.id).eq('brief_date', today).maybeSingle(),
+      supabase.from('calendar_events').select('title,start_time,end_time,all_day')
+        .eq('user_id', user.id)
+        .gte('start_time', new Date().toISOString().slice(0,10))
+        .lte('start_time', new Date(Date.now() + 86400000).toISOString().slice(0,10))
+        .order('start_time').limit(8),
     ])
 
     const tasks    = tasksR.data ?? []
@@ -153,6 +158,12 @@ export async function POST(request: Request) {
 
       (notifsR.data ?? []).length > 0
         ? `ALERTS: ` + (notifsR.data ?? []).map(n => `${n.title} [${n.type}]`).join('; ')
+        : null,
+      (calendarR as any)?.data?.length > 0
+        ? "TODAY'S SCHEDULE (" + String((calendarR as any)?.data?.length ?? 0) + " events): " +
+          ((calendarR as any)?.data as any[] ?? []).map((e: any) =>
+            String(e.title ?? e.summary ?? '') + " @ " + (e.all_day ? 'all-day' : new Date(e.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}))
+          ).join('; ')
         : null,
       execCtxStr || null,
     ].filter(Boolean).join('\n')

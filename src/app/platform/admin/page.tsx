@@ -347,7 +347,8 @@ export default function AdminPage() {
             { key:'STRIPE_PRICE_PROFESSIONAL',     value:'price_...',                                required:false },
             { key:'SUPABASE_SE_SERVICE_KEY',       value:'SE project service role key (for Command Centre live data)', required:false },
             { key:'SUPABASE_IS_SERVICE_KEY',       value:'InvestiScript service role key (for Command Centre live data)', required:false },
-            { key:'CRON_SECRET',                   value:'Secret token for Vercel cron jobs (Bearer auth on /api/cron/*)', required:true },
+            { key:'DIRECT_URL', label:'Direct DB URL', desc:'Required for admin migration runner. From Supabase → Settings → Database → Connection String (direct)', required:true },
+          { key:'CRON_SECRET',                   value:'Secret token for Vercel cron jobs (Bearer auth on /api/cron/*)', required:true },
           ].map(v=>(
             <div key={v.key} style={{ display:'flex', gap:10, alignItems:'center', padding:'6px 10px', borderRadius:6, background:'var(--pios-surface2)', fontFamily:'monospace', fontSize:11 }}>
               <span style={{ fontWeight:700, color:'#a78bfa', minWidth:240 }}>{v.key}</span>

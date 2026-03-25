@@ -86,7 +86,11 @@ const FAQ = [
   },
   {
     q: 'How do I run the M019/M020 database migrations?',
-    a: 'Go to Admin → click the Supabase SQL Editor link → paste the contents of supabase/migrations/019_ip_vault_contracts_financials.sql and run it. Then do the same for M020. These unlock IP Vault, Contracts, Group P&L, and SE-MIL Knowledge Base.',
+    a: 'Go to /platform/admin → scroll to the Migrations section → find M019 and M020 in the list → click Run for each. M019 unlocks IP Vault, Contracts, and Group P&L. M020 unlocks the SE-MIL Knowledge Base. After M019 runs, go to /platform/ip-vault and click Seed NemoClaw™ to register all 15 proprietary frameworks.',
+  },
+  {
+    q: 'Why is the admin Run button for M019/M020 failing?',
+    a: 'The Run button requires DIRECT_URL or DATABASE_URL to be set in your Vercel environment variables — this is the direct PostgreSQL connection string from Supabase (not the standard API URL). Go to Supabase Dashboard → Settings → Database → Connection String → copy the direct URL and add it as DIRECT_URL in Vercel.',
   },
 ]
 

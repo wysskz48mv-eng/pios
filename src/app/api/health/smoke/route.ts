@@ -203,6 +203,17 @@ export async function GET() {
   }))
 
 
+  checks.push(await runCheck('db_direct_url', 'Direct DB URL (for admin migrations)', false, async () => {
+    const url = process.env.DIRECT_URL ?? process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL
+    if (!url) return {
+      ok: false,
+      detail: 'Set DIRECT_URL in Vercel env vars (Supabase Dashboard → Settings → Database → Connection String). Required for running migrations from /platform/admin.',
+      warn: true,
+    }
+    return { ok: true, detail: 'Direct DB connection configured — admin migrations enabled' }
+  }))
+
+
   return NextResponse.json({
     ok:            overallOk,
     status:        overallOk ? (warns > 0 ? 'degraded' : 'healthy') : 'critical',

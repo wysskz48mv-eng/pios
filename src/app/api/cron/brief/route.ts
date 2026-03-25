@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     const briefTc = briefTcData as any
     try {
       // Gather full context for this user
-      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR, okrsR, decisionsR] = await Promise.all([
+      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR, okrsR, decisionsR, calCronR] = await Promise.all([
         admin.from('tasks').select('title,domain,priority,due_date,status')
           .eq('user_id', uid).not('status', 'in', '("done","cancelled")')
           .order('due_date', { ascending: true }).limit(15),
@@ -110,6 +110,12 @@ export async function GET(req: NextRequest) {
           .eq('user_id', uid).eq('status', 'active').order('health').limit(5),
         admin.from('exec_decisions').select('title,framework_used,status')
           .eq('user_id', uid).eq('status', 'open').limit(4),
+        // Today's calendar
+        admin.from('calendar_events').select('title,start_time,all_day')
+          .eq('user_id', uid)
+          .gte('start_time', new Date().toISOString().slice(0,10))
+          .lte('start_time', new Date(Date.now() + 86400000).toISOString().slice(0,10))
+          .order('start_time').limit(8),
       ])
 
       const tasks     = tasksR.data ?? []
@@ -206,6 +212,14 @@ export async function GET(req: NextRequest) {
           ? `EXECUTIVE OKRs (${(okrs as any[]).length} active):\n` +
             (okrs as any[]).map((o: any) => `- ${o.health === 'at_risk' ? '⚠ ' : ''}${o.title} — ${o.progress ?? 0}% (${o.period ?? ''}) [${o.health ?? 'unknown'}]`).join('\n')
           : '',
+
+
+        (calCronR as any)?.data?.length > 0
+          ? "TODAY'S CALENDAR (" + String((calCronR as any).data.length) + " events): " +
+            ((calCronR as any).data as any[]).map((e: any) =>
+              String(e.title ?? '') + (e.all_day ? " (all-day)" : " @ " + new Date(e.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}))
+            ).join('; ')
+          : null,
 
         (decisions as any[]).length > 0
           ? `OPEN DECISIONS REQUIRING ACTION (${(decisions as any[]).length}):\n` +

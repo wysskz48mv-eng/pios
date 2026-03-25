@@ -66,7 +66,8 @@ export async function POST(req: NextRequest) {
     ]) : Promise.resolve(null)
 
     // Gather all context in parallel
-    const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR] = await Promise.all([
+    const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR,
+        calendarBriefR] = await Promise.all([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
         .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
         .order('due_date', { ascending: true }).limit(15),
@@ -108,6 +109,12 @@ export async function POST(req: NextRequest) {
         .eq('user_id', user.id).eq('is_receipt', true)
         .gte('received_at', new Date(Date.now() - 48 * 3600000).toISOString())
         .order('received_at', { ascending: false }).limit(5),
+        // Today's calendar events
+        supabase.from('calendar_events').select('title,start_time,end_time,all_day')
+          .eq('user_id', user.id)
+          .gte('start_time', new Date().toISOString().slice(0,10))
+          .lte('start_time', new Date(Date.now() + 86400000).toISOString().slice(0,10))
+          .order('start_time').limit(10),
     ])
 
     const tasks     = tasksR.data ?? []
