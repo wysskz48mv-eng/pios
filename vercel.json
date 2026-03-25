@@ -55,6 +55,30 @@
     },
     "src/app/api/sia/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/cron/weekly/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/milestone-alerts/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/supervisor-digest/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/admin/run-migration/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/ai/chat/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/files/scan/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/meetings/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/payroll/detect/route.ts": {
+      "maxDuration": 60
     }
   },
   "regions": [

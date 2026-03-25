@@ -206,7 +206,7 @@ export default function KnowledgePage() {
           ) : entries.length === 0 ? (
             <div className="text-center py-12 text-sm text-muted-foreground">
               <Brain className="w-8 h-8 mx-auto mb-3 opacity-20" />
-              <p>No knowledge entries yet.</p>
+              <p>No knowledge entries yet. Use + Add Entry to capture case studies, client insights, market intelligence, or lessons learned. The AI can also search and save from Research Hub.</p>
               <p className="mt-1 text-xs">Start by adding notes, articles, case studies, and lessons learned from your work.</p>
               <button onClick={() => setMode('add')} className="mt-4 px-4 py-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 text-sm hover:bg-teal-500/15">
                 + Add first entry

@@ -156,7 +156,7 @@ export default function ContractsPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-sm text-muted-foreground">
           <FileText className="w-8 h-8 mx-auto mb-3 opacity-20" />
-          <p>No contracts registered yet.</p>
+          <p>No contracts yet. Register client, supplier, and employment agreements using + New Contract above.</p>
         </div>
       ) : (
         <div className="space-y-2">
