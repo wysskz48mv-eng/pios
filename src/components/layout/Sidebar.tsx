@@ -32,6 +32,7 @@ const NAV = [
   { href: '/platform/expenses',  icon: '£',  label: 'Expenses',       colour: '#e05a7a' as string },
   { href: '/platform/ai',        icon: '◉',  label: 'AI Companion',   colour: '#a78bfa' as string },
   { href: '/platform/help',       icon: '❓', label: 'Help',           colour: '#a78bfa' as string },
+  { href: '/platform/billing',     icon: '💳', label: 'Billing',        colour: '#22c55e' as string },
   { href: '/platform/changelog',   icon: '📋', label: "What's New",     colour: '#22c55e' as string },
   { href: '/platform/setup',       icon: '⚡', label: 'Setup Guide',    colour: '#f59e0b' as string },
   { href: '/platform/smoke',     icon: '✓',  label: 'Smoke Test',     colour: '#22c55e' as string },
