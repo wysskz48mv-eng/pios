@@ -56,7 +56,33 @@ export default function ExecutivePage() {
   const [brief, setBrief]           = useState<string | null>(null)
   const [briefLoading, setBriefLoading] = useState(false)
   const [loading, setLoading]       = useState(true)
-  const [activeTab, setActiveTab]   = useState<'overview'|'okrs'|'decisions'|'stakeholders'|'time'>('overview')
+  const [contracts, setContracts]       = useState<Record<string,any>[]>([])
+  const [financial,  setFinancial]       = useState<Record<string,any>|null>(null)
+  const [ctLoading,  setCtLoading]       = useState(false)
+  const [finLoading, setFinLoading]      = useState(false)
+
+  const loadContracts = async () => {
+    setCtLoading(true)
+    try {
+      const r = await fetch('/api/contracts')
+      if (r.ok) { const d = await r.json(); setContracts(d.contracts ?? []) }
+    } catch { /* silent */ } finally { setCtLoading(false) }
+  }
+  const loadFinancial = async () => {
+    setFinLoading(true)
+    try {
+      const r = await fetch('/api/financials')
+      if (r.ok) { const d = await r.json(); setFinancial(d) }
+    } catch { /* silent */ } finally { setFinLoading(false) }
+  }
+
+  const [activeTab, setActiveTab]   = useState<'overview'|'okrs'|'decisions'|'stakeholders'|'time'|'contracts'|'financial'>('overview')
+
+  useEffect(() => {
+    if (activeTab === 'contracts') loadContracts()
+    if (activeTab === 'financial') loadFinancial()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
   const [reportPack, setReportPack] = useState<string | null>(null)
   const [genReport, setGenReport]   = useState(false)
   const [reportCopied, setRepCopied] = useState(false)
@@ -495,6 +521,76 @@ export default function ExecutivePage() {
       )}
 
       {/* ── TIME ──────────────────────────────────────────── */}
+
+      {activeTab === 'contracts' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold">Contract Register</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Active and expiring contracts across all entities</p>
+            </div>
+            <a href="/platform/contracts" className="text-xs text-violet-500 hover:underline">Open full register →</a>
+          </div>
+          {ctLoading ? (
+            <div className="text-xs text-muted-foreground animate-pulse p-8 text-center">Loading contracts…</div>
+          ) : contracts.length === 0 ? (
+            <div className="rounded-xl border p-10 text-center text-sm text-muted-foreground">
+              <p className="mb-2 font-medium">No contracts registered</p>
+              <a href="/platform/contracts" className="text-violet-500 text-xs hover:underline">+ Register a contract</a>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {contracts.map((c: Record<string,any>) => (
+                <div key={c.id} className="rounded-lg border p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{c.title}</p>
+                    <p className="text-xs text-muted-foreground">{c.counterparty} · {c.contract_type}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-medium">{c.value ? '£' + Number(c.value).toLocaleString() : '—'}</p>
+                    <p className={`text-[10px] px-2 py-0.5 rounded-full ${c.status === 'active' ? 'bg-green-100 text-green-700' : c.status === 'expiring_soon' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {c.status?.replace('_',' ') ?? 'unknown'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'financial' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold">Group P&L</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Aggregated expenses, payroll and contracts</p>
+            </div>
+            <a href="/platform/financials" className="text-xs text-violet-500 hover:underline">Full P&L →</a>
+          </div>
+          {finLoading ? (
+            <div className="text-xs text-muted-foreground animate-pulse p-8 text-center">Loading financials…</div>
+          ) : !financial ? (
+            <div className="rounded-xl border p-10 text-center text-sm text-muted-foreground">
+              <p className="mb-2 font-medium">No financial data yet</p>
+              <p className="text-xs">Add expenses and contracts to see P&L summary</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'Total Expenses', value: financial?.total_expenses ?? 0, colour: 'text-red-500' },
+                { label: 'Payroll', value: financial?.total_payroll ?? 0, colour: 'text-amber-500' },
+                { label: 'Contracts', value: financial?.total_contracts ?? 0, colour: 'text-blue-500' },
+              ].map(({ label, value, colour }) => (
+                <div key={label} className="rounded-xl border p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                  <p className={`text-xl font-bold ${colour}`}>£{Number(value).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {activeTab === 'time' && (
         <div className="text-center py-16 text-muted-foreground">
           <Clock className="w-10 h-10 mx-auto mb-3 text-cyan-400/40" />
