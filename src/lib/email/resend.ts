@@ -135,6 +135,10 @@ export function morningBriefHtml(briefContent: string, date: string, userName: s
         </td></tr>
       </table>
     </td></tr>
+      <tr><td style="padding:16px;text-align:center;font-size:10px;color:#3a3f52;border-top:1px solid #1e2330;">
+        PIOS · VeritasIQ Technologies Ltd ·
+        <a href=\"${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'}/platform/settings#notifications\" style=\"color:#555c70;text-decoration:underline;\">Manage email preferences</a>
+      </td></tr>
   </table>
 </body>
 </html>`
@@ -265,6 +269,10 @@ export function weeklyDigestHtml(d: WeeklyDigestData): string {
 
       </table>
     </td></tr>
+      <tr><td style="padding:16px;text-align:center;font-size:10px;color:#3a3f52;border-top:1px solid #1e2330;">
+        PIOS · VeritasIQ Technologies Ltd ·
+        <a href=\"${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'}/platform/settings#notifications\" style=\"color:#555c70;text-decoration:underline;\">Manage email preferences</a>
+      </td></tr>
   </table>
 </body>
 </html>`

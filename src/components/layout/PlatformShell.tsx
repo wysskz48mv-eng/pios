@@ -5,6 +5,7 @@ import { AiChat } from './AiChat'
 import { TrialBanner } from '@/components/TrialBanner'
 import { TrialExpiredGate } from '@/components/TrialExpiredGate'
 import Link from 'next/link'
+import { GlobalSearch } from '@/components/GlobalSearch'
 import { usePathname } from 'next/navigation'
 
 interface PlatformShellProps {
@@ -121,7 +122,24 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
             </div>
           )}
 
-          {/* Desktop: spacer */}
+          {/* Desktop: ⌘K search trigger */}
+          {!isMobile && (
+            <button
+              onClick={() => {
+                const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true })
+                window.dispatchEvent(event)
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', borderRadius: 8, cursor: 'pointer',
+                background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)',
+                color: 'var(--pios-dim)', fontSize: 12,
+              }}
+            >
+              🔍 Search
+              <kbd style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'var(--pios-surface)', border: '1px solid var(--pios-border)', color: 'var(--pios-dim)' }}>⌘K</kbd>
+            </button>
+          )}
           {!isMobile && <div style={{ flex: 1 }} />}
 
           {/* Right side: credits + AI button */}
@@ -207,6 +225,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
       {isExpired && (
         <TrialExpiredGate userName={userProfile?.full_name as string | undefined} />
       )}
+      <GlobalSearch />
       {chatOpen && <AiChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />}
 
     </div>
