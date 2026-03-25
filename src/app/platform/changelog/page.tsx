@@ -11,6 +11,10 @@ export default function ChangelogPage() {
       badge: 'Latest',
       badgeColor: '#22c55e',
       changes: [
+        { type: 'new', text: 'Billing page — plan cards (Student/Individual/Team), Stripe checkout, usage limits display' },
+        { type: 'new', text: 'Executive OS: Contracts tab (live data, status badges) + Financial tab (Group P&L summary)' },
+        { type: 'new', text: 'Payroll: Edit and remove staff members inline (✎ / ✕ per card)' },
+        { type: 'improve', text: 'Onboarding wizard — CEO/Founder PRIMARY persona with NemoClaw™ seed on completion' },
         { type: 'fix', text: 'Middleware Edge Runtime crash — platform now fully accessible (MIDDLEWARE_INVOCATION_FAILED)' },
         { type: 'fix', text: 'Pricing and onboarding pages unblocked for unauthenticated visitors' },
         { type: 'fix', text: '14-day trial (was 3 days) — new signups get individual plan with full access' },

@@ -342,7 +342,10 @@ function ClaimsTab() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState('submitted')
   const [actioning, setActioning] = useState<string|null>(null)
-  const [showAdd, setShowAdd] = useState(false)
+  const [showAdd, setShowAdd]       = useState(false)
+  const [editingId, setEditingId]   = useState<string|null>(null)
+  const [editForm, setEditForm]     = useState<Record<string,any>>({})
+  const [deleting, setDeleting]     = useState<string|null>(null)
   const [form, setForm]       = useState({ claimant_name:'', claimant_email:'', amount:'', currency:'GBP', description:'', claim_period:'', category:'' })
   const [saving, setSaving]   = useState(false)
 
@@ -452,7 +455,10 @@ function ClaimsTab() {
 function StaffTab() {
   const [staff, setStaff]     = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
+  const [showAdd, setShowAdd]       = useState(false)
+  const [editingId, setEditingId]   = useState<string|null>(null)
+  const [editForm, setEditForm]     = useState<Record<string,any>>({})
+  const [deleting, setDeleting]     = useState<string|null>(null)
   const [saving, setSaving]   = useState(false)
   const [form, setForm]       = useState({ full_name:'', email:'', role:'', company_entity:'VeritasIQ Technologies Ltd', employment_type:'employee', salary_currency:'GBP', monthly_salary:'', bank_account:'', payment_method:'bank_transfer' })
 
@@ -461,6 +467,21 @@ function StaffTab() {
     fetch('/api/payroll?type=staff').then(r=>r.json()).then(d=>{ setStaff((d.staff ?? []) as StaffMember[]); setLoading(false) })
   }
   useEffect(() => { load() }, [])
+
+  async function deleteStaff(id: string) {
+    if (!confirm('Remove this staff member? This cannot be undone.')) return
+    setDeleting(id)
+    await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'delete_staff', id }) })
+    setDeleting(null); load()
+  }
+
+  async function saveEdit(id: string) {
+    setSaving(true)
+    await fetch('/api/payroll', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'update_staff', id, ...editForm }) })
+    setEditingId(null); setSaving(false); load()
+  }
 
   async function addStaff() {
     if (!form.full_name.trim() || !form.email.trim()) return
@@ -513,7 +534,8 @@ function StaffTab() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
           {staff.map(s => (
-            <div key={s.id as string} className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
+            <div key={s.id as string}>
+            <div className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(167,139,250,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>{s.full_name?.[0] ?? ""}</div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{String(s.full_name ?? "")}</div>
@@ -523,10 +545,33 @@ function StaffTab() {
                   <span>·</span><span>{String(s.employment_type ?? "")}</span>
                 </div>
               </div>
-              <div style={{ textAlign:'right' as const }}>
+              <div style={{ textAlign:'right' as const, flexShrink:0 }}>
                 <div style={{ fontSize:13, fontWeight:700 }}>{s.salary_currency} {Number(s.monthly_salary ?? 0).toFixed(0)}/mo</div>
                 <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{s.company_entity?.replace('VeritasIQ Technologies Ltd','VIQ').replace('Sustain International UK Ltd','SI UK')}</div>
               </div>
+              <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                <button onClick={() => { setEditingId(s.id as string); setEditForm({ role: s.role, monthly_salary: s.monthly_salary, salary_currency: s.salary_currency, employment_type: s.employment_type }) }}
+                  style={{ fontSize:11, padding:'4px 8px', borderRadius:5, border:'1px solid var(--pios-border)', background:'none', cursor:'pointer', color:'var(--pios-dim)' }}>✎</button>
+                <button onClick={() => deleteStaff(s.id as string)} disabled={deleting === (s.id as string)}
+                  style={{ fontSize:11, padding:'4px 8px', borderRadius:5, border:'1px solid rgba(239,68,68,0.3)', background:'none', cursor:'pointer', color:'#ef4444', opacity: deleting === (s.id as string) ? 0.5 : 1 }}>✕</button>
+              </div>
+            </div>
+            {editingId === (s.id as string) && (
+              <div style={{ marginTop:8, padding:'10px', background:'var(--pios-surface2)', borderRadius:8, display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+                <input className="pios-input" placeholder="Role" value={String(editForm.role ?? '')} onChange={e=>setEditForm((p:any)=>({...p,role:e.target.value}))} />
+                <select className="pios-input" value={String(editForm.employment_type ?? 'employee')} onChange={e=>setEditForm((p:any)=>({...p,employment_type:e.target.value}))}>
+                  {['employee','contractor','consultant','director'].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <select className="pios-input" value={String(editForm.salary_currency ?? 'GBP')} onChange={e=>setEditForm((p:any)=>({...p,salary_currency:e.target.value}))}>
+                  {['GBP','USD','SAR','AED','EUR'].map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <input className="pios-input" type="number" placeholder="Monthly salary" value={String(editForm.monthly_salary ?? '')} onChange={e=>setEditForm((p:any)=>({...p,monthly_salary:e.target.value}))} />
+                <div style={{ display:'flex', gap:6, gridColumn:'span 2' }}>
+                  <button className="pios-btn pios-btn-primary" onClick={()=>saveEdit(s.id as string)} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save'}</button>
+                  <button className="pios-btn pios-btn-ghost" onClick={()=>setEditingId(null)} style={{ fontSize:12 }}>Cancel</button>
+                </div>
+              </div>
+            )}
             </div>
           ))}
         </div>

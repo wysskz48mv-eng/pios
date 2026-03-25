@@ -167,6 +167,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ added: true, id: data?.id })
     }
 
+    if (action === 'update_staff') {
+      const { id: staffId, ...updates } = body
+      if (!staffId) return NextResponse.json({ error: 'id required' }, { status: 400 })
+      await (supabase as any).from('staff_members')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', staffId).eq('user_id', user.id)
+      return NextResponse.json({ updated: true })
+    }
+
+    if (action === 'delete_staff') {
+      const { id: staffId } = body
+      if (!staffId) return NextResponse.json({ error: 'id required' }, { status: 400 })
+      await (supabase as any).from('staff_members').delete().eq('id', staffId).eq('user_id', user.id)
+      return NextResponse.json({ deleted: true })
+    }
+
     // Approve expense claim
     if (action === 'approve_claim') {
       const { claim_id } = body
