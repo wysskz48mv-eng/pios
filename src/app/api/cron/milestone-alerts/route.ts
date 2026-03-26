@@ -26,8 +26,9 @@ function fmtDate(d: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get('x-cron-secret')
-  if (secret !== process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
+  const authHeader = req.headers.get('authorization') ?? ''
+  const cronOk = process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`
+  if (!cronOk && process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
