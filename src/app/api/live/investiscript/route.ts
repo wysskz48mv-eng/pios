@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient as createExternalClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 
 // GET /api/live/investiscript
 // Pulls live metrics from the InvestiScript Supabase project.
@@ -16,7 +15,7 @@ const IS_KEY = process.env.SUPABASE_IS_SERVICE_KEY ?? ''
 
 export async function GET(_req: NextRequest) {
   // Auth guard — must be a signed-in PIOS user
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = createClient()
   const { data: { user }, error: authErr } = await supabase.auth.getUser()
   if (authErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -31,7 +30,7 @@ export async function GET(_req: NextRequest) {
   }
 
   try {
-    const is = createClient(IS_URL, IS_KEY, { auth: { persistSession: false } })
+    const is = createExternalClient(IS_URL, IS_KEY, { auth: { persistSession: false } })
     const now = new Date()
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400_000).toISOString()
     const sevenDaysAgo  = new Date(Date.now() -  7 * 86400_000).toISOString()

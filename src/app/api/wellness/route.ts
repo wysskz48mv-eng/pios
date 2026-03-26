@@ -153,20 +153,24 @@ Respond with JSON only:
 
     // Update / upsert streak
     const today = new Date().toISOString().slice(0, 10)
-    await supabase.rpc('upsert_wellness_streak', {
-      p_user_id: user.id,
-      p_streak_type: 'daily_checkin',
-      p_activity_date: today,
-    }).catch(() => {
-      // RPC may not exist yet — upsert manually
-      supabase.from('wellness_streaks')
-        .upsert({
-          user_id: user.id,
-          streak_type: 'daily_checkin',
-          last_activity_date: today,
-        }, { onConflict: 'user_id,streak_type' })
-        .then(() => null)
-    })
+    try {
+      const { error: rpcErr } = await supabase.rpc('upsert_wellness_streak', {
+        p_user_id: user.id,
+        p_streak_type: 'daily_checkin',
+        p_activity_date: today,
+      })
+      if (rpcErr) {
+        // RPC may not exist yet — upsert manually
+        await supabase.from('wellness_streaks')
+          .upsert({
+            user_id: user.id,
+            streak_type: 'daily_checkin',
+            last_activity_date: today,
+          }, { onConflict: 'user_id,streak_type' })
+      }
+    } catch {
+      // ignore streak errors — non-fatal
+    }
 
     return NextResponse.json({ session, ai_insight, ai_recommended_actions }, { status: 201 })
   }
