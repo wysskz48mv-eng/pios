@@ -121,10 +121,11 @@ export async function GET() {
     const tenantData = tenantR.status === 'fulfilled' ? (tenantR.value?.data ?? null) : null
     const briefContent = briefR.status === 'fulfilled' ? ((briefR.value?.data as Record<string,unknown>)?.content ?? null) : null
 
-    // Exec persona — load OKR + decision + stakeholder snapshots
+    // Exec persona — load OKR + decision + stakeholder + wellness + renewal snapshots
     let execSnapshot: Record<string,unknown> | null = null
     if (isExec) {
-      const [okrsR2, decisionsR2, stakeR2, ipR, contractsR2] = await Promise.allSettled([
+      const in90 = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10)
+      const [okrsR2, decisionsR2, stakeR2, ipR, contractsR2, wellnessR, wellnessStreakR, ipRenewalR, contractRenewalR] = await Promise.allSettled([
         supabase.from('exec_okrs')
           .select('id,title,health,progress,period')
           .eq('user_id', user.id).eq('status', 'active').limit(5),
@@ -138,12 +139,37 @@ export async function GET() {
           .order('importance').limit(5),
         (supabase as any).from('ip_assets').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         (supabase as any).from('contracts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'active'),
+        // Today's wellness check-in
+        (supabase as any).from('wellness_sessions')
+          .select('id,mood_score,energy_score,stress_score,session_type,ai_insight')
+          .eq('user_id', user.id).eq('session_date', today)
+          .order('created_at', { ascending: false }).limit(1),
+        // Daily check-in streak
+        (supabase as any).from('wellness_streaks')
+          .select('current_streak,longest_streak,last_activity_date')
+          .eq('user_id', user.id).eq('streak_type', 'daily_checkin').single(),
+        // IP assets expiring within 90 days
+        (supabase as any).from('ip_assets')
+          .select('id,name,asset_type,renewal_date,status')
+          .eq('user_id', user.id).eq('status', 'active')
+          .lte('renewal_date', in90).gte('renewal_date', today)
+          .order('renewal_date').limit(5),
+        // Contracts expiring within 90 days
+        (supabase as any).from('contracts')
+          .select('id,title,contract_type,counterparty,end_date,value,currency')
+          .eq('user_id', user.id).eq('status', 'active')
+          .lte('end_date', in90).gte('end_date', today)
+          .order('end_date').limit(5),
       ])
       const okrs2      = okrsR2.status      === 'fulfilled' ? (okrsR2.value?.data      ?? []) : []
       const decisions2 = decisionsR2.status === 'fulfilled' ? (decisionsR2.value?.data ?? []) : []
       const stakes2    = stakeR2.status     === 'fulfilled' ? (stakeR2.value?.data     ?? []) : []
-      const ipCount    = ipR.status         === 'fulfilled' ? ((ipR.value as any)?.count ?? 0) : 0
-      const contractCount = contractsR2.status === 'fulfilled' ? ((contractsR2.value as any)?.count ?? 0) : 0
+      const ipCount    = ipR.status         === 'fulfilled' ? ((ipR.value as any)?.count  ?? 0) : 0
+      const contractCount  = contractsR2.status    === 'fulfilled' ? ((contractsR2.value as any)?.count    ?? 0) : 0
+      const todaySession   = wellnessR.status       === 'fulfilled' ? ((wellnessR.value as any)?.data?.[0] ?? null) : null
+      const checkinStreak  = wellnessStreakR.status  === 'fulfilled' ? ((wellnessStreakR.value as any)?.data ?? null) : null
+      const ipRenewals     = ipRenewalR.status       === 'fulfilled' ? ((ipRenewalR.value as any)?.data     ?? []) : []
+      const contractRenewals = contractRenewalR.status === 'fulfilled' ? ((contractRenewalR.value as any)?.data ?? []) : []
       const atRisk = (okrs2 as Record<string,unknown>[]).filter(o => o.health !== 'on_track').length
       execSnapshot = {
         okrs: okrs2,
@@ -160,6 +186,20 @@ export async function GET() {
         stakeholders_due_count:  (stakes2 as unknown[]).length,
         ip_assets_count:         ipCount,
         active_contracts_count:  contractCount,
+        wellness: {
+          today_done:     !!todaySession,
+          mood_score:     todaySession?.mood_score   ?? null,
+          energy_score:   todaySession?.energy_score ?? null,
+          stress_score:   todaySession?.stress_score ?? null,
+          session_type:   todaySession?.session_type ?? null,
+          ai_insight:     todaySession?.ai_insight   ?? null,
+          streak:         (checkinStreak as any)?.current_streak  ?? 0,
+          longest_streak: (checkinStreak as any)?.longest_streak  ?? 0,
+        },
+        ip_renewals_due:         ipRenewals,
+        ip_renewals_count:       (ipRenewals as unknown[]).length,
+        contract_renewals_due:   contractRenewals,
+        contract_renewals_count: (contractRenewals as unknown[]).length,
       }
     }
 

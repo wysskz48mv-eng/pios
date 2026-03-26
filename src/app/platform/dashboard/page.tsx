@@ -501,28 +501,109 @@ export default function DashboardPage() {
       </div>
 
       {/* Executive OS strip — visible for exec/founder/professional persona */}
-      {isExecPersona && execSnap && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:16 }}>
-          {[
-            { dot:'#4ade80', label:'OKR Pulse', value:`${(execSnap.okr_summary as Record<string,unknown>)?.avg_prog ?? 0}%`, sub:`${(execSnap.okr_summary as Record<string,unknown>)?.total ?? 0} active · ${(execSnap.okr_summary as Record<string,unknown>)?.at_risk ?? 0} at risk`, href:'/platform/executive' },
-            { dot:'#fbbf24', label:'Open Decisions', value:String(execSnap.open_decisions_count ?? 0), sub:'requiring action', href:'/platform/executive?tab=decisions' },
-            { dot:'#60a5fa', label:'Stakeholders Due', value:String(execSnap.stakeholders_due_count ?? 0), sub:'need contact this week', href:'/platform/executive?tab=stakeholders' },
-            { dot:'#a78bfa', label:'IP Assets', value:String(execSnap.ip_assets_count ?? 0), sub:'registered in vault', href:'/platform/ip-vault' },
-            { dot:'#3b82f6', label:'Active Contracts', value:String(execSnap.active_contracts_count ?? 0), sub:'in contract register', href:'/platform/contracts' },
-          ].map(s => (
-            <a key={(s as Record<string,unknown>).label as string} href={s.href} style={{ textDecoration:'none' }}>
-              <div className="pios-card-sm" style={{ padding:'14px 16px', cursor:'pointer' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
-                  <div style={{ width:6, height:6, borderRadius:'50%', background:s.dot, flexShrink:0 }} />
-                  <span style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</span>
+      {isExecPersona && execSnap && (() => {
+        const wellness = (execSnap as any).wellness ?? {}
+        const ipRenewals = (execSnap as any).ip_renewals_due ?? []
+        const contractRenewals = (execSnap as any).contract_renewals_due ?? []
+        const renewalAlerts = (execSnap as any).ip_renewals_count + (execSnap as any).contract_renewals_count
+        const moodColor = !wellness.today_done ? 'var(--pios-muted)'
+          : wellness.mood_score >= 7 ? '#4ade80' : wellness.mood_score >= 4 ? '#fbbf24' : '#f87171'
+        return (
+          <div style={{ marginBottom: 16 }}>
+            {/* Row 1: OKR / Decisions / Stakeholders / IP / Contracts */}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, marginBottom:10 }}>
+              {[
+                { dot:'#4ade80', label:'OKR Pulse',        value:`${(execSnap.okr_summary as Record<string,unknown>)?.avg_prog ?? 0}%`, sub:`${(execSnap.okr_summary as Record<string,unknown>)?.total ?? 0} active · ${(execSnap.okr_summary as Record<string,unknown>)?.at_risk ?? 0} at risk`, href:'/platform/executive' },
+                { dot:'#fbbf24', label:'Open Decisions',   value:String(execSnap.open_decisions_count ?? 0), sub:'requiring action',      href:'/platform/executive?tab=decisions' },
+                { dot:'#60a5fa', label:'Stakeholders Due', value:String(execSnap.stakeholders_due_count ?? 0), sub:'this week',           href:'/platform/executive?tab=stakeholders' },
+                { dot:'#a78bfa', label:'IP Assets',        value:String(execSnap.ip_assets_count ?? 0), sub:'in vault',                   href:'/platform/ip-vault' },
+                { dot:'#3b82f6', label:'Active Contracts', value:String(execSnap.active_contracts_count ?? 0), sub:'registered',          href:'/platform/contracts' },
+              ].map(s => (
+                <a key={s.label} href={s.href} style={{ textDecoration:'none' }}>
+                  <div className="pios-card-sm" style={{ padding:'12px 14px', cursor:'pointer' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:5 }}>
+                      <div style={{ width:5, height:5, borderRadius:'50%', background:s.dot, flexShrink:0 }} />
+                      <span style={{ fontSize:9, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</span>
+                    </div>
+                    <div style={{ fontSize:20, fontWeight:700, color:'var(--pios-text)', lineHeight:1 }}>{s.value}</div>
+                    <div style={{ fontSize:10, color:'var(--pios-muted)', marginTop:3 }}>{s.sub}</div>
+                  </div>
+                </a>
+              ))}
+            </div>
+
+            {/* Row 2: Wellness tile + Renewal alerts */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+
+              {/* Wellness check-in tile */}
+              <a href="/platform/wellness" style={{ textDecoration:'none' }}>
+                <div className="pios-card-sm" style={{ padding:'14px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:14 }}>
+                  <div style={{ fontSize:28, flexShrink:0 }}>
+                    {wellness.today_done ? (wellness.mood_score >= 7 ? '😊' : wellness.mood_score >= 4 ? '😐' : '😔') : '🌅'}
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                      <span style={{ fontSize:9, fontWeight:700, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Wellness</span>
+                      {wellness.streak > 0 && (
+                        <span style={{ fontSize:9, fontWeight:700, color:'#f97316', background:'rgba(249,115,22,0.1)', border:'1px solid rgba(249,115,22,0.2)', padding:'1px 5px', borderRadius:8 }}>
+                          🔥 {wellness.streak}d
+                        </span>
+                      )}
+                    </div>
+                    {wellness.today_done ? (
+                      <div>
+                        <div style={{ display:'flex', gap:8, marginBottom:3 }}>
+                          {[{l:'M',v:wellness.mood_score,c:'#9b87f5'},{l:'E',v:wellness.energy_score,c:'#22d3ee'},{l:'S',v:wellness.stress_score,c:'#f97316'}].map(({l,v,c}) => (
+                            <span key={l} style={{ fontSize:11, fontWeight:700, color:c, background:c+'18', border:`1px solid ${c}30`, padding:'1px 5px', borderRadius:5 }}>{l}:{v}</span>
+                          ))}
+                        </div>
+                        <div style={{ fontSize:10, color:'var(--pios-muted)' }}>Checked in today ✓</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:600, color:'var(--pios-text)' }}>Check in →</div>
+                        <div style={{ fontSize:10, color:'var(--pios-muted)' }}>No check-in yet today</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div style={{ fontSize:22, fontWeight:700, color:'var(--pios-text)' }}>{s.value}</div>
-                <div style={{ fontSize:11, color:'var(--pios-muted)', marginTop:2 }}>{s.sub}</div>
+              </a>
+
+              {/* Renewal alerts tile */}
+              <div className="pios-card-sm" style={{ padding:'14px 16px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
+                  <div style={{ width:5, height:5, borderRadius:'50%', background: renewalAlerts > 0 ? '#f87171' : '#4ade80', flexShrink:0 }} />
+                  <span style={{ fontSize:9, fontWeight:700, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Renewals Due (90d)</span>
+                </div>
+                {renewalAlerts === 0 ? (
+                  <div style={{ fontSize:12, color:'var(--pios-muted)' }}>No renewals due ✓</div>
+                ) : (
+                  <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                    {[...ipRenewals.slice(0,2).map((a: any) => ({
+                      label: a.name?.length > 28 ? a.name.slice(0,25)+'…' : a.name,
+                      date: a.renewal_date, type: a.asset_type, href: '/platform/ip-vault', color: '#a78bfa',
+                    })), ...contractRenewals.slice(0,2).map((c: any) => ({
+                      label: c.title?.length > 28 ? c.title.slice(0,25)+'…' : c.title,
+                      date: c.end_date, type: c.contract_type, href: '/platform/contracts', color: '#3b82f6',
+                    }))].slice(0,3).map((r, i) => (
+                      <a key={i} href={r.href} style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:6 }}>
+                        <div style={{ width:4, height:4, borderRadius:'50%', background:r.color, flexShrink:0 }} />
+                        <span style={{ fontSize:10, color:'var(--pios-text)', flex:1, minWidth:0 }}>{r.label}</span>
+                        <span style={{ fontSize:9, color:'var(--pios-dim)', whiteSpace:'nowrap' }}>
+                          {new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}
+                        </span>
+                      </a>
+                    ))}
+                    {renewalAlerts > 3 && (
+                      <div style={{ fontSize:9, color:'var(--pios-dim)', marginTop:2 }}>+{renewalAlerts - 3} more</div>
+                    )}
+                  </div>
+                )}
               </div>
-            </a>
-          ))}
-        </div>
-      )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Notifications strip — show if any unread */}
       {notifs.length > 0 && (
