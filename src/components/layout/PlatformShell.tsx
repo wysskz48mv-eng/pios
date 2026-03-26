@@ -36,7 +36,8 @@ function pageTitle(pathname: string | null): string {
     payroll: 'Payroll', projects: 'Projects', command: 'Live Data', expenses: 'Expenses',
     ai: 'AI Companion', help: 'Help', billing: 'Billing', changelog: "What's New",
     setup: 'Setup Guide', smoke: 'Smoke Test', operator: 'Operator Config',
-    admin: 'Admin', study: 'Study Timer', nps: 'Feedback', settings: 'Settings',
+    admin: 'Admin',
+    'policy-coach': 'Policy Coach', study: 'Study Timer', nps: 'Feedback', settings: 'Settings',
   }
   return map[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1)
 }

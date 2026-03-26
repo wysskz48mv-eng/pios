@@ -34,6 +34,7 @@ const NAV_GROUPS = [
       { href: '/platform/academic',  icon: '🎓', label: 'Academic Hub',  colour: '#5b8def' },
       { href: '/platform/research',  icon: '🔬', label: 'Research',      colour: '#5b8def' },
       { href: '/platform/learning',  icon: '🗺️', label: 'Learning Hub',  colour: '#8B5CF6' },
+      { href: '/platform/policy-coach', icon: '🛡️', label: 'Policy Coach', badge: 'NEW', colour: '#f59e0b' },
       { href: '/platform/study',     icon: '⏱',  label: 'Study Timer',  colour: '#8b5cf6' },
       { href: '/platform/knowledge', icon: '🧠', label: 'SE-MIL',        colour: '#0d9488' },
     ],
