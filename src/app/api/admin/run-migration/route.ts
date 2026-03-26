@@ -1018,10 +1018,13 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit({ key: `pios:admin:${ip}`, ...LIMITS.admin })
   if (rl) return rl
 
-  // Allow bypass via SEED_SECRET header (for initial setup without login)
+  // Allow bypass via SEED_SECRET (header or request body)
+  const rawBody = await req.text().catch(() => '{}')
+  const body = JSON.parse(rawBody || '{}')
   const seedSecret = process.env.SEED_SECRET
-  const authHeader = req.headers.get('x-seed-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  const hasSeedBypass = seedSecret && authHeader === seedSecret
+  const headerSecret = req.headers.get('x-seed-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '') ?? ''
+  const bodySecret   = String(body.seed_secret ?? '')
+  const hasSeedBypass = !!seedSecret && (headerSecret === seedSecret || bodySecret === seedSecret)
 
   if (!hasSeedBypass) {
     const supabase = createClient()
@@ -1034,7 +1037,6 @@ export async function POST(req: NextRequest) {
     if (mfaError) return mfaError
   }
 
-  const body = await req.json().catch(() => ({}))
   const id: string = body.migration ?? '012'
 
   if (id === 'all') {

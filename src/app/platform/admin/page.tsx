@@ -64,19 +64,22 @@ export default function AdminPage() {
 
   useEffect(() => { loadStatus() }, [loadStatus])
 
+  function getSeedSecret() {
+    return (document.getElementById('pios-seed-secret') as HTMLInputElement)?.value?.trim() ?? ''
+  }
+
   async function runMigration(id: string) {
     setRunning(id)
-    const seedSecret = (document.getElementById('pios-seed-secret') as HTMLInputElement)?.value ?? ''
-    const headers: Record<string,string> = { 'Content-Type': 'application/json' }
-    if (seedSecret) headers['x-seed-secret'] = seedSecret
-    // 001-007: legacy migrate route (file-based runner)
-    // 008-013: run-migration route (inline SQL via pg direct connection)
+    const secret = getSeedSecret()
+    // 001-007: legacy migrate route; 008+: run-migration route
     const legacyIds = ['001','002','003','004','005','006','007']
     const endpoint  = legacyIds.includes(id) ? '/api/admin/migrate' : '/api/admin/run-migration'
+    const body: Record<string,string> = { migration: id }
+    if (secret) body.seed_secret = secret
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers,
-      body: JSON.stringify({ migration: id }),
+      headers: { 'Content-Type': 'application/json', ...(secret ? { 'x-seed-secret': secret } : {}) },
+      body: JSON.stringify(body),
     })
     const d = await res.json()
     setResults(prev => ({ ...prev, [id]: d }))
@@ -87,24 +90,22 @@ export default function AdminPage() {
 
   async function runAll() {
     setRunning('all')
-    const seedSecret = (document.getElementById('pios-seed-secret') as HTMLInputElement)?.value ?? ''
-    const headers: Record<string,string> = { 'Content-Type': 'application/json' }
-    if (seedSecret) headers['x-seed-secret'] = seedSecret
-    // Run legacy (001-007) then extended (008-013) migrations in sequence
+    const secret = getSeedSecret()
+    const extraHeaders = secret ? { 'x-seed-secret': secret } : {}
+    // Run legacy (001-007)
     const legacyRes = await fetch('/api/admin/migrate', {
       method: 'POST',
-      headers,
-      body: JSON.stringify({ run_all: true }),
+      headers: { 'Content-Type': 'application/json', ...extraHeaders },
+      body: JSON.stringify({ run_all: true, ...(secret ? { seed_secret: secret } : {}) }),
     })
     const legacyData = await legacyRes.json()
-
+    // Run extended (008-021)
     const extRes = await fetch('/api/admin/run-migration', {
       method: 'POST',
-      headers,
-      body: JSON.stringify({ migration: 'all' }),
+      headers: { 'Content-Type': 'application/json', ...extraHeaders },
+      body: JSON.stringify({ migration: 'all', ...(secret ? { seed_secret: secret } : {}) }),
     })
     const extData = await extRes.json()
-
     setResults(prev => ({ ...prev, all: { legacy: legacyData, extended: extData } }))
     setRunning(null)
     loadStatus()

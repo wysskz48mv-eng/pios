@@ -109,9 +109,14 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth: SEED_SECRET bypass OR owner session
     const seedSecret = process.env.SEED_SECRET
-    const authHeader = request.headers.get('x-seed-secret') ?? request.headers.get('authorization')?.replace('Bearer ', '')
-    const hasSeedBypass = seedSecret && authHeader === seedSecret
+    const headerSecret = request.headers.get('x-seed-secret') ?? ''
+    const bodyRaw = await request.text()
+    const body = JSON.parse(bodyRaw || '{}')
+    const bodySecret = body.seed_secret ?? ''
+    const hasSeedBypass = seedSecret && (headerSecret === seedSecret || bodySecret === seedSecret)
+
     if (!hasSeedBypass) {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -120,7 +125,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body = await request.json()
     const { migration, run_all } = body
 
     if (run_all) {
