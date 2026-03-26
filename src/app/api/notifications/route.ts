@@ -32,6 +32,20 @@ export async function GET() {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const body = await req.json()
+    if (!body.id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+    await supabase.from('notifications').update({ read: true }).eq('id', body.id as string).eq('user_id', user.id)
+    return NextResponse.json({ ok: true })
+  } catch (err: unknown) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient()

@@ -32,6 +32,13 @@ export default function FinancialsPage() {
   const [generating, setGen]      = useState(false)
   const [copied, setCopied]       = useState(false)
   const [refreshing, setRefresh]  = useState(false)
+  const [showSnap, setShowSnap]   = useState(false)
+  const [saving, setSaving]       = useState(false)
+  const [snapForm, setSnapForm]   = useState({
+    period: `${new Date().toLocaleString('en-GB', { month: 'short' })} ${new Date().getFullYear()}`,
+    period_type: 'month', revenue: '', expenses: '', payroll_cost: '',
+    cash_position: '', receivables: '', payables: '', currency: 'GBP', notes: '',
+  })
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefresh(true); else setLoading(true)
@@ -57,6 +64,28 @@ export default function FinancialsPage() {
     setGen(false)
   }
 
+  async function saveSnapshot() {
+    setSaving(true)
+    try {
+      const r = await fetch('/api/financials', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save_snapshot',
+          period: snapForm.period, period_type: snapForm.period_type,
+          revenue: Number(snapForm.revenue) || 0,
+          expenses: Number(snapForm.expenses) || 0,
+          payroll_cost: Number(snapForm.payroll_cost) || 0,
+          cash_position: Number(snapForm.cash_position) || 0,
+          receivables: Number(snapForm.receivables) || 0,
+          payables: Number(snapForm.payables) || 0,
+          currency: snapForm.currency, notes: snapForm.notes || null,
+        }),
+      })
+      if (r.ok) { setShowSnap(false); load() }
+    } catch { /* silent */ }
+    setSaving(false)
+  }
+
   const now = new Date()
   const ytdLabel = `YTD ${now.getFullYear()}`
   const totalBurn = (summary?.totalExpensesYTD ?? 0) + (summary?.payrollYTD ?? 0)
@@ -77,12 +106,62 @@ export default function FinancialsPage() {
           <button onClick={() => load(true)} disabled={refreshing} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground">
             <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
           </button>
+          <button onClick={() => setShowSnap(s => !s)} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground">
+            + Add snapshot
+          </button>
           <button onClick={aiCommentary} disabled={generating || !summary} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-green-500/10 text-green-400 text-sm font-medium hover:bg-green-500/15 disabled:opacity-50">
             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
             CFO Brief
           </button>
         </div>
       </div>
+
+      {/* Snapshot entry form */}
+      {showSnap && (
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h3 className="text-sm font-semibold mb-4">Add Financial Snapshot</h3>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            {[
+              { label:'Period', key:'period', placeholder:'Mar 2026' },
+              { label:'Currency', key:'currency', placeholder:'GBP' },
+              { label:'Revenue', key:'revenue', placeholder:'0', type:'number' },
+              { label:'Expenses', key:'expenses', placeholder:'0', type:'number' },
+              { label:'Payroll cost', key:'payroll_cost', placeholder:'0', type:'number' },
+              { label:'Cash position', key:'cash_position', placeholder:'0', type:'number' },
+              { label:'Receivables', key:'receivables', placeholder:'0', type:'number' },
+              { label:'Payables', key:'payables', placeholder:'0', type:'number' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="text-xs text-muted-foreground block mb-1">{f.label}</label>
+                <input
+                  type={f.type ?? 'text'}
+                  value={(snapForm as any)[f.key]}
+                  onChange={e => setSnapForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  placeholder={f.placeholder}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-foreground focus:outline-none focus:border-violet-500/40"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="mb-3">
+            <label className="text-xs text-muted-foreground block mb-1">Notes (optional)</label>
+            <input
+              value={snapForm.notes}
+              onChange={e => setSnapForm(p => ({ ...p, notes: e.target.value }))}
+              placeholder="Any context for this period..."
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-foreground focus:outline-none focus:border-violet-500/40"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setShowSnap(false)} className="px-4 py-2 rounded-lg text-sm text-muted-foreground border border-border hover:bg-card">
+              Cancel
+            </button>
+            <button onClick={saveSnapshot} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/15 disabled:opacity-50">
+              {saving ? 'Saving…' : 'Save snapshot'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
