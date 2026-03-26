@@ -67,7 +67,8 @@ export async function GET(req: NextRequest) {
     const briefTc = briefTcData as any
     try {
       // Gather full context for this user
-      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR, okrsR, decisionsR, calCronR] = await Promise.all([
+      const in90cron = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10)
+      const [tasksR, modulesR, chaptersR, projectsR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR, okrsR, decisionsR, calCronR, wellnessCronR, ipRenewCronR, ctRenewCronR] = await Promise.all([
         admin.from('tasks').select('title,domain,priority,due_date,status')
           .eq('user_id', uid).not('status', 'in', '("done","cancelled")')
           .order('due_date', { ascending: true }).limit(15),
@@ -116,11 +117,32 @@ export async function GET(req: NextRequest) {
           .gte('start_time', new Date().toISOString().slice(0,10))
           .lte('start_time', new Date(Date.now() + 86400000).toISOString().slice(0,10))
           .order('start_time').limit(8),
+        // Yesterday's wellness session (brief runs at 06:00 before today's check-in)
+        (admin as any).from('wellness_sessions')
+          .select('mood_score,energy_score,stress_score,focus_score,dominant_domain,ai_insight')
+          .eq('user_id', uid)
+          .gte('session_date', new Date(Date.now() - 86400000).toISOString().slice(0,10))
+          .order('session_date', { ascending: false }).limit(1),
+        // IP renewals due within 90 days
+        (admin as any).from('ip_assets')
+          .select('name,asset_type,renewal_date')
+          .eq('user_id', uid).eq('status', 'active')
+          .lte('renewal_date', in90cron).gte('renewal_date', today)
+          .order('renewal_date').limit(5),
+        // Contract renewals due within 90 days
+        (admin as any).from('contracts')
+          .select('title,contract_type,counterparty,end_date,value,currency')
+          .eq('user_id', uid).eq('status', 'active')
+          .lte('end_date', in90cron).gte('end_date', today)
+          .order('end_date').limit(5),
       ])
 
       const tasks     = tasksR.data ?? []
       const okrs      = (okrsR as any)?.data ?? []
       const decisions = (decisionsR as any)?.data ?? []
+      const wellnessCron  = (wellnessCronR as any)?.data?.[0] ?? null
+      const ipRenewCron   = (ipRenewCronR  as any)?.data     ?? []
+      const ctRenewCron   = (ctRenewCronR  as any)?.data     ?? []
       const overdue   = tasks.filter((t: any) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
       const dueToday  = tasks.filter((t: any) => (t as Record<string,unknown>).due_date === today)
       const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date || String((t as Record<string,unknown>).due_date ?? '') > today)
@@ -226,6 +248,22 @@ export async function GET(req: NextRequest) {
             (decisions as any[]).map((d: any) => `- ${d.title} [${d.framework_used ?? 'TBD'}]`).join('\n')
           : '',
 
+        // Wellness state
+        wellnessCron
+          ? `WELLNESS STATE (last check-in): Mood ${wellnessCron.mood_score}/10 · Energy ${wellnessCron.energy_score}/10 · Stress ${wellnessCron.stress_score}/10 · Focus ${wellnessCron.focus_score}/10` +
+            (wellnessCron.ai_insight ? ` · NemoClaw: "${wellnessCron.ai_insight}"` : '')
+          : 'WELLNESS: No recent check-in',
+
+        // Renewal alerts
+        (ipRenewCron.length + ctRenewCron.length) > 0
+          ? `RENEWALS DUE WITHIN 90 DAYS (${ipRenewCron.length + ctRenewCron.length}):\n` + [
+              ...(ipRenewCron as any[]).map((a: any) =>
+                `- [IP/${a.asset_type}] ${a.name} — renews ${new Date(a.renewal_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`),
+              ...(ctRenewCron as any[]).map((c: any) =>
+                `- [Contract/${c.contract_type}] ${c.title} (${c.counterparty}) — expires ${new Date(c.end_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`),
+            ].join('\n')
+          : '',
+
       ].filter(Boolean).join('\n\n')
 
       const toneGuide = briefTc?.tone_preference === 'direct' ? 'Be blunt. No preamble.'
@@ -233,7 +271,7 @@ export async function GET(req: NextRequest) {
         : 'Be professional and direct.'
       const goalsNote = briefTc?.goals_context ? `\nUser goals: ${briefTc.goals_context}` : ''
       const instrNote = briefTc?.custom_instructions ? `\nCustom brief instructions: ${briefTc.custom_instructions}` : ''
-      const system = `You are PIOS, a personal AI operating system. Generate a personalised morning brief for this user. ${toneGuide}${goalsNote}${instrNote} Lead with overdue tasks if any. Flag upcoming deadlines. Note pending meeting actions. Spot cross-domain conflicts. Name 2-3 priority actions for today. Max 300 words. Use ## Section Name headers for each section.`
+      const system = `You are PIOS, a personal AI operating system. Generate a personalised morning brief for this user. ${toneGuide}${goalsNote}${instrNote} Lead with overdue tasks if any. Flag upcoming deadlines. Note pending meeting actions. Spot cross-domain conflicts. If wellness stress ≥ 7 flag capacity risk. If renewals due ≤ 30 days mark URGENT. Name 2-3 priority actions for today. Max 300 words. Use ## Section Name headers for each section. Omit empty sections.`
 
       const content = await callClaude(
         [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}` }],

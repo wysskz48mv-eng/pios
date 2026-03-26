@@ -313,6 +313,9 @@ export default function CommandPage() {
   const [activeTab, setActiveTab]       = useState<'platforms'|'feeds'>('platforms')
   const [okrs, setOkrs]                 = useState<any[]>([])
   const [decisions, setDecisions]       = useState<any[]>([])
+  const [wellness, setWellness]         = useState<Record<string,any>|null>(null)
+  const [ipRenewCount, setIpRenewCount] = useState<number>(0)
+  const [ctRenewCount, setCtRenewCount] = useState<number>(0)
 
   const loadPlatforms = useCallback(async () => {
     setLoading(true)
@@ -325,6 +328,9 @@ export default function CommandPage() {
     setSe(seR); setIs(isR); setGh(ghR)
     if (execR?.exec?.okrs) setOkrs(execR.exec.okrs ?? [])
     if (execR?.exec?.open_decisions) setDecisions(execR.exec.open_decisions ?? [])
+    if (execR?.exec?.wellness) setWellness(execR.exec.wellness)
+    if (execR?.exec?.ip_renewals_count !== undefined) setIpRenewCount(execR.exec.ip_renewals_count)
+    if (execR?.exec?.contract_renewals_count !== undefined) setCtRenewCount(execR.exec.contract_renewals_count)
     setLastRefresh(new Date()); setLoading(false)
   }, [])
 
@@ -540,6 +546,74 @@ export default function CommandPage() {
                 )}
               </div>
             </div>
+          )}
+
+          {/* Wellness + Renewal row */}
+          {(!!wellness || ipRenewCount + ctRenewCount > 0) && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12 }}>
+
+                {/* Wellness tile */}
+                <a href="/platform/wellness" style={{ textDecoration:'none' }}>
+                  {(() => {
+                    const wColor = !wellness?.today_done ? '#6b7280' : (wellness?.mood_score ?? 5) >= 7 ? '#22c55e' : (wellness?.mood_score ?? 5) >= 4 ? '#f59e0b' : '#ef4444'
+                    return (
+                  <div style={{ ...CARD, cursor:'pointer', display:'flex', gap:14, alignItems:'center', borderLeft:`3px solid ${wColor}` }}>
+                    <div style={{ fontSize:28, flexShrink:0 }}>
+                      {!wellness?.today_done ? '🌅' : (wellness?.mood_score ?? 5) >= 7 ? '😊' : (wellness?.mood_score ?? 5) >= 4 ? '😐' : '😔'}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                        <div style={{ ...LABEL }}>Wellness</div>
+                        {(wellness?.streak ?? 0) > 0 && (
+                          <span style={{ fontSize:9, fontWeight:700, color:'#f97316', background:'rgba(249,115,22,0.1)', border:'1px solid rgba(249,115,22,0.2)', padding:'1px 5px', borderRadius:8 }}>
+                            🔥 {wellness?.streak}d
+                          </span>
+                        )}
+                      </div>
+                      {wellness?.today_done ? (
+                        <div style={{ display:'flex', gap:6, flexWrap:'wrap' as const }}>
+                          {[{l:'M',v:wellness?.mood_score,c:'#9b87f5'},{l:'E',v:wellness?.energy_score,c:'#22d3ee'},{l:'S',v:wellness?.stress_score,c:'#f97316'}].map(({l,v,c}) => (
+                            <span key={l} style={{ fontSize:11, fontWeight:700, color:c, background:c+'18', border:`1px solid ${c}30`, padding:'1px 6px', borderRadius:5 }}>{l}:{v}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize:12, color:'var(--pios-muted)' }}>No check-in yet today →</div>
+                      )}
+                    </div>
+                  </div>
+                    )
+                  })()}
+                </a>
+
+                {/* Renewal alerts tile */}
+                <div style={{ ...CARD, borderLeft:`3px solid ${ipRenewCount + ctRenewCount > 0 ? '#ef4444' : '#22c55e'}` }}>
+                  <div style={{ ...LABEL, marginBottom:8 }}>
+                    {ipRenewCount + ctRenewCount > 0 ? `⚠ ${ipRenewCount + ctRenewCount} Renewal${ipRenewCount + ctRenewCount > 1 ? 's' : ''} Due (90d)` : '✓ No Renewals Due'}
+                  </div>
+                  {ipRenewCount + ctRenewCount === 0 ? (
+                    <div style={{ fontSize:11, color:'var(--pios-muted)' }}>All IP assets and contracts are current.</div>
+                  ) : (
+                    <div style={{ display:'flex', gap:12 }}>
+                      {ipRenewCount > 0 && (
+                        <a href="/platform/ip-vault" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#a78bfa' }}>
+                          <span style={{ fontSize:9, fontWeight:700, background:'rgba(167,139,250,0.15)', border:'1px solid rgba(167,139,250,0.3)', padding:'2px 6px', borderRadius:6 }}>
+                            {ipRenewCount} IP
+                          </span>
+                          <span style={{ color:'var(--pios-dim)' }}>→</span>
+                        </a>
+                      )}
+                      {ctRenewCount > 0 && (
+                        <a href="/platform/contracts" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#3b82f6' }}>
+                          <span style={{ fontSize:9, fontWeight:700, background:'rgba(59,130,246,0.15)', border:'1px solid rgba(59,130,246,0.3)', padding:'2px 6px', borderRadius:6 }}>
+                            {ctRenewCount} Contract{ctRenewCount > 1 ? 's' : ''}
+                          </span>
+                          <span style={{ color:'var(--pios-dim)' }}>→</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+          </div>
           )}
 
       {activeTab === 'feeds' && (
