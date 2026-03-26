@@ -18,7 +18,7 @@ const ALLOWED_FIELDS = [
   'full_name', 'billing_email', 'programme_name', 'university',
   'timezone', 'job_title', 'organisation', 'phone',
   'preferred_domains', 'notification_prefs', 'avatar_url', 'persona_type',
-  'onboarded',
+  'onboarded', 'cv_storage_path', 'cv_filename', 'cv_processing_status', 'cv_uploaded_at',
 ]
 
 const VALID_TIMEZONES_PARTIAL = [

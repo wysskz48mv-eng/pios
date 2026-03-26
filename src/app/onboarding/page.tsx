@@ -1,503 +1,629 @@
 'use client'
-import React from 'react'
-import { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-/**
- * /onboarding — First-run wizard
- * Step 1: Persona selection (executive | professional | student)
- *         Professional/CEO/Founder leads — PRIMARY persona hierarchy
- * Step 2: Profile setup (context-aware per persona)
- * Step 3: Plan selection
- * Step 4: Gmail connect (optional)
- *
- * PIOS Sprint 63 | VeritasIQ Technologies Ltd
- * Fix: removed duplicate persona entries; exec=PRIMARY with ★ badge
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Onboarding v3.0 — 5-step investment-grade wizard
+// Step 1: Persona  (CEO/Founder PRIMARY)
+// Step 2: Profile  (name, role, org, timezone)
+// Step 3: CV Upload + NemoClaw™ Intelligence Calibration  ← NEW
+// Step 4: Plan
+// Step 5: Connect Gmail
+// PIOS v3.0 · VeritasIQ Technologies Ltd
+// ─────────────────────────────────────────────────────────────────────────────
 
 const PERSONAS = [
   {
-    key: 'executive',
-    icon: '⚡',
-    title: 'Founder / CEO',
-    subtitle: 'Running one or more companies, consulting practice, or C-suite executive role',
-    features: [
-      'Command Centre + Daily AI Brief (7am)',
-      '15 NemoClaw™ consulting frameworks',
-      'Executive OS + Decision Architecture™',
-      'IP Vault, Group P&L, Contract Register',
-      'Payroll engine + OKR pulse',
-    ],
-    colour: '#0d9488',
-    badge: '★ Primary Mode',
+    key: 'executive', icon: '⚡', color: 'var(--pro)', badge: 'PRIMARY',
+    label: 'Founder / CEO',
+    sub: 'Running companies, consulting practice, or C-suite executive',
+    features: ['Command Centre + 7am AI Brief', '15 NemoClaw™ consulting frameworks', 'Executive OS + Decision Architecture™', 'IP Vault · Group P&L · Contracts', 'Payroll engine + OKR pulse'],
   },
   {
-    key: 'professional',
-    icon: '💼',
-    title: 'Consultant / Advisor',
-    subtitle: 'Client-facing advisory, interim management, or specialist consulting work',
-    features: [
-      'Consulting Framework Engine (15 tools)',
-      'Client engagement & proposal tracker',
-      'SE-MIL Knowledge Base',
-      'Stakeholder Power Atlas',
-      'Time sovereignty + billing tracker',
-    ],
-    colour: '#7c3aed',
+    key: 'consultant', icon: '◎', color: 'var(--ai)',
+    label: 'Consultant / Advisor',
+    sub: 'Client-facing advisory, interim management, specialist consulting',
+    features: ['Consulting Framework Engine (15 tools)', 'Client engagement & proposal tracker', 'SE-MIL Knowledge Base', 'Stakeholder Power Atlas', 'Time sovereignty + billing tracker'],
   },
   {
-    key: 'student',
-    icon: '🎓',
-    title: 'Student / Researcher',
-    subtitle: 'DBA, MBA, MSc, PhD, CPD or professional qualification',
-    features: [
-      'Thesis & chapter tracker',
-      'CPD deadline management (12 bodies)',
-      'Academic calendar + supervisor log',
-      'Literature organiser + AI search',
-      'Research Hub + citation manager',
-    ],
-    colour: '#6c8eff',
+    key: 'academic', icon: '◈', color: 'var(--academic)',
+    label: 'Academic / Researcher',
+    sub: 'DBA, MBA, MSc, PhD, CPD or professional qualification',
+    features: ['Thesis & chapter word-count tracker', 'CPD deadline management (12 bodies)', 'Academic calendar + supervisor log', 'Literature organiser + AI search', 'Research Hub + citation manager'],
   },
 ]
 
 const PLANS = [
-  {
-    key: 'student',
-    name: 'Student',
-    price: '$9/mo',
-    colour: '#0891b2',
-    description: 'Academic lifecycle + CPD tracking',
-    features: [
-      'Academic Hub — thesis, chapters, milestones',
-      'CPD Tracker (12 bodies)',
-      'Supervisor session log + AI summaries',
-      'Research Hub + literature AI',
-      '2,000 AI credits/mo',
-    ],
-  },
-  {
-    key: 'professional',
-    name: 'Professional',
-    price: '$24/mo',
-    colour: '#7c3aed',
-    description: 'Full CEO/Founder OS — all 41 modules',
-    popular: true,
-    features: [
-      'Daily AI Brief (7am)',
-      'Payroll detect engine',
-      '15 NemoClaw™ consulting frameworks',
-      'Executive OS + Decision Architecture',
-      'IP Vault + Contracts + Group P&L',
-      'SE-MIL Knowledge Base',
-      '10,000 AI credits/mo',
-    ],
-  },
-  {
-    key: 'team',
-    name: 'Team / Institution',
-    price: 'Custom',
-    colour: '#0d9488',
-    description: 'Shared workspaces, SSO, dept admin',
-    features: [
-      'Everything in Professional',
-      'Shared research workspaces',
-      'Department-level admin',
-      'SSO / institutional login',
-      'Cohort dashboard for supervisors',
-      'Unlimited AI credits',
-      'Dedicated support',
-    ],
-  },
+  { key: 'student',       name: 'Student',       price: '$9',   period: '/mo', color: 'var(--pro)',      description: 'Academic lifecycle + CPD', features: ['Academic Hub', 'CPD Tracker', 'Research Hub', '2,000 AI credits/mo'] },
+  { key: 'professional',  name: 'Professional',  price: '$24',  period: '/mo', color: 'var(--ai)',       description: 'Full CEO/Founder OS', popular: true, features: ['Daily AI Brief', '15 NemoClaw™ frameworks', 'Executive OS', 'IP Vault + Contracts', '10,000 AI credits/mo'] },
+  { key: 'team',          name: 'Team',          price: 'Custom', period: '',  color: 'var(--fm)',       description: 'Shared workspaces + SSO', features: ['Everything in Professional', 'Dept-level admin + SSO', 'Cohort dashboard', 'Unlimited AI credits'] },
 ]
 
-function ProgressDots({ step, total }: { step: number; total: number }) {
+const TIMEZONES = ['Europe/London','Europe/Dublin','Europe/Paris','Asia/Riyadh','Asia/Dubai','Asia/Karachi','Africa/Johannesburg','Africa/Lusaka','America/New_York','America/Chicago','America/Los_Angeles','UTC']
+
+const REGISTER_LABELS: Record<string, string> = {
+  peer_executive: 'Peer Executive',
+  professional:   'Professional',
+  coached:        'Coached',
+  mentored:       'Mentored',
+}
+const INTENSITY_LABELS: Record<string, string> = {
+  light:     'Light touch',
+  balanced:  'Balanced',
+  intensive: 'Intensive coaching',
+}
+
+// ── Shared primitives ─────────────────────────────────────────────────────────
+
+function StepBar({ step, total }: { step: number; total: number }) {
   return (
-    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 40 }}>
+    <div style={{ display: 'flex', gap: 5, marginBottom: 44 }}>
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} style={{
-          width: i + 1 === step ? 24 : 8, height: 8, borderRadius: 4,
-          background: i + 1 === step ? '#0d9488' : i + 1 < step ? 'rgba(13,148,136,0.4)' : 'rgba(255,255,255,0.1)',
-          transition: 'all .3s ease',
+          flex: i + 1 === step ? 2.5 : 1, height: 3, borderRadius: 99,
+          background: i + 1 < step ? 'rgba(139,124,248,0.4)' : i + 1 === step ? 'var(--ai)' : 'var(--pios-surface3)',
+          transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)',
         }} />
       ))}
     </div>
   )
 }
 
-function Label({ children }: { children: React.ReactNode }) {
+const labelSty: React.CSSProperties = {
+  fontSize: 10, fontWeight: 700, letterSpacing: '0.07em',
+  textTransform: 'uppercase' as const, color: 'var(--pios-dim)', marginBottom: 7,
+}
+const inputSty: React.CSSProperties = {
+  display: 'block', width: '100%', padding: '10px 13px',
+  background: 'var(--pios-surface2)', border: '1px solid var(--pios-border2)',
+  borderRadius: 9, color: 'var(--pios-text)', fontSize: 13,
+  fontFamily: 'var(--font-sans)', outline: 'none', boxSizing: 'border-box' as const,
+  transition: 'border-color 0.15s, box-shadow 0.15s',
+}
+
+function TextInput({ label, value, onChange, placeholder, type = 'text' }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string
+}) {
   return (
-    <div style={{
-      fontSize: 11, fontWeight: 600, letterSpacing: 1,
-      textTransform: 'uppercase' as const, color: '#454d63', marginBottom: 6,
-    }}>
-      {children}
+    <div style={{ marginBottom: 14 }}>
+      <div style={labelSty}>{label}</div>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={inputSty}
+        onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'var(--ai)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px var(--ai-glow)' }}
+        onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'var(--pios-border2)'; (e.target as HTMLInputElement).style.boxShadow = 'none' }} />
     </div>
   )
 }
 
-function Input({
-  value, onChange, placeholder, type = 'text',
-}: {
-  value: string
-  onChange: (v: string) => void
-  placeholder?: string
-  type?: string
+function PrimaryBtn({ onClick, disabled, children, color = 'var(--ai)' }: {
+  onClick: () => void; disabled?: boolean; children: React.ReactNode; color?: string
 }) {
   return (
-    <input
-      type={type} value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      style={{
-        width: '100%', padding: '10px 14px', borderRadius: 8,
-        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-        color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const,
-        marginBottom: 16,
-      }}
-    />
+    <button onClick={onClick} disabled={disabled} style={{
+      width: '100%', padding: '12px', borderRadius: 11, border: 'none',
+      background: disabled ? 'rgba(139,124,248,0.3)' : color,
+      color: 'var(--pios-bg)', fontFamily: 'var(--font-display)',
+      fontSize: 14, fontWeight: 700, cursor: disabled ? 'not-allowed' : 'pointer',
+      transition: 'opacity 0.15s',
+    }}
+      onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}>
+      {children}
+    </button>
   )
 }
 
-// Hex → rgb triplet for rgba() usage in inline styles
-function hexRgb(hex: string): string {
-  const h = hex.replace('#', '')
-  const r = parseInt(h.slice(0, 2), 16)
-  const g = parseInt(h.slice(2, 4), 16)
-  const b = parseInt(h.slice(4, 6), 16)
-  return `${r},${g},${b}`
+function GhostBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} style={{
+      flex: 1, padding: '11px', borderRadius: 11,
+      border: '1px solid var(--pios-border2)', background: 'transparent',
+      color: 'var(--pios-muted)', fontSize: 13, cursor: 'pointer',
+      fontFamily: 'var(--font-sans)',
+    }}>{children}</button>
+  )
 }
 
-export default function OnboardingPage() {
-  const router  = useRouter()
-  const supabase = createClient()
+// ── Main wizard ───────────────────────────────────────────────────────────────
 
-  // Redirect existing users who already completed onboarding
-  React.useEffect(() => {
+export default function OnboardingPage() {
+  const router   = useRouter()
+  const supabase = createClient()
+  const fileRef  = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/auth/login'); return }
-      supabase
-        .from('user_profiles')
-        .select('persona_type, onboarded')
-        .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          if (data?.onboarded && data?.persona_type) {
-            router.push('/platform/dashboard')
-          }
-        })
+      supabase.from('user_profiles').select('persona_type, onboarded').eq('id', user.id).single()
+        .then(({ data }) => { if (data?.onboarded && data?.persona_type) router.push('/platform/dashboard') })
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [step, setStep]             = useState(1)
-  const [persona, setPersona]       = useState('')
-  const [fullName, setFullName]     = useState('')
-  const [jobTitle, setJobTitle]     = useState('')
-  const [organisation, setOrg]      = useState('')
-  const [programme, setProgramme]   = useState('')
-  const [university, setUniversity] = useState('')
-  const [timezone, setTimezone]     = useState('Europe/London')
-  const [plan, setPlan]             = useState('professional')
-  const [saving, setSaving]         = useState(false)
-  const [error, setError]           = useState('')
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [step,         setStep]         = useState(1)
+  const [persona,      setPersona]      = useState('')
+  const [fullName,     setFullName]     = useState('')
+  const [jobTitle,     setJobTitle]     = useState('')
+  const [organisation, setOrg]         = useState('')
+  const [programme,    setProgramme]    = useState('')
+  const [university,   setUniversity]   = useState('')
+  const [timezone,     setTimezone]     = useState('Europe/London')
+  const [plan,         setPlan]         = useState('professional')
+  const [saving,       setSaving]       = useState(false)
+  const [error,        setError]        = useState('')
+
+  // CV step state
+  const [cvFile,        setCvFile]       = useState<File | null>(null)
+  const [cvProcessing,  setCvProcessing] = useState(false)
+  const [cvDone,        setCvDone]       = useState(false)
+  const [cvError,       setCvError]      = useState('')
+  const [calibration,   setCalibration]  = useState<Record<string, unknown> | null>(null)
+  const [isDragging,    setIsDragging]   = useState(false)
+
+  const isExec = persona === 'executive' || persona === 'consultant'
+  const isAcad = persona === 'academic'
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
 
   async function saveProfile() {
-    setSaving(true)
-    setError('')
+    if (!fullName.trim()) { setError('Please enter your full name.'); return }
+    setSaving(true); setError('')
     try {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name:        fullName,
-          job_title:        jobTitle || undefined,
-          organisation:     organisation || undefined,
-          programme_name:   programme || undefined,
-          university:       university || undefined,
+          full_name:      fullName,
+          job_title:      jobTitle      || undefined,
+          organisation:   organisation  || undefined,
+          programme_name: programme     || undefined,
+          university:     university    || undefined,
           timezone,
-          persona_type:     persona || 'executive',
-          onboarded:        true,
+          persona_type:   persona       || 'executive',
         }),
       })
       if (!res.ok) throw new Error('Profile save failed')
       setStep(3)
-    } catch {
-      setError('Could not save profile. Please try again.')
-    }
+    } catch { setError('Could not save profile. Please try again.') }
     setSaving(false)
+  }
+
+  async function processCV(file: File) {
+    setCvFile(file); setCvError(''); setCvProcessing(true); setCvDone(false)
+    try {
+      const fd = new FormData()
+      fd.append('cv', file)
+      const res  = await fetch('/api/cv', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok || data.error) { setCvError(data.error ?? 'Processing failed.'); setCvProcessing(false); return }
+
+      // Auto-fill profile fields if empty
+      if (data.autofill?.full_name    && !fullName)     setFullName(data.autofill.full_name)
+      if (data.autofill?.job_title    && !jobTitle)     setJobTitle(data.autofill.job_title)
+      if (data.autofill?.organisation && !organisation) setOrg(data.autofill.organisation)
+
+      setCalibration(data.calibration)
+      setCvDone(true)
+    } catch { setCvError('Network error. Please try again.') }
+    setCvProcessing(false)
+  }
+
+  function handleFileDrop(e: React.DragEvent) {
+    e.preventDefault(); setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) processCV(file)
   }
 
   async function completePlan() {
     setSaving(true)
+    // Mark as onboarded
+    await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ onboarded: true }),
+    })
     router.push('/platform/dashboard')
     setSaving(false)
   }
 
-  const card: React.CSSProperties = {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)',
-    borderRadius: 16, padding: 32,
-  }
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0a0b1a 0%, #0d0f24 100%)',
-      padding: 24, fontFamily: 'system-ui, sans-serif',
+      minHeight: '100vh', background: 'var(--pios-bg)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '32px 20px', fontFamily: 'var(--font-sans)',
     }}>
-      <div style={{ width: '100%', maxWidth: step === 1 ? 780 : 480 }}>
+      <div style={{ width: '100%', maxWidth: step === 1 ? 820 : 500 }} className="fade-up">
 
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
-            PIOS<span style={{ color: '#0d9488' }}>™</span>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 13, margin: '0 auto 12px',
+            background: 'linear-gradient(135deg, var(--ai), var(--academic))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20, color: '#fff',
+            boxShadow: '0 4px 24px rgba(139,124,248,0.3)',
+          }}>P</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
+            PIOS
           </div>
-          <div style={{ fontSize: 13, color: '#454d63', marginTop: 4 }}>
-            Personal Intelligence Operating System
-          </div>
+          <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>Personal Intelligence Operating System</div>
         </div>
 
-        <ProgressDots step={step} total={4} />
+        <StepBar step={step} total={5} />
 
-        {/* ── STEP 1: Persona selection ─────────────────────── */}
+        {/* ── STEP 1: Persona ─────────────────────────────────────────────── */}
         {step === 1 && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 8, textAlign: 'center' }}>
-              How will you use PIOS?
-            </h2>
-            <p style={{ fontSize: 14, color: '#454d63', textAlign: 'center', marginBottom: 28 }}>
-              Choose your primary context — you can access all modules from any persona.
-            </p>
-            {/* 3-column grid — one card per unique persona */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em', marginBottom: 6 }}>
+                How will you use PIOS?
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--pios-muted)' }}>
+                Choose your primary context — all modules are available from any persona.
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
               {PERSONAS.map(p => (
-                <button
-                  key={p.key}
-                  onClick={() => { setPersona(p.key); setStep(2) }}
-                  style={{
-                    background: persona === p.key
-                      ? `rgba(${hexRgb(p.colour)},0.1)`
-                      : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${persona === p.key ? p.colour : 'rgba(255,255,255,0.06)'}`,
-                    borderRadius: 14, padding: 22, cursor: 'pointer',
-                    textAlign: 'left' as const, transition: 'all .2s',
-                    position: 'relative' as const,
-                  }}
-                >
+                <button key={p.key} onClick={() => { setPersona(p.key); setStep(2) }} style={{
+                  background: persona === p.key ? `${p.color}0e` : 'var(--pios-surface)',
+                  border: `1px solid ${persona === p.key ? p.color : 'var(--pios-border)'}`,
+                  borderRadius: 14, padding: 22, cursor: 'pointer',
+                  textAlign: 'left' as const, transition: 'all 0.2s',
+                  position: 'relative' as const, fontFamily: 'var(--font-sans)',
+                }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = p.color }}
+                  onMouseLeave={e => { if (persona !== p.key) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--pios-border)' }}>
+
                   {p.badge && (
                     <div style={{
                       position: 'absolute', top: -10, right: 12,
-                      background: '#0d9488', color: '#fff',
-                      fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-                    }}>
-                      {p.badge}
-                    </div>
+                      background: p.color, color: 'var(--pios-bg)',
+                      fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 20,
+                      letterSpacing: '0.05em', fontFamily: 'var(--font-display)',
+                    }}>{p.badge}</div>
                   )}
-                  <div style={{ fontSize: 30, marginBottom: 12 }}>{p.icon}</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 4 }}>
-                    {p.title}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#454d63', marginBottom: 14, lineHeight: 1.5 }}>
-                    {p.subtitle}
-                  </div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+
+                  <div style={{ fontSize: 26, marginBottom: 12, color: p.color }}>{p.icon}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 14.5, fontWeight: 700, color: 'var(--pios-text)', marginBottom: 5, letterSpacing: '-0.01em' }}>{p.label}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--pios-muted)', marginBottom: 16, lineHeight: 1.55 }}>{p.sub}</div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 5 }}>
                     {p.features.map(f => (
-                      <li key={f} style={{
-                        fontSize: 12, color: '#6b7280', marginBottom: 4,
-                        paddingLeft: 14, position: 'relative' as const,
-                      }}>
-                        <span style={{ position: 'absolute', left: 0, color: p.colour }}>·</span>
+                      <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11.5, color: 'var(--pios-sub)' }}>
+                        <span style={{ color: p.color, fontSize: 10, marginTop: 2, flexShrink: 0 }}>◆</span>
                         {f}
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── STEP 2: Profile ───────────────────────────────── */}
+        {/* ── STEP 2: Profile ─────────────────────────────────────────────── */}
         {step === 2 && (
-          <div style={card}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 24 }}>
-              Set up your profile
-            </h2>
-            <Label>Full name</Label>
-            <Input value={fullName} onChange={setFullName} placeholder="Your full name" />
+          <div style={{ background: 'var(--pios-surface)', border: '1px solid var(--pios-border2)', borderRadius: 18, padding: 30, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, var(--ai), var(--academic))', opacity: 0.5 }} />
 
-            {(persona === 'professional' || persona === 'executive') && <>
-              <Label>Job title</Label>
-              <Input value={jobTitle} onChange={setJobTitle} placeholder="CEO, Managing Director, Consultant…" />
-              <Label>Organisation</Label>
-              <Input value={organisation} onChange={setOrg} placeholder="Your company or firm" />
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 6 }}>Your profile</div>
+            <div style={{ fontSize: 12.5, color: 'var(--pios-muted)', marginBottom: 24 }}>NemoClaw™ uses this to personalise every interaction.</div>
+
+            <TextInput label="Full name *" value={fullName} onChange={setFullName} placeholder="Douglas Masuku" />
+
+            {isExec && <>
+              <TextInput label="Job title" value={jobTitle} onChange={setJobTitle} placeholder="Group CEO / Founder / Managing Director" />
+              <TextInput label="Organisation" value={organisation} onChange={setOrg} placeholder="VeritasIQ Technologies Ltd" />
             </>}
 
-            {persona === 'student' && <>
-              <Label>Programme</Label>
-              <Input value={programme} onChange={setProgramme} placeholder="e.g. DBA — University of Portsmouth" />
-              <Label>University</Label>
-              <Input value={university} onChange={setUniversity} placeholder="University name" />
+            {isAcad && <>
+              <TextInput label="Programme" value={programme} onChange={setProgramme} placeholder="DBA — Facilities Management" />
+              <TextInput label="University" value={university} onChange={setUniversity} placeholder="University of Portsmouth" />
             </>}
 
-            <Label>Timezone</Label>
-            <select
-              value={timezone}
-              onChange={e => setTimezone(e.target.value)}
-              style={{
-                width: '100%', padding: '10px 14px', borderRadius: 8,
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                color: '#fff', fontSize: 14, marginBottom: 16,
-              }}
-            >
-              {[
-                'Europe/London', 'Europe/Dublin', 'Europe/Paris',
-                'Asia/Riyadh', 'Asia/Dubai', 'Asia/Karachi',
-                'Africa/Johannesburg', 'Africa/Lusaka',
-                'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'UTC',
-              ].map(tz => (
-                <option key={tz} value={tz}>{tz}</option>
-              ))}
-            </select>
+            <div style={{ marginBottom: 22 }}>
+              <div style={labelSty}>TIMEZONE</div>
+              <select value={timezone} onChange={e => setTimezone(e.target.value)} style={{ ...inputSty }}>
+                {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
+              </select>
+            </div>
 
-            {error && (
-              <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12 }}>{error}</p>
+            {error && <div style={{ color: 'var(--dng)', fontSize: 12, marginBottom: 14 }}>⚠ {error}</div>}
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <GhostBtn onClick={() => setStep(1)}>← Back</GhostBtn>
+              <div style={{ flex: 2 }}>
+                <PrimaryBtn onClick={saveProfile} disabled={!fullName || saving}>
+                  {saving ? '⟳ Saving…' : 'Continue →'}
+                </PrimaryBtn>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 3: CV Upload + Calibration ─────────────────────────────── */}
+        {step === 3 && (
+          <div style={{ background: 'var(--pios-surface)', border: '1px solid var(--pios-border2)', borderRadius: 18, padding: 30, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, var(--ai), var(--academic))', opacity: 0.5 }} />
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 20 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ai-subtle)', border: '1px solid rgba(139,124,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>◉</div>
+              <div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
+                  Intelligence Calibration
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--pios-muted)', lineHeight: 1.6 }}>
+                  Upload your CV so NemoClaw™ can calibrate its coaching register, select the most relevant frameworks for your background, and identify your growth areas — making every conversation bespoke from day one.
+                </div>
+              </div>
+            </div>
+
+            {/* What NemoClaw reads */}
+            <div style={{ background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)', borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
+              <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--pios-dim)', letterSpacing: '0.07em', textTransform: 'uppercase' as const, marginBottom: 10 }}>What NemoClaw™ extracts</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {[
+                  { icon: '◈', label: 'Education & qualifications', sub: 'Calibrates depth of support' },
+                  { icon: '⚡', label: 'Career trajectory', sub: 'Sets communication register' },
+                  { icon: '◎', label: 'Industry expertise', sub: 'Selects relevant frameworks' },
+                  { icon: '↗', label: 'Achievements & gaps', sub: 'Identifies growth areas' },
+                ].map(item => (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ color: 'var(--ai)', fontSize: 12, marginTop: 1, flexShrink: 0 }}>{item.icon}</span>
+                    <div>
+                      <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--pios-text)' }}>{item.label}</div>
+                      <div style={{ fontSize: 10.5, color: 'var(--pios-dim)' }}>{item.sub}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Drop zone */}
+            {!cvDone && (
+              <div
+                onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleFileDrop}
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  border: `2px dashed ${isDragging ? 'var(--ai)' : cvFile ? 'rgba(139,124,248,0.3)' : 'var(--pios-border2)'}`,
+                  borderRadius: 12, padding: '32px 20px', textAlign: 'center' as const,
+                  cursor: 'pointer', transition: 'all 0.2s', marginBottom: 16,
+                  background: isDragging ? 'var(--ai-subtle)' : 'transparent',
+                }}>
+                <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) processCV(f) }} />
+
+                {cvProcessing ? (
+                  <div>
+                    <div style={{ fontSize: 28, marginBottom: 12, animation: 'ai-pulse 1.5s ease-in-out infinite', color: 'var(--ai)' }}>◉</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--pios-text)', marginBottom: 6 }}>
+                      NemoClaw™ is reading your CV…
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>Extracting profile · Calibrating intelligence · Selecting frameworks</div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📄</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--pios-text)', marginBottom: 4 }}>
+                      {cvFile ? cvFile.name : 'Drop your CV here'}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
+                      {cvFile ? 'Click to change file' : 'or click to browse — PDF, DOCX, or TXT · Max 5MB'}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => setStep(1)}
-                style={{
-                  padding: '12px 20px', borderRadius: 8,
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#6b7280', fontSize: 14, cursor: 'pointer',
-                }}
-              >
-                ← Back
-              </button>
-              <button
-                onClick={saveProfile}
-                disabled={!fullName || saving}
-                style={{
-                  flex: 1, padding: '12px', borderRadius: 8,
-                  background: '#0d9488', border: 'none',
-                  color: '#fff', fontSize: 15, fontWeight: 600,
-                  cursor: 'pointer', opacity: !fullName || saving ? 0.5 : 1,
-                }}
-              >
-                {saving ? 'Saving…' : 'Continue →'}
-              </button>
+            {/* CV error */}
+            {cvError && (
+              <div style={{ background: 'rgba(224,82,114,0.08)', border: '1px solid rgba(224,82,114,0.2)', borderRadius: 9, padding: '10px 14px', marginBottom: 14, color: 'var(--dng)', fontSize: 12 }}>
+                ⚠ {cvError} <button onClick={() => setCvError('')} style={{ background: 'none', border: 'none', color: 'var(--dng)', cursor: 'pointer', marginLeft: 8, fontSize: 12 }}>Retry</button>
+              </div>
+            )}
+
+            {/* Calibration result */}
+            {cvDone && calibration && (
+              <div style={{ marginBottom: 18 }}>
+                {/* NemoClaw summary */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(139,124,248,0.07), rgba(79,142,247,0.04))',
+                  border: '1px solid rgba(139,124,248,0.18)', borderRadius: 12, padding: '14px 16px', marginBottom: 12,
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, var(--ai), var(--academic))' }} />
+                  <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--ai)', letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 8 }}>◉ NemoClaw™ Calibration Complete</div>
+                  <div style={{ fontSize: 13, color: 'var(--pios-sub)', lineHeight: 1.65 }}>
+                    {String(calibration.calibration_summary ?? '')}
+                  </div>
+                </div>
+
+                {/* Calibration metrics grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                  <div style={{ background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)', borderRadius: 9, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 9.5, color: 'var(--pios-dim)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginBottom: 5 }}>Register</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ai)' }}>{REGISTER_LABELS[String(calibration.communication_register ?? '')] ?? String(calibration.communication_register ?? '')}</div>
+                  </div>
+                  <div style={{ background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)', borderRadius: 9, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 9.5, color: 'var(--pios-dim)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginBottom: 5 }}>Coaching</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ai)' }}>{INTENSITY_LABELS[String(calibration.coaching_intensity ?? '')] ?? String(calibration.coaching_intensity ?? '')}</div>
+                  </div>
+                  <div style={{ background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)', borderRadius: 9, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 9.5, color: 'var(--pios-dim)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginBottom: 5 }}>Style</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ai)', textTransform: 'capitalize' as const }}>{String(calibration.decision_style ?? '')}</div>
+                  </div>
+                </div>
+
+                {/* Frameworks */}
+                {Array.isArray(calibration.recommended_frameworks) && (calibration.recommended_frameworks as string[]).length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 9.5, color: 'var(--pios-dim)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginBottom: 6 }}>Priority Frameworks</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
+                      {(calibration.recommended_frameworks as string[]).map(fw => (
+                        <span key={fw} style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 5, background: 'var(--ai-subtle)', color: 'var(--ai)' }}>{fw}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Growth areas */}
+                {Array.isArray(calibration.growth_areas) && (calibration.growth_areas as string[]).length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 9.5, color: 'var(--pios-dim)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginBottom: 6 }}>Growth Areas NemoClaw™ Will Coach On</div>
+                    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 4 }}>
+                      {(calibration.growth_areas as string[]).slice(0, 3).map((area: string) => (
+                        <div key={area} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 12, color: 'var(--pios-sub)' }}>
+                          <span style={{ color: 'var(--fm)', flexShrink: 0, marginTop: 2 }}>◆</span>
+                          {area}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button onClick={() => { setCvDone(false); setCvFile(null); setCalibration(null) }} style={{
+                  marginTop: 10, background: 'none', border: 'none',
+                  color: 'var(--pios-dim)', fontSize: 11, cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                }}>↺ Upload a different CV</button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <GhostBtn onClick={() => setStep(2)}>← Back</GhostBtn>
+              <div style={{ flex: 2 }}>
+                <PrimaryBtn onClick={() => setStep(4)}>
+                  {cvDone ? 'Continue →' : 'Skip for now →'}
+                </PrimaryBtn>
+              </div>
             </div>
+
+            {!cvDone && (
+              <div style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: 'var(--pios-dim)' }}>
+                Your CV is processed securely and never shared. You can update it anytime in Settings.
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── STEP 3: Plan ──────────────────────────────────── */}
-        {step === 3 && (
+        {/* ── STEP 4: Plan ─────────────────────────────────────────────────── */}
+        {step === 4 && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 8, textAlign: 'center' }}>
-              Choose your plan
-            </h2>
-            <p style={{ fontSize: 14, color: '#454d63', textAlign: 'center', marginBottom: 28 }}>
-              14-day free trial on all plans. Cancel anytime.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+            <div style={{ textAlign: 'center', marginBottom: 26 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em', marginBottom: 5 }}>Choose your plan</div>
+              <div style={{ fontSize: 13, color: 'var(--pios-muted)' }}>14-day free trial on all plans · Cancel anytime</div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10, marginBottom: 18 }}>
               {PLANS.map(p => (
-                <button
-                  key={p.key}
-                  onClick={() => setPlan(p.key)}
-                  style={{
-                    background: plan === p.key ? 'rgba(13,148,136,0.1)' : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${plan === p.key ? '#0d9488' : 'rgba(255,255,255,0.06)'}`,
-                    borderRadius: 12, padding: '16px 20px', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                  }}
-                >
+                <button key={p.key} onClick={() => setPlan(p.key)} style={{
+                  background: plan === p.key ? `${p.color}0e` : 'var(--pios-surface)',
+                  border: `1px solid ${plan === p.key ? p.color : 'var(--pios-border)'}`,
+                  borderRadius: 12, padding: '14px 18px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
+                  transition: 'all 0.15s', fontFamily: 'var(--font-sans)',
+                  position: 'relative' as const,
+                }}>
+                  {p.popular && (
+                    <div style={{ position: 'absolute', top: -9, right: 14, background: 'var(--ai)', color: 'var(--pios-bg)', fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 20, fontFamily: 'var(--font-display)' }}>POPULAR</div>
+                  )}
                   <div style={{ textAlign: 'left' as const }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>{p.name}</span>
-                      {p.popular && (
-                        <span style={{
-                          fontSize: 10, fontWeight: 600,
-                          background: '#0d9488', color: '#fff',
-                          padding: '1px 7px', borderRadius: 20,
-                        }}>
-                          Popular
-                        </span>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontSize: 14.5, fontWeight: 700, color: 'var(--pios-text)' }}>{p.name}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#454d63' }}>{p.description}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--pios-muted)', marginBottom: 8 }}>{p.description}</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+                      {p.features.slice(0, 3).map(f => (
+                        <span key={f} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: `${p.color}12`, color: p.color, fontWeight: 600 }}>{f}</span>
+                      ))}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' as const }}>
-                    {p.price}
+                  <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.04em' }}>{p.price}</span>
+                    <span style={{ fontSize: 12, color: 'var(--pios-muted)' }}>{p.period}</span>
                   </div>
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => setStep(4)}
-              style={{
-                width: '100%', marginTop: 20, padding: '12px', borderRadius: 8,
-                background: '#0d9488', border: 'none',
-                color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Continue →
-            </button>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <GhostBtn onClick={() => setStep(3)}>← Back</GhostBtn>
+              <div style={{ flex: 2 }}>
+                <PrimaryBtn onClick={() => setStep(5)}>Continue →</PrimaryBtn>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* ── STEP 4: Gmail connect ─────────────────────────── */}
-        {step === 4 && (
-          <div style={card}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 8 }}>
-              Connect Gmail
-            </h2>
-            <p style={{ fontSize: 14, color: '#454d63', lineHeight: 1.7, marginBottom: 28 }}>
-              PIOS automatically triages your inbox, captures action items, and extracts receipts.
-              Connecting Gmail unlocks the full autonomous intelligence layer.
-            </p>
-            <button
-              onClick={async () => {
-                await supabase.auth.signInWithOAuth({
-                  provider: 'google',
-                  options: {
-                    scopes: [
-                      'email', 'profile',
-                      'https://www.googleapis.com/auth/gmail.readonly',
-                      'https://www.googleapis.com/auth/calendar.readonly',
-                    ].join(' '),
-                    redirectTo: `${window.location.origin}/auth/callback?next=/platform/dashboard`,
-                  },
-                })
-              }}
-              style={{
-                width: '100%', padding: '12px', borderRadius: 8,
-                background: '#fff', border: 'none', color: '#000',
-                fontSize: 15, fontWeight: 600, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 10, marginBottom: 12,
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 48 48">
-                <path fill="#EA4335" d="M24 9.5c3.1 0 5.8 1.1 8 2.9l6-6C34.4 3.1 29.5 1 24 1 14.8 1 7 6.7 3.7 14.6l7 5.5C12.4 13.8 17.7 9.5 24 9.5z"/>
-                <path fill="#34A853" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.1 5.1-4.5 6.7l7 5.5C43.1 37 46.1 31.3 46.1 24.5z"/>
-                <path fill="#FBBC05" d="M10.7 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7-5.5C2.3 17.1 1 20.4 1 24s1.3 6.9 3.7 9.6l7-5.4z"/>
-                <path fill="#4285F4" d="M24 47c5.5 0 10.1-1.8 13.5-4.9l-7-5.5c-1.9 1.3-4.3 2-6.5 2-6.3 0-11.6-4.3-13.5-10.1l-7 5.5C7 40.3 14.8 47 24 47z"/>
+        {/* ── STEP 5: Connect Gmail ────────────────────────────────────────── */}
+        {step === 5 && (
+          <div style={{ background: 'var(--pios-surface)', border: '1px solid var(--pios-border2)', borderRadius: 18, padding: 30, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, var(--ai), var(--fm))', opacity: 0.5 }} />
+
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>✉</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 6 }}>Connect Gmail</div>
+              <div style={{ fontSize: 13, color: 'var(--pios-muted)', lineHeight: 1.65, maxWidth: 340, margin: '0 auto' }}>
+                PIOS auto-triages your inbox, captures action items, and extracts receipts — unlocking the full autonomous intelligence layer.
+              </div>
+            </div>
+
+            <div style={{ background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
+              {[
+                { icon: '◉', text: 'Autonomous inbox triage — NemoClaw™ surfaces what needs action' },
+                { icon: '📅', text: 'Calendar sync — briefings include today\'s meetings automatically' },
+                { icon: '🧾', text: 'Receipt capture — expenses logged without manual entry' },
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: i < 2 ? '1px solid var(--pios-border)' : 'none' }}>
+                  <span style={{ fontSize: 14, color: 'var(--fm)', flexShrink: 0 }}>{item.icon}</span>
+                  <span style={{ fontSize: 12.5, color: 'var(--pios-sub)', lineHeight: 1.5 }}>{item.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <button onClick={async () => {
+              await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                  scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
+                  redirectTo: `${window.location.origin}/auth/callback?next=/platform/dashboard`,
+                },
+              })
+            }} style={{
+              width: '100%', padding: '12px 16px', borderRadius: 11, marginBottom: 10,
+              border: '1px solid var(--pios-border2)', background: 'var(--pios-surface2)',
+              color: 'var(--pios-text)', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              transition: 'all 0.15s', fontFamily: 'var(--font-sans)',
+            }}
+              onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = 'var(--pios-border3)'; b.style.background = 'var(--pios-surface3)' }}
+              onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = 'var(--pios-border2)'; b.style.background = 'var(--pios-surface2)' }}>
+              <svg width="16" height="16" viewBox="0 0 18 18">
+                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                <path fill="#FBBC05" d="M3.964 10.706c-.18-.54-.282-1.117-.282-1.706s.102-1.166.282-1.706V4.962H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.038l3.007-2.332z"/>
+                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/>
               </svg>
               Connect Gmail &amp; Calendar
             </button>
-            <button
-              onClick={completePlan}
-              disabled={saving}
-              style={{
-                width: '100%', padding: '12px', borderRadius: 8,
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-                color: '#6b7280', fontSize: 14, cursor: 'pointer',
-              }}
-            >
-              Skip for now → Enter PIOS
+
+            <button onClick={completePlan} disabled={saving} style={{
+              width: '100%', padding: '11px', borderRadius: 11,
+              border: '1px solid var(--pios-border)', background: 'transparent',
+              color: 'var(--pios-muted)', fontSize: 13, cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+            }}>
+              {saving ? '⟳ Setting up…' : 'Skip — Enter PIOS →'}
             </button>
+
+            <div style={{ textAlign: 'center', marginTop: 16, fontSize: 10.5, color: 'var(--pios-dim)', fontFamily: 'var(--font-mono)' }}>
+              PIOS v3.0 · VeritasIQ Technologies Ltd · info@veritasiq.io
+            </div>
           </div>
         )}
 
