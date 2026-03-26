@@ -2,41 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
-
 :root {
-  /* Core backgrounds */
-  --pios-bg:       #08090c;
-  --pios-surface:  #0e1117;
-  --pios-surface2: #141820;
-  --pios-surface3: #1a2030;
+  /* ── Backgrounds — deep navy-black with subtle warmth ── */
+  --pios-bg:       #070810;
+  --pios-surface:  #0b0d18;
+  --pios-surface2: #0f1120;
+  --pios-surface3: #141728;
+  --pios-surface4: #1b1f32;
 
-  /* Borders */
-  --pios-border:  rgba(255,255,255,0.06);
-  --pios-border2: rgba(255,255,255,0.10);
-  --pios-border3: rgba(255,255,255,0.16);
+  /* ── Borders ── */
+  --pios-border:  rgba(255,255,255,0.055);
+  --pios-border2: rgba(255,255,255,0.09);
+  --pios-border3: rgba(255,255,255,0.14);
 
-  /* Text */
-  --pios-text:  #eceef4;
-  --pios-sub:   #b0b6c8;
-  --pios-muted: #7a8098;
-  --pios-dim:   #4a5068;
+  /* ── Text ── */
+  --pios-text:  #f0f2fa;
+  --pios-sub:   #a8adc8;
+  --pios-muted: #636880;
+  --pios-dim:   #3a3e58;
 
-  /* Brand accents */
-  --ai:       #9b87f5;   /* NemoClaw violet */
-  --ai-glow:  rgba(155,135,245,0.18);
-  --academic: #5b8def;   /* academic blue */
-  --fm:       #26c99a;   /* teal */
-  --saas:     #f0a030;   /* amber */
-  --ops:      #e0547a;   /* coral */
+  /* ── Brand: NemoClaw violet primary ── */
+  --ai:        #8b7cf8;
+  --ai2:       #6d5ee8;
+  --ai-glow:   rgba(139,124,248,0.22);
+  --ai-subtle: rgba(139,124,248,0.08);
 
-  /* Sidebar width */
-  --sidebar-w:           228px;
-  --sidebar-w-collapsed:  60px;
+  /* ── Domain colours ── */
+  --academic:  #4f8ef7;   /* academic blue */
+  --fm:        #10d9a0;   /* teal — VeritasEdge */
+  --saas:      #f0a030;   /* amber */
+  --ops:       #f4845f;   /* coral */
+  --dng:       #e05272;   /* red-coral */
+  --pro:       #22d3ee;   /* cyan — professional */
 
-  /* Fonts */
-  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
+  /* ── Sidebar width ── */
+  --sidebar-w:           220px;
+  --sidebar-w-collapsed:  56px;
+
+  /* ── Fonts ── */
+  --font-display: 'Syne', system-ui, sans-serif;
+  --font-sans:    'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono:    'DM Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,11 +51,14 @@ body {
   background: var(--pios-bg);
   color: var(--pios-text);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ── Display font utility ── */
+.font-display { font-family: var(--font-display); }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -211,6 +220,8 @@ body {
 @keyframes scaleIn  { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
 @keyframes spin     { to { transform: rotate(360deg); } }
 @keyframes pulse    { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes ai-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes countUp  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes shimmer  {
   0%   { background-position: -200% center; }
   100% { background-position:  200% center; }
@@ -220,7 +231,7 @@ body {
 .fade-up  { animation: fadeUp  0.25s ease-out; }
 .scale-in { animation: scaleIn 0.2s ease-out; }
 .spin     { animation: spin 1s linear infinite; }
-.ai-pulse { animation: pulse 2.5s ease-in-out infinite; }
+.ai-pulse { animation: ai-pulse 2.5s ease-in-out infinite; }
 
 /* ── Skeleton loader ── */
 .pios-skeleton {

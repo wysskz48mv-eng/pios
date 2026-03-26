@@ -116,9 +116,9 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
         {/* ── Top bar ── */}
         <header style={{
           position: 'sticky', top: 0, zIndex: 10,
-          background: 'rgba(8,9,12,0.88)', backdropFilter: 'blur(12px)',
+          background: 'rgba(7,8,16,0.9)', backdropFilter: 'blur(16px)',
           borderBottom: '1px solid var(--pios-border)',
-          padding: '0 20px', height: 50,
+          padding: '0 24px', height: 56,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
           flexShrink: 0,
         }}>
@@ -144,7 +144,8 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{
-                fontSize: 14, fontWeight: 600, color: 'var(--pios-text)',
+                fontFamily: 'var(--font-display)',
+                fontSize: 15, fontWeight: 700, color: 'var(--pios-text)',
                 letterSpacing: '-0.02em',
               }}>{title}</span>
             </div>
@@ -210,17 +211,17 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
             <button onClick={() => setChatOpen(!chatOpen)} style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 14px', borderRadius: 20,
-              background: chatOpen ? 'rgba(155,135,245,0.15)' : 'var(--pios-surface2)',
-              border: `1px solid ${chatOpen ? 'rgba(155,135,245,0.35)' : 'var(--pios-border2)'}`,
+              background: chatOpen ? 'rgba(139,124,248,0.14)' : 'var(--pios-surface2)',
+              border: `1px solid ${chatOpen ? 'rgba(139,124,248,0.3)' : 'var(--pios-border2)'}`,
               color: chatOpen ? 'var(--ai)' : 'var(--pios-muted)',
               cursor: 'pointer', fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
-              letterSpacing: '-0.01em',
+              letterSpacing: '-0.01em', fontFamily: 'var(--font-sans)',
             }}>
               <span style={{
                 width: 6, height: 6, borderRadius: '50%',
                 background: 'var(--ai)', display: 'inline-block',
               }} className="ai-pulse" />
-              {isMobile ? 'AI' : 'NemoClaw'}
+              {isMobile ? 'AI' : 'NemoClaw™'}
             </button>
           </div>
         </header>
