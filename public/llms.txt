@@ -1,6 +1,54 @@
 # PIOS — Personal Intelligent Operating System
-# VeritasIQ Technologies Ltd
-# This application is private and access-restricted.
-# Automated crawling or scraping is not permitted.
+# VeritasIQ Technologies Ltd · pios.veritasiq.io
+# llms.txt v2.4 — Claude for Chrome integration manifest
 
-Access: restricted
+## What is PIOS?
+
+PIOS is a personal AI operating system for multi-domain professionals.
+It unifies academic research, FM consulting delivery, SaaS business operations,
+task management, calendar, email triage, expenses, payroll, and meeting notes
+into a single Claude-powered platform.
+
+## Live context API
+
+Claude for Chrome can fetch a structured snapshot of the user's current state:
+
+  GET /api/claude-context
+
+Returns: urgent tasks, overdue items, today's calendar, thesis progress,
+email action queue, expenses, notifications, meeting pending actions,
+and cross-platform KPIs (VeritasEdge™, InvestiScript).
+
+Requires: user must be signed in at pios.veritasiq.io (Supabase session cookie
+shared with the browser — no separate authentication needed for Claude for Chrome).
+
+## Authentication
+
+PIOS uses Supabase Auth (magic link / Google OAuth).
+The /api/claude-context endpoint uses the existing browser session cookie.
+If the user is not signed in, the endpoint returns { authenticated: false }
+with a sign_in_url to redirect to.
+
+## Quick actions Claude can perform
+
+- Create tasks:     POST /api/tasks { title, domain, priority, due_date }
+- Sync email:       POST /api/email/sync
+- Log expense:      POST /api/expenses { action: "create", description, amount, currency, category, domain, date }
+- Create meeting:   POST /api/meetings { title, raw_transcript, auto_process: true, domain }
+- Get daily brief:  GET /api/brief
+- Mark task done:   PATCH /api/tasks { id, status: "done" }
+
+## Domains
+
+Tasks and items are tagged with domains: academic, fm_consulting, saas, business, personal
+
+## Platform
+
+- Frontend: Next.js 14 / TypeScript
+- AI: Anthropic Claude (claude-sonnet-4-20250514)
+- Database: Supabase PostgreSQL (EU West)
+- Version: PIOS v2.9
+
+## Confidentiality
+
+This is a private application. Access is restricted to authorised users.

@@ -24,6 +24,7 @@ const PUBLIC_PATHS = new Set([
   '/api/health',
   '/api/health/smoke',     // Smoke test — auth checked inside route
   '/api/auth/connect-gmail', // OAuth initiation — no user session yet
+  '/llms.txt',             // Claude for Chrome manifest — public
 ])
 
 // ── Allowed preview/access tokens ───────────────────────────────────────────
@@ -51,10 +52,10 @@ const SEC_HEADERS: Record<string, string> = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
-    "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.stripe.com https://gmail.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.stripe.com https://gmail.googleapis.com https://accounts.google.com https://oauth2.googleapis.com",
     "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -81,10 +82,12 @@ export async function middleware(request: NextRequest) {
 
   // ── Access gate — private beta / invite-only ─────────────────────────────
   // If PIOS_ACCESS_TOKEN is set, only requests bearing the token proceed.
-  // Exempt: health checks and Stripe webhooks only.
+  // Exempt: health checks, Stripe webhooks, and Claude for Chrome endpoints.
   const exemptFromGate = pathname === '/api/health' ||
     pathname === '/api/health/smoke' ||
-    pathname === '/api/stripe/webhook'
+    pathname === '/api/stripe/webhook' ||
+    pathname === '/api/claude-context' ||   // Claude for Chrome context API
+    pathname === '/llms.txt'                 // Claude for Chrome manifest
   if (!exemptFromGate && !hasAccessToken(request)) {
     // Set the token cookie when provided via query param so subsequent requests pass
     const queryToken = request.nextUrl.searchParams.get('token')

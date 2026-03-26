@@ -196,7 +196,7 @@ export async function GET() {
           date:              today,
           day:               new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
           has_brief:         !!brief,
-          brief_summary:     brief?.content ? String(brief.content ?? "").slice(0, 500) + (((brief.content as any[])).length > 500 ? '…' : '') : null,
+          brief_summary:     brief?.content ? String(brief.content ?? '').slice(0, 800) + (String(brief.content ?? '').length > 800 ? '…' : '') : null,
           brief_url:         '/api/brief',
         },
 
@@ -262,25 +262,23 @@ export async function GET() {
           })),
           total_needing_action: emails.length,
           sync_url: '/api/email/sync',
+          accounts: accounts.map((a: Record<string, unknown>) => ({
+            provider:    a.provider,
+            context:     a.context,
+            label:       a.label ?? a.email_address,
+            is_primary:  a.is_primary,
+            last_synced: a.last_synced_at,
+          })),
+          recent_receipts: receipts.slice(0, 5).map((r: Record<string, unknown>) => ({
+            subject:  r.subject,
+            vendor:   (r.receipt_data as Record<string,unknown>)?.vendor ?? r.sender_name,
+            amount:   (r.receipt_data as Record<string,unknown>)?.amount,
+            currency: (r.receipt_data as Record<string,unknown>)?.currency ?? 'GBP',
+            date:     String(r.received_at ?? '').slice(0, 10),
+          })),
         },
 
         // Meetings with pending actions
-          email_accounts: accounts.map((a: Record<string, unknown>) => ({
-            provider:   a.provider,
-            context:    a.context,
-            label:      a.label ?? a.email_address,
-            is_primary: a.is_primary,
-            last_synced: a.last_synced_at,
-          })),
-
-          recent_receipts: receipts.slice(0, 5).map((r: Record<string, unknown>) => ({
-            subject:  r.subject,
-            vendor:   (r.receipt_data as any)?.vendor ?? r.sender_name,
-            amount:   (r.receipt_data as any)?.amount,
-            currency: (r.receipt_data as any)?.currency ?? 'GBP',
-            date:     String(r.received_at ?? "").slice(0, 10),
-          })),
-
         meetings_pending: meetings.map((m: Record<string, unknown>) => ({
           id: (m as Record<string,unknown>).id, title: (m as Record<string,unknown>).title, date: (m as Record<string,unknown>).meeting_date, domain: (m as Record<string,unknown>).domain,
           action_item_count: (m.ai_action_items as unknown[])?.length ?? 0,
@@ -313,16 +311,17 @@ export async function GET() {
         // Metadata
         _meta: {
           generated_at:  new Date().toISOString(),
-          platform:      'PIOS v2.2',
+          platform:      'PIOS v2.9',
           llms_txt:      '/llms.txt',
-          docs:          'https://pios.veritasiq.io/platform/setup',
+          docs:          'https://pios.veritasiq.io/platform/setup'
+        ,  llms_txt_url:  'https://pios.veritasiq.io/llms.txt',
         },
       },
       {
         headers: {
           'Cache-Control': 'no-store, must-revalidate',
           'Content-Type':  'application/json',
-          'X-PIOS-Version': '2.2',
+          'X-PIOS-Version': '2.9',
         },
       }
     )
