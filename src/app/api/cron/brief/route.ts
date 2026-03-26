@@ -278,6 +278,10 @@ export async function GET(req: NextRequest) {
         system, 500
       )
 
+      // Generate smart notifications for this user (idempotent — deduped by title+day)
+      const notifUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000') + '/api/notifications/generate'
+      fetch(notifUrl, { method: 'POST' }).catch(() => {}) // best-effort, non-blocking
+
       // Always upsert — refreshes any existing brief for today
       await admin.from('daily_briefs').upsert({
         user_id:      uid,

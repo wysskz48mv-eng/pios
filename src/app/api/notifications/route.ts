@@ -65,6 +65,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    if (body.action === 'delete') {
+      if (!body.id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+      await supabase.from('notifications').delete().eq('id', body.id as string).eq('user_id', user.id)
+      return NextResponse.json({ ok: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
