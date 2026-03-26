@@ -88,11 +88,8 @@ async function checkTableExists(supabase: any, tableName: string): Promise<boole
 
 export async function GET() {
   try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user || user.email !== OWNER_EMAIL) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    }
+    // Open endpoint — reads only, checks table existence
+    const supabase = createServiceClient()
 
     // Check which sentinel tables exist
     const status: Record<string, { applied: boolean; name: string; description: string }> = {}

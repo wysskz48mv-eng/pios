@@ -1038,10 +1038,5 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user || user.email !== OWNER_EMAIL) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-  }
   return NextResponse.json({ migrations: Object.keys(MIGRATIONS), usage: 'POST { migration: "012" } or { migration: "all" }' })
 }
