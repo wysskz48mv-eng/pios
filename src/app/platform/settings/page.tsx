@@ -129,7 +129,7 @@ function EmailAccountsSection() {
           </div>
         </div>
         <button onClick={() => { setShowAdd(!showAdd); setError(null) }}
-          className="btn-v3-primary" style={{ fontSize:11 }}>
+          className="pios-btn pios-btn-primary" style={{ fontSize:11 }}>
           + Add inbox
         </button>
       </div>
@@ -172,7 +172,7 @@ function EmailAccountsSection() {
                 Click below to connect your Google account via OAuth. Gmail, Calendar, and Drive access will be requested.
                 {accounts.length > 0 && <span style={{ color:'var(--saas)' }}> To add a second Google account, use IMAP + app password instead.</span>}
               </div>
-              <button onClick={connectGoogle} className="btn-v3-primary" style={{ fontSize:12, width:'100%' }}>
+              <button onClick={connectGoogle} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%' }}>
                 Connect Google Account →
               </button>
             </div>
@@ -187,7 +187,7 @@ function EmailAccountsSection() {
               <div style={{ fontSize:10, color:'var(--pios-dim)', padding:'8px 10px', background:'rgba(0,120,212,0.06)', borderRadius:6, marginBottom:10, lineHeight:1.5 }}>
                 <strong style={{ color:'#0078D4' }}>Institutional accounts (NHS, Gov, armed forces):</strong> Your IT team may block OAuth consent for external apps. If sign-in fails, use the IMAP option with an app-specific password generated in your M365 settings.
               </div>
-              <button onClick={connectMicrosoft} className="btn-v3-primary" style={{ fontSize:12, width:'100%', background:'#0078D4', borderColor:'#0078D4' }}>
+              <button onClick={connectMicrosoft} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%', background:'#0078D4', borderColor:'#0078D4' }}>
                 Connect Microsoft / Outlook →
               </button>
             </div>
@@ -206,7 +206,7 @@ function EmailAccountsSection() {
               </div>
               <div style={{ height:8 }} />
               <input type="password" placeholder="App password (not your main password)" value={imapForm.password} onChange={e => setImapForm(p=>({...p,password:e.target.value}))} style={inp} />
-              <button onClick={addImap} disabled={saving} className="btn-v3-primary" style={{ fontSize:12, width:'100%' }}>
+              <button onClick={addImap} disabled={saving} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%' }}>
                 {saving ? 'Adding…' : 'Add IMAP Account'}
               </button>
             </div>
@@ -279,7 +279,7 @@ const PLANS: Record<string,{name:string;price:number;credits:number}> = {
 
 function Section({ title, children }: { title:string; children:React.ReactNode }) {
   return (
-    <div className="card-v3">
+    <div className="pios-card">
       <div style={{ fontSize:14,fontWeight:600,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--pios-border)' }}>{title}</div>
       {children}
     </div>
@@ -504,12 +504,12 @@ export default function SettingsPage() {
               ].map(([k,l]) => (
                 <div key={String(k ?? "")}>
                   <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>{l}</div>
-                  <input className="inp-v3" value={String((form as Record<string, unknown>)[k] ?? "")} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
+                  <input className="pios-input" value={String((form as Record<string, unknown>)[k] ?? "")} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
                 </div>
               ))}
               <div style={{ display:'flex',gap:8,marginTop:4 }}>
-                <button className="btn-v3-primary" onClick={saveProfile} disabled={saving} style={{ flex:1,fontSize:12 }}>{saving?'Saving…':'Save profile'}</button>
-                <button className="btn-v3-ghost" onClick={()=>setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
+                <button className="pios-btn pios-btn-primary" onClick={saveProfile} disabled={saving} style={{ flex:1,fontSize:12 }}>{saving?'Saving…':'Save profile'}</button>
+                <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
               </div>
             </div>
           ) : (
@@ -523,7 +523,7 @@ export default function SettingsPage() {
                 ['University',profile?.university ?? '—'],
                 ['Timezone', profile?.timezone ?? 'Europe/London'],
               ].map((row: any) => <Row key={String(row[0] ?? "")} label={String(row[0] ?? "")} value={String(row[1] ?? "")} />)}
-              <button className="btn-v3-ghost" onClick={()=>setEditing(true)} style={{ fontSize:12,marginTop:12,width:'100%' }}>✎ Edit profile</button>
+              <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(true)} style={{ fontSize:12,marginTop:12,width:'100%' }}>✎ Edit profile</button>
             </div>
           )}
         </Section>
@@ -626,7 +626,7 @@ export default function SettingsPage() {
               ))}
               <div>
                 <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:6 }}>Brief feed items count (how many top items to include)</div>
-                <input type="number" className="inp-v3" min={1} max={10} value={Number(feedSettings.brief_feed_count??3)} onChange={e=>updateFeedSetting('brief_feed_count',parseInt(e.target.value)||3)} style={{ width:80 }} />
+                <input type="number" className="pios-input" min={1} max={10} value={Number(feedSettings.brief_feed_count??3)} onChange={e=>updateFeedSetting('brief_feed_count',parseInt(e.target.value)||3)} style={{ width:80 }} />
               </div>
               <Link href="/platform/command" style={{ fontSize:12,color:'var(--academic)',textDecoration:'none' }}>Manage feed topics →</Link>
             </div>

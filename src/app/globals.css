@@ -134,7 +134,9 @@ body {
 
 .pios-btn-primary {
   background: var(--ai);
-  color: #08090c;
+  color: var(--pios-bg);
+  font-family: var(--font-display);
+  font-weight: 700;
   box-shadow: 0 0 0 0 var(--ai-glow);
 }
 .pios-btn-primary:hover {

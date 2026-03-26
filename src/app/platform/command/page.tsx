@@ -202,64 +202,64 @@ function FeedFormModal({ feed, onSave, onClose }: { feed: Record<string,unknown>
           <div style={{ display:'grid', gridTemplateColumns:'52px 1fr', gap:10 }}>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Icon</div>
-              <input className="inp-v3" value={String(form.emoji ?? "")} onChange={e=>f('emoji',e.target.value)} style={{ textAlign:'center', fontSize:20 }} maxLength={2} />
+              <input className="pios-input" value={String(form.emoji ?? "")} onChange={e=>f('emoji',e.target.value)} style={{ textAlign:'center', fontSize:20 }} maxLength={2} />
             </div>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Feed label *</div>
-              <input className="inp-v3" placeholder="e.g. GCC FM Market" value={String(form.label ?? "")} onChange={e=>f('label',e.target.value)} />
+              <input className="pios-input" placeholder="e.g. GCC FM Market" value={String(form.label ?? "")} onChange={e=>f('label',e.target.value)} />
             </div>
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Topic / search prompt * <span style={{ color:'var(--pios-dim)' }}>(what to search for)</span></div>
-            <input className="inp-v3" placeholder="e.g. facilities management GCC Saudi Arabia UAE market news" value={String(form.topic ?? "")} onChange={e=>f('topic',e.target.value)} />
+            <input className="pios-input" placeholder="e.g. facilities management GCC Saudi Arabia UAE market news" value={String(form.topic ?? "")} onChange={e=>f('topic',e.target.value)} />
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Description</div>
-            <input className="inp-v3" placeholder="Brief description of what this feed covers" value={String(form.description ?? "")} onChange={e=>f('description',e.target.value)} />
+            <input className="pios-input" placeholder="Brief description of what this feed covers" value={String(form.description ?? "")} onChange={e=>f('description',e.target.value)} />
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Keywords <span style={{ color:'var(--pios-dim)' }}>(comma-separated)</span></div>
-            <input className="inp-v3" placeholder="NEOM, Qiddiya, smart buildings, ISO 55001" value={String(form.keywords ?? "")} onChange={e=>f('keywords',e.target.value)} />
+            <input className="pios-input" placeholder="NEOM, Qiddiya, smart buildings, ISO 55001" value={String(form.keywords ?? "")} onChange={e=>f('keywords',e.target.value)} />
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Preferred sources <span style={{ color:'var(--pios-dim)' }}>(comma-separated)</span></div>
-            <input className="inp-v3" placeholder="FM World, MEED, RICS, Arab News" value={String(form.sources ?? "")} onChange={e=>f('sources',e.target.value)} />
+            <input className="pios-input" placeholder="FM World, MEED, RICS, Arab News" value={String(form.sources ?? "")} onChange={e=>f('sources',e.target.value)} />
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Exclude terms <span style={{ color:'var(--pios-dim)' }}>(comma-separated)</span></div>
-            <input className="inp-v3" placeholder="terms to filter out" value={String(form.exclude_terms ?? "")} onChange={e=>f('exclude_terms',e.target.value)} />
+            <input className="pios-input" placeholder="terms to filter out" value={String(form.exclude_terms ?? "")} onChange={e=>f('exclude_terms',e.target.value)} />
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Category</div>
-              <select className="inp-v3" value={String(form.category ?? "")} onChange={e=>f('category',e.target.value)}>
+              <select className="pios-input" value={String(form.category ?? "")} onChange={e=>f('category',e.target.value)}>
                 {Object.entries({ industry:'Industry', technology:'Technology', regulatory:'Regulatory', academic:'Academic', business:'Business', personal:'Personal' }).map(([k,v])=><option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Refresh</div>
-              <select className="inp-v3" value={String(form.refresh_freq ?? "")} onChange={e=>f('refresh_freq',e.target.value)}>
+              <select className="pios-input" value={String(form.refresh_freq ?? "")} onChange={e=>f('refresh_freq',e.target.value)}>
                 {[['daily','Daily'],['hourly','Hourly'],['weekly','Weekly']].map(([k,v])=><option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Max items</div>
-              <input className="inp-v3" type="number" min={3} max={20} value={Number(form.max_items ?? 8)} onChange={e=>f('max_items',e.target.value)} />
+              <input className="pios-input" type="number" min={3} max={20} value={Number(form.max_items ?? 8)} onChange={e=>f('max_items',e.target.value)} />
             </div>
           </div>
         </div>
 
         <div style={{ display:'flex', gap:10, marginTop:20 }}>
-          <button className="btn-v3-primary" onClick={save} disabled={saving || !String(form.label).trim() || !String(form.topic).trim()} style={{ flex:1 }}>
+          <button className="pios-btn pios-btn-primary" onClick={save} disabled={saving || !String(form.label).trim() || !String(form.topic).trim()} style={{ flex:1 }}>
             {saving ? 'Saving…' : feed ? 'Save changes' : 'Add feed'}
           </button>
-          <button className="btn-v3-ghost" onClick={onClose}>Cancel</button>
+          <button className="pios-btn pios-btn-ghost" onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>
@@ -393,7 +393,7 @@ export default function CommandPage() {
             {lastRefresh && <span style={{ marginLeft:12, color:'var(--pios-dim)' }}>Updated {timeAgo(lastRefresh.toISOString())}</span>}
           </p>
         </div>
-        <button onClick={loadPlatforms} disabled={loading} className="btn-v3-ghost" style={{ fontSize:12, opacity:loading?0.5:1 }}>
+        <button onClick={loadPlatforms} disabled={loading} className="pios-btn pios-btn-ghost" style={{ fontSize:12, opacity:loading?0.5:1 }}>
           {loading ? '⟳ Refreshing…' : '⟳ Refresh'}
         </button>
       </div>
@@ -622,7 +622,7 @@ export default function CommandPage() {
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:20, flexWrap:'wrap' as const }}>
             <div style={{ display:'flex', gap:10, alignItems:'center' }}>
               <span style={{ fontSize:13, color:'var(--pios-muted)' }}>{activeFeeds.length} active feed{activeFeeds.length !== 1 ? 's' : ''}</span>
-              <button onClick={refreshAllFeeds} className="btn-v3-ghost" style={{ fontSize:12 }}>↻ Refresh all</button>
+              <button onClick={refreshAllFeeds} className="pios-btn pios-btn-ghost" style={{ fontSize:12 }}>↻ Refresh all</button>
             </div>
             <div style={{ display:'flex', gap:8, alignItems:'center' }}>
               {/* Layout toggle */}
@@ -641,7 +641,7 @@ export default function CommandPage() {
                 <input type="checkbox" checked={Boolean(feedSettings.brief_include_feeds)} onChange={e => updateFeedSetting('brief_include_feeds', e.target.checked)} />
                 Include in brief
               </label>
-              <button onClick={() => setShowAddFeed(true)} className="btn-v3-primary" style={{ fontSize:12 }}>+ Add feed</button>
+              <button onClick={() => setShowAddFeed(true)} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>+ Add feed</button>
             </div>
           </div>
 
@@ -654,7 +654,7 @@ export default function CommandPage() {
               <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:20, maxWidth:400, margin:'0 auto 20px' }}>
                 Run migration 005 in Supabase to seed your default feeds, or add your first custom feed now.
               </p>
-              <button onClick={() => setShowAddFeed(true)} className="btn-v3-primary" style={{ fontSize:13 }}>Add your first feed</button>
+              <button onClick={() => setShowAddFeed(true)} className="pios-btn pios-btn-primary" style={{ fontSize:13 }}>Add your first feed</button>
             </div>
           ) : (
             <div style={{

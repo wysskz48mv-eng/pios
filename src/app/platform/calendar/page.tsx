@@ -43,7 +43,7 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
       <div style={{ position:'relative',background:'var(--pios-surface)',borderRadius:16,border:'1px solid var(--pios-border)',padding:28,width:'100%',maxWidth:520,maxHeight:'90vh',overflowY:'auto' as const }}>
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20 }}>
           <div style={{ flex:1,minWidth:0 }}>
-            {editing?<input className="inp-v3" value={form.title} onChange={e=>f('title',e.target.value)} style={{ fontSize:17,fontWeight:700,marginBottom:6 }} autoFocus placeholder="Event title…" />
+            {editing?<input className="pios-input" value={form.title} onChange={e=>f('title',e.target.value)} style={{ fontSize:17,fontWeight:700,marginBottom:6 }} autoFocus placeholder="Event title…" />
               :<h2 style={{ fontSize:17,fontWeight:700,lineHeight:1.3,marginBottom:4 }}>{String(event.title ?? "")}</h2>}
             <div style={{ display:'flex',gap:8,alignItems:'center',flexWrap:'wrap' as const }}>
               <span style={{ fontSize:11,padding:'2px 8px',borderRadius:20,background:domainColour(event.domain||'personal')+'20',color:domainColour(event.domain||'personal'),fontWeight:600 }}>{domainLabel(event.domain||'personal')}</span>
@@ -57,17 +57,17 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
         {editing?(
           <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8 }}>
-              <div><div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>Start</div><input type="datetime-local" className="inp-v3" value={form.start_time} onChange={e=>f('start_time',e.target.value)} /></div>
-              <div><div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>End</div><input type="datetime-local" className="inp-v3" value={form.end_time} onChange={e=>f('end_time',e.target.value)} /></div>
+              <div><div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>Start</div><input type="datetime-local" className="pios-input" value={form.start_time} onChange={e=>f('start_time',e.target.value)} /></div>
+              <div><div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>End</div><input type="datetime-local" className="pios-input" value={form.end_time} onChange={e=>f('end_time',e.target.value)} /></div>
             </div>
-            <select className="inp-v3" value={form.domain} onChange={e=>f('domain',e.target.value)}>
+            <select className="pios-input" value={form.domain} onChange={e=>f('domain',e.target.value)}>
               {DOMAINS.map(d=><option key={d} value={d}>{domainLabel(d)}</option>)}
             </select>
-            <input className="inp-v3" placeholder="Location…" value={form.location} onChange={e=>f('location',e.target.value)} />
-            <textarea className="inp-v3" placeholder="Description…" rows={3} value={form.description} onChange={e=>f('description',e.target.value)} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
+            <input className="pios-input" placeholder="Location…" value={form.location} onChange={e=>f('location',e.target.value)} />
+            <textarea className="pios-input" placeholder="Description…" rows={3} value={form.description} onChange={e=>f('description',e.target.value)} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
             <div style={{ display:'flex',gap:8,marginTop:4 }}>
-              <button className="btn-v3-primary" onClick={save} disabled={saving} style={{ flex:1,fontSize:12 }}>{saving?'Saving…':isNew?'Create event':'Save changes'}</button>
-              <button className="btn-v3-ghost" onClick={()=>isNew?onClose():setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
+              <button className="pios-btn pios-btn-primary" onClick={save} disabled={saving} style={{ flex:1,fontSize:12 }}>{saving?'Saving…':isNew?'Create event':'Save changes'}</button>
+              <button className="pios-btn pios-btn-ghost" onClick={()=>isNew?onClose():setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
             </div>
           </div>
         ):(
@@ -118,7 +118,7 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
               </a>
             )}
             <div style={{ display:'flex',gap:8,marginTop:4 }}>
-              <button className="btn-v3-ghost" onClick={()=>setEditing(true)} style={{ flex:1,fontSize:12 }}>✎ Edit</button>
+              <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(true)} style={{ flex:1,fontSize:12 }}>✎ Edit</button>
               {event.source!=='google'&&<button onClick={()=>{onDelete(event.id);onClose()}} style={{ padding:'8px 14px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'var(--dng)',fontSize:12 }}>Delete</button>}
             </div>
           </div>
@@ -241,8 +241,8 @@ export default function CalendarPage() {
               <button key={v} onClick={()=>setView(v as 'month' | 'list')} style={{ padding:'4px 10px',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',background:view===v?'var(--pios-surface)':'transparent',color:view===v?'var(--pios-text)':'var(--pios-dim)' }}>{icon}</button>
             ))}
           </div>
-          <button className="btn-v3-ghost" onClick={syncGoogle} disabled={syncing} style={{ fontSize:12 }}>{syncing?'⟳ Syncing…':'↻ Sync Google'}</button>
-          <button className="btn-v3-primary" onClick={()=>{const d=new Date();d.setHours(9,0,0,0);setAddingDate(d)}} style={{ fontSize:12 }}>+ Event</button>
+          <button className="pios-btn pios-btn-ghost" onClick={syncGoogle} disabled={syncing} style={{ fontSize:12 }}>{syncing?'⟳ Syncing…':'↻ Sync Google'}</button>
+          <button className="pios-btn pios-btn-primary" onClick={()=>{const d=new Date();d.setHours(9,0,0,0);setAddingDate(d)}} style={{ fontSize:12 }}>+ Event</button>
         </div>
       </div>
 
@@ -261,7 +261,7 @@ export default function CalendarPage() {
       ):(
         <div>
           {loading?<Spinner />:upcoming.length===0?(
-            <div className="card-v3" style={{ textAlign:'center' as const,padding:'48px' }}>
+            <div className="pios-card" style={{ textAlign:'center' as const,padding:'48px' }}>
               <div style={{ fontSize:32,marginBottom:12 }}>📅</div>
               <div style={{ fontSize:14,fontWeight:700,marginBottom:8 }}>No upcoming events</div>
               <p style={{ fontSize:13,color:'var(--pios-muted)' }}>Sync Google Calendar or add an event manually.</p>
@@ -269,7 +269,7 @@ export default function CalendarPage() {
           ):(
             <div style={{ display:'flex',flexDirection:'column' as const,gap:8 }}>
               {upcoming.map(e=>(
-                <div key={(e as Record<string,unknown>).id as string} onClick={()=>setSelectedEvent(e)} className="card-v3" style={{ padding:'12px 16px',cursor:'pointer',display:'flex',alignItems:'flex-start',gap:14,borderLeft:`3px solid ${domainColour(e.domain||'personal')}` }}>
+                <div key={(e as Record<string,unknown>).id as string} onClick={()=>setSelectedEvent(e)} className="pios-card" style={{ padding:'12px 16px',cursor:'pointer',display:'flex',alignItems:'flex-start',gap:14,borderLeft:`3px solid ${domainColour(e.domain||'personal')}` }}>
                   <div style={{ textAlign:'center' as const,minWidth:52,flexShrink:0 }}>
                     <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{new Date(String(e.start_time ?? "")).toLocaleDateString('en-GB',{weekday:'short'})}</div>
                     <div style={{ fontSize:15,fontWeight:700 }}>{new Date(String(e.start_time ?? "")).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>

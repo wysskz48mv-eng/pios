@@ -291,7 +291,7 @@ export default function ExecutivePage() {
             {okrs.length === 0 && (
               <div>
                 <p className="text-xs text-muted-foreground">No active OKRs. Add one to start tracking.</p>
-                <button onClick={() => { setActiveTab('okrs') }} className="btn-v3-ghost" style={{ fontSize:11, marginTop:8 }}>+ Add OKR</button>
+                <button onClick={() => { setActiveTab('okrs') }} className="pios-btn pios-btn-ghost" style={{ fontSize:11, marginTop:8 }}>+ Add OKR</button>
               </div>
             )}
           </div>

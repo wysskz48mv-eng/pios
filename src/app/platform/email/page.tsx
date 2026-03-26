@@ -154,13 +154,13 @@ export default function EmailPage() {
         </div>
         <div style={{ display:'flex',gap:8 }}>
           {accounts.length === 0 ? (
-            <a href="/api/auth/connect-gmail" className="btn-v3-primary" style={{ fontSize:12, textDecoration:'none' }}>
+            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-primary" style={{ fontSize:12, textDecoration:'none' }}>
               Connect Gmail →
             </a>
           ) : (
             <>
-              <button className="btn-v3-ghost" onClick={()=>setShowCompose(!showCompose)} style={{ fontSize:12 }}>✉ Compose</button>
-              <button className="btn-v3-primary" onClick={syncGmail} disabled={syncing} style={{ fontSize:12 }}>
+              <button className="pios-btn pios-btn-ghost" onClick={()=>setShowCompose(!showCompose)} style={{ fontSize:12 }}>✉ Compose</button>
+              <button className="pios-btn pios-btn-primary" onClick={syncGmail} disabled={syncing} style={{ fontSize:12 }}>
                 {syncing?'⟳ Syncing…':'↻ Sync Gmail'}
               </button>
             </>
@@ -170,12 +170,12 @@ export default function EmailPage() {
 
       {/* Compose panel */}
       {showCompose && (
-        <div className="card-v3" style={{ marginBottom:16,borderColor:'rgba(34,209,194,0.3)' }}>
+        <div className="pios-card" style={{ marginBottom:16,borderColor:'rgba(34,209,194,0.3)' }}>
           <div style={{ fontSize:13,fontWeight:600,marginBottom:12,color:'var(--pro)' }}>New message</div>
           <div style={{ display:'flex',flexDirection:'column' as const,gap:8,marginBottom:10 }}>
-            <input className="inp-v3" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...p,to:e.target.value}))} />
-            <input className="inp-v3" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...p,subject:e.target.value}))} />
-            <textarea className="inp-v3" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
+            <input className="pios-input" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...p,to:e.target.value}))} />
+            <input className="pios-input" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...p,subject:e.target.value}))} />
+            <textarea className="pios-input" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
           </div>
           <div style={{ display:'flex',gap:8,alignItems:'center' }}>
             <button onClick={async()=>{
@@ -194,8 +194,8 @@ export default function EmailPage() {
               } else {
                 setBanner({msg:`Send failed: ${d.error ?? 'Unknown error'}`, ok:false})
               }
-            }} className="btn-v3-primary" style={{ fontSize:12 }}>Send</button>
-            <button onClick={()=>setShowCompose(false)} className="btn-v3-ghost" style={{ fontSize:12 }}>Cancel</button>
+            }} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>Send</button>
+            <button onClick={()=>setShowCompose(false)} className="pios-btn pios-btn-ghost" style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -215,29 +215,29 @@ export default function EmailPage() {
       </div>
 
       {!loading && emails.length===0 ? (
-        <div className="card-v3" style={{ textAlign:'center' as const,padding:'48px' }}>
+        <div className="pios-card" style={{ textAlign:'center' as const,padding:'48px' }}>
           <div style={{ fontSize:32,marginBottom:12 }}>✉</div>
           <h2 style={{ fontSize:16,fontWeight:600,marginBottom:8 }}>Connect Gmail</h2>
           <p style={{ color:'var(--pios-muted)',fontSize:13,marginBottom:20,maxWidth:400,margin:'0 auto 20px' }}>
             PIOS will triage your inbox, prioritise emails by domain, extract action items, and draft replies.
           </p>
-          <button className="btn-v3-primary" onClick={syncGmail} style={{ fontSize:13,padding:'10px 24px' }}>Connect Gmail & Start Triaging</button>
+          <button className="pios-btn pios-btn-primary" onClick={syncGmail} style={{ fontSize:13,padding:'10px 24px' }}>Connect Gmail & Start Triaging</button>
         </div>
       ) : (
         <div style={{ display:'grid',gridTemplateColumns:selected?'1fr 1fr':'1fr',gap:16 }}>
           {/* No accounts connected */}
       {accounts.length === 0 && !loading && (
-        <div className="card-v3" style={{ textAlign:'center' as const, padding:'48px 24px', marginBottom:16 }}>
+        <div className="pios-card" style={{ textAlign:'center' as const, padding:'48px 24px', marginBottom:16 }}>
           <div style={{ fontSize:40, marginBottom:16 }}>📧</div>
           <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>Connect your Gmail</div>
           <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:24, maxWidth:400, margin:'0 auto 24px' }}>
             PIOS will triage your inbox, extract action items from emails, auto-capture receipts, and include email context in your daily brief.
           </p>
           <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' as const }}>
-            <a href="/api/auth/connect-gmail" className="btn-v3-primary" style={{ textDecoration:'none', fontSize:13 }}>
+            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-primary" style={{ textDecoration:'none', fontSize:13 }}>
               🔗 Connect Gmail
             </a>
-            <a href="/platform/settings" className="btn-v3-ghost" style={{ textDecoration:'none', fontSize:13 }}>
+            <a href="/platform/settings" className="pios-btn pios-btn-ghost" style={{ textDecoration:'none', fontSize:13 }}>
               ⚙ Settings
             </a>
           </div>
@@ -245,7 +245,7 @@ export default function EmailPage() {
       )}
 
       {/* Email list */}
-          <div className="card-v3" style={{ padding:0,overflow:'hidden' }}>
+          <div className="pios-card" style={{ padding:0,overflow:'hidden' }}>
             {loading ? <p style={{ textAlign:'center' as const,padding:'40px',color:'var(--pios-muted)' }}>Loading…</p>
             : emails.map((e,i)=>(
               <div key={e.id as string} onClick={()=>setSelected(e as EmailItem)} style={{
@@ -274,7 +274,7 @@ export default function EmailPage() {
 
           {/* Email detail */}
           {selected && (
-            <div className="card-v3" style={{ padding:20,overflowY:'auto' as const,maxHeight:'80vh' }}>
+            <div className="pios-card" style={{ padding:20,overflowY:'auto' as const,maxHeight:'80vh' }}>
               <div style={{ marginBottom:14,paddingBottom:14,borderBottom:'1px solid var(--pios-border)' }}>
                 <div style={{ fontSize:16,fontWeight:700,marginBottom:4 }}>{String(selected.subject ?? "")}</div>
                 <div style={{ fontSize:12,color:'var(--pios-muted)',marginBottom:8 }}>From: {String(selected.sender_name ?? "")} &lt;{String(selected.sender_email ?? "")}&gt;</div>
@@ -320,14 +320,14 @@ export default function EmailPage() {
               {/* Reply box */}
               <div style={{ borderTop:'1px solid var(--pios-border)',paddingTop:14 }}>
                 <div style={{ fontSize:11,fontWeight:600,color:'var(--pios-muted)',marginBottom:8 }}>Reply</div>
-                <textarea value={replyText} onChange={e=>setReplyText(e.target.value)} className="inp-v3"
+                <textarea value={replyText} onChange={e=>setReplyText(e.target.value)} className="pios-input"
                   placeholder={`Reply to ${String(selected.sender_name ?? "")}…`} rows={4}
                   style={{ width:'100%',resize:'vertical' as const,fontFamily:'inherit',marginBottom:8 }} />
                 <div style={{ display:'flex',gap:8,alignItems:'center' }}>
-                  <button className="btn-v3-primary" onClick={sendReply} disabled={replying||!replyText.trim()} style={{ fontSize:12 }}>
+                  <button className="pios-btn pios-btn-primary" onClick={sendReply} disabled={replying||!replyText.trim()} style={{ fontSize:12 }}>
                     {replying?'⟳ Sending…':'Send reply'}
                   </button>
-                  <button className="btn-v3-ghost" onClick={()=>setReplyText('')} style={{ fontSize:12 }}>Clear</button>
+                  <button className="pios-btn pios-btn-ghost" onClick={()=>setReplyText('')} style={{ fontSize:12 }}>Clear</button>
                   <span style={{ fontSize:10,color:'var(--pios-dim)' }}>Requires Gmail send scope</span>
                 </div>
               </div>

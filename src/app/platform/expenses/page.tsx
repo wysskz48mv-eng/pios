@@ -175,8 +175,8 @@ export default function ExpensesPage() {
           <p style={{ fontSize:13,color:'var(--pios-muted)' }}>Track, categorise, and reconcile for tax purposes</p>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <button onClick={exportCSV} className="btn-v3-ghost" style={{ fontSize:12 }}>↓ Export CSV</button>
-          <button className="btn-v3-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add expense</button>
+          <button onClick={exportCSV} className="pios-btn pios-btn-ghost" style={{ fontSize:12 }}>↓ Export CSV</button>
+          <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add expense</button>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export default function ExpensesPage() {
           { label:'Billable',       value:fmt(billable),  colour:'var(--fm)' },
           { label:'Entries',        value:filtered.length, colour:'var(--fm)' },
         ].map(s=>(
-          <div key={(s as Record<string,unknown>).label as string} className="card-v3-sm" style={{ padding:'12px 14px' }}>
+          <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
             <div style={{ fontSize:18,fontWeight:800,color:s.colour,lineHeight:1,marginBottom:3 }}>{s.value}</div>
             <div style={{ fontSize:11,color:'var(--pios-muted)' }}>{s.label}</div>
           </div>
@@ -197,43 +197,43 @@ export default function ExpensesPage() {
 
       {/* Add form */}
       {showAdd && (
-        <div className="card-v3" style={{ marginBottom:16,borderColor:'rgba(167,139,250,0.3)' }}>
+        <div className="pios-card" style={{ marginBottom:16,borderColor:'rgba(167,139,250,0.3)' }}>
           <div style={{ display:'grid',gridTemplateColumns:'1fr auto auto auto auto',gap:8,marginBottom:8 }}>
-            <input className="inp-v3" placeholder="Description *" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} />
-            <input type="number" className="inp-v3" placeholder="Amount" style={{ width:100 }} value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} />
-            <select className="inp-v3" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...p,currency:e.target.value}))}>
+            <input className="pios-input" placeholder="Description *" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} />
+            <input type="number" className="pios-input" placeholder="Amount" style={{ width:100 }} value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} />
+            <select className="pios-input" style={{ width:'auto' }} value={form.currency} onChange={e=>setForm(p=>({...p,currency:e.target.value}))}>
               {CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
-            <select className="inp-v3" style={{ width:'auto' }} value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}>
+            <select className="pios-input" style={{ width:'auto' }} value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}>
               <option value="">Category…</option>
               {CATEGORIES.map(c=><option key={c} value={c}>{c.replace('_',' ')}</option>)}
             </select>
-            <input type="date" className="inp-v3" style={{ width:'auto' }} value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} />
+            <input type="date" className="pios-input" style={{ width:'auto' }} value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))} />
           </div>
           <div style={{ display:'grid',gridTemplateColumns:'auto 1fr 1fr auto',gap:8,marginBottom:8 }}>
-            <select className="inp-v3" style={{ width:'auto' }} value={form.domain} onChange={e=>setForm(p=>({...p,domain:e.target.value}))}>
+            <select className="pios-input" style={{ width:'auto' }} value={form.domain} onChange={e=>setForm(p=>({...p,domain:e.target.value}))}>
               {DOMAINS.map(d=><option key={d} value={d}>{domainLabel(d)}</option>)}
             </select>
-            <input className="inp-v3" placeholder="Client (if billable)" value={form.client} onChange={e=>setForm(p=>({...p,client:e.target.value}))} />
-            <input className="inp-v3" placeholder="Notes" value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} />
+            <input className="pios-input" placeholder="Client (if billable)" value={form.client} onChange={e=>setForm(p=>({...p,client:e.target.value}))} />
+            <input className="pios-input" placeholder="Notes" value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} />
             <label style={{ display:'flex',alignItems:'center',gap:6,fontSize:12,cursor:'pointer',whiteSpace:'nowrap' as const }}>
               <input type="checkbox" checked={form.billable} onChange={e=>setForm(p=>({...p,billable:e.target.checked}))} />
               Billable
             </label>
           </div>
           <div style={{ display:'flex',gap:8 }}>
-            <button className="btn-v3-primary" onClick={add} disabled={saving} style={{ fontSize:12 }}>{saving ? 'Saving…' : 'Add expense'}</button>
-            <button className="btn-v3-ghost" onClick={aiCategorise} disabled={aiLoading||!form.description.trim()} style={{ fontSize:12 }}>
+            <button className="pios-btn pios-btn-primary" onClick={add} disabled={saving} style={{ fontSize:12 }}>{saving ? 'Saving…' : 'Add expense'}</button>
+            <button className="pios-btn pios-btn-ghost" onClick={aiCategorise} disabled={aiLoading||!form.description.trim()} style={{ fontSize:12 }}>
               {aiLoading ? '…' : '✦ AI categorise'}
             </button>
-            <button className="btn-v3-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
 
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20 }}>
         {/* By category */}
-        <div className="card-v3">
+        <div className="pios-card">
           <div style={{ fontSize:13,fontWeight:700,marginBottom:14 }}>By category</div>
           {catEntries.length===0 ? <p style={{ fontSize:12,color:'var(--pios-dim)' }}>No data</p> : (
             <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
@@ -251,7 +251,7 @@ export default function ExpensesPage() {
         </div>
 
         {/* By domain */}
-        <div className="card-v3">
+        <div className="pios-card">
           <div style={{ fontSize:13,fontWeight:700,marginBottom:14 }}>By domain</div>
           {Object.keys(byDomain).length===0 ? <p style={{ fontSize:12,color:'var(--pios-dim)' }}>No data</p> : (
             <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
@@ -288,7 +288,7 @@ export default function ExpensesPage() {
 
       {/* Table */}
       {loading ? <p style={{ textAlign:'center' as const,padding:'40px',color:'var(--pios-muted)',fontSize:13 }}>Loading…</p> : (
-        <div className="card-v3" style={{ padding:0,overflow:'hidden' }}>
+        <div className="pios-card" style={{ padding:0,overflow:'hidden' }}>
           <table style={{ width:'100%',borderCollapse:'collapse' }}>
             <thead>
               <tr style={{ borderBottom:'1px solid var(--pios-border)' }}>
@@ -304,7 +304,7 @@ export default function ExpensesPage() {
                   <td style={{ padding:'10px 14px',fontSize:13 }}>
                     {editing === e.id ? (
                       <input value={String(editForm?.description ?? '')} onChange={ev=>setEditForm(p=>({...p,description:ev.target.value}))}
-                        className="inp-v3" style={{ fontSize:12,padding:'4px 8px',width:'100%' }} autoFocus onKeyDown={ev=>{if(ev.key==='Enter')saveEdit();if(ev.key==='Escape'){setEditing(null);setEditForm(null)}}} />
+                        className="pios-input" style={{ fontSize:12,padding:'4px 8px',width:'100%' }} autoFocus onKeyDown={ev=>{if(ev.key==='Enter')saveEdit();if(ev.key==='Escape'){setEditing(null);setEditForm(null)}}} />
                     ) : (
                       <span onClick={()=>startEdit(e)} style={{ cursor:'text' }} title="Click to edit">{String(e.description ?? "")}</span>
                     )}

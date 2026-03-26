@@ -195,23 +195,23 @@ function SearchTab() {
 
   return (
     <div>
-      <div className="card-v3" style={{ marginBottom: 16 }}>
+      <div className="pios-card" style={{ marginBottom: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, marginBottom: 12 }}>
-          <input className="inp-v3" placeholder='e.g. AI predictive maintenance facilities management GCC'
+          <input className="pios-input" placeholder='e.g. AI predictive maintenance facilities management GCC'
             value={query} onChange={e => setQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && search()}
             style={{ fontSize: 14 }} />
-          <button className="btn-v3-primary" onClick={search} disabled={loading || !query.trim()} style={{ fontSize: 13, minWidth: 100 }}>
+          <button className="pios-btn pios-btn-primary" onClick={search} disabled={loading || !query.trim()} style={{ fontSize: 13, minWidth: 100 }}>
             {loading ? '⟳ Searching…' : '🔍 Search'}
           </button>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
-          <select className="inp-v3" style={{ width: 'auto', fontSize: 12 }} value={database} onChange={e => setDatabase(e.target.value)}>
+          <select className="pios-input" style={{ width: 'auto', fontSize: 12 }} value={database} onChange={e => setDatabase(e.target.value)}>
             {DB_OPTIONS.map(d => <option key={(d as Record<string,unknown>).value as string} value={d.value}>{d.label}</option>)}
           </select>
-          <input className="inp-v3" placeholder="Year from" type="number" style={{ width: 110, fontSize: 12 }} value={yearFrom} onChange={e => setYearFrom(e.target.value)} />
-          <input className="inp-v3" placeholder="Year to" type="number" style={{ width: 100, fontSize: 12 }} value={yearTo} onChange={e => setYearTo(e.target.value)} />
-          <select className="inp-v3" style={{ width: 'auto', fontSize: 12 }} value={maxResults} onChange={e => setMaxResults(parseInt(e.target.value))}>
+          <input className="pios-input" placeholder="Year from" type="number" style={{ width: 110, fontSize: 12 }} value={yearFrom} onChange={e => setYearFrom(e.target.value)} />
+          <input className="pios-input" placeholder="Year to" type="number" style={{ width: 100, fontSize: 12 }} value={yearTo} onChange={e => setYearTo(e.target.value)} />
+          <select className="pios-input" style={{ width: 'auto', fontSize: 12 }} value={maxResults} onChange={e => setMaxResults(parseInt(e.target.value))}>
             {[5, 10, 15, 20].map(n => <option key={n} value={n}>{n} results</option>)}
           </select>
         </div>
@@ -225,7 +225,7 @@ function SearchTab() {
 
       {/* Suggested searches */}
       {!results.length && !loading && (
-        <div className="card-v3" style={{ marginBottom: 16 }}>
+        <div className="pios-card" style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>Suggested searches for your DBA</div>
           <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
             {[
@@ -279,7 +279,7 @@ function SearchTab() {
           )}
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
             {results.map((r, i) => (
-              <div key={i} className="card-v3" style={{ padding: '16px 18px' }}>
+              <div key={i} className="pios-card" style={{ padding: '16px 18px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 6 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, marginBottom: 4, color: 'var(--pios-text)' }}>{String(r.title ?? "")}</div>
@@ -352,7 +352,7 @@ function SearchTab() {
 
       {/* Recent search history */}
       {history.length > 0 && !results.length && !loading && (
-        <div className="card-v3" style={{ marginTop: 16 }}>
+        <div className="pios-card" style={{ marginTop: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>Recent searches</div>
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6 }}>
             {history.map((h, i) => (
@@ -434,28 +434,28 @@ function JournalsTab() {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <span style={{ fontSize: 13, color: 'var(--pios-muted)' }}>{journals.length} journals tracked</span>
-          <button className="btn-v3-primary" onClick={() => setShowAdd(!showAdd)} style={{ fontSize: 12 }}>+ Add journal</button>
+          <button className="pios-btn pios-btn-primary" onClick={() => setShowAdd(!showAdd)} style={{ fontSize: 12 }}>+ Add journal</button>
         </div>
 
         {showAdd && (
-          <div className="card-v3" style={{ marginBottom: 14, borderColor: ACCENT + '40' }}>
+          <div className="pios-card" style={{ marginBottom: 14, borderColor: ACCENT + '40' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-              <input className="inp-v3" placeholder="Journal name *" value={addForm.journal_name} onChange={e => setAddForm(p => ({ ...p, journal_name: e.target.value }))} />
-              <input className="inp-v3" placeholder="Publisher" value={addForm.publisher} onChange={e => setAddForm(p => ({ ...p, publisher: e.target.value }))} />
-              <input className="inp-v3" placeholder="Impact factor" type="number" step="0.1" value={addForm.impact_factor} onChange={e => setAddForm(p => ({ ...p, impact_factor: e.target.value }))} />
-              <select className="inp-v3" value={addForm.quartile} onChange={e => setAddForm(p => ({ ...p, quartile: e.target.value }))}>
+              <input className="pios-input" placeholder="Journal name *" value={addForm.journal_name} onChange={e => setAddForm(p => ({ ...p, journal_name: e.target.value }))} />
+              <input className="pios-input" placeholder="Publisher" value={addForm.publisher} onChange={e => setAddForm(p => ({ ...p, publisher: e.target.value }))} />
+              <input className="pios-input" placeholder="Impact factor" type="number" step="0.1" value={addForm.impact_factor} onChange={e => setAddForm(p => ({ ...p, impact_factor: e.target.value }))} />
+              <select className="pios-input" value={addForm.quartile} onChange={e => setAddForm(p => ({ ...p, quartile: e.target.value }))}>
                 {['Q1', 'Q2', 'Q3', 'Q4', 'Unranked'].map(q => <option key={q} value={q}>{q}</option>)}
               </select>
-              <input className="inp-v3" placeholder="Subject area" value={addForm.subject_area} onChange={e => setAddForm(p => ({ ...p, subject_area: e.target.value }))} />
-              <select className="inp-v3" value={addForm.priority} onChange={e => setAddForm(p => ({ ...p, priority: e.target.value }))}>
+              <input className="pios-input" placeholder="Subject area" value={addForm.subject_area} onChange={e => setAddForm(p => ({ ...p, subject_area: e.target.value }))} />
+              <select className="pios-input" value={addForm.priority} onChange={e => setAddForm(p => ({ ...p, priority: e.target.value }))}>
                 {[['high', 'High priority'], ['medium', 'Medium'], ['low', 'Low'], ['watch', 'Watch']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
-            <input className="inp-v3" placeholder="Submission URL" value={addForm.submission_url} onChange={e => setAddForm(p => ({ ...p, submission_url: e.target.value }))} style={{ marginBottom: 8 }} />
-            <input className="inp-v3" placeholder="Author guidelines URL" value={addForm.guidelines_url} onChange={e => setAddForm(p => ({ ...p, guidelines_url: e.target.value }))} style={{ marginBottom: 8 }} />
+            <input className="pios-input" placeholder="Submission URL" value={addForm.submission_url} onChange={e => setAddForm(p => ({ ...p, submission_url: e.target.value }))} style={{ marginBottom: 8 }} />
+            <input className="pios-input" placeholder="Author guidelines URL" value={addForm.guidelines_url} onChange={e => setAddForm(p => ({ ...p, guidelines_url: e.target.value }))} style={{ marginBottom: 8 }} />
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn-v3-primary" onClick={addJournal} disabled={saving} style={{ fontSize: 12 }}>{saving ? 'Adding…' : 'Add journal'}</button>
-              <button className="btn-v3-ghost" onClick={() => setShowAdd(false)} style={{ fontSize: 12 }}>Cancel</button>
+              <button className="pios-btn pios-btn-primary" onClick={addJournal} disabled={saving} style={{ fontSize: 12 }}>{saving ? 'Adding…' : 'Add journal'}</button>
+              <button className="pios-btn pios-btn-ghost" onClick={() => setShowAdd(false)} style={{ fontSize: 12 }}>Cancel</button>
             </div>
           </div>
         )}
@@ -463,7 +463,7 @@ function JournalsTab() {
         {loading ? <Spinner /> : (
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
             {journals.map((j: Record<string,unknown>) => (
-              <div key={j.id as string} onClick={() => setSelected(selected?.id === String(j.id ?? "") ? null : j as JournalRecord)} className="card-v3"
+              <div key={j.id as string} onClick={() => setSelected(selected?.id === String(j.id ?? "") ? null : j as JournalRecord)} className="pios-card"
                 style={{ padding: '14px 16px', cursor: 'pointer', border: `1px solid ${selected?.id === j.id ? ACCENT + '60' : 'var(--pios-border)'}`, background: selected?.id === j.id ? 'rgba(108,142,255,0.05)' : 'var(--pios-surface)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -503,7 +503,7 @@ function JournalsTab() {
       {/* Right — guidelines panel */}
       {selected && (
         <div>
-          <div className="card-v3" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
+          <div className="pios-card" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{String(selected?.journal_name ?? "")}</div>
@@ -513,7 +513,7 @@ function JournalsTab() {
             </div>
 
             {!guidelines && !guideLoading && (
-              <button className="btn-v3-primary" onClick={() => selected && getGuidelines(selected as unknown as JournalRecord)} style={{ fontSize: 12, width: '100%' }}>
+              <button className="pios-btn pios-btn-primary" onClick={() => selected && getGuidelines(selected as unknown as JournalRecord)} style={{ fontSize: 12, width: '100%' }}>
                 Get author guidelines summary
               </button>
             )}
@@ -624,7 +624,7 @@ function CFPTab() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <span style={{ fontSize: 13, color: 'var(--pios-muted)' }}>{saved.length} tracked · Click "Find CFPs" to discover new ones</span>
-        <button className="btn-v3-primary" onClick={fetchCFPs} disabled={loading} style={{ fontSize: 12 }}>
+        <button className="pios-btn pios-btn-primary" onClick={fetchCFPs} disabled={loading} style={{ fontSize: 12 }}>
           {loading ? '⟳ Searching…' : '🔍 Find CFPs'}
         </button>
       </div>
@@ -639,7 +639,7 @@ function CFPTab() {
             {live.map((cfp, i) => {
               const days = String((cfp as Record<string,unknown>).deadline ?? "") ? daysUntil(String((cfp as Record<string,unknown>).deadline ?? "")) : null
               return (
-                <div key={i} className="card-v3" style={{ padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div key={i} className="pios-card" style={{ padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 4 }}>
                       <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{String((cfp as Record<string,unknown>).title ?? "")}</span>
@@ -673,7 +673,7 @@ function CFPTab() {
             {saved.map((cfp: Record<string,unknown>) => {
               const days = String((cfp as Record<string,unknown>).deadline ?? "") ? daysUntil(String((cfp as Record<string,unknown>).deadline ?? "")) : null
               return (
-                <div key={cfp.id as string} className="card-v3" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div key={cfp.id as string} className="pios-card" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{String((cfp as Record<string,unknown>).title ?? "")}</div>
                     <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{String(cfp.journal_name ?? (cfp as Record<string,unknown>).conference_name ?? "")}</div>
@@ -698,11 +698,11 @@ function CFPTab() {
       )}
 
       {saved.length === 0 && !loading && live.length === 0 && (
-        <div className="card-v3" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
+        <div className="pios-card" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📣</div>
           <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>No CFPs tracked yet</div>
           <p style={{ fontSize: 13, color: 'var(--pios-muted)', marginBottom: 16 }}>Click "Find CFPs" to discover calls for papers and special issues relevant to your DBA research.</p>
-          <button className="btn-v3-primary" onClick={fetchCFPs} style={{ fontSize: 13 }}>Find CFPs now</button>
+          <button className="pios-btn pios-btn-primary" onClick={fetchCFPs} style={{ fontSize: 13 }}>Find CFPs now</button>
         </div>
       )}
     </div>
@@ -745,7 +745,7 @@ function ImportTab() {
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
       {/* Institutional DB access guide */}
       <div>
-        <div className="card-v3" style={{ marginBottom: 14, borderLeft: `3px solid ${ACCENT}` }}>
+        <div className="pios-card" style={{ marginBottom: 14, borderLeft: `3px solid ${ACCENT}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Scopus — Institutional Access</div>
           <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 12 }}>
             Your university library provides database access. The PIOS search tab uses AI to simulate results — for authoritative data, use your institutional login.
@@ -766,7 +766,7 @@ function ImportTab() {
           <a href="https://www.scopus.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: ACCENT }}>Open Scopus →</a>
         </div>
 
-        <div className="card-v3" style={{ borderLeft: '3px solid var(--saas)' }}>
+        <div className="pios-card" style={{ borderLeft: '3px solid var(--saas)' }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>ISO Standards Access</div>
           <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 12 }}>
             ISO standards relevant to your DBA (ISO 55001, ISO 41001, ISO 15686) are available via BSI and through the UoP library.
@@ -788,7 +788,7 @@ function ImportTab() {
 
       {/* Mendeley / Zotero + manual import */}
       <div>
-        <div className="card-v3" style={{ marginBottom: 14, borderLeft: '3px solid var(--ai)' }}>
+        <div className="pios-card" style={{ marginBottom: 14, borderLeft: '3px solid var(--ai)' }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Mendeley & Zotero</div>
           <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 12 }}>
             PIOS tracks literature in its own database. These tools work alongside PIOS for PDF management and citation generation.
@@ -805,26 +805,26 @@ function ImportTab() {
         </div>
 
         {/* Manual import */}
-        <div className="card-v3">
+        <div className="pios-card">
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Add to literature library</div>
           {importResult && (
             <div style={{ padding: '8px 12px', borderRadius: 6, background: 'var(--fm)20', color: 'var(--fm)', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>{importResult}</div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-            <input className="inp-v3" placeholder="Title *" value={manualForm.title} onChange={e => setManualForm(p => ({ ...p, title: e.target.value }))} />
-            <input className="inp-v3" placeholder="Authors (comma-separated)" value={manualForm.authors} onChange={e => setManualForm(p => ({ ...p, authors: e.target.value }))} />
+            <input className="pios-input" placeholder="Title *" value={manualForm.title} onChange={e => setManualForm(p => ({ ...p, title: e.target.value }))} />
+            <input className="pios-input" placeholder="Authors (comma-separated)" value={manualForm.authors} onChange={e => setManualForm(p => ({ ...p, authors: e.target.value }))} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-              <input className="inp-v3" placeholder="Year" type="number" value={manualForm.year} onChange={e => setManualForm(p => ({ ...p, year: e.target.value }))} />
-              <select className="inp-v3" value={manualForm.source_type} onChange={e => setManualForm(p => ({ ...p, source_type: e.target.value }))}>
+              <input className="pios-input" placeholder="Year" type="number" value={manualForm.year} onChange={e => setManualForm(p => ({ ...p, year: e.target.value }))} />
+              <select className="pios-input" value={manualForm.source_type} onChange={e => setManualForm(p => ({ ...p, source_type: e.target.value }))}>
                 {['journal', 'book', 'conference', 'report', 'thesis', 'website', 'other'].map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-              <input className="inp-v3" placeholder="DOI" value={manualForm.doi} onChange={e => setManualForm(p => ({ ...p, doi: e.target.value }))} />
+              <input className="pios-input" placeholder="DOI" value={manualForm.doi} onChange={e => setManualForm(p => ({ ...p, doi: e.target.value }))} />
             </div>
-            <input className="inp-v3" placeholder="Journal name" value={manualForm.journal} onChange={e => setManualForm(p => ({ ...p, journal: e.target.value }))} />
-            <input className="inp-v3" placeholder="URL" value={manualForm.url} onChange={e => setManualForm(p => ({ ...p, url: e.target.value }))} />
-            <input className="inp-v3" placeholder="Tags (comma-separated)" value={manualForm.tags} onChange={e => setManualForm(p => ({ ...p, tags: e.target.value }))} />
-            <textarea className="inp-v3" placeholder="Notes…" rows={2} style={{ resize: 'vertical' as const, fontFamily: 'inherit' }} value={manualForm.notes} onChange={e => setManualForm(p => ({ ...p, notes: e.target.value }))} />
-            <button className="btn-v3-primary" onClick={manualImport} disabled={importing || !manualForm.title.trim()} style={{ fontSize: 12 }}>
+            <input className="pios-input" placeholder="Journal name" value={manualForm.journal} onChange={e => setManualForm(p => ({ ...p, journal: e.target.value }))} />
+            <input className="pios-input" placeholder="URL" value={manualForm.url} onChange={e => setManualForm(p => ({ ...p, url: e.target.value }))} />
+            <input className="pios-input" placeholder="Tags (comma-separated)" value={manualForm.tags} onChange={e => setManualForm(p => ({ ...p, tags: e.target.value }))} />
+            <textarea className="pios-input" placeholder="Notes…" rows={2} style={{ resize: 'vertical' as const, fontFamily: 'inherit' }} value={manualForm.notes} onChange={e => setManualForm(p => ({ ...p, notes: e.target.value }))} />
+            <button className="pios-btn pios-btn-primary" onClick={manualImport} disabled={importing || !manualForm.title.trim()} style={{ fontSize: 12 }}>
               {importing ? 'Adding…' : 'Add to library'}
             </button>
           </div>
@@ -916,7 +916,7 @@ function LibraryTab() {
             { label: 'Read', val: stats.read, c: 'var(--fm)', f: 'read' },
             { label: 'Revisit', val: stats.revisit, c: 'var(--saas)', f: 'revisit' },
           ].map(s => (
-            <div key={(s as Record<string,unknown>).label as string} className="card-v3-sm" style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => setFilter(s.f)}>
+            <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => setFilter(s.f)}>
               <div style={{ fontSize: 18, fontWeight: 800, color: s.c, lineHeight: 1, marginBottom: 2 }}>{String(s.val ?? "")}</div>
               <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{s.label}</div>
             </div>
@@ -927,7 +927,7 @@ function LibraryTab() {
       {/* Search + filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' as const, alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <input className="inp-v3" placeholder="Search title, journal, notes…"
+          <input className="pios-input" placeholder="Search title, journal, notes…"
             value={search} onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && load()}
             style={{ paddingLeft: 28, fontSize: 12 }} />
@@ -968,7 +968,7 @@ function LibraryTab() {
           {loading ? (
             <div style={{ padding: '32px 0', textAlign: 'center' as const, color: 'var(--pios-muted)', fontSize: 13 }}>Loading library…</div>
           ) : items.length === 0 ? (
-            <div className="card-v3" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
+            <div className="pios-card" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Library is empty</div>
               <p style={{ fontSize: 13, color: 'var(--pios-muted)' }}>Add papers via the ⬇ Import & Connect tab or the 🔍 Database Search tab.</p>
@@ -977,7 +977,7 @@ function LibraryTab() {
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
               {items.map(item => (
                 <div key={item.id as string} onClick={() => setSelected(selected?.id===item.id ? null : item)}
-                  className="card-v3" style={{ padding: '12px 16px', cursor: 'pointer',
+                  className="pios-card" style={{ padding: '12px 16px', cursor: 'pointer',
                     border: `1px solid ${selected?.id===item.id ? ACCENT+'50' : 'var(--pios-border)'}`,
                     background: selected?.id===item.id ? ACCENT+'05' : 'var(--pios-surface)' }}>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -1017,7 +1017,7 @@ function LibraryTab() {
         {/* Detail */}
         {selected && (
           <div>
-            <div className="card-v3" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
+            <div className="pios-card" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginBottom: 4 }}>{String(selected?.title ?? "")}</div>
@@ -1038,7 +1038,7 @@ function LibraryTab() {
 
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginBottom: 4 }}>Notes</div>
-                <textarea className="inp-v3" rows={3} placeholder="Add reading notes…"
+                <textarea className="pios-input" rows={3} placeholder="Add reading notes…"
                   defaultValue={String(selected.notes ?? "")}
                   onBlur={e => updateItem(String(selected.id ?? ""), { notes: e.target.value })}
                   style={{ width: '100%', resize: 'vertical' as const, fontFamily: 'inherit', fontSize: 12 }} />

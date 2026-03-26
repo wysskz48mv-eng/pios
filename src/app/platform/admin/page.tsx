@@ -155,7 +155,7 @@ export default function AdminPage() {
           { label:'Database',           value:'Supabase',     colour:'var(--academic)' },
           { label:'Deployment',         value:'Vercel',       colour:'var(--fm)' },
         ].map(s=>(
-          <div key={s.label} className="card-v3-sm" style={{ padding:'12px 14px' }}>
+          <div key={s.label} className="pios-card-sm" style={{ padding:'12px 14px' }}>
             <div style={{ fontSize:18, fontWeight:800, color:s.colour, lineHeight:1, marginBottom:3 }}>{s.value}</div>
             <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{s.label}</div>
           </div>
@@ -163,7 +163,7 @@ export default function AdminPage() {
       </div>
 
       {/* Migrations */}
-      <div className="card-v3">
+      <div className="pios-card">
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
           <div>
             <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>Database Migrations</div>
@@ -183,7 +183,7 @@ export default function AdminPage() {
           <button
             onClick={runAll}
             disabled={running==='all' || loading}
-            className="btn-v3-primary"
+            className="pios-btn pios-btn-primary"
             style={{ fontSize:12, flexShrink:0 }}
           >
             {running==='all' ? <><Spinner/>Running all…</> : '▶ Run all pending'}
@@ -324,7 +324,7 @@ export default function AdminPage() {
       </div>
 
       {/* Supabase direct links */}
-      <div className="card-v3" style={{ marginTop:16 }}>
+      <div className="pios-card" style={{ marginTop:16 }}>
         <div style={{ fontSize:14, fontWeight:700, marginBottom:12 }}>Supabase Dashboard</div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
           {[
@@ -345,7 +345,7 @@ export default function AdminPage() {
       </div>
 
       {/* Environment variables checklist */}
-      <div className="card-v3" style={{ marginTop:16 }}>
+      <div className="pios-card" style={{ marginTop:16 }}>
         <div style={{ fontSize:14, fontWeight:700, marginBottom:12 }}>Vercel Environment Variables</div>
         <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, marginBottom:14 }}>
           Set these in your Vercel project settings → Environment Variables.

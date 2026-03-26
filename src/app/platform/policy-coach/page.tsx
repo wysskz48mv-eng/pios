@@ -139,7 +139,7 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
       <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 20, borderTop: '1px solid var(--pios-border)', marginTop: 24 }}>
         {completed
           ? <span style={{ fontSize: 13, color: 'var(--fm)', fontWeight: 600 }}>✓ Lesson complete</span>
-          : <button className="btn-v3-primary" onClick={onComplete} style={{ fontSize: 13 }}>Mark complete & continue →</button>
+          : <button className="pios-btn pios-btn-primary" onClick={onComplete} style={{ fontSize: 13 }}>Mark complete & continue →</button>
         }
       </div>
     )
@@ -459,7 +459,7 @@ export default function PolicyCoachPage() {
       </div>
 
       {/* Profile form */}
-      <div className="card-v3">
+      <div className="pios-card">
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Tell us about yourself</h2>
         <p style={{ fontSize: 13, color: 'var(--pios-muted)', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid var(--pios-border)' }}>
           PIOS™ uses your profile to personalise every lesson — your language, your examples, your pace.
@@ -467,7 +467,7 @@ export default function PolicyCoachPage() {
 
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ai)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 7 }}>Your name</label>
-          <input className="inp-v3" placeholder="e.g. Siphathisiwe" value={name} onChange={e => setName(e.target.value)} />
+          <input className="pios-input" placeholder="e.g. Siphathisiwe" value={name} onChange={e => setName(e.target.value)} />
         </div>
 
         <div style={{ marginBottom: 18 }}>
@@ -486,7 +486,7 @@ export default function PolicyCoachPage() {
 
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ai)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 7 }}>How familiar are you with policies and procedures?</label>
-          <select className="inp-v3" value={level} onChange={e => setLevel(e.target.value)}>
+          <select className="pios-input" value={level} onChange={e => setLevel(e.target.value)}>
             <option value="">Select your starting point…</option>
             <option value="new">🌱 Completely new — I've never worked with formal policies before</option>
             <option value="some">🌿 Some experience — I've seen policies but never owned them</option>
@@ -495,7 +495,7 @@ export default function PolicyCoachPage() {
           </select>
         </div>
 
-        <button className="btn-v3-primary" onClick={startCoaching} disabled={!role || !level} style={{ fontSize: 13 }}>
+        <button className="pios-btn pios-btn-primary" onClick={startCoaching} disabled={!role || !level} style={{ fontSize: 13 }}>
           Begin My Coaching Journey →
         </button>
       </div>
@@ -560,7 +560,7 @@ export default function PolicyCoachPage() {
         </div>
 
         {/* Lesson body */}
-        <div className="card-v3" style={{ borderColor: `${TAG_COLOR[LESSONS[currentLesson].tag]}30` }}>
+        <div className="pios-card" style={{ borderColor: `${TAG_COLOR[LESSONS[currentLesson].tag]}30` }}>
           <LessonContent
             key={currentLesson}
             lessonId={currentLesson}

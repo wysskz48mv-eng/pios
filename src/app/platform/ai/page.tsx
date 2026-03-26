@@ -203,7 +203,7 @@ export default function AiPage() {
       {/* ── Session sidebar ─────────────────────────────────────────────── */}
       {showHistory && (
         <div style={{ width: 240, display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-          <button className="btn-v3-primary" onClick={() => newChat()} style={{ fontSize: 12, width: '100%' }}>
+          <button className="pios-btn pios-btn-primary" onClick={() => newChat()} style={{ fontSize: 12, width: '100%' }}>
             + New conversation
           </button>
 

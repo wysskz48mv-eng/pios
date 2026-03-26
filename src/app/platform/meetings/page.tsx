@@ -173,7 +173,7 @@ export default function MeetingsPage() {
             Paste transcripts or write notes → AI extracts decisions, action items, and risks
           </p>
         </div>
-        <button onClick={() => setShowNew(v => !v)} className="btn-v3-primary" style={{ fontSize:12 }}>
+        <button onClick={() => setShowNew(v => !v)} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>
           + New meeting
         </button>
       </div>
@@ -228,10 +228,10 @@ export default function MeetingsPage() {
                 Auto-extract with AI after saving
               </label>
               <div style={{ display:'flex', gap:8 }}>
-                <button onClick={create} disabled={saving} className="btn-v3-primary" style={{ fontSize:11 }}>
+                <button onClick={create} disabled={saving} className="pios-btn pios-btn-primary" style={{ fontSize:11 }}>
                   {saving ? 'Saving…' : 'Save & Process'}
                 </button>
-                <button onClick={() => { setShowNew(false); setForm(EMPTY_FORM) }} className="btn-v3-ghost" style={{ fontSize:11 }}>Cancel</button>
+                <button onClick={() => { setShowNew(false); setForm(EMPTY_FORM) }} className="pios-btn pios-btn-ghost" style={{ fontSize:11 }}>Cancel</button>
               </div>
             </div>
           )}

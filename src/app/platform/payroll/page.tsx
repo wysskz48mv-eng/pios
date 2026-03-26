@@ -114,7 +114,7 @@ function RunsTab() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <div style={{ fontSize:13, color:'var(--pios-muted)' }}>{runs.length} payroll runs</div>
         <div style={{ display:'flex', gap:8 }}>
-          <button className="btn-v3-ghost" onClick={detect} disabled={detecting} style={{ fontSize:12 }}>
+          <button className="pios-btn pios-btn-ghost" onClick={detect} disabled={detecting} style={{ fontSize:12 }}>
             {detecting ? '⟳ Scanning…' : '📧 Detect from Gmail'}
           </button>
         </div>
@@ -136,7 +136,7 @@ function RunsTab() {
               <div style={{ fontSize:32, marginBottom:12 }}>💳</div>
               <div style={{ fontSize:14, fontWeight:700, marginBottom:8 }}>No payroll runs yet</div>
               <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:16 }}>Click "Detect from Gmail" to scan for payroll emails from your accountant.</p>
-              <button className="btn-v3-primary" onClick={detect} disabled={detecting} style={{ fontSize:13 }}>{detecting?'Scanning…':'Detect from Gmail'}</button>
+              <button className="pios-btn pios-btn-primary" onClick={detect} disabled={detecting} style={{ fontSize:13 }}>{detecting?'Scanning…':'Detect from Gmail'}</button>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
@@ -209,7 +209,7 @@ function RunsTab() {
               {selectedRun.status === 'approved' && !selectedRun.remittance_sent_at && (
                 <div>
                   {!remitPreview ? (
-                    <button className="btn-v3-primary" onClick={previewRemit} disabled={remitting} style={{ width:'100%', fontSize:12 }}>
+                    <button className="pios-btn pios-btn-primary" onClick={previewRemit} disabled={remitting} style={{ width:'100%', fontSize:12 }}>
                       {remitting ? '⟳ Generating…' : '📨 Preview remittances'}
                     </button>
                   ) : (
@@ -224,10 +224,10 @@ function RunsTab() {
                         </div>
                       ))}
                       <div style={{ display:'flex', gap:8, marginTop:10 }}>
-                        <button className="btn-v3-primary" onClick={confirmRemit} disabled={remitting} style={{ flex:1, fontSize:12 }}>
+                        <button className="pios-btn pios-btn-primary" onClick={confirmRemit} disabled={remitting} style={{ flex:1, fontSize:12 }}>
                           {remitting ? '⟳ Queueing…' : '✓ Queue all transfers'}
                         </button>
-                        <button className="btn-v3-ghost" onClick={()=>setRemitPreview(null)} style={{ fontSize:12 }}>Cancel</button>
+                        <button className="pios-btn pios-btn-ghost" onClick={()=>setRemitPreview(null)} style={{ fontSize:12 }}>Cancel</button>
                       </div>
                     </div>
                   )}
@@ -389,7 +389,7 @@ function ClaimsTab() {
             <button key={v} onClick={()=>{ setFilter(v); load(v) }} style={{ padding:'4px 12px', borderRadius:20, fontSize:11, border:'1px solid var(--pios-border)', background:filter===v?'var(--pios-surface)':'transparent', color:filter===v?'var(--pios-text)':'var(--pios-muted)', fontWeight:filter===v?600:400, cursor:'pointer' }}>{l}</button>
           ))}
         </div>
-        <button className="btn-v3-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Submit claim</button>
+        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Submit claim</button>
       </div>
 
       {showAdd && (
@@ -409,8 +409,8 @@ function ClaimsTab() {
           <input className="pios-input" placeholder="Category (travel / software / equipment…)" value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))} style={{ marginBottom:8 }} />
           <input className="pios-input" placeholder="Description" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} style={{ marginBottom:10 }} />
           <div style={{ display:'flex', gap:8 }}>
-            <button className="btn-v3-primary" onClick={submitClaim} disabled={saving} style={{ fontSize:12 }}>{saving?'Submitting…':'Submit claim'}</button>
-            <button className="btn-v3-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="pios-btn pios-btn-primary" onClick={submitClaim} disabled={saving} style={{ fontSize:12 }}>{saving?'Submitting…':'Submit claim'}</button>
+            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -495,7 +495,7 @@ function StaffTab() {
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <span style={{ fontSize:13, color:'var(--pios-muted)' }}>{staff.length} active staff members</span>
-        <button className="btn-v3-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add staff</button>
+        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add staff</button>
       </div>
 
       {showAdd && (
@@ -520,8 +520,8 @@ function StaffTab() {
           </div>
           <input className="pios-input" placeholder="Bank account (last 4 digits only — never store full number)" value={form.bank_account} onChange={e=>setForm(p=>({...p,bank_account:e.target.value.slice(0,4)}))} style={{ marginBottom:10 }} maxLength={4} />
           <div style={{ display:'flex', gap:8 }}>
-            <button className="btn-v3-primary" onClick={addStaff} disabled={saving} style={{ fontSize:12 }}>{saving?'Adding…':'Add staff member'}</button>
-            <button className="btn-v3-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="pios-btn pios-btn-primary" onClick={addStaff} disabled={saving} style={{ fontSize:12 }}>{saving?'Adding…':'Add staff member'}</button>
+            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -567,8 +567,8 @@ function StaffTab() {
                 </select>
                 <input className="pios-input" type="number" placeholder="Monthly salary" value={String(editForm.monthly_salary ?? '')} onChange={e=>setEditForm((p:any)=>({...p,monthly_salary:e.target.value}))} />
                 <div style={{ display:'flex', gap:6, gridColumn:'span 2' }}>
-                  <button className="btn-v3-primary" onClick={()=>saveEdit(s.id as string)} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save'}</button>
-                  <button className="btn-v3-ghost" onClick={()=>setEditingId(null)} style={{ fontSize:12 }}>Cancel</button>
+                  <button className="pios-btn pios-btn-primary" onClick={()=>saveEdit(s.id as string)} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save'}</button>
+                  <button className="pios-btn pios-btn-ghost" onClick={()=>setEditingId(null)} style={{ fontSize:12 }}>Cancel</button>
                 </div>
               </div>
             )}
@@ -617,7 +617,7 @@ function ChaseTab() {
           <input className="pios-input" placeholder="Accountant email (optional)" value={accountantEmail} onChange={e=>setAccountantEmail(e.target.value)} />
           <input type="date" className="pios-input" value={expectedDate} onChange={e=>setExpectedDate(e.target.value)} placeholder="Expected date (defaults to last working day)" />
         </div>
-        <button className="btn-v3-primary" onClick={checkPayroll} disabled={checking} style={{ fontSize:12 }}>
+        <button className="pios-btn pios-btn-primary" onClick={checkPayroll} disabled={checking} style={{ fontSize:12 }}>
           {checking ? '⟳ Checking…' : '🔍 Check payroll status'}
         </button>
       </div>

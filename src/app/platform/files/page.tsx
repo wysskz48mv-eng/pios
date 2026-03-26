@@ -83,8 +83,8 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
           <div style={{ padding:'0 8px', marginBottom:12 }}>
             <input className="pios-input" placeholder="Folder name…" value={newSpace.name} onChange={e=>setNewSpace(p=>({...p,name:e.target.value}))} style={{ marginBottom:6, fontSize:12 }} />
             <div style={{ display:'flex', gap:4 }}>
-              <button onClick={addSpace} className="btn-v3-primary" style={{ fontSize:11, flex:1 }}>Add</button>
-              <button onClick={()=>setShowAddSpace(false)} className="btn-v3-ghost" style={{ fontSize:11 }}>✕</button>
+              <button onClick={addSpace} className="pios-btn pios-btn-primary" style={{ fontSize:11, flex:1 }}>Add</button>
+              <button onClick={()=>setShowAddSpace(false)} className="pios-btn pios-btn-ghost" style={{ fontSize:11 }}>✕</button>
             </div>
           </div>
         )}
@@ -116,7 +116,7 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
             match them to your projects, and propose which folder each file belongs in. Nothing is moved or deleted — read-only scan.
           </p>
           <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-            <button className="btn-v3-primary" onClick={()=>onScan('root')} disabled={scanning} style={{ fontSize:12 }}>
+            <button className="pios-btn pios-btn-primary" onClick={()=>onScan('root')} disabled={scanning} style={{ fontSize:12 }}>
               {scanning ? '⟳ Scanning…' : '🔍 Scan My Drive'}
             </button>
             <span style={{ fontSize:11, color:'var(--pios-dim)' }}>Scans up to 50 recent files · AI classifies each one</span>
@@ -405,7 +405,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
           <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>Filing Rules</div>
           <p style={{ fontSize:12, color:'var(--pios-muted)' }}>Rules run automatically when files are scanned or emails are received. Lower priority number = checked first.</p>
         </div>
-        <button className="btn-v3-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add rule</button>
+        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add rule</button>
       </div>
 
       {showAdd && (
@@ -433,8 +433,8 @@ function RulesTab({ spaces }: { spaces:any[] }) {
           </div>
           <input className="pios-input" placeholder="Action value (project name, folder path, tag name)" value={form.action_value} onChange={e=>f('action_value',e.target.value)} style={{ marginBottom:10 }} />
           <div style={{ display:'flex', gap:8 }}>
-            <button className="btn-v3-primary" onClick={saveRule} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save rule'}</button>
-            <button className="btn-v3-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="pios-btn pios-btn-primary" onClick={saveRule} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save rule'}</button>
+            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -442,7 +442,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
       {loading ? <Spinner /> : rules.length===0 ? (
         <div className="pios-card" style={{ textAlign:'center' as const, padding:'40px' }}>
           <div style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:12 }}>No rules yet. Run migration 006 to seed default rules, or add your own.</div>
-          <button className="btn-v3-primary" onClick={()=>setShowAdd(true)} style={{ fontSize:13 }}>Add first rule</button>
+          <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(true)} style={{ fontSize:13 }}>Add first rule</button>
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
