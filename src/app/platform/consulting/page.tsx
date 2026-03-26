@@ -1,50 +1,85 @@
-/**
- * /platform/consulting — CSA™ Consulting Strategist Agent
- * Framework engine: POM™ OAE™ SDL™ CVDM™ CPA™ SCE™ AAM™
- * PIOS Sprint 23 | VeritasIQ Technologies Ltd
- */
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Briefcase, Zap, Plus, ChevronDown, Loader2, Copy, Check } from 'lucide-react'
 
-type Framework = { key: string; name: string; desc: string }
-type Engagement = { id: string; client_name: string; engagement_type: string; status: string; framework_used: string; brief: string; ai_output: string; created_at: string }
+// ─────────────────────────────────────────────────────────────────────────────
+// Consulting v3.0 — CSA™ Consulting Strategist Agent
+// 15 NemoClaw™ proprietary frameworks · Engagement CRUD · Proposal generator
+// UIX fully upgraded to v3.0 token set (no Tailwind dependencies)
+// PIOS v3.0 · VeritasIQ Technologies Ltd
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Framework  = { key:string; name:string; desc:string }
+type Engagement = { id:string; client_name:string; engagement_type:string; status:string; framework_used:string; brief:string; ai_output:string; created_at:string }
 
 const STATUS_COLOR: Record<string,string> = {
-  active:    'bg-green-500/10 text-green-400 border-green-500/20',
-  proposal:  'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  on_hold:   'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  completed: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-  cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
+  active:'var(--fm)', proposal:'var(--academic)', on_hold:'var(--saas)',
+  completed:'var(--pios-dim)', cancelled:'var(--dng)',
 }
-
 const ENG_TYPES = ['strategy','operations','change','commercial','diagnostic','other']
 
+const inp: React.CSSProperties = {
+  display:'block', width:'100%', padding:'9px 12px', marginBottom:10,
+  background:'var(--pios-surface2)', border:'1px solid var(--pios-border2)',
+  borderRadius:8, color:'var(--pios-text)', fontSize:13,
+  fontFamily:'var(--font-sans)', outline:'none', boxSizing:'border-box' as const,
+  transition:'border-color 0.15s',
+}
+
+function Tag({ children, color }: { children:React.ReactNode; color:string }) {
+  return <span style={{ fontSize:9.5, fontWeight:600, padding:'2px 7px', borderRadius:5, background:`${color}12`, color, letterSpacing:'0.02em' }}>{children}</span>
+}
+
+function SectionLabel({ children }: { children:React.ReactNode }) {
+  return <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase' as const, color:'var(--pios-dim)', marginBottom:10 }}>{children}</div>
+}
+
+// ── Framework card ────────────────────────────────────────────────────────────
+function FrameworkCard({ fw, selected, onSelect }: { fw:Framework; selected:boolean; onSelect:()=>void }) {
+  return (
+    <button onClick={onSelect} style={{
+      background:selected?'var(--ai-subtle)':'var(--pios-surface)',
+      border:`1px solid ${selected?'var(--ai)':'var(--pios-border)'}`,
+      borderRadius:10, padding:'12px 14px', cursor:'pointer', textAlign:'left' as const,
+      transition:'all 0.15s', fontFamily:'var(--font-sans)', width:'100%',
+    }}
+      onMouseEnter={e=>{ if(!selected)(e.currentTarget as HTMLButtonElement).style.borderColor='var(--pios-border2)' }}
+      onMouseLeave={e=>{ if(!selected)(e.currentTarget as HTMLButtonElement).style.borderColor='var(--pios-border)' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:4 }}>
+        <span style={{ fontFamily:'var(--font-display)', fontSize:11.5, fontWeight:800, color:selected?'var(--ai)':'var(--pios-muted)', letterSpacing:'0.02em' }}>{fw.key}</span>
+        {selected && <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--ai)' }} />}
+      </div>
+      <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-text)', marginBottom:3, lineHeight:1.3 }}>{fw.name}</div>
+      <div style={{ fontSize:11, color:'var(--pios-muted)', lineHeight:1.5 }}>{fw.desc}</div>
+    </button>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function ConsultingPage() {
-  const [frameworks, setFrameworks] = useState<Framework[]>([])
-  const [engagements, setEngagements] = useState<Engagement[]>([])
-  const [loading, setLoading]       = useState(true)
-  const [activeTab, setActiveTab]   = useState<'frameworks'|'engagements'|'proposals'>('frameworks')
+  const [frameworks,    setFrameworks]    = useState<Framework[]>([])
+  const [engagements,   setEngagements]   = useState<Engagement[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [activeTab,     setActiveTab]     = useState<'frameworks'|'engagements'|'proposals'>('frameworks')
 
-  // Framework analyser state
-  const [selFramework, setSelFramework] = useState<string>('')
-  const [situation, setSituation]       = useState('')
-  const [engagementId, setEngagementId] = useState('')
-  const [analysing, setAnalysing]       = useState(false)
-  const [analysis, setAnalysis]         = useState<string | null>(null)
-  const [copied, setCopied]             = useState(false)
+  // Framework analyser
+  const [selFramework,  setSelFramework]  = useState('')
+  const [situation,     setSituation]     = useState('')
+  const [engagementId,  setEngagementId]  = useState('')
+  const [analysing,     setAnalysing]     = useState(false)
+  const [analysis,      setAnalysis]      = useState<string|null>(null)
+  const [copied,        setCopied]        = useState(false)
 
-  // Proposal state
-  const [propClient, setPropClient]   = useState('')
-  const [propType, setPropType]       = useState('strategy')
-  const [propScope, setPropScope]     = useState('')
-  const [generating, setGenerating]   = useState(false)
-  const [proposal, setProposal]       = useState<string | null>(null)
+  // Proposal generator
+  const [propClient,    setPropClient]    = useState('')
+  const [propType,      setPropType]      = useState('strategy')
+  const [propScope,     setPropScope]     = useState('')
+  const [generating,    setGenerating]    = useState(false)
+  const [proposal,      setProposal]      = useState<string|null>(null)
 
-  // New engagement modal
-  const [showEngModal, setShowEngModal] = useState(false)
-  const [engForm, setEngForm] = useState({ client_name: '', engagement_type: 'strategy', status: 'active', brief: '' })
-  const [saving, setSaving] = useState(false)
+  // Engagement modal
+  const [showEngModal,  setShowEngModal]  = useState(false)
+  const [engForm,       setEngForm]       = useState({ client_name:'', engagement_type:'strategy', status:'active', brief:'' })
+  const [saving,        setSaving]        = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -64,18 +99,11 @@ export default function ConsultingPage() {
 
   async function runAnalysis() {
     if (!selFramework || !situation.trim()) return
-    setAnalysing(true)
-    setAnalysis(null)
+    setAnalysing(true); setAnalysis(null)
     try {
       const r = await fetch('/api/consulting', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'apply_framework',
-          framework_key: selFramework,
-          situation: situation.trim(),
-          engagement_id: engagementId || undefined,
-        }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ action:'apply_framework', framework_key:selFramework, situation:situation.trim(), engagement_id:engagementId||undefined }),
       })
       const d = await r.json()
       setAnalysis(d.analysis ?? 'No output returned.')
@@ -85,18 +113,11 @@ export default function ConsultingPage() {
 
   async function generateProposal() {
     if (!propClient.trim() || !propScope.trim()) return
-    setGenerating(true)
-    setProposal(null)
+    setGenerating(true); setProposal(null)
     try {
       const r = await fetch('/api/consulting', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generate_proposal',
-          client_name: propClient,
-          engagement_type: propType,
-          scope: propScope,
-        }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ action:'generate_proposal', client_name:propClient, engagement_type:propType, scope:propScope }),
       })
       const d = await r.json()
       setProposal(d.proposal ?? 'Error generating proposal.')
@@ -107,205 +128,256 @@ export default function ConsultingPage() {
   async function saveEngagement() {
     setSaving(true)
     await fetch('/api/consulting', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'save_engagement', payload: engForm }),
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ action:'save_engagement', payload:engForm }),
     })
     setShowEngModal(false)
-    setEngForm({ client_name: '', engagement_type: 'strategy', status: 'active', brief: '' })
-    setSaving(false)
-    load()
+    setEngForm({ client_name:'', engagement_type:'strategy', status:'active', brief:'' })
+    setSaving(false); load()
   }
 
   function copyAnalysis() {
     if (!analysis) return
     navigator.clipboard.writeText(analysis)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setCopied(true); setTimeout(()=>setCopied(false), 2000)
   }
 
-  const inp = "w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-violet-500/50 mb-3"
-  const sel = inp + " appearance-none"
-
   if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="text-muted-foreground text-sm animate-pulse">Loading Consulting Engine…</div>
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:240, color:'var(--pios-muted)', fontSize:13 }}>
+      <div style={{ width:14, height:14, border:'2px solid var(--pios-border2)', borderTop:'2px solid var(--ai)', borderRadius:'50%', animation:'spin 0.8s linear infinite', marginRight:10 }} />
+      Loading Consulting Engine…
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
+  const selFw = frameworks.find(f=>f.key===selFramework)
+
   return (
-    <div className="p-6 min-h-screen max-w-5xl">
+    <div className="fade-up">
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:24 }}>
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Briefcase className="w-5 h-5 text-violet-400" />
-            <h1 className="text-xl font-bold">Consulting Strategist</h1>
-            <span className="text-xs bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full font-medium">CSA™</span>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+            <h1 style={{ fontFamily:'var(--font-display)', fontSize:22, fontWeight:700, color:'var(--pios-text)', letterSpacing:'-0.03em' }}>Consulting Strategist</h1>
+            <Tag color="var(--ai)">CSA™</Tag>
           </div>
-          <p className="text-sm text-muted-foreground">Proprietary framework engine — 15 analytical models, zero third-party IP</p>
+          <p style={{ fontSize:12, color:'var(--pios-muted)' }}>
+            {frameworks.length} proprietary frameworks · {engagements.length} active engagements
+          </p>
         </div>
-        <button onClick={() => setShowEngModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg text-sm font-medium hover:bg-violet-500/20">
-          <Plus className="w-4 h-4" /> New Engagement
+        <button onClick={()=>setShowEngModal(true)} style={{ padding:'7px 16px', borderRadius:9, border:'none', background:'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+          + New Engagement
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-white/5 rounded-lg p-1 w-fit">
-        {(['frameworks','engagements','proposals'] as const).map(t => (
-          <button key={t} onClick={() => setActiveTab(t)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium capitalize transition-colors ${activeTab === t ? 'bg-white/10 text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-            {t}
-          </button>
+      <div style={{ display:'flex', gap:4, padding:3, borderRadius:9, background:'var(--pios-surface2)', marginBottom:22, width:'fit-content' }}>
+        {([['frameworks','Framework Engine'],['engagements','Engagements'],['proposals','Proposal Generator']] as const).map(([tab, label]) => (
+          <button key={tab} onClick={()=>setActiveTab(tab)} style={{
+            padding:'6px 16px', borderRadius:7, border:'none', cursor:'pointer',
+            background:activeTab===tab?'var(--ai-subtle)':'transparent',
+            color:activeTab===tab?'var(--ai)':'var(--pios-muted)',
+            fontSize:12.5, fontWeight:activeTab===tab?600:400,
+            fontFamily:'var(--font-sans)', transition:'all 0.15s',
+          }}>{label}</button>
         ))}
       </div>
 
-      {/* ── FRAMEWORKS TAB ──────────────────────────────────── */}
-      {activeTab === 'frameworks' && (
-        <div className="grid grid-cols-5 gap-5">
+      {/* ── TAB: Framework Engine ── */}
+      {activeTab==='frameworks' && (
+        <div style={{ display:'grid', gridTemplateColumns:'280px 1fr', gap:20 }}>
+
           {/* Framework selector */}
-          <div className="col-span-2 space-y-2">
-            {!selFramework && (
-              <div className="text-xs text-violet-400/70 mb-3 p-2 bg-violet-500/5 rounded-lg border border-violet-500/10">
-                Select a framework → describe your situation → click Run Analysis
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-3">Select framework</p>
-            {frameworks.map(fw => (
-              <button key={fw.key} onClick={() => setSelFramework(fw.key)}
-                className={`w-full text-left p-3 rounded-xl border transition-all ${selFramework === fw.key
-                  ? 'bg-violet-500/10 border-violet-500/30'
-                  : 'bg-card border-border hover:bg-white/5'}`}>
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className={`text-xs font-bold tracking-wide ${selFramework === fw.key ? 'text-violet-400' : 'text-muted-foreground'}`}>{fw.key}™</span>
-                  {selFramework === fw.key && <ChevronDown className="w-3 h-3 text-violet-400" />}
+          <div>
+            <SectionLabel>Select Framework</SectionLabel>
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {frameworks.map(fw => (
+                <FrameworkCard key={fw.key} fw={fw} selected={selFramework===fw.key} onSelect={()=>setSelFramework(fw.key)} />
+              ))}
+              {frameworks.length === 0 && (
+                <div style={{ padding:'24px', textAlign:'center', color:'var(--pios-muted)', fontSize:12, border:'1px dashed var(--pios-border)', borderRadius:10 }}>
+                  No frameworks loaded.<br/>Check NemoClaw™ seed in admin.
                 </div>
-                <div className={`text-sm font-medium leading-tight ${selFramework === fw.key ? 'text-foreground' : 'text-foreground/80'}`}>{fw.name}</div>
-                <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{fw.desc}</div>
-              </button>
-            ))}
+              )}
+            </div>
           </div>
 
-          {/* Analysis input + output */}
-          <div className="col-span-3">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-3">Situation / context</p>
-            <textarea
-              value={situation}
-              onChange={e => setSituation(e.target.value)}
-              placeholder={selFramework
-                ? `Describe the situation you want to analyse using ${selFramework}™…\n\nInclude: what's happening, who's involved, what decisions are pending, any constraints.`
-                : 'Select a framework on the left, then describe your situation here…'}
-              className="w-full h-36 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-violet-500/40 resize-none mb-3"
-            />
-
-            {engagements.length > 0 && (
-              <div className="mb-3">
-                <label className="text-xs text-muted-foreground uppercase tracking-wide block mb-1.5">Link to engagement (optional)</label>
-                <select value={engagementId} onChange={e => setEngagementId(e.target.value)} className={sel}>
-                  <option value="">— none —</option>
-                  {engagements.map(e => <option key={e.id} value={e.id}>{e.client_name} · {e.engagement_type}</option>)}
-                </select>
-              </div>
-            )}
-
-            <button onClick={runAnalysis} disabled={!selFramework || !situation.trim() || analysing}
-              className="w-full py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold disabled:opacity-40 hover:bg-violet-600 transition-colors flex items-center justify-center gap-2 mb-5">
-              {analysing ? <><Loader2 className="w-4 h-4 animate-spin" /> Analysing…</> : <><Zap className="w-4 h-4" /> Run {selFramework ? `${selFramework}™` : 'Framework'} Analysis</>}
-            </button>
-
-            {analysis && (
-              <div className="bg-card border border-border rounded-xl p-5 relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-violet-400" />
-                    <span className="text-xs font-semibold text-violet-400 uppercase tracking-wide">CSA™ Analysis — {selFramework}™</span>
+          {/* Analysis panel */}
+          <div>
+            {selFw ? (
+              <>
+                {/* Selected framework header */}
+                <div style={{ background:'var(--ai-subtle)', border:'1px solid rgba(139,124,248,0.2)', borderRadius:12, padding:'14px 16px', marginBottom:16, position:'relative', overflow:'hidden' }}>
+                  <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, var(--ai), var(--academic))' }} />
+                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                    <span style={{ fontFamily:'var(--font-display)', fontSize:13, fontWeight:800, color:'var(--ai)' }}>{selFw.key}™</span>
+                    <span style={{ fontFamily:'var(--font-display)', fontSize:14, fontWeight:700, color:'var(--pios-text)', letterSpacing:'-0.01em' }}>{selFw.name}</span>
                   </div>
-                  <button onClick={copyAnalysis} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                    {copied ? <><Check className="w-3 h-3 text-green-400" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
-                  </button>
+                  <div style={{ fontSize:12.5, color:'var(--pios-muted)', lineHeight:1.55 }}>{selFw.desc}</div>
                 </div>
-                <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{analysis}</div>
+
+                {/* Situation input */}
+                <SectionLabel>Describe your situation</SectionLabel>
+                <textarea
+                  style={{ ...inp, resize:'vertical', fontFamily:'inherit', minHeight:120, marginBottom:12 }}
+                  placeholder={`Describe the situation you want to analyse using ${selFw.key}™. Include context, stakeholders, constraints, and what decision or output you need…`}
+                  value={situation} onChange={e=>setSituation(e.target.value)}
+                  onFocus={e=>{ (e.target as HTMLTextAreaElement).style.borderColor='var(--ai)' }}
+                  onBlur={e=>{ (e.target as HTMLTextAreaElement).style.borderColor='var(--pios-border2)' }}
+                />
+
+                {/* Link to engagement */}
+                {engagements.length > 0 && (
+                  <div style={{ marginBottom:14 }}>
+                    <SectionLabel>Link to engagement (optional)</SectionLabel>
+                    <select style={inp} value={engagementId} onChange={e=>setEngagementId(e.target.value)}>
+                      <option value="">— No engagement —</option>
+                      {engagements.filter(e=>e.status==='active'||e.status==='proposal').map(e=>(
+                        <option key={e.id} value={e.id}>{e.client_name} · {e.engagement_type}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <button onClick={runAnalysis} disabled={analysing||!situation.trim()} style={{
+                  padding:'10px 20px', borderRadius:9, border:'none',
+                  background:analysing||!situation.trim()?'rgba(139,124,248,0.3)':'var(--ai)',
+                  color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700,
+                  cursor:analysing||!situation.trim()?'not-allowed':'pointer', transition:'opacity 0.15s',
+                  display:'flex', alignItems:'center', gap:8,
+                }}>
+                  {analysing ? (
+                    <><div style={{ width:13, height:13, border:'2px solid rgba(255,255,255,0.3)', borderTop:'2px solid white', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} /> Analysing…</>
+                  ) : `Apply ${selFw.key}™ →`}
+                </button>
+
+                {/* Analysis output */}
+                {analysis && (
+                  <div style={{ marginTop:18, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:12, overflow:'hidden' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid var(--pios-border)' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--ai)' }} className="ai-pulse" />
+                        <span style={{ fontFamily:'var(--font-display)', fontSize:12.5, fontWeight:700, color:'var(--pios-text)' }}>{selFw.key}™ Analysis</span>
+                      </div>
+                      <button onClick={copyAnalysis} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid var(--pios-border2)', background:'transparent', color:'var(--pios-muted)', fontSize:11, cursor:'pointer', fontFamily:'var(--font-sans)' }}>
+                        {copied?'✓ Copied':'⎘ Copy'}
+                      </button>
+                    </div>
+                    <div style={{ padding:'16px', fontSize:13, lineHeight:1.75, color:'var(--pios-text)', whiteSpace:'pre-wrap', maxHeight:480, overflowY:'auto' }}>
+                      {analysis}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:320, textAlign:'center' }}>
+                <div style={{ fontSize:32, marginBottom:14, opacity:0.25 }}>◎</div>
+                <div style={{ fontFamily:'var(--font-display)', fontSize:15, fontWeight:700, color:'var(--pios-text)', marginBottom:6 }}>Select a framework</div>
+                <p style={{ fontSize:13, color:'var(--pios-muted)', maxWidth:340, lineHeight:1.65 }}>
+                  Choose one of the {frameworks.length} NemoClaw™ proprietary frameworks from the left, describe your situation, and get a structured strategic analysis.
+                </p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* ── ENGAGEMENTS TAB ──────────────────────────────────── */}
-      {activeTab === 'engagements' && (
-        <div className="space-y-3">
-          {engagements.map(e => (
-            <div key={e.id} className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <div className="text-base font-semibold text-foreground">{e.client_name}</div>
-                  <div className="text-xs text-muted-foreground capitalize mt-0.5">{e.engagement_type}</div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {e.framework_used && (
-                    <span className="text-xs bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full">{e.framework_used}™</span>
-                  )}
-                  <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${STATUS_COLOR[e.status] ?? ''}`}>{e.status}</span>
-                </div>
-              </div>
-              {e.brief && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{e.brief}</p>}
-              {e.ai_output && (
-                <div className="mt-3 bg-white/3 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Last AI output</div>
-                  <p className="text-xs text-foreground/70 line-clamp-3">{e.ai_output}</p>
-                </div>
-              )}
+      {/* ── TAB: Engagements ── */}
+      {activeTab==='engagements' && (
+        <div>
+          {engagements.length===0 ? (
+            <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:14, padding:'52px 24px', textAlign:'center' }}>
+              <div style={{ fontSize:32, marginBottom:12, opacity:0.25 }}>◎</div>
+              <div style={{ fontFamily:'var(--font-display)', fontSize:15, fontWeight:700, marginBottom:8 }}>No engagements yet</div>
+              <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:18 }}>Track your consulting engagements and link framework analyses to client work.</p>
+              <button onClick={()=>setShowEngModal(true)} style={{ padding:'8px 18px', borderRadius:9, border:'none', background:'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700, cursor:'pointer' }}>+ New Engagement</button>
             </div>
-          ))}
-          {engagements.length === 0 && (
-            <div className="text-center py-16 text-muted-foreground">
-              <Briefcase className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No engagements yet.</p>
-              <p className="text-xs mt-1">Add a client engagement to start tracking and linking framework analyses.</p>
+          ) : (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+              {engagements.map(e=>(
+                <div key={e.id} style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:12, padding:'14px 16px', borderLeft:`2px solid ${STATUS_COLOR[e.status]??'var(--pios-dim)'}` }}>
+                  <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:13.5, fontWeight:700, color:'var(--pios-text)', letterSpacing:'-0.01em' }}>{e.client_name}</div>
+                    <Tag color={STATUS_COLOR[e.status]??'var(--pios-dim)'}>{e.status.replace('_',' ')}</Tag>
+                  </div>
+                  <div style={{ display:'flex', gap:5, marginBottom:8, flexWrap:'wrap' }}>
+                    <Tag color="var(--pios-muted)">{e.engagement_type}</Tag>
+                    {e.framework_used&&<Tag color="var(--ai)">{e.framework_used}</Tag>}
+                  </div>
+                  {e.brief&&<p style={{ fontSize:11.5, color:'var(--pios-muted)', lineHeight:1.55 }}>{e.brief.slice(0,100)}{e.brief.length>100?'…':''}</p>}
+                  <div style={{ fontSize:10, color:'var(--pios-dim)', marginTop:8 }}>
+                    {new Date(e.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
       )}
 
-      {/* ── PROPOSALS TAB ──────────────────────────────────── */}
-      {activeTab === 'proposals' && (
-        <div className="grid grid-cols-2 gap-6">
+      {/* ── TAB: Proposal Generator ── */}
+      {activeTab==='proposals' && (
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-4">Generate proposal section</p>
-            <label className="text-xs text-muted-foreground block mb-1">Client name</label>
-            <input value={propClient} onChange={e => setPropClient(e.target.value)} placeholder="e.g. Qiddiya Investment Company" className={inp} />
-            <label className="text-xs text-muted-foreground block mb-1">Engagement type</label>
-            <select value={propType} onChange={e => setPropType(e.target.value)} className={sel}>
-              {ENG_TYPES.map(t => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
-            </select>
-            <label className="text-xs text-muted-foreground block mb-1">Scope summary</label>
-            <textarea value={propScope} onChange={e => setPropScope(e.target.value)}
-              placeholder="Describe the engagement scope, objectives and key deliverables…"
-              className="w-full h-32 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-violet-500/40 resize-none mb-4" />
-            <button onClick={generateProposal} disabled={!propClient.trim() || !propScope.trim() || generating}
-              className="w-full py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold disabled:opacity-40 hover:bg-violet-600 flex items-center justify-center gap-2">
-              {generating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</> : <><Zap className="w-4 h-4" /> Generate Proposal Section</>}
+            <SectionLabel>Client &amp; scope</SectionLabel>
+            <div style={{ marginBottom:12 }}>
+              <div style={{ fontSize:10, color:'var(--pios-dim)', fontWeight:600, letterSpacing:'0.05em', textTransform:'uppercase', marginBottom:5 }}>Client name</div>
+              <input style={inp} placeholder="Acme Corp / QPMO / KSP…" value={propClient} onChange={e=>setPropClient(e.target.value)}
+                onFocus={e=>{(e.target as HTMLInputElement).style.borderColor='var(--ai)'}}
+                onBlur={e=>{(e.target as HTMLInputElement).style.borderColor='var(--pios-border2)'}} />
+            </div>
+            <div style={{ marginBottom:12 }}>
+              <div style={{ fontSize:10, color:'var(--pios-dim)', fontWeight:600, letterSpacing:'0.05em', textTransform:'uppercase', marginBottom:5 }}>Engagement type</div>
+              <select style={inp} value={propType} onChange={e=>setPropType(e.target.value)}>
+                {ENG_TYPES.map(t=><option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+              </select>
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:10, color:'var(--pios-dim)', fontWeight:600, letterSpacing:'0.05em', textTransform:'uppercase', marginBottom:5 }}>Scope &amp; requirements</div>
+              <textarea
+                style={{ ...inp, resize:'vertical', fontFamily:'inherit', minHeight:120 }}
+                placeholder="Describe what the client needs, the key challenges, deliverables expected, and any constraints…"
+                value={propScope} onChange={e=>setPropScope(e.target.value)}
+                onFocus={e=>{(e.target as HTMLTextAreaElement).style.borderColor='var(--ai)'}}
+                onBlur={e=>{(e.target as HTMLTextAreaElement).style.borderColor='var(--pios-border2)'}}
+              />
+            </div>
+            <button onClick={generateProposal} disabled={generating||!propClient.trim()||!propScope.trim()} style={{
+              padding:'10px 20px', borderRadius:9, border:'none',
+              background:generating||!propClient.trim()||!propScope.trim()?'rgba(139,124,248,0.3)':'var(--ai)',
+              color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700,
+              cursor:generating||!propClient.trim()||!propScope.trim()?'not-allowed':'pointer',
+              display:'flex', alignItems:'center', gap:8,
+            }}>
+              {generating?(
+                <><div style={{ width:13, height:13, border:'2px solid rgba(255,255,255,0.3)', borderTop:'2px solid white', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />Generating…</>
+              ):'Generate Proposal →'}
             </button>
           </div>
 
           <div>
             {proposal ? (
-              <div className="bg-card border border-border rounded-xl p-5 h-full">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-violet-400 uppercase tracking-wide">CSA™ Proposal Draft</span>
-                  <button onClick={() => { navigator.clipboard.writeText(proposal); setCopied(true); setTimeout(()=>setCopied(false),2000) }}
-                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
-                    {copied ? <><Check className="w-3 h-3 text-green-400" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
+              <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:12, overflow:'hidden', height:'100%' }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid var(--pios-border)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--ai)' }} className="ai-pulse" />
+                    <span style={{ fontFamily:'var(--font-display)', fontSize:12.5, fontWeight:700 }}>Proposal — {propClient}</span>
+                  </div>
+                  <button onClick={()=>{navigator.clipboard.writeText(proposal||'');setCopied(true);setTimeout(()=>setCopied(false),2000)}} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid var(--pios-border2)', background:'transparent', color:'var(--pios-muted)', fontSize:11, cursor:'pointer', fontFamily:'var(--font-sans)' }}>
+                    {copied?'✓ Copied':'⎘ Copy'}
                   </button>
                 </div>
-                <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed overflow-y-auto max-h-96">{proposal}</div>
+                <div style={{ padding:'16px', fontSize:13, lineHeight:1.75, color:'var(--pios-text)', whiteSpace:'pre-wrap', overflowY:'auto', maxHeight:480 }}>
+                  {proposal}
+                </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-center text-muted-foreground bg-card border border-border rounded-xl">
-                <div>
-                  <Zap className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Proposal will appear here</p>
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', textAlign:'center', border:'1px dashed var(--pios-border)', borderRadius:12, padding:32 }}>
+                <div style={{ fontSize:28, marginBottom:12, opacity:0.2 }}>◎</div>
+                <div style={{ fontSize:13, color:'var(--pios-muted)', lineHeight:1.65 }}>
+                  Fill in the client details and scope, then generate a structured consulting proposal using NemoClaw™ intelligence.
                 </div>
               </div>
             )}
@@ -313,25 +385,50 @@ export default function ConsultingPage() {
         </div>
       )}
 
-      {/* ── ENGAGEMENT MODAL ─────────────────────────────────── */}
+      {/* Engagement modal */}
       {showEngModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-background border border-border rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-base font-semibold mb-4">New Engagement</h3>
-            <input className={inp} placeholder="Client name" value={engForm.client_name} onChange={e => setEngForm(f=>({...f,client_name:e.target.value}))} />
-            <label className="text-xs text-muted-foreground block mb-1">Type</label>
-            <select className={sel} value={engForm.engagement_type} onChange={e => setEngForm(f=>({...f,engagement_type:e.target.value}))}>
-              {ENG_TYPES.map(t => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
-            </select>
-            <label className="text-xs text-muted-foreground block mb-1">Status</label>
-            <select className={sel} value={engForm.status} onChange={e => setEngForm(f=>({...f,status:e.target.value}))}>
-              {['active','proposal','on_hold','completed','cancelled'].map(s => <option key={s} value={s}>{s.replace('_',' ')}</option>)}
-            </select>
-            <textarea className={inp+' h-20 resize-none'} placeholder="Brief description…" value={engForm.brief} onChange={e => setEngForm(f=>({...f,brief:e.target.value}))} />
-            <div className="flex gap-2 mt-1">
-              <button onClick={()=>setShowEngModal(false)} className="flex-1 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-white/5">Cancel</button>
-              <button onClick={saveEngagement} disabled={!engForm.client_name||saving} className="flex-1 py-2 rounded-lg bg-violet-500 text-white text-sm font-medium disabled:opacity-50">
-                {saving ? 'Saving…' : 'Save'}
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, padding:20 }}>
+          <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border2)', borderRadius:16, padding:28, width:'100%', maxWidth:440, position:'relative', overflow:'hidden' }}>
+            <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, var(--ai), var(--academic))' }} />
+            <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:700, color:'var(--pios-text)', letterSpacing:'-0.02em', marginBottom:18 }}>New Engagement</div>
+
+            {[
+              { label:'Client name', key:'client_name', type:'text', placeholder:'QPMO / KSP / Acme Corp' },
+            ].map(field=>(
+              <div key={field.key} style={{ marginBottom:12 }}>
+                <div style={{ fontSize:10, color:'var(--pios-dim)', fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:5 }}>{field.label}</div>
+                <input style={inp} placeholder={field.placeholder} value={(engForm as any)[field.key]} onChange={e=>setEngForm(f=>({...f,[field.key]:e.target.value}))}
+                  onFocus={ev=>{(ev.target as HTMLInputElement).style.borderColor='var(--ai)'}}
+                  onBlur={ev=>{(ev.target as HTMLInputElement).style.borderColor='var(--pios-border2)'}} />
+              </div>
+            ))}
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12 }}>
+              <div>
+                <div style={{ fontSize:10, color:'var(--pios-dim)', fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:5 }}>Type</div>
+                <select style={inp} value={engForm.engagement_type} onChange={e=>setEngForm(f=>({...f,engagement_type:e.target.value}))}>
+                  {ENG_TYPES.map(t=><option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize:10, color:'var(--pios-dim)', fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:5 }}>Status</div>
+                <select style={inp} value={engForm.status} onChange={e=>setEngForm(f=>({...f,status:e.target.value}))}>
+                  {['active','proposal','on_hold','completed','cancelled'].map(s=><option key={s} value={s}>{s.replace('_',' ')}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:10, color:'var(--pios-dim)', fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:5 }}>Brief description</div>
+              <textarea style={{ ...inp, resize:'vertical', fontFamily:'inherit', minHeight:72 }} placeholder="Scope, objectives, key deliverables…" value={engForm.brief} onChange={e=>setEngForm(f=>({...f,brief:e.target.value}))}
+                onFocus={ev=>{(ev.target as HTMLTextAreaElement).style.borderColor='var(--ai)'}}
+                onBlur={ev=>{(ev.target as HTMLTextAreaElement).style.borderColor='var(--pios-border2)'}} />
+            </div>
+
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={()=>setShowEngModal(false)} style={{ flex:1, padding:'10px', borderRadius:9, border:'1px solid var(--pios-border2)', background:'transparent', color:'var(--pios-muted)', fontSize:13, cursor:'pointer', fontFamily:'var(--font-sans)' }}>Cancel</button>
+              <button onClick={saveEngagement} disabled={!engForm.client_name||saving} style={{ flex:2, padding:'10px', borderRadius:9, border:'none', background:!engForm.client_name||saving?'rgba(139,124,248,0.35)':'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700, cursor:!engForm.client_name||saving?'not-allowed':'pointer' }}>
+                {saving?'Saving…':'Save Engagement'}
               </button>
             </div>
           </div>
