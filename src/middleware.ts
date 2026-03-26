@@ -26,6 +26,17 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/connect-gmail', // OAuth initiation — no user session yet
 ])
 
+// ── Allowed preview/access tokens ───────────────────────────────────────────
+// Set PIOS_ACCESS_TOKEN env var to restrict access during private beta
+// Requests must include ?token=<value> or cookie pios_token=<value>
+function hasAccessToken(request: NextRequest): boolean {
+  const token = process.env.PIOS_ACCESS_TOKEN
+  if (!token) return true // No token configured → open
+  const queryToken  = request.nextUrl.searchParams.get('token')
+  const cookieToken = request.cookies.get('pios_token')?.value
+  return queryToken === token || cookieToken === token
+}
+
 // ── ISO 27001 A.14.2 — Security response headers ────────────────────────────
 const SEC_HEADERS: Record<string, string> = {
   'X-Content-Type-Options':    'nosniff',
@@ -36,6 +47,7 @@ const SEC_HEADERS: Record<string, string> = {
   'X-Content-Owner':           'VeritasIQ Technologies Ltd',
   'Permissions-Policy':        'camera=(), microphone=(), geolocation=(), payment=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'X-Robots-Tag':              'noindex, nofollow, noarchive, nosnippet',
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
@@ -65,6 +77,30 @@ export async function middleware(request: NextRequest) {
   const PIOS_BLOCKED = ['/api/debug', '/.env', '/.git', '/api/openapi']
   if (PIOS_BLOCKED.some(p => pathname.startsWith(p))) {
     return new NextResponse('Not found.', { status: 404 })
+  }
+
+  // ── Access gate — private beta / invite-only ─────────────────────────────
+  // If PIOS_ACCESS_TOKEN is set, only requests bearing the token proceed.
+  // Exempt: health checks and Stripe webhooks only.
+  const exemptFromGate = pathname === '/api/health' ||
+    pathname === '/api/health/smoke' ||
+    pathname === '/api/stripe/webhook'
+  if (!exemptFromGate && !hasAccessToken(request)) {
+    // Set the token cookie when provided via query param so subsequent requests pass
+    const queryToken = request.nextUrl.searchParams.get('token')
+    if (queryToken === process.env.PIOS_ACCESS_TOKEN) {
+      const url = new URL(request.url)
+      url.searchParams.delete('token')
+      const res = NextResponse.redirect(url)
+      res.cookies.set('pios_token', queryToken, {
+        httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60 * 60 * 24 * 30,
+      })
+      return res
+    }
+    return new NextResponse(
+      '<!DOCTYPE html><html><head><meta name="robots" content="noindex,nofollow"><title>PIOS — Access Restricted</title><style>body{font-family:-apple-system,sans-serif;background:#08090c;color:#eceef4;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}.box{text-align:center;padding:40px;}.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#9b87f5,#5b8def);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff;margin:0 auto 20px;}.h{font-size:20px;font-weight:700;margin-bottom:8px;}.s{font-size:14px;color:#7a8098;}</style></head><body><div class="box"><div class="logo">P</div><div class="h">Access Restricted</div><div class="s">PIOS is currently in private access.<br>Contact <a href="mailto:info@veritasiq.io" style="color:#9b87f5;text-decoration:none;">info@veritasiq.io</a> for access.</div></div></body></html>',
+      { status: 403, headers: { 'Content-Type': 'text/html', 'X-Robots-Tag': 'noindex, nofollow' } }
+    )
   }
 
   // Build base response and apply security headers to everything

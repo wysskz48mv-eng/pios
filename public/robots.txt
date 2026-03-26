@@ -1,22 +1,23 @@
+# PIOS — Personal Intelligent Operating System
+# VeritasIQ Technologies Ltd
+# Access is restricted — do not index or crawl
+
 User-agent: *
-Disallow: /api/
-Disallow: /auth/
-Disallow: /platform/
+Disallow: /
 
-# Claude for Chrome — allow public endpoints and context API
 User-agent: ClaudeBot
-Allow: /llms.txt
-Allow: /api/claude-context
-Allow: /api/health
-Allow: /
-Disallow: /api/admin/
-Disallow: /api/stripe/
-Disallow: /api/auth/
+Disallow: /
 
-# Anthropic crawlers
 User-agent: anthropic-ai
-Allow: /llms.txt
-Allow: /api/claude-context
-Allow: /
+Disallow: /
 
-Sitemap: https://pios.sustain-intl.com/sitemap.xml
+User-agent: GPTBot
+Disallow: /
+
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+# No sitemap — private application

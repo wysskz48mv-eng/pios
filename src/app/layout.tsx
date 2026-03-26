@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: 'PIOS — Personal Intelligent Operating System',
   description: 'Your AI-powered command centre. Academic, consulting, projects, and business — unified.',
   keywords: ['AI productivity', 'personal OS', 'academic management', 'consulting', 'postgraduate'],
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
   icons: {
     icon: '/favicon.ico',
     apple: '/favicon.ico',
