@@ -6,9 +6,28 @@
 export default function ChangelogPage() {
   const entries = [
     {
-      version: 'v2.9.0',
+      version: 'v3.0.0',
       date: 'March 2026',
       badge: 'Latest',
+      badgeColor: '#a78bfa',
+      changes: [
+        { type: 'new', text: 'Sprint 77: NemoClaw AI enriched with wellness, IP vault, contracts and knowledge context — AI companion now sees your full operational state' },
+        { type: 'new', text: 'Sprint 77: 4 new AI shortcuts — Wellness + performance link, IP portfolio review, Contract risk scan, Knowledge base insight' },
+        { type: 'new', text: "Sprint 76: Dashboard wellness tile — today's mood/energy/stress scores, check-in CTA, 🔥 streak badge" },
+        { type: 'new', text: 'Sprint 76: Dashboard renewal alerts tile — IP assets + contracts expiring in 90 days, colour-coded with expiry dates' },
+        { type: 'new', text: 'Sprint 76: Dashboard exec strip expanded to 5+2 tile layout (row 1: OKRs/Decisions/Stakeholders/IP/Contracts; row 2: Wellness + Renewals)' },
+        { type: 'new', text: 'Sprint 75: M021 (wellness tables) registered in migration runner — runnable via /platform/admin' },
+        { type: 'new', text: 'Sprint 75: NemoClaw™ seed button in /platform/admin — one-click seeds all 15 frameworks into IP Vault' },
+        { type: 'new', text: 'Sprint 75: Intelligence Hub rebuilt — 5 AI domain briefings (FM, Academic, SaaS, Regulatory, GCC), NemoClaw synthesis, SO WHAT callouts' },
+        { type: 'new', text: 'Sprint 75: /api/intelligence/briefing — domain-tuned AI briefing engine for UK/GCC FM + SaaS context' },
+        { type: 'fix',  text: 'Admin page: inline all migration SQL — fixes Vercel filesystem read failure on /api/admin/migrate' },
+        { type: 'fix',  text: 'TypeScript: 0 errors across all source files (was 2 in admin page)' },
+      ],
+    },
+    {
+      version: 'v2.9.0',
+      date: 'March 2026',
+      badge: null,
       badgeColor: '#22c55e',
       changes: [
         { type: 'new', text: 'Billing page — plan cards (Student/Individual/Team), Stripe checkout, usage limits display' },

@@ -90,24 +90,84 @@ export async function POST(request: Request) {
 
     const tasks    = tasksR.data ?? []
 
-    // Exec persona — fetch live OKR/decision/stakeholder state for AI context
+    // Exec persona — fetch live OKR/decision/stakeholder + wellness + IP + knowledge context
     let execCtxStr = ''
     if (aiIsExec) {
-      const [okrAiR, decAiR, stakeAiR] = await Promise.all([
+      const in90 = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10)
+      const [okrAiR, decAiR, stakeAiR, wellnessAiR, ipAiR, contractAiR, knowledgeAiR] = await Promise.allSettled([
         supabase.from('exec_okrs').select('title,health,progress').eq('user_id', user.id).eq('status','active').limit(5),
         supabase.from('exec_decisions').select('title,framework_used').eq('user_id', user.id).eq('status','open').limit(4),
         supabase.from('exec_stakeholders').select('name,importance,next_touchpoint')
           .eq('user_id', user.id)
           .lte('next_touchpoint', new Date(Date.now() + 7*86400000).toISOString().split('T')[0])
           .limit(3),
+        // Today's wellness state
+        (supabase as any).from('wellness_sessions')
+          .select('mood_score,energy_score,stress_score,focus_score,dominant_domain,ai_insight')
+          .eq('user_id', user.id).eq('session_date', today)
+          .order('created_at', { ascending: false }).limit(1),
+        // IP vault — frameworks + active assets
+        (supabase as any).from('ip_assets')
+          .select('name,asset_type,status,renewal_date')
+          .eq('user_id', user.id).eq('status', 'active').limit(20),
+        // Contracts — active + expiring
+        (supabase as any).from('contracts')
+          .select('title,contract_type,counterparty,status,end_date,value,currency')
+          .eq('user_id', user.id).eq('status', 'active')
+          .order('end_date', { ascending: true }).limit(8),
+        // Recent knowledge entries
+        (supabase as any).from('knowledge_entries')
+          .select('title,entry_type,domain,summary')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }).limit(5),
       ])
-      const okrLines   = (okrAiR.data  ?? []).map((o:Record<string,unknown>) => `${o.title}: ${o.progress}% (${o.health})`).join(', ')
-      const decLines   = (decAiR.data  ?? []).map((d:Record<string,unknown>) => `${d.title} [${d.framework_used ?? '?'}™]`).join(', ')
-      const stakeLines = (stakeAiR.data ?? []).map((s:Record<string,unknown>) => `${s.name} [${s.importance}]`).join(', ')
+      const okrAiData     = okrAiR.status     === 'fulfilled' ? (okrAiR.value.data     ?? []) : []
+      const decAiData     = decAiR.status     === 'fulfilled' ? (decAiR.value.data     ?? []) : []
+      const stakeAiData   = stakeAiR.status   === 'fulfilled' ? (stakeAiR.value.data   ?? []) : []
+      const wellnessData  = wellnessAiR.status === 'fulfilled' ? ((wellnessAiR.value as any).data?.[0] ?? null) : null
+      const ipData        = ipAiR.status       === 'fulfilled' ? ((ipAiR.value as any).data       ?? []) : []
+      const contractData  = contractAiR.status === 'fulfilled' ? ((contractAiR.value as any).data  ?? []) : []
+      const knowledgeData = knowledgeAiR.status === 'fulfilled' ? ((knowledgeAiR.value as any).data ?? []) : []
+
+      const okrLines   = (okrAiData   as Record<string,unknown>[]).map(o => `${o.title}: ${o.progress}% (${o.health})`).join(', ')
+      const decLines   = (decAiData   as Record<string,unknown>[]).map(d => `${d.title} [${d.framework_used ?? '?'}™]`).join(', ')
+      const stakeLines = (stakeAiData as Record<string,unknown>[]).map(s => `${s.name} [${s.importance}]`).join(', ')
+
+      // Wellness line
+      const wellnessLine = wellnessData
+        ? `TODAY'S WELLNESS: Mood ${wellnessData.mood_score}/10 · Energy ${wellnessData.energy_score}/10 · Stress ${wellnessData.stress_score}/10 · Focus ${wellnessData.focus_score}/10 · Domain focus: ${wellnessData.dominant_domain ?? 'general'}`
+        : 'WELLNESS: No check-in today yet'
+
+      // IP vault — frameworks vs other assets
+      const frameworks   = (ipData as Record<string,unknown>[]).filter(a => a.asset_type === 'framework')
+      const trademarks   = (ipData as Record<string,unknown>[]).filter(a => a.asset_type === 'trademark')
+      const renewalsDue  = (ipData as Record<string,unknown>[]).filter(a => a.renewal_date && (a.renewal_date as string) <= in90)
+      const ipLine = ipData.length > 0
+        ? `IP VAULT (${ipData.length} assets): ${frameworks.length} frameworks (NemoClaw™ suite), ${trademarks.length} trademarks` +
+          (renewalsDue.length > 0 ? ` — ⚠ ${renewalsDue.length} renewal(s) due within 90 days` : '')
+        : null
+
+      // Active contracts
+      const contractLine = contractData.length > 0
+        ? `ACTIVE CONTRACTS (${contractData.length}): ` +
+          (contractData as Record<string,unknown>[]).slice(0, 4).map(c =>
+            `${c.title} [${c.contract_type}/${c.counterparty}${c.end_date ? ' · expires ' + new Date(c.end_date as string).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : ''}]`
+          ).join('; ')
+        : null
+
+      // Knowledge entries
+      const knowledgeLine = knowledgeData.length > 0
+        ? `RECENT KNOWLEDGE: ` + (knowledgeData as Record<string,unknown>[]).map(k => `${k.title} [${k.entry_type}/${k.domain}]`).join('; ')
+        : null
+
       execCtxStr = [
         okrLines   ? `ACTIVE OKRs: ${okrLines}` : null,
         decLines   ? `OPEN DECISIONS: ${decLines}` : null,
         stakeLines ? `STAKEHOLDERS DUE: ${stakeLines}` : null,
+        wellnessLine,
+        ipLine,
+        contractLine,
+        knowledgeLine,
       ].filter(Boolean).join('\n')
     }
     const overdue  = tasks.filter(t => t.due_date && t.due_date < today)

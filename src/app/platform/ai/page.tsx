@@ -29,6 +29,10 @@ const SHORTCUTS = [
   { label:'Structure a decision',            prompt:'I have an important decision to make. Help me structure it using the Decision Architecture approach — options map, constraints, and a clear recommendation.' },
   { label:'Time sovereignty audit',          prompt:'Review my current time allocation and flag where busyness might be replacing strategy. What should I protect or cut?' },
   { label:'Summarise this week',              prompt:'Give me a summary of what I have accomplished this week and what is outstanding.' },
+  { label:'Wellness + performance link',      prompt:'Based on my recent wellness check-ins and current workload, what patterns do you see between my energy/stress levels and productivity? What should I adjust?' },
+  { label:'IP portfolio review',              prompt:'Review my IP vault and give me a strategic assessment: what is well-protected, what gaps exist, and what are my most urgent renewal or filing priorities?' },
+  { label:'Contract risk scan',               prompt:'Review my active contracts and flag any upcoming renewals, high-risk terms, or counterparty concerns I should be aware of in the next 90 days.' },
+  { label:'Knowledge base insight',           prompt:'Based on my recent knowledge entries, what themes or opportunities am I tracking that deserve more strategic attention?' },
 ]
 
 function TimeAgo({ iso }: { iso: string }) {
