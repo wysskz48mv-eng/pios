@@ -155,26 +155,86 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="fade-in">
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Command Centre</h1>
-        <p style={{ color: 'var(--pios-muted)', fontSize: 13 }}>
-          {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          {tenant?.plan && <span style={{ marginLeft: 12, padding: '2px 8px', borderRadius: 4, background: 'rgba(167,139,250,0.12)', color: 'var(--ai)', fontSize: 11, fontWeight: 600, textTransform: 'capitalize' }}>{tenant.plan}</span>}
-        </p>
+    <div className="fade-up">
+      {/* ── Dashboard header ── */}
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: 12, marginBottom: 28,
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+            <h1 style={{
+              fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em',
+              color: 'var(--pios-text)', lineHeight: 1,
+            }}>Command Centre</h1>
+            {tenant?.plan && (
+              <span style={{
+                padding: '3px 10px', borderRadius: 20,
+                background: 'rgba(155,135,245,0.1)', border: '1px solid rgba(155,135,245,0.18)',
+                color: 'var(--ai)', fontSize: 10, fontWeight: 700,
+                letterSpacing: '0.05em', textTransform: 'capitalize' as const,
+              }}>{tenant.plan}</span>
+            )}
+          </div>
+          <p style={{ color: 'var(--pios-muted)', fontSize: 13, letterSpacing: '-0.01em' }}>
+            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+
+        {/* Quick stat pills */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {overdueCount > 0 && (
+            <div style={{
+              padding: '6px 12px', borderRadius: 20,
+              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+              fontSize: 12, fontWeight: 600, color: '#ef4444',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <span style={{ fontSize: 10 }}>⚠</span> {overdueCount} overdue
+            </div>
+          )}
+          {criticalCount > 0 && (
+            <div style={{
+              padding: '6px 12px', borderRadius: 20,
+              background: 'rgba(240,160,48,0.08)', border: '1px solid rgba(240,160,48,0.2)',
+              fontSize: 12, fontWeight: 600, color: '#f0a030',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <span style={{ fontSize: 10 }}>●</span> {criticalCount} critical
+            </div>
+          )}
+          {dueTodayCount > 0 && (
+            <div style={{
+              padding: '6px 12px', borderRadius: 20,
+              background: 'rgba(155,135,245,0.08)', border: '1px solid rgba(155,135,245,0.18)',
+              fontSize: 12, fontWeight: 600, color: 'var(--ai)',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <span style={{ fontSize: 10 }}>◉</span> {dueTodayCount} due today
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Domain health strip */}
+      {/* ── Domain health strip ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 20 }}>
         {DOMAINS.map(d => (
-          <div key={(d as Record<string,unknown>).key as string} className="pios-card-sm" style={{ borderLeft: `3px solid ${domainColour(d.key)}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{d.icon}</span>
-              <span style={{ fontSize: 20, fontWeight: 700, color: domainColour(d.key) }}>{domainCounts[d.key] || 0}</span>
+          <div key={(d as Record<string,unknown>).key as string}
+            className="pios-card-sm"
+            style={{
+              borderLeft: `2px solid ${domainColour(d.key)}`,
+              background: 'var(--pios-surface)',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+            }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 15 }}>{d.icon}</span>
+              <span style={{
+                fontSize: 18, fontWeight: 800, color: domainColour(d.key),
+                letterSpacing: '-0.03em', lineHeight: 1,
+              }}>{domainCounts[d.key] || 0}</span>
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600 }}>{d.label}</div>
-            <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginTop: 2 }}>{d.extra}</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 2 }}>{d.label}</div>
+            <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{d.extra}</div>
           </div>
         ))}
       </div>
