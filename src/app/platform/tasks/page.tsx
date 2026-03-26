@@ -289,6 +289,9 @@ export default function TasksPage() {
     setTasks(prev => prev.filter((t: Record<string,unknown>) => t.id !== id))
   }
 
+  // today must be declared BEFORE visibleTasks (was causing ReferenceError -> black screen)
+  const today = new Date().toISOString().slice(0,10)
+
   // Filter displayed tasks
   const visibleTasks = tasks.filter(t => {
     if (statusFilter === 'open')    return ['todo','in_progress','blocked'].includes(String(t.status ?? ''))
@@ -302,7 +305,6 @@ export default function TasksPage() {
   const grouped = STATUSES.reduce((acc,s) => { acc[s] = visibleTasks.filter(t=>t.status===s); return acc }, {} as Record<string,any[]>)
   const openCount    = tasks.filter(t=>['todo','in_progress','blocked'].includes(String(t.status ?? ''))).length
   const criticalCount = tasks.filter(t=>t.priority==='critical' && t.status!=='done').length
-  const today = new Date().toISOString().slice(0,10)
   const overdueCount  = tasks.filter(t=>t.due_date && t.due_date < today && t.status!=='done').length
 
   const sortedTasks = [...tasks].sort((a, b) => {
