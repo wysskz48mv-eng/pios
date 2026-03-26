@@ -95,14 +95,14 @@ export default function AdminPage() {
     // Run legacy (001-007)
     const legacyRes = await fetch('/api/admin/migrate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...extraHeaders },
+      headers: { 'Content-Type': 'application/json', ...(extraHeaders as any) },
       body: JSON.stringify({ run_all: true, ...(secret ? { seed_secret: secret } : {}) }),
     })
     const legacyData = await legacyRes.json()
     // Run extended (008-021)
     const extRes = await fetch('/api/admin/run-migration', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...extraHeaders },
+      headers: { 'Content-Type': 'application/json', ...(extraHeaders as any) },
       body: JSON.stringify({ migration: 'all', ...(secret ? { seed_secret: secret } : {}) }),
     })
     const extData = await extRes.json()
