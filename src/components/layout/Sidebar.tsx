@@ -57,6 +57,12 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: 'Wellness',
+    items: [
+      { href: '/platform/wellness', icon: '◉', label: 'Wellness Intelligence', colour: '#26c99a' },
+    ],
+  },
+  {
     label: 'System',
     items: [
       { href: '/platform/notifications', icon: '🔔', label: 'Notifications', colour: '#f59e0b' },

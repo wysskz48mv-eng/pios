@@ -79,6 +79,9 @@
     },
     "src/app/api/payroll/detect/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/wellness/route.ts": {
+      "maxDuration": 60
     }
   },
   "regions": [
