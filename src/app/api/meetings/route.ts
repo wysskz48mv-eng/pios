@@ -15,7 +15,7 @@
  * Supports: Zoom/Teams/Meet transcripts (pasted), voice notes, manual notes.
  * No bot infrastructure required — paste-based approach works with any platform.
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'

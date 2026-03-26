@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Settings — profile edit, plan, integrations, email accounts, news feed prefs
-// PIOS v2.7 | VeritasIQ Technologies Ltd
+// PIOS v3.0 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CONTEXT_LABELS: Record<string, string> = {
@@ -638,7 +638,7 @@ export default function SettingsPage() {
         {/* System info */}
         <Section title="System">
           {[
-            ['PIOS Version',    'v2.0.0'],
+            ['PIOS Version',    'v3.0.0'],
             ['AI Engine',       'claude-sonnet-4-6'],
             ['Database',        'Supabase PostgreSQL (EU West)'],
             ['Deployment',      'Vercel'],

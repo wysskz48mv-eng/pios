@@ -4,7 +4,7 @@
  * Used by the Setup Guide and admin to confirm platform is production-ready.
  * Each check is independent; failures do not cascade.
  *
- * PIOS v2.7 | Sprint 58 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | Sprint 58 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
@@ -221,7 +221,7 @@ export async function GET() {
     critical_fails: criticalFails.map(c => c.name),
     checks,
     platform:      'PIOS',
-    version:       process.env.npm_package_version ?? '2.4.0',
+    version:       process.env.npm_package_version ?? '3.0.0',
     timestamp:     new Date().toISOString(),
     owner:         'VeritasIQ Technologies Ltd',
   }, { status: overallOk ? 200 : 503 })

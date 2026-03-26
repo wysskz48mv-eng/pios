@@ -7,7 +7,7 @@ import { domainColour, domainLabel } from '@/lib/utils'
 // Meetings — Notes Ingestion + AI Action Extraction (Otter.ai gap closed)
 // Paste transcripts or type notes → AI extracts decisions, action items, risks
 // Promote action items directly to Tasks with one click
-// PIOS v2.2 | VeritasIQ Technologies Ltd
+// PIOS v3.0 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ACCENT  = '#a78bfa'

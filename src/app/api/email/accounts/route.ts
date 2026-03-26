@@ -10,7 +10,7 @@
  * OAuth flows (/api/auth/connect-microsoft) and auto-registered here.
  * IMAP accounts are added directly via this route (app password).
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'

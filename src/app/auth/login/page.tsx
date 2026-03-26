@@ -237,7 +237,7 @@ export default function LoginPage() {
               </Link>
             </p>
             <p style={{ fontSize: 11, color: 'var(--pios-dim)' }}>
-              PIOS v2.9 · VeritasIQ Technologies Ltd
+              PIOS v3.0 · VeritasIQ Technologies Ltd
             </p>
           </div>
         </div>

@@ -15,7 +15,7 @@
  * Microsoft returns an error here and we redirect to settings
  * with a clear IMAP fallback suggestion.
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'

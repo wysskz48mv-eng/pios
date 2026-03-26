@@ -3,7 +3,7 @@
  * Transactional email via Resend API.
  * Used by: cron/brief (daily delivery), onboarding, notifications.
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 
 const RESEND_API = 'https://api.resend.com/emails'

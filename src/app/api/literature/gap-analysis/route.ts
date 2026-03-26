@@ -2,7 +2,7 @@
  * POST /api/literature/gap-analysis
  * AI-powered literature gap analysis — identifies research gaps,
  * suggests next sources to find, and maps coverage to thesis chapters.
- * PIOS v2.2 | Sprint 26
+ * PIOS v3.0 | Sprint 26
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }               from '@/lib/supabase/server'

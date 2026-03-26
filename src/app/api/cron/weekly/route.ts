@@ -14,7 +14,7 @@
  * Idempotent: re-running on the same Sunday re-sends with fresh data.
  * Never throws — each user is wrapped in try/catch.
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@supabase/supabase-js'

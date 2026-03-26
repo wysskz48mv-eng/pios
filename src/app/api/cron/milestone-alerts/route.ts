@@ -2,7 +2,7 @@
  * GET /api/cron/milestone-alerts
  * Daily cron (07:00 UTC): emails supervisor when milestones are upcoming.
  * Also emails the student for overdue items.
- * PIOS v2.2 | Sprint 21
+ * PIOS v3.0 | Sprint 21
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@supabase/supabase-js'

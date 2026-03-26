@@ -4,7 +4,7 @@
  * PATCH /api/milestones            — update milestone (status, dates, notes)
  * DELETE /api/milestones?id=       — delete milestone
  *
- * PIOS v2.2 | Sprint 22 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | Sprint 22 | VeritasIQ Technologies Ltd
  * Table: programme_milestones (M011 — supersedes dba_milestones M010)
  */
 import { NextRequest, NextResponse } from 'next/server'

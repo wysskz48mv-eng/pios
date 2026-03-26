@@ -1,7 +1,7 @@
 /**
  * GET /api/dashboard
  * Uses Promise.allSettled — a missing table never crashes the response.
- * PIOS v2.7 | Sprint 28 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | Sprint 28 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'

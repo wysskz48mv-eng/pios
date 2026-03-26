@@ -27,7 +27,7 @@ export const maxDuration = 60
  *   - Imminent CFP deadlines
  *   - Live VeritasEdge / InvestiScript metrics
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 export async function POST(req: NextRequest) {
   try {
@@ -55,14 +55,40 @@ export async function POST(req: NextRequest) {
       if (cached?.content) return NextResponse.json({ content: cached.content, brief_date: today, cached: true })
     }
 
-    // Exec persona: fetch OKR/decision/stakeholder data in parallel with standard data
-    const execDataPromise = isExecPersona ? Promise.all([
+    // Exec persona: fetch OKR/decision/stakeholder + wellness + renewal data in parallel
+    const in90 = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10)
+    const execDataPromise = isExecPersona ? Promise.allSettled([
       supabase.from('exec_okrs').select('title,health,progress,period').eq('user_id', user.id).eq('status','active').limit(6),
       supabase.from('exec_decisions').select('title,framework_used,context').eq('user_id', user.id).eq('status','open').limit(5),
       supabase.from('exec_stakeholders').select('name,importance,next_touchpoint,open_commitments')
         .eq('user_id', user.id)
         .lte('next_touchpoint', new Date(Date.now() + 7*86400000).toISOString().split('T')[0])
         .limit(4),
+      // Wellness — yesterday's session (brief generates before today's check-in)
+      (supabase as any).from('wellness_sessions')
+        .select('mood_score,energy_score,stress_score,focus_score,dominant_domain,ai_insight')
+        .eq('user_id', user.id)
+        .gte('session_date', new Date(Date.now() - 86400000).toISOString().slice(0,10))
+        .order('session_date', { ascending: false })
+        .limit(1),
+      // Wellness streak
+      (supabase as any).from('wellness_streaks')
+        .select('current_streak,streak_type')
+        .eq('user_id', user.id)
+        .eq('streak_type', 'daily_checkin')
+        .single(),
+      // IP renewals due within 90 days
+      (supabase as any).from('ip_assets')
+        .select('name,asset_type,renewal_date')
+        .eq('user_id', user.id).eq('status', 'active')
+        .lte('renewal_date', in90).gte('renewal_date', today)
+        .order('renewal_date').limit(5),
+      // Contract renewals due within 90 days
+      (supabase as any).from('contracts')
+        .select('title,contract_type,counterparty,end_date,value,currency')
+        .eq('user_id', user.id).eq('status', 'active')
+        .lte('end_date', in90).gte('end_date', today)
+        .order('end_date').limit(5),
     ]) : Promise.resolve(null)
 
     // Gather all context in parallel
@@ -252,14 +278,47 @@ export async function POST(req: NextRequest) {
     const execData = isExecPersona ? await execDataPromise : null
     let execBriefSection = ''
     if (isExecPersona && execData) {
-      const [okrBR, decBR, stakeBR] = execData
-      const okrLines   = (okrBR.data   ?? []).map((o:Record<string,unknown>) => `- ${o.title}: ${o.progress}% (${o.health})`).join('\n')
-      const decLines   = (decBR.data   ?? []).map((d:Record<string,unknown>) => `- ${d.title} [${(d.framework_used as string) ?? '?'}™]`).join('\n')
-      const stakeLines = (stakeBR.data ?? []).map((s:Record<string,unknown>) => `- ${s.name} [${s.importance}]`).join('\n')
+      const results = execData as PromiseSettledResult<any>[]
+      const okrBR    = results[0]?.status === 'fulfilled' ? results[0].value : null
+      const decBR    = results[1]?.status === 'fulfilled' ? results[1].value : null
+      const stakeBR  = results[2]?.status === 'fulfilled' ? results[2].value : null
+      const wellR    = results[3]?.status === 'fulfilled' ? results[3].value : null
+      const streakR  = results[4]?.status === 'fulfilled' ? results[4].value : null
+      const ipRenewR = results[5]?.status === 'fulfilled' ? results[5].value : null
+      const ctRenewR = results[6]?.status === 'fulfilled' ? results[6].value : null
+
+      const okrLines   = (okrBR?.data   ?? []).map((o:Record<string,unknown>) => `- ${o.title}: ${o.progress}% (${o.health})`).join('\n')
+      const decLines   = (decBR?.data   ?? []).map((d:Record<string,unknown>) => `- ${d.title} [${(d.framework_used as string) ?? '?'}™]`).join('\n')
+      const stakeLines = (stakeBR?.data ?? []).map((s:Record<string,unknown>) => `- ${s.name} [${s.importance}]`).join('\n')
+
+      // Wellness section
+      const lastSession = wellR?.data?.[0] ?? null
+      const streak      = streakR?.data?.current_streak ?? 0
+      const wellnessLine = lastSession
+        ? `WELLNESS STATE (last check-in): Mood ${lastSession.mood_score}/10 · Energy ${lastSession.energy_score}/10 · Stress ${lastSession.stress_score}/10 · Focus ${lastSession.focus_score}/10 · Domain: ${lastSession.dominant_domain ?? 'general'}` +
+          (streak > 0 ? ` · 🔥 ${streak}-day streak` : '') +
+          (lastSession.ai_insight ? `\n  NemoClaw insight: "${lastSession.ai_insight}"` : '')
+        : 'WELLNESS STATE: No recent check-in — recommend completing morning check-in at /platform/wellness'
+
+      // IP renewal alerts
+      const ipRenewals = ipRenewR?.data ?? []
+      const ctRenewals = ctRenewR?.data ?? []
+      const renewalLines = [
+        ...(ipRenewals as Record<string,unknown>[]).map(a =>
+          `- [IP/${String(a.asset_type ?? '')}] ${a.name} — renews ${new Date(String(a.renewal_date ?? '')).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`
+        ),
+        ...(ctRenewals as Record<string,unknown>[]).map(c =>
+          `- [Contract/${String(c.contract_type ?? '')}] ${c.title} (${c.counterparty}) — expires ${new Date(String(c.end_date ?? '')).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}` +
+          (c.value ? ` · ${c.currency ?? 'GBP'} ${Number(c.value).toLocaleString()}` : '')
+        ),
+      ].join('\n')
+
       execBriefSection = [
         okrLines   ? `\n\nACTIVE OKRs:\n${okrLines}` : '',
         decLines   ? `\nOPEN DECISIONS:\n${decLines}` : '',
         stakeLines ? `\nSTAKEHOLDERS DUE THIS WEEK:\n${stakeLines}` : '',
+        `\n\n${wellnessLine}`,
+        renewalLines ? `\n\nRENEWALS DUE WITHIN 90 DAYS:\n${renewalLines}` : '',
       ].join('')
     }
 
@@ -295,7 +354,11 @@ Rules:
 - Note auto-captured receipts/invoices pending review
 - Identify cross-domain conflicts
 - Name 2-3 items requiring personal decision or action today
-- Use ## Section headers for each section (Overdue Tasks, Today's Priorities, etc.)
+- If wellness state shows stress ≥ 7, flag capacity risk and suggest protecting recovery time
+- If wellness streak ≥ 7, acknowledge momentum briefly
+- If renewals due within 30 days, flag as URGENT and name the specific asset/contract
+- Use ## Section headers for each section (Overdue Tasks, Today's Priorities, Exec OS, Wellness Signal, Renewal Alerts, etc.)
+- Omit sections with nothing to report (don't write empty sections)
 - Max 350 words per section`
 
     const content: string = await callClaude(

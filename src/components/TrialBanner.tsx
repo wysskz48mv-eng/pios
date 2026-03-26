@@ -3,7 +3,7 @@
  * TrialBanner — sticky top bar shown to trialing users.
  * Shows days remaining, upgrade CTA, and dismisses on upgrade.
  * Rendered inside PlatformShell when tenant.plan_status === 'trialing'.
- * PIOS v2.2 | Sprint 28 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | Sprint 28 | VeritasIQ Technologies Ltd
  */
 import { useState } from 'react'
 import Link from 'next/link'

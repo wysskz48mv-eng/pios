@@ -2,7 +2,7 @@
 /**
  * TrialExpiredGate — full-screen block shown when trial has expired.
  * Rendered by PlatformShell when plan_status === 'canceled' and no active sub.
- * PIOS v2.2 | Sprint 28 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | Sprint 28 | VeritasIQ Technologies Ltd
  */
 import Link from 'next/link'
 

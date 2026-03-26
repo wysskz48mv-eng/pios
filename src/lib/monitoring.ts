@@ -1,7 +1,7 @@
 /**
  * PIOS Monitoring — DSN-gated error tracking
  * Only active when SENTRY_DSN environment variable is set.
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 type ErrorCtx = Record<string, string | number | boolean | null | undefined>
 
