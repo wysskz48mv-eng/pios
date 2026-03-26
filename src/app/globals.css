@@ -2,21 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+
 :root {
-  --pios-bg: #0a0b0d;
-  --pios-surface: #111318;
-  --pios-surface2: #181c24;
-  --pios-surface3: #1e2330;
-  --pios-border: rgba(255,255,255,0.07);
-  --pios-border2: rgba(255,255,255,0.12);
-  --pios-text: #e8eaf0;
-  --pios-muted: #8b90a0;
-  --pios-dim: #555c70;
-  --academic: #6c8eff;
-  --fm: #2dd4a0;
-  --saas: #f59e0b;
-  --ops: #e05a7a;
-  --ai: #a78bfa;
+  /* Core backgrounds */
+  --pios-bg:       #08090c;
+  --pios-surface:  #0e1117;
+  --pios-surface2: #141820;
+  --pios-surface3: #1a2030;
+
+  /* Borders */
+  --pios-border:  rgba(255,255,255,0.06);
+  --pios-border2: rgba(255,255,255,0.10);
+  --pios-border3: rgba(255,255,255,0.16);
+
+  /* Text */
+  --pios-text:  #eceef4;
+  --pios-sub:   #b0b6c8;
+  --pios-muted: #7a8098;
+  --pios-dim:   #4a5068;
+
+  /* Brand accents */
+  --ai:       #9b87f5;   /* NemoClaw violet */
+  --ai-glow:  rgba(155,135,245,0.18);
+  --academic: #5b8def;   /* academic blue */
+  --fm:       #26c99a;   /* teal */
+  --saas:     #f0a030;   /* amber */
+  --ops:      #e0547a;   /* coral */
+
+  /* Sidebar width */
+  --sidebar-w:           228px;
+  --sidebar-w-collapsed:  60px;
+
+  /* Fonts */
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,98 +44,243 @@
 body {
   background: var(--pios-bg);
   color: var(--pios-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-::-webkit-scrollbar { width: 4px; height: 4px; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--pios-border2); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--pios-border2); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--pios-border3); }
 
+/* ── Cards ── */
 .pios-card {
   background: var(--pios-surface);
   border: 1px solid var(--pios-border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 20px;
+  transition: border-color 0.15s;
 }
+.pios-card:hover { border-color: var(--pios-border2); }
 
 .pios-card-sm {
   background: var(--pios-surface);
   border: 1px solid var(--pios-border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 14px;
 }
 
+.pios-card-flat {
+  background: var(--pios-surface2);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+/* ── Badges ── */
 .domain-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
+.pios-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--pios-surface2);
+  color: var(--pios-muted);
+  border: 1px solid var(--pios-border);
+}
+
+/* ── Buttons ── */
 .pios-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 9px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   border: none;
   outline: none;
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
 }
+.pios-btn:active { transform: scale(0.97); }
 
 .pios-btn-primary {
   background: var(--ai);
-  color: #0a0b0d;
+  color: #08090c;
+  box-shadow: 0 0 0 0 var(--ai-glow);
 }
-.pios-btn-primary:hover { opacity: 0.9; }
+.pios-btn-primary:hover {
+  opacity: 0.88;
+  box-shadow: 0 4px 20px var(--ai-glow);
+}
 
 .pios-btn-ghost {
   background: transparent;
   color: var(--pios-muted);
-  border: 1px solid var(--pios-border);
+  border: 1px solid var(--pios-border2);
 }
-.pios-btn-ghost:hover { background: var(--pios-surface2); color: var(--pios-text); }
+.pios-btn-ghost:hover {
+  background: var(--pios-surface2);
+  color: var(--pios-text);
+  border-color: var(--pios-border3);
+}
 
+.pios-btn-sm {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 7px;
+}
+
+/* ── Inputs ── */
 .pios-input {
   background: var(--pios-surface2);
-  border: 1px solid var(--pios-border);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border: 1px solid var(--pios-border2);
+  border-radius: 9px;
+  padding: 9px 14px;
   color: var(--pios-text);
   font-size: 14px;
+  font-family: var(--font-sans);
   width: 100%;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.pios-input:focus { border-color: var(--ai); }
+.pios-input:focus {
+  border-color: var(--ai);
+  box-shadow: 0 0 0 3px var(--ai-glow);
+}
 .pios-input::placeholder { color: var(--pios-dim); }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.fade-in { animation: fadeIn 0.2s ease-out; }
+/* ── Section headings ── */
+.pios-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pios-dim);
+  margin-bottom: 10px;
+}
 
-@keyframes spin { to { transform: rotate(360deg); } }
-.spin { animation: spin 1s linear infinite; }
+/* ── Dividers ── */
+.pios-divider {
+  height: 1px;
+  background: var(--pios-border);
+  margin: 12px 0;
+}
 
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-.ai-pulse { animation: pulse 2s ease-in-out infinite; }
+/* ── Stat blocks ── */
+.pios-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pios-stat-val {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--pios-text);
+}
+.pios-stat-lbl {
+  font-size: 11px;
+  color: var(--pios-muted);
+  font-weight: 500;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn  { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes pulse    { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes shimmer  {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+.fade-in  { animation: fadeIn  0.2s ease-out; }
+.fade-up  { animation: fadeUp  0.25s ease-out; }
+.scale-in { animation: scaleIn 0.2s ease-out; }
+.spin     { animation: spin 1s linear infinite; }
+.ai-pulse { animation: pulse 2.5s ease-in-out infinite; }
+
+/* ── Skeleton loader ── */
+.pios-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--pios-surface2) 25%,
+    var(--pios-surface3) 50%,
+    var(--pios-surface2) 75%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 6px;
+}
+
+/* ── Table ── */
+.pios-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.pios-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pios-dim);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--pios-border);
+}
+.pios-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--pios-border);
+  color: var(--pios-sub);
+}
+.pios-table tr:last-child td { border-bottom: none; }
+.pios-table tr:hover td { background: var(--pios-surface2); }
+
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--ai);
+  outline-offset: 2px;
+}
+
+/* ── Selection ── */
+::selection {
+  background: var(--ai-glow);
+  color: var(--pios-text);
+}
+
+/* ── Mono util ── */
+.mono { font-family: var(--font-mono); }
 
 /* ── Mobile responsive ── */
 @media (max-width: 768px) {
-  .pios-card { padding: 14px; border-radius: 10px; }
-  .pios-card-sm { padding: 10px; border-radius: 7px; }
-  .pios-btn { padding: 7px 12px; font-size: 12px; }
-  .pios-input { padding: 9px 12px; font-size: 14px; }
-  body { font-size: 13px; }
+  .pios-card    { padding: 14px; border-radius: 12px; }
+  .pios-card-sm { padding: 10px; border-radius: 8px;  }
+  .pios-btn     { padding: 7px 12px; font-size: 12px;  }
+  .pios-input   { padding: 9px 12px; font-size: 14px;  }
+  body          { font-size: 13px; }
 }
 
 /* ── Tablet ── */
@@ -123,7 +288,7 @@ body {
   .pios-card { padding: 16px; }
 }
 
-/* ── Print (for report packs) ── */
+/* ── Print ── */
 @media print {
   body { background: white; color: black; }
   .pios-card { border: 1px solid #ccc; background: white; }
