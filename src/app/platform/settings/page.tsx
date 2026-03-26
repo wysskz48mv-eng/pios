@@ -636,14 +636,92 @@ export default function SettingsPage() {
         </Section>
 
         {/* System info */}
+        <Section title="Privacy & Data">
+          <div style={{ marginBottom:16 }}>
+            <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.7, marginBottom:12 }}>
+              PIOS stores your data under UK GDPR. You have the right to access, export, or delete your data at any time.
+              Wellness data is classified as special category health data (Art.9) and is stored only where you have given explicit consent.
+            </p>
+            <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
+              {/* Export */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:8, border:'1px solid var(--pios-border)', background:'var(--pios-surface2)' }}>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-text)' }}>Export My Data</div>
+                  <div style={{ fontSize:11, color:'var(--pios-dim)' }}>Download all your PIOS data as JSON (Art.20 portability)</div>
+                </div>
+                <button
+                  onClick={async () => {
+                    const r = await fetch('/api/gdpr', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'export' }) })
+                    if (r.ok) {
+                      const blob = await r.blob()
+                      const url  = URL.createObjectURL(blob)
+                      const a    = document.createElement('a')
+                      a.href     = url
+                      a.download = `pios-data-export-${new Date().toISOString().slice(0,10)}.json`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }
+                  }}
+                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(34,197,94,0.3)', background:'rgba(34,197,94,0.06)', color:'#22c55e', cursor:'pointer', whiteSpace:'nowrap' as const }}
+                >
+                  ⬇ Export JSON
+                </button>
+              </div>
+
+              {/* Erase wellness */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:8, border:'1px solid var(--pios-border)', background:'var(--pios-surface2)' }}>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-text)' }}>Delete Wellness Data</div>
+                  <div style={{ fontSize:11, color:'var(--pios-dim)' }}>Remove all check-ins, streaks, patterns, purpose anchors (Art.17 — health data)</div>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!confirm('This will permanently delete all your wellness check-ins, streaks, patterns and purpose anchors. This cannot be undone.')) return
+                    const r = await fetch('/api/gdpr', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'erase_wellness', confirm:'ERASE WELLNESS DATA' }) })
+                    const d = await r.json()
+                    alert(r.ok ? 'Wellness data deleted.' : d.error ?? 'Failed')
+                  }}
+                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(245,158,11,0.3)', background:'rgba(245,158,11,0.06)', color:'#f59e0b', cursor:'pointer', whiteSpace:'nowrap' as const }}
+                >
+                  🗑 Delete Wellness
+                </button>
+              </div>
+
+              {/* Full erase */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.2)', background:'rgba(239,68,68,0.03)' }}>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:600, color:'#ef4444' }}>Delete All My Data</div>
+                  <div style={{ fontSize:11, color:'var(--pios-dim)' }}>Permanently erase all PIOS data and pseudonymise your profile (Art.17)</div>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!confirm('⚠ This will permanently delete ALL your PIOS data (tasks, projects, wellness, IP vault, contracts, knowledge, expenses, etc.). Your account will be pseudonymised. This cannot be undone.')) return
+                    if (!confirm('Final confirmation: type OK to proceed with full data erasure.')) return
+                    const r = await fetch('/api/gdpr', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'erase', confirm:'ERASE MY DATA' }) })
+                    const d = await r.json()
+                    if (r.ok) { alert('All data erased. You will be signed out.'); window.location.href = '/auth/login' }
+                    else alert(d.error ?? 'Failed')
+                  }}
+                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(239,68,68,0.3)', background:'rgba(239,68,68,0.06)', color:'#ef4444', cursor:'pointer', whiteSpace:'nowrap' as const }}
+                >
+                  ⚠ Erase All Data
+                </button>
+              </div>
+            </div>
+            <p style={{ fontSize:10, color:'var(--pios-dim)', marginTop:10 }}>
+              Controller: VeritasIQ Technologies Ltd, United Kingdom · DPO: info@veritasiq.io
+            </p>
+          </div>
+        </Section>
+
         <Section title="System">
           {[
-            ['PIOS Version',    'v3.0.0'],
-            ['AI Engine',       'claude-sonnet-4-6'],
+            ['PIOS Version',    'v3.0.0 (Sprint 80)'],
+            ['AI Engine',       'claude-sonnet-4-6 (Sonnet 4)'],
             ['Database',        'Supabase PostgreSQL (EU West)'],
             ['Deployment',      'Vercel'],
             ['Owner',           'VeritasIQ Technologies Ltd'],
-            ['Migrations run',  '001–007'],
+            ['Migrations run',  '001–021'],
           ].map(([l,v])=>(
             <div key={String(l ?? "")} style={{ display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--pios-border)' }}>
               <span style={{ fontSize:12,color:'var(--pios-muted)' }}>{l}</span>

@@ -102,6 +102,9 @@ export async function GET(req: NextRequest) {
         modules,
         fmNews,
         okrsWeekly,
+        wellnessWeek,
+        ipRenew30,
+        ctRenew30,
       ] = await Promise.all([
         // Tasks completed this week
         admin.from('tasks')
@@ -160,6 +163,28 @@ export async function GET(req: NextRequest) {
           .eq('status', 'active')
           .order('health')
           .limit(6),
+
+        // Wellness check-ins this week
+        (admin as any).from('wellness_sessions')
+          .select('mood_score,energy_score,stress_score,focus_score,session_date')
+          .eq('user_id', uid)
+          .gte('session_date', String(win.from ?? '').slice(0, 10))
+          .lte('session_date', String(win.to ?? '').slice(0, 10))
+          .order('session_date'),
+
+        // IP + contract renewals due next 30 days (weekly urgency window)
+        (admin as any).from('ip_assets')
+          .select('name,asset_type,renewal_date')
+          .eq('user_id', uid).eq('status', 'active')
+          .gte('renewal_date', new Date().toISOString().slice(0, 10))
+          .lte('renewal_date', new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10))
+          .order('renewal_date').limit(3),
+        (admin as any).from('contracts')
+          .select('title,contract_type,end_date')
+          .eq('user_id', uid).eq('status', 'active')
+          .gte('end_date', new Date().toISOString().slice(0, 10))
+          .lte('end_date', new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10))
+          .order('end_date').limit(3),
       ])
 
       const totalWords   = (thesisNow.data ?? []).reduce((s: number, c: unknown) => s + ((c as any)?.word_count ?? 0), 0)
@@ -185,10 +210,23 @@ export async function GET(req: NextRequest) {
       const okrList      = ((okrsWeekly as any)?.data ?? []) as any[]
       const atRiskOkrs   = okrList.filter((o: any) => o.health === 'at_risk' || o.health === 'off_track')
 
+      // Wellness week stats
+      const wellnessSessions = ((wellnessWeek as any)?.data ?? []) as any[]
+      const wellnessCheckins = wellnessSessions.length
+      const avgMoodWeek   = wellnessCheckins ? Math.round(wellnessSessions.reduce((s: number, w: any) => s + (w.mood_score ?? 5), 0) / wellnessCheckins * 10) / 10 : null
+      const avgEnergyWeek = wellnessCheckins ? Math.round(wellnessSessions.reduce((s: number, w: any) => s + (w.energy_score ?? 5), 0) / wellnessCheckins * 10) / 10 : null
+      const avgStressWeek = wellnessCheckins ? Math.round(wellnessSessions.reduce((s: number, w: any) => s + (w.stress_score ?? 5), 0) / wellnessCheckins * 10) / 10 : null
+      const ipRenew30Days = ((ipRenew30 as any)?.data ?? []) as any[]
+      const ctRenew30Days = ((ctRenew30 as any)?.data ?? []) as any[]
+
       // ── AI insight (non-blocking, skip on error) ─────────────────────────
       let topInsight = ''
       try {
-        const insightPrompt = `You are PIOS, a personal intelligence operating system. Write ONE short, specific, actionable sentence (max 25 words) as a weekly insight for ${profile.full_name?.split(' ')[0] ?? 'the user'} based on: tasks completed=${tasksDone.count ?? 0}, overdue=${tasksOverdue.count ?? 0}, thesis words=${totalWords}, expenses=${expList.length}, OKRs active=${okrList.length} (${atRiskOkrs.length} at risk). Be encouraging but honest. No filler phrases.`
+        const renewalNote = (ipRenew30Days.length + ctRenew30Days.length) > 0 
+          ? `, ${ipRenew30Days.length + ctRenew30Days.length} renewal(s) due within 30 days` : ''
+        const wellnessNote = avgMoodWeek !== null
+          ? `, avg mood=${avgMoodWeek} energy=${avgEnergyWeek} stress=${avgStressWeek} (${wellnessCheckins} check-ins)` : ''
+        const insightPrompt = `You are PIOS, a personal intelligence operating system. Write ONE short, specific, actionable sentence (max 25 words) as a weekly insight for ${profile.full_name?.split(' ')[0] ?? 'the user'} based on: tasks completed=${tasksDone.count ?? 0}, overdue=${tasksOverdue.count ?? 0}, thesis words=${totalWords}, expenses=${expList.length}, OKRs active=${okrList.length} (${atRiskOkrs.length} at risk)${wellnessNote}${renewalNote}. Be encouraging but honest. No filler phrases.`
         const resp = await callClaude([{ role: 'user', content: insightPrompt }], 'You are a concise, motivating weekly advisor. Output only the insight sentence — no quotes, no preamble.', 60)
         topInsight = resp.trim()
       } catch { /* non-blocking */ }
