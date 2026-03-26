@@ -398,6 +398,39 @@ export default function AdminPage() {
         </a>
       </div>
 
+      {/* ── NemoClaw™ Framework Seeder ────────────────── */}
+      <div className="mt-8 bg-card border border-violet-500/20 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold">NemoClaw™ IP Framework Seed</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Seeds all 15 proprietary NemoClaw™ frameworks into your IP Vault (SDL, POM, OAE, CVDM, CPA, UMS, VFO, CFE, ADF, GSM, SPA, RTE, IML, SCE, AAM).
+              Requires M019 to be applied first.
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const r = await fetch('/api/ip-vault', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'seed_frameworks' }),
+              })
+              const d = await r.json()
+              if (d.seeded !== undefined) {
+                alert(`✓ NemoClaw™ seed complete: ${d.seeded} frameworks added, ${d.skipped} already present`)
+              } else {
+                alert(d.error ?? 'Seed failed — ensure M019 is applied')
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20 text-sm hover:bg-violet-500/15 whitespace-nowrap"
+          >
+            ✦ Seed NemoClaw™
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Idempotent — safe to run multiple times. Already-present frameworks are skipped. View results in IP Vault → Frameworks.
+        </p>
+      </div>
+
       {/* ── Demo Data Seeder ────────────────────────── */}
       <div className="mt-8 bg-card border border-amber-500/20 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
