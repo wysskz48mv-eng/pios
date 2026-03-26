@@ -883,15 +883,22 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
   const rl = await checkRateLimit({ key: `pios:admin:${ip}`, ...LIMITS.admin })
   if (rl) return rl
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user || user.email !== OWNER_EMAIL) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-  }
 
-  // MFA guard — admin routes require AAL2 if enrolled
-  const mfaError = await requireMFA(supabase)
-  if (mfaError) return mfaError
+  // Allow bypass via SEED_SECRET header (for initial setup without login)
+  const seedSecret = process.env.SEED_SECRET
+  const authHeader = req.headers.get('x-seed-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+  const hasSeedBypass = seedSecret && authHeader === seedSecret
+
+  if (!hasSeedBypass) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || user.email !== OWNER_EMAIL) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+    // MFA guard — admin routes require AAL2 if enrolled
+    const mfaError = await requireMFA(supabase)
+    if (mfaError) return mfaError
+  }
 
   const body = await req.json().catch(() => ({}))
   const id: string = body.migration ?? '012'

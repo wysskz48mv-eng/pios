@@ -66,13 +66,16 @@ export default function AdminPage() {
 
   async function runMigration(id: string) {
     setRunning(id)
+    const seedSecret = (document.getElementById('pios-seed-secret') as HTMLInputElement)?.value ?? ''
+    const headers: Record<string,string> = { 'Content-Type': 'application/json' }
+    if (seedSecret) headers['x-seed-secret'] = seedSecret
     // 001-007: legacy migrate route (file-based runner)
     // 008-013: run-migration route (inline SQL via pg direct connection)
     const legacyIds = ['001','002','003','004','005','006','007']
     const endpoint  = legacyIds.includes(id) ? '/api/admin/migrate' : '/api/admin/run-migration'
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ migration: id }),
     })
     const d = await res.json()
@@ -84,17 +87,20 @@ export default function AdminPage() {
 
   async function runAll() {
     setRunning('all')
+    const seedSecret = (document.getElementById('pios-seed-secret') as HTMLInputElement)?.value ?? ''
+    const headers: Record<string,string> = { 'Content-Type': 'application/json' }
+    if (seedSecret) headers['x-seed-secret'] = seedSecret
     // Run legacy (001-007) then extended (008-013) migrations in sequence
     const legacyRes = await fetch('/api/admin/migrate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ run_all: true }),
     })
     const legacyData = await legacyRes.json()
 
     const extRes = await fetch('/api/admin/run-migration', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ migration: 'all' }),
     })
     const extData = await extRes.json()
@@ -163,6 +169,15 @@ export default function AdminPage() {
             <p style={{ fontSize:12, color:'var(--pios-muted)' }}>
               Run these in order. Migrations 001–003 may already be applied. 004–009 add Research, Feeds, File Intelligence, Payroll, Weekly Snapshots, and Multi-Email + Meeting Notes tables.
             </p>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:8 }}>
+              <input
+                id="pios-seed-secret"
+                type="password"
+                placeholder="Setup secret (if not logged in as owner)"
+                style={{ fontSize:12, padding:'6px 10px', borderRadius:6, border:'1px solid var(--pios-border)', background:'var(--pios-card2)', color:'var(--pios-text)', width:280 }}
+              />
+              <span style={{ fontSize:11, color:'var(--pios-muted)' }}>Enter SEED_SECRET from Vercel env</span>
+            </div>
           </div>
           <button
             onClick={runAll}
