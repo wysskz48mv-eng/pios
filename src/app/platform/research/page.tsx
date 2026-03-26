@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 // literature import guide (Scopus, Mendeley, Zotero)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ACCENT = '#6c8eff'
+const ACCENT = 'var(--academic)'
 const TABS = ['search', 'journals', 'cfp', 'library', 'import'] as const
 type Tab = typeof TABS[number]
 
@@ -123,12 +123,12 @@ const DB_OPTIONS = [
 ]
 
 const STATUS_COLOURS: Record<string, string> = {
-  researching: '#64748b', drafting: '#6c8eff', submitted: '#f59e0b',
-  under_review: '#a78bfa', accepted: '#22c55e', rejected: '#ef4444', published: '#2dd4a0',
+  researching: '#64748b', drafting: 'var(--academic)', submitted: 'var(--saas)',
+  under_review: 'var(--ai)', accepted: 'var(--fm)', rejected: 'var(--dng)', published: 'var(--fm)',
 }
 
 const CFP_STATUS_COLOURS: Record<string, string> = {
-  new: '#6c8eff', considering: '#f59e0b', planning: '#2dd4a0', dismissed: '#64748b',
+  new: 'var(--academic)', considering: 'var(--saas)', planning: 'var(--fm)', dismissed: '#64748b',
 }
 
 function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -195,37 +195,37 @@ function SearchTab() {
 
   return (
     <div>
-      <div className="pios-card" style={{ marginBottom: 16 }}>
+      <div className="card-v3" style={{ marginBottom: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, marginBottom: 12 }}>
-          <input className="pios-input" placeholder='e.g. AI predictive maintenance facilities management GCC'
+          <input className="inp-v3" placeholder='e.g. AI predictive maintenance facilities management GCC'
             value={query} onChange={e => setQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && search()}
             style={{ fontSize: 14 }} />
-          <button className="pios-btn pios-btn-primary" onClick={search} disabled={loading || !query.trim()} style={{ fontSize: 13, minWidth: 100 }}>
+          <button className="btn-v3-primary" onClick={search} disabled={loading || !query.trim()} style={{ fontSize: 13, minWidth: 100 }}>
             {loading ? '⟳ Searching…' : '🔍 Search'}
           </button>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
-          <select className="pios-input" style={{ width: 'auto', fontSize: 12 }} value={database} onChange={e => setDatabase(e.target.value)}>
+          <select className="inp-v3" style={{ width: 'auto', fontSize: 12 }} value={database} onChange={e => setDatabase(e.target.value)}>
             {DB_OPTIONS.map(d => <option key={(d as Record<string,unknown>).value as string} value={d.value}>{d.label}</option>)}
           </select>
-          <input className="pios-input" placeholder="Year from" type="number" style={{ width: 110, fontSize: 12 }} value={yearFrom} onChange={e => setYearFrom(e.target.value)} />
-          <input className="pios-input" placeholder="Year to" type="number" style={{ width: 100, fontSize: 12 }} value={yearTo} onChange={e => setYearTo(e.target.value)} />
-          <select className="pios-input" style={{ width: 'auto', fontSize: 12 }} value={maxResults} onChange={e => setMaxResults(parseInt(e.target.value))}>
+          <input className="inp-v3" placeholder="Year from" type="number" style={{ width: 110, fontSize: 12 }} value={yearFrom} onChange={e => setYearFrom(e.target.value)} />
+          <input className="inp-v3" placeholder="Year to" type="number" style={{ width: 100, fontSize: 12 }} value={yearTo} onChange={e => setYearTo(e.target.value)} />
+          <select className="inp-v3" style={{ width: 'auto', fontSize: 12 }} value={maxResults} onChange={e => setMaxResults(parseInt(e.target.value))}>
             {[5, 10, 15, 20].map(n => <option key={n} value={n}>{n} results</option>)}
           </select>
         </div>
         {database && (
           <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
             {DB_OPTIONS.find(d => d.value === database)?.note} ·{' '}
-            <span style={{ color: '#f59e0b' }}>AI-assisted — verify results in your institutional access portal</span>
+            <span style={{ color: 'var(--saas)' }}>AI-assisted — verify results in your institutional access portal</span>
           </p>
         )}
       </div>
 
       {/* Suggested searches */}
       {!results.length && !loading && (
-        <div className="pios-card" style={{ marginBottom: 16 }}>
+        <div className="card-v3" style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>Suggested searches for your DBA</div>
           <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
             {[
@@ -268,18 +268,18 @@ function SearchTab() {
             <div style={{ padding:'10px 14px', borderRadius:8, marginBottom:14, display:'flex', gap:16, alignItems:'center', flexWrap:'wrap',
               background: (Number((guardSummary as Record<string,unknown>).fabricated_risk) > 0 ? 'rgba(239,68,68,0.07)' : (Number((guardSummary as Record<string,unknown>).needs_review) > 0 ? 'rgba(245,158,11,0.07)' : 'rgba(34,197,94,0.07)')),
               border: `1px solid ${Number((guardSummary as Record<string,unknown>).fabricated_risk) > 0 ? 'rgba(239,68,68,0.2)' : (Number((guardSummary as Record<string,unknown>).needs_review) > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)')}` }}>
-              <span style={{ fontSize:12, fontWeight:600, color: (Number((guardSummary as Record<string,unknown>).fabricated_risk) > 0 ? '#ef4444' : (Number((guardSummary as Record<string,unknown>).needs_review) > 0 ? '#f59e0b' : '#22c55e')) }}>
+              <span style={{ fontSize:12, fontWeight:600, color: (Number((guardSummary as Record<string,unknown>).fabricated_risk) > 0 ? 'var(--dng)' : (Number((guardSummary as Record<string,unknown>).needs_review) > 0 ? 'var(--saas)' : 'var(--fm)')) }}>
                 🔍 Citation Guard:
               </span>
               <span style={{ fontSize:12, color:'var(--pios-muted)' }}>
                 {((guardSummary as Record<string,unknown>).verified as string | number | boolean)} verified · {((guardSummary as Record<string,unknown>).needs_review as string | number | boolean)} needs review · {((guardSummary as Record<string,unknown>).fabricated_risk as string | number | boolean)} unverifiable
               </span>
-              {((guardSummary as Record<string,unknown>).warning as string | number | boolean) && <span style={{ fontSize:11, color:'#f59e0b' }}>⚠ {((guardSummary as Record<string,unknown>).warning as string | number | boolean)}</span>}
+              {((guardSummary as Record<string,unknown>).warning as string | number | boolean) && <span style={{ fontSize:11, color:'var(--saas)' }}>⚠ {((guardSummary as Record<string,unknown>).warning as string | number | boolean)}</span>}
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
             {results.map((r, i) => (
-              <div key={i} className="pios-card" style={{ padding: '16px 18px' }}>
+              <div key={i} className="card-v3" style={{ padding: '16px 18px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 6 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, marginBottom: 4, color: 'var(--pios-text)' }}>{String(r.title ?? "")}</div>
@@ -290,15 +290,15 @@ function SearchTab() {
                       <span>·</span>
                       <span>{String(r.year ?? "")}</span>
                       {((r.citations !== undefined && Number(r.citations) > 0)) && <><span>·</span><span>{String(r.citations ?? "")} citations</span></>}
-                      {Boolean((r as Record<string,unknown>).open_access) && <span style={{ color: '#22c55e', fontWeight: 600 }}>OA</span>}
+                      {Boolean((r as Record<string,unknown>).open_access) && <span style={{ color: 'var(--fm)', fontWeight: 600 }}>OA</span>}
                     </div>
                   </div>
                   <div style={{ display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
                     {String(r.provenance_label ?? "") && (() => {
                       const badges: Record<string,{text:string,colour:string,bg:string}> = {
-                        AI_VERIFIED:    { text:'✓ Verified',       colour:'#22c55e', bg:'rgba(34,197,94,0.1)' },
-                        AI_UNVERIFIED:  { text:'⚠ Unverified',     colour:'#f59e0b', bg:'rgba(245,158,11,0.1)' },
-                        FABRICATED_RISK:{ text:'✗ Check manually', colour:'#ef4444', bg:'rgba(239,68,68,0.1)' },
+                        AI_VERIFIED:    { text:'✓ Verified',       colour:'var(--fm)', bg:'rgba(34,197,94,0.1)' },
+                        AI_UNVERIFIED:  { text:'⚠ Unverified',     colour:'var(--saas)', bg:'rgba(245,158,11,0.1)' },
+                        FABRICATED_RISK:{ text:'✗ Check manually', colour:'var(--dng)', bg:'rgba(239,68,68,0.1)' },
                       }
                       const b = badges[r.provenance_label as keyof typeof badges]
                       return b ? (
@@ -331,12 +331,12 @@ function SearchTab() {
                         </a>
                       )}
                       {r.crossref_title && String(r.provenance_label ?? "") === 'FABRICATED_RISK' && (
-                        <div style={{ width:'100%', marginTop:6, padding:'6px 10px', borderRadius:6, background:'rgba(239,68,68,0.08)', fontSize:11, color:'#ef4444' }}>
+                        <div style={{ width:'100%', marginTop:6, padding:'6px 10px', borderRadius:6, background:'rgba(239,68,68,0.08)', fontSize:11, color:'var(--dng)' }}>
                           ⚠ CrossRef title: &ldquo;{String(r.crossref_title ?? "")}&rdquo; — differs from AI output. Verify before citing.
                         </div>
                       )}
                       {r.requires_hitl && String(r.hitl_reason ?? "") && (
-                        <div style={{ width:'100%', marginTop:4, fontSize:11, color:'#f59e0b' }}>HITL: {String(String(r.hitl_reason ?? "") ?? "")}</div>
+                        <div style={{ width:'100%', marginTop:4, fontSize:11, color:'var(--saas)' }}>HITL: {String(String(r.hitl_reason ?? "") ?? "")}</div>
                       )}
                     </div>
                   </div>
@@ -352,7 +352,7 @@ function SearchTab() {
 
       {/* Recent search history */}
       {history.length > 0 && !results.length && !loading && (
-        <div className="pios-card" style={{ marginTop: 16 }}>
+        <div className="card-v3" style={{ marginTop: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-muted)', marginBottom: 10, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>Recent searches</div>
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6 }}>
             {history.map((h, i) => (
@@ -426,7 +426,7 @@ function JournalsTab() {
     load()
   }
 
-  const priorityColor = (p: string) => ({ high: '#ef4444', medium: '#f59e0b', low: '#64748b', watch: '#6c8eff' })[p] ?? '#64748b'
+  const priorityColor = (p: string) => ({ high: 'var(--dng)', medium: 'var(--saas)', low: '#64748b', watch: 'var(--academic)' })[p] ?? '#64748b'
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 1fr' : '1fr', gap: 16 }}>
@@ -434,28 +434,28 @@ function JournalsTab() {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <span style={{ fontSize: 13, color: 'var(--pios-muted)' }}>{journals.length} journals tracked</span>
-          <button className="pios-btn pios-btn-primary" onClick={() => setShowAdd(!showAdd)} style={{ fontSize: 12 }}>+ Add journal</button>
+          <button className="btn-v3-primary" onClick={() => setShowAdd(!showAdd)} style={{ fontSize: 12 }}>+ Add journal</button>
         </div>
 
         {showAdd && (
-          <div className="pios-card" style={{ marginBottom: 14, borderColor: ACCENT + '40' }}>
+          <div className="card-v3" style={{ marginBottom: 14, borderColor: ACCENT + '40' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-              <input className="pios-input" placeholder="Journal name *" value={addForm.journal_name} onChange={e => setAddForm(p => ({ ...p, journal_name: e.target.value }))} />
-              <input className="pios-input" placeholder="Publisher" value={addForm.publisher} onChange={e => setAddForm(p => ({ ...p, publisher: e.target.value }))} />
-              <input className="pios-input" placeholder="Impact factor" type="number" step="0.1" value={addForm.impact_factor} onChange={e => setAddForm(p => ({ ...p, impact_factor: e.target.value }))} />
-              <select className="pios-input" value={addForm.quartile} onChange={e => setAddForm(p => ({ ...p, quartile: e.target.value }))}>
+              <input className="inp-v3" placeholder="Journal name *" value={addForm.journal_name} onChange={e => setAddForm(p => ({ ...p, journal_name: e.target.value }))} />
+              <input className="inp-v3" placeholder="Publisher" value={addForm.publisher} onChange={e => setAddForm(p => ({ ...p, publisher: e.target.value }))} />
+              <input className="inp-v3" placeholder="Impact factor" type="number" step="0.1" value={addForm.impact_factor} onChange={e => setAddForm(p => ({ ...p, impact_factor: e.target.value }))} />
+              <select className="inp-v3" value={addForm.quartile} onChange={e => setAddForm(p => ({ ...p, quartile: e.target.value }))}>
                 {['Q1', 'Q2', 'Q3', 'Q4', 'Unranked'].map(q => <option key={q} value={q}>{q}</option>)}
               </select>
-              <input className="pios-input" placeholder="Subject area" value={addForm.subject_area} onChange={e => setAddForm(p => ({ ...p, subject_area: e.target.value }))} />
-              <select className="pios-input" value={addForm.priority} onChange={e => setAddForm(p => ({ ...p, priority: e.target.value }))}>
+              <input className="inp-v3" placeholder="Subject area" value={addForm.subject_area} onChange={e => setAddForm(p => ({ ...p, subject_area: e.target.value }))} />
+              <select className="inp-v3" value={addForm.priority} onChange={e => setAddForm(p => ({ ...p, priority: e.target.value }))}>
                 {[['high', 'High priority'], ['medium', 'Medium'], ['low', 'Low'], ['watch', 'Watch']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
-            <input className="pios-input" placeholder="Submission URL" value={addForm.submission_url} onChange={e => setAddForm(p => ({ ...p, submission_url: e.target.value }))} style={{ marginBottom: 8 }} />
-            <input className="pios-input" placeholder="Author guidelines URL" value={addForm.guidelines_url} onChange={e => setAddForm(p => ({ ...p, guidelines_url: e.target.value }))} style={{ marginBottom: 8 }} />
+            <input className="inp-v3" placeholder="Submission URL" value={addForm.submission_url} onChange={e => setAddForm(p => ({ ...p, submission_url: e.target.value }))} style={{ marginBottom: 8 }} />
+            <input className="inp-v3" placeholder="Author guidelines URL" value={addForm.guidelines_url} onChange={e => setAddForm(p => ({ ...p, guidelines_url: e.target.value }))} style={{ marginBottom: 8 }} />
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="pios-btn pios-btn-primary" onClick={addJournal} disabled={saving} style={{ fontSize: 12 }}>{saving ? 'Adding…' : 'Add journal'}</button>
-              <button className="pios-btn pios-btn-ghost" onClick={() => setShowAdd(false)} style={{ fontSize: 12 }}>Cancel</button>
+              <button className="btn-v3-primary" onClick={addJournal} disabled={saving} style={{ fontSize: 12 }}>{saving ? 'Adding…' : 'Add journal'}</button>
+              <button className="btn-v3-ghost" onClick={() => setShowAdd(false)} style={{ fontSize: 12 }}>Cancel</button>
             </div>
           </div>
         )}
@@ -463,7 +463,7 @@ function JournalsTab() {
         {loading ? <Spinner /> : (
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
             {journals.map((j: Record<string,unknown>) => (
-              <div key={j.id as string} onClick={() => setSelected(selected?.id === String(j.id ?? "") ? null : j as JournalRecord)} className="pios-card"
+              <div key={j.id as string} onClick={() => setSelected(selected?.id === String(j.id ?? "") ? null : j as JournalRecord)} className="card-v3"
                 style={{ padding: '14px 16px', cursor: 'pointer', border: `1px solid ${selected?.id === j.id ? ACCENT + '60' : 'var(--pios-border)'}`, background: selected?.id === j.id ? 'rgba(108,142,255,0.05)' : 'var(--pios-surface)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -475,13 +475,13 @@ function JournalsTab() {
                     <div style={{ display: 'flex', gap: 10, fontSize: 11, color: 'var(--pios-dim)', flexWrap: 'wrap' as const }}>
                       {Boolean((j as Record<string,unknown>).publisher) && <span>{String((j as Record<string,unknown>).publisher ?? "")}</span>}
                       {Boolean((j as Record<string,unknown>).impact_factor) && <><span>·</span><span>IF {String((j as Record<string,unknown>).impact_factor ?? "")}</span></>}
-                      {Boolean((j as Record<string,unknown>).quartile) && <><span>·</span><span style={{ fontWeight: 600, color: String((j as Record<string,unknown>).quartile ?? '') === 'Q1' ? '#22c55e' : String((j as Record<string,unknown>).quartile ?? '') === 'Q2' ? ACCENT : 'var(--pios-dim)' }}>{String((j as Record<string,unknown>).quartile ?? "")}</span></>}
-                      {Boolean((j as Record<string,unknown>).is_scopus_indexed) && <><span>·</span><span style={{ color: '#f59e0b' }}>Scopus</span></>}
+                      {Boolean((j as Record<string,unknown>).quartile) && <><span>·</span><span style={{ fontWeight: 600, color: String((j as Record<string,unknown>).quartile ?? '') === 'Q1' ? 'var(--fm)' : String((j as Record<string,unknown>).quartile ?? '') === 'Q2' ? ACCENT : 'var(--pios-dim)' }}>{String((j as Record<string,unknown>).quartile ?? "")}</span></>}
+                      {Boolean((j as Record<string,unknown>).is_scopus_indexed) && <><span>·</span><span style={{ color: 'var(--saas)' }}>Scopus</span></>}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                     <button onClick={e => { e.stopPropagation(); getGuidelines(j as JournalRecord) }} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid var(--pios-border)', background: 'none', cursor: 'pointer', color: ACCENT }}>Guidelines</button>
-                    <button onClick={e => { e.stopPropagation(); deleteJournal(String((j as Record<string,unknown>).id ?? '')) }} style={{ fontSize: 11, padding: '3px 6px', borderRadius: 6, border: '1px solid rgba(239,68,68,0.2)', background: 'none', cursor: 'pointer', color: '#ef4444' }}>✕</button>
+                    <button onClick={e => { e.stopPropagation(); deleteJournal(String((j as Record<string,unknown>).id ?? '')) }} style={{ fontSize: 11, padding: '3px 6px', borderRadius: 6, border: '1px solid rgba(239,68,68,0.2)', background: 'none', cursor: 'pointer', color: 'var(--dng)' }}>✕</button>
                   </div>
                 </div>
                 <div style={{ marginTop: 8, display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -503,7 +503,7 @@ function JournalsTab() {
       {/* Right — guidelines panel */}
       {selected && (
         <div>
-          <div className="pios-card" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
+          <div className="card-v3" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{String(selected?.journal_name ?? "")}</div>
@@ -513,7 +513,7 @@ function JournalsTab() {
             </div>
 
             {!guidelines && !guideLoading && (
-              <button className="pios-btn pios-btn-primary" onClick={() => selected && getGuidelines(selected as unknown as JournalRecord)} style={{ fontSize: 12, width: '100%' }}>
+              <button className="btn-v3-primary" onClick={() => selected && getGuidelines(selected as unknown as JournalRecord)} style={{ fontSize: 12, width: '100%' }}>
                 Get author guidelines summary
               </button>
             )}
@@ -624,7 +624,7 @@ function CFPTab() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <span style={{ fontSize: 13, color: 'var(--pios-muted)' }}>{saved.length} tracked · Click "Find CFPs" to discover new ones</span>
-        <button className="pios-btn pios-btn-primary" onClick={fetchCFPs} disabled={loading} style={{ fontSize: 12 }}>
+        <button className="btn-v3-primary" onClick={fetchCFPs} disabled={loading} style={{ fontSize: 12 }}>
           {loading ? '⟳ Searching…' : '🔍 Find CFPs'}
         </button>
       </div>
@@ -639,11 +639,11 @@ function CFPTab() {
             {live.map((cfp, i) => {
               const days = String((cfp as Record<string,unknown>).deadline ?? "") ? daysUntil(String((cfp as Record<string,unknown>).deadline ?? "")) : null
               return (
-                <div key={i} className="pios-card" style={{ padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div key={i} className="card-v3" style={{ padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 4 }}>
                       <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{String((cfp as Record<string,unknown>).title ?? "")}</span>
-                      {Number((cfp as Record<string,unknown>).relevance_score ?? 0) >= 4 && <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 20, background: '#22c55e20', color: '#22c55e', fontWeight: 600, flexShrink: 0 }}>High match</span>}
+                      {Number((cfp as Record<string,unknown>).relevance_score ?? 0) >= 4 && <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 20, background: 'var(--fm)20', color: 'var(--fm)', fontWeight: 600, flexShrink: 0 }}>High match</span>}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--pios-muted)', marginBottom: 4 }}>{String(cfp.journal_name ?? (cfp as Record<string,unknown>).conference_name ?? "") }</div>
                     {String((cfp as Record<string,unknown>).topic_summary ?? "") && <p style={{ fontSize: 12, color: 'var(--pios-dim)', lineHeight: 1.5, marginBottom: 6 }}>{String((cfp as Record<string,unknown>).topic_summary ?? "")}</p>}
@@ -651,7 +651,7 @@ function CFPTab() {
                   </div>
                   <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
                     {days !== null && (
-                      <div style={{ fontSize: 13, fontWeight: 700, color: days < 30 ? '#ef4444' : days < 60 ? '#f59e0b' : '#22c55e', marginBottom: 4 }}>{days}d left</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: days < 30 ? 'var(--dng)' : days < 60 ? 'var(--saas)' : 'var(--fm)', marginBottom: 4 }}>{days}d left</div>
                     )}
                     {String((cfp as Record<string,unknown>).deadline ?? "") && <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 8 }}>{String((cfp as Record<string,unknown>).deadline ?? "")}</div>}
                     <button onClick={() => saveCFP(cfp)} disabled={savingId === String((cfp as Record<string,unknown>).title ?? "")} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: `1px solid ${ACCENT}`, background: 'none', cursor: 'pointer', color: ACCENT }}>
@@ -673,13 +673,13 @@ function CFPTab() {
             {saved.map((cfp: Record<string,unknown>) => {
               const days = String((cfp as Record<string,unknown>).deadline ?? "") ? daysUntil(String((cfp as Record<string,unknown>).deadline ?? "")) : null
               return (
-                <div key={cfp.id as string} className="pios-card" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div key={cfp.id as string} className="card-v3" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{String((cfp as Record<string,unknown>).title ?? "")}</div>
                     <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{String(cfp.journal_name ?? (cfp as Record<string,unknown>).conference_name ?? "")}</div>
                   </div>
                   {days !== null && (
-                    <div style={{ fontSize: 12, fontWeight: 700, color: days < 14 ? '#ef4444' : days < 30 ? '#f59e0b' : 'var(--pios-muted)', flexShrink: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: days < 14 ? 'var(--dng)' : days < 30 ? 'var(--saas)' : 'var(--pios-muted)', flexShrink: 0 }}>
                       {days > 0 ? `${days}d` : 'Passed'}
                     </div>
                   )}
@@ -698,11 +698,11 @@ function CFPTab() {
       )}
 
       {saved.length === 0 && !loading && live.length === 0 && (
-        <div className="pios-card" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
+        <div className="card-v3" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📣</div>
           <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>No CFPs tracked yet</div>
           <p style={{ fontSize: 13, color: 'var(--pios-muted)', marginBottom: 16 }}>Click "Find CFPs" to discover calls for papers and special issues relevant to your DBA research.</p>
-          <button className="pios-btn pios-btn-primary" onClick={fetchCFPs} style={{ fontSize: 13 }}>Find CFPs now</button>
+          <button className="btn-v3-primary" onClick={fetchCFPs} style={{ fontSize: 13 }}>Find CFPs now</button>
         </div>
       )}
     </div>
@@ -745,7 +745,7 @@ function ImportTab() {
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
       {/* Institutional DB access guide */}
       <div>
-        <div className="pios-card" style={{ marginBottom: 14, borderLeft: `3px solid ${ACCENT}` }}>
+        <div className="card-v3" style={{ marginBottom: 14, borderLeft: `3px solid ${ACCENT}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Scopus — Institutional Access</div>
           <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 12 }}>
             Your university library provides database access. The PIOS search tab uses AI to simulate results — for authoritative data, use your institutional login.
@@ -766,7 +766,7 @@ function ImportTab() {
           <a href="https://www.scopus.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: ACCENT }}>Open Scopus →</a>
         </div>
 
-        <div className="pios-card" style={{ borderLeft: '3px solid #f59e0b' }}>
+        <div className="card-v3" style={{ borderLeft: '3px solid var(--saas)' }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>ISO Standards Access</div>
           <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 12 }}>
             ISO standards relevant to your DBA (ISO 55001, ISO 41001, ISO 15686) are available via BSI and through the UoP library.
@@ -778,7 +778,7 @@ function ImportTab() {
               { name: 'UoP Library E-Standards', url: 'https://library.port.ac.uk', desc: 'Search "standards" in the library portal' },
             ].map(r => (
               <div key={r.name as string} style={{ padding: '8px 10px', borderRadius: 6, background: 'var(--pios-surface2)' }}>
-                <a href={String(r.url ?? "")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', display: 'block', marginBottom: 2 }}>{String(r.name ?? "")} →</a>
+                <a href={String(r.url ?? "")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: 'var(--saas)', display: 'block', marginBottom: 2 }}>{String(r.name ?? "")} →</a>
                 <span style={{ fontSize: 11, color: 'var(--pios-dim)' }}>{String(r.desc ?? "")}</span>
               </div>
             ))}
@@ -788,13 +788,13 @@ function ImportTab() {
 
       {/* Mendeley / Zotero + manual import */}
       <div>
-        <div className="pios-card" style={{ marginBottom: 14, borderLeft: '3px solid #a78bfa' }}>
+        <div className="card-v3" style={{ marginBottom: 14, borderLeft: '3px solid var(--ai)' }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Mendeley & Zotero</div>
           <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65, marginBottom: 12 }}>
             PIOS tracks literature in its own database. These tools work alongside PIOS for PDF management and citation generation.
           </p>
           {[
-            { name: 'Mendeley Reference Manager', url: 'https://www.mendeley.com', desc: 'Download desktop app → Import Scopus CSV → Cite in Word/Google Docs', colour: '#a78bfa' },
+            { name: 'Mendeley Reference Manager', url: 'https://www.mendeley.com', desc: 'Download desktop app → Import Scopus CSV → Cite in Word/Google Docs', colour: 'var(--ai)' },
             { name: 'Zotero', url: 'https://www.zotero.org', desc: 'Browser plugin auto-captures papers from Scopus, publisher sites. Sync with PIOS via Zotero key field.', colour: '#CC2936' },
           ].map(t => (
             <div key={(t as Record<string,unknown>).name as string} style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--pios-surface2)', marginBottom: 8 }}>
@@ -805,26 +805,26 @@ function ImportTab() {
         </div>
 
         {/* Manual import */}
-        <div className="pios-card">
+        <div className="card-v3">
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Add to literature library</div>
           {importResult && (
-            <div style={{ padding: '8px 12px', borderRadius: 6, background: '#22c55e20', color: '#22c55e', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>{importResult}</div>
+            <div style={{ padding: '8px 12px', borderRadius: 6, background: 'var(--fm)20', color: 'var(--fm)', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>{importResult}</div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-            <input className="pios-input" placeholder="Title *" value={manualForm.title} onChange={e => setManualForm(p => ({ ...p, title: e.target.value }))} />
-            <input className="pios-input" placeholder="Authors (comma-separated)" value={manualForm.authors} onChange={e => setManualForm(p => ({ ...p, authors: e.target.value }))} />
+            <input className="inp-v3" placeholder="Title *" value={manualForm.title} onChange={e => setManualForm(p => ({ ...p, title: e.target.value }))} />
+            <input className="inp-v3" placeholder="Authors (comma-separated)" value={manualForm.authors} onChange={e => setManualForm(p => ({ ...p, authors: e.target.value }))} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-              <input className="pios-input" placeholder="Year" type="number" value={manualForm.year} onChange={e => setManualForm(p => ({ ...p, year: e.target.value }))} />
-              <select className="pios-input" value={manualForm.source_type} onChange={e => setManualForm(p => ({ ...p, source_type: e.target.value }))}>
+              <input className="inp-v3" placeholder="Year" type="number" value={manualForm.year} onChange={e => setManualForm(p => ({ ...p, year: e.target.value }))} />
+              <select className="inp-v3" value={manualForm.source_type} onChange={e => setManualForm(p => ({ ...p, source_type: e.target.value }))}>
                 {['journal', 'book', 'conference', 'report', 'thesis', 'website', 'other'].map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-              <input className="pios-input" placeholder="DOI" value={manualForm.doi} onChange={e => setManualForm(p => ({ ...p, doi: e.target.value }))} />
+              <input className="inp-v3" placeholder="DOI" value={manualForm.doi} onChange={e => setManualForm(p => ({ ...p, doi: e.target.value }))} />
             </div>
-            <input className="pios-input" placeholder="Journal name" value={manualForm.journal} onChange={e => setManualForm(p => ({ ...p, journal: e.target.value }))} />
-            <input className="pios-input" placeholder="URL" value={manualForm.url} onChange={e => setManualForm(p => ({ ...p, url: e.target.value }))} />
-            <input className="pios-input" placeholder="Tags (comma-separated)" value={manualForm.tags} onChange={e => setManualForm(p => ({ ...p, tags: e.target.value }))} />
-            <textarea className="pios-input" placeholder="Notes…" rows={2} style={{ resize: 'vertical' as const, fontFamily: 'inherit' }} value={manualForm.notes} onChange={e => setManualForm(p => ({ ...p, notes: e.target.value }))} />
-            <button className="pios-btn pios-btn-primary" onClick={manualImport} disabled={importing || !manualForm.title.trim()} style={{ fontSize: 12 }}>
+            <input className="inp-v3" placeholder="Journal name" value={manualForm.journal} onChange={e => setManualForm(p => ({ ...p, journal: e.target.value }))} />
+            <input className="inp-v3" placeholder="URL" value={manualForm.url} onChange={e => setManualForm(p => ({ ...p, url: e.target.value }))} />
+            <input className="inp-v3" placeholder="Tags (comma-separated)" value={manualForm.tags} onChange={e => setManualForm(p => ({ ...p, tags: e.target.value }))} />
+            <textarea className="inp-v3" placeholder="Notes…" rows={2} style={{ resize: 'vertical' as const, fontFamily: 'inherit' }} value={manualForm.notes} onChange={e => setManualForm(p => ({ ...p, notes: e.target.value }))} />
+            <button className="btn-v3-primary" onClick={manualImport} disabled={importing || !manualForm.title.trim()} style={{ fontSize: 12 }}>
               {importing ? 'Adding…' : 'Add to library'}
             </button>
           </div>
@@ -901,7 +901,7 @@ function LibraryTab() {
     setExporting(false)
   }
 
-  const READ_COLOURS: Record<string, string> = { unread: '#64748b', reading: '#6c8eff', read: '#22c55e', revisit: '#f59e0b' }
+  const READ_COLOURS: Record<string, string> = { unread: '#64748b', reading: 'var(--academic)', read: 'var(--fm)', revisit: 'var(--saas)' }
   const TYPE_ICONS:   Record<string, string> = { journal: '📄', book: '📚', conference: '🎤', report: '📋', thesis: '🎓', website: '🌐', other: '📁' }
 
   return (
@@ -910,13 +910,13 @@ function LibraryTab() {
       {stats && ((stats as Record<string,unknown>)?.total as number as number) > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 16 }}>
           {[
-            { label: 'Total', val: ((stats as Record<string,unknown>)?.total as number as number), c: '#6c8eff', f: 'all' },
+            { label: 'Total', val: ((stats as Record<string,unknown>)?.total as number as number), c: 'var(--academic)', f: 'all' },
             { label: 'Unread', val: stats.unread, c: '#64748b', f: 'unread' },
-            { label: 'Reading', val: stats.reading, c: '#6c8eff', f: 'reading' },
-            { label: 'Read', val: stats.read, c: '#22c55e', f: 'read' },
-            { label: 'Revisit', val: stats.revisit, c: '#f59e0b', f: 'revisit' },
+            { label: 'Reading', val: stats.reading, c: 'var(--academic)', f: 'reading' },
+            { label: 'Read', val: stats.read, c: 'var(--fm)', f: 'read' },
+            { label: 'Revisit', val: stats.revisit, c: 'var(--saas)', f: 'revisit' },
           ].map(s => (
-            <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => setFilter(s.f)}>
+            <div key={(s as Record<string,unknown>).label as string} className="card-v3-sm" style={{ padding: '10px 12px', cursor: 'pointer' }} onClick={() => setFilter(s.f)}>
               <div style={{ fontSize: 18, fontWeight: 800, color: s.c, lineHeight: 1, marginBottom: 2 }}>{String(s.val ?? "")}</div>
               <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{s.label}</div>
             </div>
@@ -927,7 +927,7 @@ function LibraryTab() {
       {/* Search + filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' as const, alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <input className="pios-input" placeholder="Search title, journal, notes…"
+          <input className="inp-v3" placeholder="Search title, journal, notes…"
             value={search} onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && load()}
             style={{ paddingLeft: 28, fontSize: 12 }} />
@@ -968,7 +968,7 @@ function LibraryTab() {
           {loading ? (
             <div style={{ padding: '32px 0', textAlign: 'center' as const, color: 'var(--pios-muted)', fontSize: 13 }}>Loading library…</div>
           ) : items.length === 0 ? (
-            <div className="pios-card" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
+            <div className="card-v3" style={{ textAlign: 'center' as const, padding: '48px 24px' }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Library is empty</div>
               <p style={{ fontSize: 13, color: 'var(--pios-muted)' }}>Add papers via the ⬇ Import & Connect tab or the 🔍 Database Search tab.</p>
@@ -977,7 +977,7 @@ function LibraryTab() {
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
               {items.map(item => (
                 <div key={item.id as string} onClick={() => setSelected(selected?.id===item.id ? null : item)}
-                  className="pios-card" style={{ padding: '12px 16px', cursor: 'pointer',
+                  className="card-v3" style={{ padding: '12px 16px', cursor: 'pointer',
                     border: `1px solid ${selected?.id===item.id ? ACCENT+'50' : 'var(--pios-border)'}`,
                     background: selected?.id===item.id ? ACCENT+'05' : 'var(--pios-surface)' }}>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -995,8 +995,8 @@ function LibraryTab() {
                           style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, border: 'none', cursor: 'pointer', background: (READ_COLOURS[String(item.read_status ?? "") as keyof typeof READ_COLOURS]??'#64748b')+'20', color: READ_COLOURS[String(item.read_status ?? "") as keyof typeof READ_COLOURS]??'#64748b', fontWeight: 600, outline: 'none' }}>
                           {['unread','reading','read','revisit'].map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        {Boolean(item.relevance) && <span style={{ fontSize: 11, color: '#f59e0b' }}>{'★'.repeat(Number(item.relevance ?? 0))}{'☆'.repeat(5 - Number(item.relevance ?? 0))}</span>}
-                        {Boolean(item.ai_summary) && <span style={{ fontSize: 10, color: '#a78bfa' }}>✦ AI</span>}
+                        {Boolean(item.relevance) && <span style={{ fontSize: 11, color: 'var(--saas)' }}>{'★'.repeat(Number(item.relevance ?? 0))}{'☆'.repeat(5 - Number(item.relevance ?? 0))}</span>}
+                        {Boolean(item.ai_summary) && <span style={{ fontSize: 10, color: 'var(--ai)' }}>✦ AI</span>}
                         {Boolean(item.doi) && <a href={`https://doi.org/${String(item.doi ?? "")}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: ACCENT }}>DOI →</a>}
                         {(item.tags as string[] | undefined)?.slice(0,3).map((t: string) => (
                           <span key={t} style={{ fontSize: 9, padding: '1px 6px', borderRadius: 10, background: 'var(--pios-surface2)', color: 'var(--pios-dim)' }}>{t}</span>
@@ -1004,7 +1004,7 @@ function LibraryTab() {
                       </div>
                     </div>
                     <button onClick={e => { e.stopPropagation(); deleteItem(String(item.id ?? '')) }} disabled={Boolean(deleting && deleting===String(item.id ?? ""))}
-                      style={{ fontSize: 11, padding: '3px 6px', borderRadius: 5, border: '1px solid rgba(239,68,68,0.2)', background: 'none', cursor: 'pointer', color: '#ef4444', flexShrink: 0, opacity: 0.6 }}>
+                      style={{ fontSize: 11, padding: '3px 6px', borderRadius: 5, border: '1px solid rgba(239,68,68,0.2)', background: 'none', cursor: 'pointer', color: 'var(--dng)', flexShrink: 0, opacity: 0.6 }}>
                       {deleting===item.id ? '…' : '✕'}
                     </button>
                   </div>
@@ -1017,7 +1017,7 @@ function LibraryTab() {
         {/* Detail */}
         {selected && (
           <div>
-            <div className="pios-card" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
+            <div className="card-v3" style={{ position: 'sticky', top: 20, borderLeft: `3px solid ${ACCENT}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginBottom: 4 }}>{String(selected?.title ?? "")}</div>
@@ -1032,13 +1032,13 @@ function LibraryTab() {
                 <span style={{ fontSize: 11, color: 'var(--pios-muted)' }}>Relevance:</span>
                 {[1,2,3,4,5].map(n => (
                   <button key={n} onClick={() => updateItem(String(selected?.id ?? ""), { relevance: n })}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: n <= Number(selected?.relevance ?? 0)?'#f59e0b':'var(--pios-dim)', padding: '0 1px', lineHeight: 1 }}>★</button>
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: n <= Number(selected?.relevance ?? 0)?'var(--saas)':'var(--pios-dim)', padding: '0 1px', lineHeight: 1 }}>★</button>
                 ))}
               </div>
 
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginBottom: 4 }}>Notes</div>
-                <textarea className="pios-input" rows={3} placeholder="Add reading notes…"
+                <textarea className="inp-v3" rows={3} placeholder="Add reading notes…"
                   defaultValue={String(selected.notes ?? "")}
                   onBlur={e => updateItem(String(selected.id ?? ""), { notes: e.target.value })}
                   style={{ width: '100%', resize: 'vertical' as const, fontFamily: 'inherit', fontSize: 12 }} />
@@ -1046,12 +1046,12 @@ function LibraryTab() {
 
               {Boolean(selected.ai_summary) ? (
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#a78bfa', marginBottom: 6 }}>✦ AI Summary</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ai)', marginBottom: 6 }}>✦ AI Summary</div>
                   <p style={{ fontSize: 12, color: 'var(--pios-text)', lineHeight: 1.65, marginBottom: 8 }}>{String(selected.ai_summary ?? "")}</p>
                   {selected._guard && (
                     <div style={{ marginBottom:6, padding:'5px 10px', borderRadius:6, fontSize:11, fontWeight:600,
                       background: (selected._guard as {provenance_label?:string})?.provenance_label==='AI_VERIFIED' ? 'rgba(34,197,94,0.08)' : (selected._guard as {provenance_label?:string})?.provenance_label==='FABRICATED_RISK' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
-                      color: (selected._guard as {provenance_label?:string})?.provenance_label==='AI_VERIFIED' ? '#22c55e' : (selected._guard as {provenance_label?:string})?.provenance_label==='FABRICATED_RISK' ? '#ef4444' : '#f59e0b',
+                      color: (selected._guard as {provenance_label?:string})?.provenance_label==='AI_VERIFIED' ? 'var(--fm)' : (selected._guard as {provenance_label?:string})?.provenance_label==='FABRICATED_RISK' ? 'var(--dng)' : 'var(--saas)',
                     }}>
                       {(selected._guard as {provenance_label?:string})?.provenance_label==='AI_VERIFIED' ? '✓ CrossRef verified' :
                        (selected._guard as {provenance_label?:string})?.provenance_label==='FABRICATED_RISK' ? '✗ Not found in CrossRef — verify before citing' :
@@ -1067,7 +1067,7 @@ function LibraryTab() {
                 </div>
               ) : (
                 <button onClick={() => generateSummary(String(selected.id ?? ""))} disabled={aiLoading===String(selected.id ?? "")}
-                  style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px dashed rgba(167,139,250,0.3)', background: 'none', cursor: 'pointer', color: '#a78bfa', fontSize: 12, marginBottom: 12 }}>
+                  style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px dashed rgba(167,139,250,0.3)', background: 'none', cursor: 'pointer', color: 'var(--ai)', fontSize: 12, marginBottom: 12 }}>
                   {aiLoading===String(selected.id ?? "") ? '⟳ Generating…' : '✦ Generate AI summary + APA citation'}
                 </button>
               )}
@@ -1088,7 +1088,7 @@ function LibraryTab() {
               {(selected.themes as string[])?.length > 0 && (
                 <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap' as const, gap: 4 }}>
                   {(selected.themes as string[]).map((t: string) => (
-                    <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: '#a78bfa20', color: '#a78bfa' }}>{t}</span>
+                    <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'var(--ai)20', color: 'var(--ai)' }}>{t}</span>
                   ))}
                 </div>
               )}

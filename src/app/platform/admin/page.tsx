@@ -36,14 +36,14 @@ function StatusBadge({ applied }: { applied: boolean }) {
   return (
     <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, fontWeight:600,
       background:applied?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)',
-      color:applied?'#22c55e':'#ef4444' }}>
+      color:applied?'var(--fm)':'var(--dng)' }}>
       {applied ? '✓ Applied' : '✗ Not applied'}
     </span>
   )
 }
 
 function Spinner() {
-  return <div style={{ width:14, height:14, border:'2px solid rgba(167,139,250,0.2)', borderTop:'2px solid #a78bfa', borderRadius:'50%', animation:'spin 0.8s linear infinite', display:'inline-block', marginRight:6 }} />
+  return <div style={{ width:14, height:14, border:'2px solid rgba(139,124,248,0.2)', borderTop:'2px solid var(--ai)', borderRadius:'50%', animation:'spin 0.8s linear infinite', display:'inline-block', marginRight:6 }} />
 }
 
 export default function AdminPage() {
@@ -143,19 +143,19 @@ export default function AdminPage() {
         <h1 style={{ fontSize:22, fontWeight:700, marginBottom:4 }}>PIOS Admin</h1>
         <p style={{ fontSize:13, color:'var(--pios-muted)' }}>
           Database migrations · Platform health · System config
-          <span style={{ marginLeft:12, fontSize:11, padding:'2px 8px', borderRadius:20, background:'rgba(239,68,68,0.1)', color:'#ef4444', fontWeight:600 }}>Owner only</span>
+          <span style={{ marginLeft:12, fontSize:11, padding:'2px 8px', borderRadius:20, background:'rgba(239,68,68,0.1)', color:'var(--dng)', fontWeight:600 }}>Owner only</span>
         </p>
       </div>
 
       {/* Health summary */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:24 }}>
         {[
-          { label:'Migrations applied', value:`${appliedCount}/${totalCount}`, colour:appliedCount===totalCount?'#22c55e':'#f59e0b' },
-          { label:'Platform version',   value:'v3.0.0',      colour:'#a78bfa' },
-          { label:'Database',           value:'Supabase',     colour:'#6c8eff' },
-          { label:'Deployment',         value:'Vercel',       colour:'#2dd4a0' },
+          { label:'Migrations applied', value:`${appliedCount}/${totalCount}`, colour:appliedCount===totalCount?'var(--fm)':'var(--saas)' },
+          { label:'Platform version',   value:'v3.0.0',      colour:'var(--ai)' },
+          { label:'Database',           value:'Supabase',     colour:'var(--academic)' },
+          { label:'Deployment',         value:'Vercel',       colour:'var(--fm)' },
         ].map(s=>(
-          <div key={s.label} className="pios-card-sm" style={{ padding:'12px 14px' }}>
+          <div key={s.label} className="card-v3-sm" style={{ padding:'12px 14px' }}>
             <div style={{ fontSize:18, fontWeight:800, color:s.colour, lineHeight:1, marginBottom:3 }}>{s.value}</div>
             <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{s.label}</div>
           </div>
@@ -163,7 +163,7 @@ export default function AdminPage() {
       </div>
 
       {/* Migrations */}
-      <div className="pios-card">
+      <div className="card-v3">
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
           <div>
             <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>Database Migrations</div>
@@ -183,7 +183,7 @@ export default function AdminPage() {
           <button
             onClick={runAll}
             disabled={running==='all' || loading}
-            className="pios-btn pios-btn-primary"
+            className="btn-v3-primary"
             style={{ fontSize:12, flexShrink:0 }}
           >
             {running==='all' ? <><Spinner/>Running all…</> : '▶ Run all pending'}
@@ -207,7 +207,7 @@ export default function AdminPage() {
                     background:st?.applied?'rgba(34,197,94,0.04)':'var(--pios-surface)',
                     cursor:'pointer',
                   }} onClick={()=>setExpanded(isExpanded?null:id)}>
-                    <div style={{ width:32, height:32, borderRadius:8, background:'rgba(167,139,250,0.1)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>
+                    <div style={{ width:32, height:32, borderRadius:8, background:'var(--ai-subtle)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:'var(--ai)', flexShrink:0 }}>
                       {id}
                     </div>
                     <div style={{ flex:1, minWidth:0 }}>
@@ -220,7 +220,7 @@ export default function AdminPage() {
                         <button
                           onClick={e=>{e.stopPropagation();runMigration(id)}}
                           disabled={running===id}
-                          style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid rgba(167,139,250,0.3)', background:'rgba(167,139,250,0.08)', cursor:'pointer', color:'#a78bfa', fontWeight:600 }}
+                          style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid rgba(167,139,250,0.3)', background:'var(--ai-subtle)', cursor:'pointer', color:'var(--ai)', fontWeight:600 }}
                         >
                           {running===id ? <><Spinner/>Running…</> : '▶ Run'}
                         </button>
@@ -235,7 +235,7 @@ export default function AdminPage() {
                         href={SUPABASE_URL}
                         target="_blank" rel="noopener noreferrer"
                         onClick={e=>e.stopPropagation()}
-                        style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid rgba(34,209,194,0.3)', background:'none', color:'#22d3ee', textDecoration:'none' }}
+                        style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid rgba(34,209,194,0.3)', background:'none', color:'var(--pro)', textDecoration:'none' }}
                       >
                         Open SQL Editor →
                       </a>
@@ -262,10 +262,10 @@ export default function AdminPage() {
                       {result && (
                         <div style={{
                           padding:'10px 14px', borderRadius:8, marginTop:8,
-                          background:result.status==='applied'?'rgba(34,197,94,0.08)':result.status==='manual_required'?'rgba(167,139,250,0.08)':'rgba(239,68,68,0.08)',
-                          borderLeft:`3px solid ${result.status==='applied'?'#22c55e':result.status==='manual_required'?'#a78bfa':'#ef4444'}`,
+                          background:result.status==='applied'?'rgba(34,197,94,0.08)':result.status==='manual_required'?'var(--ai-subtle)':'rgba(239,68,68,0.08)',
+                          borderLeft:`3px solid ${result.status==='applied'?'var(--fm)':result.status==='manual_required'?'var(--ai)':'var(--dng)'}`,
                         }}>
-                          <div style={{ fontSize:12, fontWeight:600, marginBottom:4, color:result.status==='applied'?'#22c55e':result.status==='manual_required'?'#a78bfa':'#ef4444' }}>
+                          <div style={{ fontSize:12, fontWeight:600, marginBottom:4, color:result.status==='applied'?'var(--fm)':result.status==='manual_required'?'var(--ai)':'var(--dng)' }}>
                             {result.status==='applied' ? '✓ Applied successfully' :
                              result.status==='manual_required' ? '⚠ Manual execution required' :
                              `✗ Error: ${result.exec_error ?? result.error}`}
@@ -277,10 +277,10 @@ export default function AdminPage() {
                                 {result.instructions?.map((s:string,i:number) => <li key={i}>{s}</li>)}
                               </ol>
                               <div style={{ display:'flex', gap:8 }}>
-                                <button onClick={()=>copySql(id)} style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid rgba(167,139,250,0.3)', background:'rgba(167,139,250,0.08)', cursor:'pointer', color:'#a78bfa' }}>
+                                <button onClick={()=>copySql(id)} style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid rgba(167,139,250,0.3)', background:'var(--ai-subtle)', cursor:'pointer', color:'var(--ai)' }}>
                                   {copySuccess===id ? '✓ Copied!' : '⎘ Copy full SQL'}
                                 </button>
-                                <a href={SUPABASE_URL} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid rgba(34,209,194,0.3)', background:'none', color:'#22d3ee', textDecoration:'none' }}>
+                                <a href={SUPABASE_URL} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid rgba(34,209,194,0.3)', background:'none', color:'var(--pro)', textDecoration:'none' }}>
                                   Open Supabase SQL Editor →
                                 </a>
                               </div>
@@ -312,7 +312,7 @@ export default function AdminPage() {
                 <div key={(r as any).id} style={{ display:'flex', gap:10, alignItems:'center', fontSize:12 }}>
                   <span style={{ fontSize:10, padding:'1px 6px', borderRadius:4, fontFamily:'monospace', background:'var(--pios-surface)', border:'1px solid var(--pios-border)' }}>{(r as any).id}</span>
                   <span style={{ flex:1 }}>{(r as any).name}</span>
-                  <span style={{ fontSize:11, color:(r as any).status==='applied'?'#22c55e':(r as any).status==='skipped'?'var(--pios-dim)':'#ef4444' }}>
+                  <span style={{ fontSize:11, color:(r as any).status==='applied'?'var(--fm)':(r as any).status==='skipped'?'var(--pios-dim)':'var(--dng)' }}>
                     {(r as any).status==='applied'?'✓ Applied':(r as any).status==='skipped'?'○ Skipped':'✗ Error'}
                   </span>
                 </div>
@@ -324,16 +324,16 @@ export default function AdminPage() {
       </div>
 
       {/* Supabase direct links */}
-      <div className="pios-card" style={{ marginTop:16 }}>
+      <div className="card-v3" style={{ marginTop:16 }}>
         <div style={{ fontSize:14, fontWeight:700, marginBottom:12 }}>Supabase Dashboard</div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
           {[
-            { label:'SQL Editor',    url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new',        colour:'#6c8eff' },
-            { label:'Table Editor',  url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/editor',         colour:'#22c55e' },
-            { label:'Auth Users',    url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/auth/users',      colour:'#f59e0b' },
-            { label:'Storage',       url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/storage/buckets', colour:'#2dd4a0' },
-            { label:'RLS Policies',  url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/auth/policies',   colour:'#a78bfa' },
-            { label:'API Settings',  url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/settings/api',   colour:'#e05a7a' },
+            { label:'SQL Editor',    url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new',        colour:'var(--academic)' },
+            { label:'Table Editor',  url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/editor',         colour:'var(--fm)' },
+            { label:'Auth Users',    url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/auth/users',      colour:'var(--saas)' },
+            { label:'Storage',       url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/storage/buckets', colour:'var(--fm)' },
+            { label:'RLS Policies',  url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/auth/policies',   colour:'var(--ai)' },
+            { label:'API Settings',  url:'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/settings/api',   colour:'var(--dng)' },
           ].map(l=>(
             <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer"
               style={{ padding:'10px 14px', borderRadius:8, border:`1px solid ${l.colour}30`, background:`${l.colour}08`, textDecoration:'none', display:'block', transition:'background 0.1s' }}>
@@ -345,7 +345,7 @@ export default function AdminPage() {
       </div>
 
       {/* Environment variables checklist */}
-      <div className="pios-card" style={{ marginTop:16 }}>
+      <div className="card-v3" style={{ marginTop:16 }}>
         <div style={{ fontSize:14, fontWeight:700, marginBottom:12 }}>Vercel Environment Variables</div>
         <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, marginBottom:14 }}>
           Set these in your Vercel project settings → Environment Variables.
@@ -368,9 +368,9 @@ export default function AdminPage() {
           { key:'CRON_SECRET',                   value:'Secret token for Vercel cron jobs (Bearer auth on /api/cron/*)', required:true },
           ].map(v=>(
             <div key={v.key} style={{ display:'flex', gap:10, alignItems:'center', padding:'6px 10px', borderRadius:6, background:'var(--pios-surface2)', fontFamily:'monospace', fontSize:11 }}>
-              <span style={{ fontWeight:700, color:'#a78bfa', minWidth:240 }}>{v.key}</span>
+              <span style={{ fontWeight:700, color:'var(--ai)', minWidth:240 }}>{v.key}</span>
               <span style={{ flex:1, color:'var(--pios-dim)' }}>{v.value}</span>
-              <span style={{ fontSize:10, padding:'1px 6px', borderRadius:3, background:v.required?'rgba(239,68,68,0.1)':'rgba(100,116,139,0.1)', color:v.required?'#ef4444':'var(--pios-dim)', fontWeight:600 }}>
+              <span style={{ fontSize:10, padding:'1px 6px', borderRadius:3, background:v.required?'rgba(239,68,68,0.1)':'rgba(100,116,139,0.1)', color:v.required?'var(--dng)':'var(--pios-dim)', fontWeight:600 }}>
                 {v.required?'Required':'Optional'}
               </span>
             </div>

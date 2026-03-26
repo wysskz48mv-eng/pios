@@ -9,15 +9,15 @@ const TABS = ['structure', 'files', 'invoices', 'rules'] as const
 type Tab = typeof TABS[number]
 
 const CAT_COLOURS: Record<string, string> = {
-  invoice: '#f59e0b', contract: '#6c8eff', report: '#2dd4a0',
-  proposal: '#a78bfa', correspondence: '#22d3ee', technical: '#22c55e',
-  financial: '#f59e0b', legal: '#e05a7a', academic: '#6c8eff',
+  invoice: 'var(--saas)', contract: 'var(--academic)', report: 'var(--fm)',
+  proposal: 'var(--ai)', correspondence: 'var(--pro)', technical: 'var(--fm)',
+  financial: 'var(--saas)', legal: 'var(--dng)', academic: 'var(--academic)',
   other: '#64748b', unprocessed: '#475569',
 }
 
 const INV_STATUS: Record<string, string> = {
-  pending: '#f59e0b', approved: '#6c8eff', paid: '#22c55e',
-  overdue: '#ef4444', disputed: '#e05a7a', cancelled: '#64748b',
+  pending: 'var(--saas)', approved: 'var(--academic)', paid: 'var(--fm)',
+  overdue: 'var(--dng)', disputed: 'var(--dng)', cancelled: '#64748b',
 }
 
 function Pill({ label, colour }: { label: string; colour: string }) {
@@ -26,12 +26,12 @@ function Pill({ label, colour }: { label: string; colour: string }) {
 
 function Spinner({ label='Loading…' }: { label?: string }) {
   return <div style={{ display:'flex', alignItems:'center', gap:8, color:'var(--pios-muted)', fontSize:13, padding:'32px 0', justifyContent:'center' }}>
-    <div style={{ width:14, height:14, border:'2px solid rgba(108,142,255,0.2)', borderTop:'2px solid #6c8eff', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />{label}
+    <div style={{ width:14, height:14, border:'2px solid rgba(108,142,255,0.2)', borderTop:'2px solid var(--academic)', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />{label}
   </div>
 }
 
 function TabBtn({ active, onClick, children }: { active:boolean; onClick:()=>void; children:React.ReactNode }) {
-  return <button onClick={onClick} style={{ padding:'8px 18px', fontSize:13, fontWeight:active?600:400, border:'none', borderBottom:`2px solid ${active?'#6c8eff':'transparent'}`, background:'none', cursor:'pointer', color:active?'#6c8eff':'var(--pios-muted)', marginBottom:-1, transition:'all 0.15s' }}>{children}</button>
+  return <button onClick={onClick} style={{ padding:'8px 18px', fontSize:13, fontWeight:active?600:400, border:'none', borderBottom:`2px solid ${active?'var(--academic)':'transparent'}`, background:'none', cursor:'pointer', color:active?'var(--academic)':'var(--pios-muted)', marginBottom:-1, transition:'all 0.15s' }}>{children}</button>
 }
 
 // ── Folder tree ───────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ function FolderNode({ space, all, depth=0, onSelect, selected }: { space:any; al
 function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:any[]; onScan:(folder:string)=>void; scanning:boolean; scanResult:any; stats:any }) {
   const [selectedSpace, setSelectedSpace] = useState<FileSpace|null>(null)
   const [showAddSpace, setShowAddSpace] = useState(false)
-  const [newSpace, setNewSpace] = useState({ name:'', space_type:'folder', icon:'📁', colour:'#6c8eff' })
+  const [newSpace, setNewSpace] = useState({ name:'', space_type:'folder', icon:'📁', colour:'var(--academic)' })
   const roots = spaces.filter(s => !s.parent_id)
 
   async function addSpace() {
@@ -77,14 +77,14 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
       <div className="pios-card" style={{ padding:'16px 8px', height:'fit-content', minHeight:400 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0 8px', marginBottom:12 }}>
           <span style={{ fontSize:12, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase' as const, letterSpacing:'0.06em' }}>Folders</span>
-          <button onClick={()=>setShowAddSpace(!showAddSpace)} style={{ fontSize:11, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'none', cursor:'pointer', color:'#6c8eff' }}>+</button>
+          <button onClick={()=>setShowAddSpace(!showAddSpace)} style={{ fontSize:11, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'none', cursor:'pointer', color:'var(--academic)' }}>+</button>
         </div>
         {showAddSpace && (
           <div style={{ padding:'0 8px', marginBottom:12 }}>
             <input className="pios-input" placeholder="Folder name…" value={newSpace.name} onChange={e=>setNewSpace(p=>({...p,name:e.target.value}))} style={{ marginBottom:6, fontSize:12 }} />
             <div style={{ display:'flex', gap:4 }}>
-              <button onClick={addSpace} className="pios-btn pios-btn-primary" style={{ fontSize:11, flex:1 }}>Add</button>
-              <button onClick={()=>setShowAddSpace(false)} className="pios-btn pios-btn-ghost" style={{ fontSize:11 }}>✕</button>
+              <button onClick={addSpace} className="btn-v3-primary" style={{ fontSize:11, flex:1 }}>Add</button>
+              <button onClick={()=>setShowAddSpace(false)} className="btn-v3-ghost" style={{ fontSize:11 }}>✕</button>
             </div>
           </div>
         )}
@@ -96,10 +96,10 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
         {/* Stats row */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
           {[
-            { label:'Folders', value:stats?.spaces??0, colour:'#6c8eff' },
-            { label:'Files indexed', value:stats?.files??0, colour:'#2dd4a0' },
-            { label:'Invoices found', value:stats?.invoices??0, colour:'#f59e0b' },
-            { label:'Pending approval', value:stats?.invoicesPending??0, colour:'#ef4444' },
+            { label:'Folders', value:stats?.spaces??0, colour:'var(--academic)' },
+            { label:'Files indexed', value:stats?.files??0, colour:'var(--fm)' },
+            { label:'Invoices found', value:stats?.invoices??0, colour:'var(--saas)' },
+            { label:'Pending approval', value:stats?.invoicesPending??0, colour:'var(--dng)' },
           ].map(s=>(
             <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
               <div style={{ fontSize:20, fontWeight:800, color:s.colour, lineHeight:1, marginBottom:3 }}>{s.value}</div>
@@ -109,21 +109,21 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
         </div>
 
         {/* Scan panel */}
-        <div className="pios-card" style={{ borderLeft:'3px solid #6c8eff' }}>
+        <div className="pios-card" style={{ borderLeft:'3px solid var(--academic)' }}>
           <div style={{ fontSize:14, fontWeight:700, marginBottom:8 }}>Scan Google Drive</div>
           <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, marginBottom:14 }}>
             PIOS will scan your Drive files, classify them with AI (invoice / contract / report / technical etc.),
             match them to your projects, and propose which folder each file belongs in. Nothing is moved or deleted — read-only scan.
           </p>
           <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-            <button className="pios-btn pios-btn-primary" onClick={()=>onScan('root')} disabled={scanning} style={{ fontSize:12 }}>
+            <button className="btn-v3-primary" onClick={()=>onScan('root')} disabled={scanning} style={{ fontSize:12 }}>
               {scanning ? '⟳ Scanning…' : '🔍 Scan My Drive'}
             </button>
             <span style={{ fontSize:11, color:'var(--pios-dim)' }}>Scans up to 50 recent files · AI classifies each one</span>
           </div>
           {scanResult && (
-            <div style={{ marginTop:14, padding:'10px 14px', borderRadius:8, background:'rgba(34,197,94,0.08)', borderLeft:'2px solid #22c55e' }}>
-              <div style={{ fontSize:12, fontWeight:600, color:'#22c55e', marginBottom:4 }}>Scan complete</div>
+            <div style={{ marginTop:14, padding:'10px 14px', borderRadius:8, background:'rgba(34,197,94,0.08)', borderLeft:'2px solid var(--fm)' }}>
+              <div style={{ fontSize:12, fontWeight:600, color:'var(--fm)', marginBottom:4 }}>Scan complete</div>
               <div style={{ fontSize:12, color:'var(--pios-muted)' }}>
                 {scanResult.filesScanned} files scanned · {scanResult.filesClassified} classified · {scanResult.invoicesFound} invoices detected
               </div>
@@ -143,7 +143,7 @@ function StructureTab({ spaces, onScan, scanning, scanResult, stats }: { spaces:
             </div>
             <div style={{ fontSize:12, color:'var(--pios-muted)' }}>
               {selectedSpace.drive_folder_id
-                ? <span style={{ color:'#22c55e' }}>✓ Linked to Google Drive folder</span>
+                ? <span style={{ color:'var(--fm)' }}>✓ Linked to Google Drive folder</span>
                 : <span>Not yet linked to a Drive folder</span>
               }
             </div>
@@ -214,11 +214,11 @@ function FilesTab({ spaces }: { spaces:any[] }) {
           <button key={v} onClick={()=>setFilter(v)} style={{ padding:'4px 12px', borderRadius:20, fontSize:11, border:'1px solid var(--pios-border)', background:filter===v?'var(--pios-surface)':'transparent', color:filter===v?'var(--pios-text)':'var(--pios-muted)', fontWeight:filter===v?600:400, cursor:'pointer' }}>{l}</button>
         ))}
         <span style={{ marginLeft:'auto', fontSize:11, color:'var(--pios-dim)' }}>{items.length} files</span>
-        <label style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', borderRadius:8, cursor:'pointer', fontSize:11, fontWeight:600, background:'rgba(108,142,255,0.12)', border:'1px solid rgba(108,142,255,0.3)', color:'#6c8eff', opacity:uploading?0.6:1 }}>
+        <label style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', borderRadius:8, cursor:'pointer', fontSize:11, fontWeight:600, background:'rgba(108,142,255,0.12)', border:'1px solid rgba(108,142,255,0.3)', color:'var(--academic)', opacity:uploading?0.6:1 }}>
           {uploading ? '⏳' : '⬆'} {uploading ? 'Uploading…' : 'Upload'}
           <input type="file" onChange={handleUpload} disabled={uploading} accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.json,.png,.jpg,.jpeg" style={{ display:'none' }} />
         </label>
-        {uploadMsg && <span style={{ fontSize:11, color:uploadMsg.startsWith('✓')?'#22c55e':'#ef4444' }}>{uploadMsg}</span>}
+        {uploadMsg && <span style={{ fontSize:11, color:uploadMsg.startsWith('✓')?'var(--fm)':'var(--dng)' }}>{uploadMsg}</span>}
       </div>
 
       {loading ? <Spinner /> : items.length===0 ? (
@@ -240,18 +240,18 @@ function FilesTab({ spaces }: { spaces:any[] }) {
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4, flexWrap:'wrap' as const }}>
                     <span style={{ fontSize:13, fontWeight:600 }}>{String(item.name ?? "")}</span>
                     {item.ai_category && <Pill label={item.ai_category} colour={CAT_COLOURS[item.ai_category]??'#64748b'} />}
-                    {item.ai_project_tag && <Pill label={item.ai_project_tag} colour="#6c8eff" />}
-                    {item.filing_status && <Pill label={item.filing_status.replace('_',' ')} colour={item.filing_status==='filed'?'#22c55e':item.filing_status==='classified'?'#6c8eff':'#64748b'} />}
+                    {item.ai_project_tag && <Pill label={item.ai_project_tag} colour="var(--academic)" />}
+                    {item.filing_status && <Pill label={item.filing_status.replace('_',' ')} colour={item.filing_status==='filed'?'var(--fm)':item.filing_status==='classified'?'var(--academic)':'#64748b'} />}
                   </div>
                   {item.ai_summary && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:4 }}>{item.ai_summary}</p>}
                   <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' as const }}>
-                    {space && <span style={{ fontSize:11, color:space.colour??'#6c8eff' }}>{String(space.icon ?? "")} {String(space.name ?? "")}</span>}
-                    {item.drive_web_url && <a href={item.drive_web_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#6c8eff' }}>Open in Drive →</a>}
+                    {space && <span style={{ fontSize:11, color:space.colour??'var(--academic)' }}>{String(space.icon ?? "")} {String(space.name ?? "")}</span>}
+                    {item.drive_web_url && <a href={item.drive_web_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'var(--academic)' }}>Open in Drive →</a>}
                     {item.ai_confidence && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>AI: {Math.round(item.ai_confidence*100)}% confident</span>}
                   </div>
                 </div>
                 {item.ai_category !== 'invoice' && (
-                  <button onClick={()=>extractInvoice(item.id)} disabled={extracting===item.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #f59e0b40', background:'none', cursor:'pointer', color:'#f59e0b', flexShrink:0 }}>
+                  <button onClick={()=>extractInvoice(item.id)} disabled={extracting===item.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--saas)40', background:'none', cursor:'pointer', color:'var(--saas)', flexShrink:0 }}>
                     {extracting===item.id ? '⟳' : '💰 Extract invoice'}
                   </button>
                 )}
@@ -295,9 +295,9 @@ function InvoicesTab() {
       {invoices.length > 0 && (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
           {[
-            { label:'Pending approval', value:`${invoices.filter(i=>i.status==='pending').length} invoices · ${invoices[0]?.currency??'GBP'} ${totalPending.toFixed(2)}`, colour:'#f59e0b' },
-            { label:'Overdue', value:`${invoices.filter(i=>i.status==='overdue').length} · ${invoices[0]?.currency??'GBP'} ${totalOverdue.toFixed(2)}`, colour:'#ef4444' },
-            { label:'Total tracked', value:`${invoices.length} invoices`, colour:'#6c8eff' },
+            { label:'Pending approval', value:`${invoices.filter(i=>i.status==='pending').length} invoices · ${invoices[0]?.currency??'GBP'} ${totalPending.toFixed(2)}`, colour:'var(--saas)' },
+            { label:'Overdue', value:`${invoices.filter(i=>i.status==='overdue').length} · ${invoices[0]?.currency??'GBP'} ${totalOverdue.toFixed(2)}`, colour:'var(--dng)' },
+            { label:'Total tracked', value:`${invoices.length} invoices`, colour:'var(--academic)' },
           ].map(s=>(
             <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
               <div style={{ fontSize:13, fontWeight:700, color:s.colour, marginBottom:3 }}>{s.value}</div>
@@ -330,7 +330,7 @@ function InvoicesTab() {
                       {inv.invoice_number ?? (inv.supplier_name ? `Invoice from ${inv.supplier_name}` : 'Invoice')}
                     </span>
                     <Pill label={String(inv.status ?? '')} colour={(INV_STATUS as Record<string,string>)[String(inv.status ?? '')] ?? '#64748b'} />
-                    <Pill label={inv.invoice_type?.replace('_',' ')??'payable'} colour="#a78bfa" />
+                    <Pill label={inv.invoice_type?.replace('_',' ')??'payable'} colour="var(--ai)" />
                     {inv.ai_extracted && <span style={{ fontSize:10, color:'var(--pios-dim)' }}>AI extracted</span>}
                   </div>
                   <div style={{ display:'flex', gap:12, fontSize:12, color:'var(--pios-muted)', flexWrap:'wrap' as const }}>
@@ -339,10 +339,10 @@ function InvoicesTab() {
                     {inv.company_entity && <span>Entity: {inv.company_entity}</span>}
                     {inv.project_id && <span>Project assigned</span>}
                     {inv.invoice_date && <span>Dated: {inv.invoice_date}</span>}
-                    {inv.due_date && <span style={{ color: new Date(inv.due_date)<new Date()&&inv.status!=='paid'?'#ef4444':'inherit' }}>Due: {inv.due_date}</span>}
+                    {inv.due_date && <span style={{ color: new Date(inv.due_date)<new Date()&&inv.status!=='paid'?'var(--dng)':'inherit' }}>Due: {inv.due_date}</span>}
                   </div>
-                  {inv.name && <div style={{ fontSize:11, color:'#6c8eff', marginTop:4 }}>📄 {String(inv.name)}</div>}
-                  {Boolean((inv.email_items as unknown[])?.length) && <div style={{ fontSize:11, color:'#22d3ee', marginTop:4 }}>✉ linked email</div>}
+                  {inv.name && <div style={{ fontSize:11, color:'var(--academic)', marginTop:4 }}>📄 {String(inv.name)}</div>}
+                  {Boolean((inv.email_items as unknown[])?.length) && <div style={{ fontSize:11, color:'var(--pro)', marginTop:4 }}>✉ linked email</div>}
                 </div>
                 <div style={{ textAlign:'right' as const, flexShrink:0 }}>
                   <div style={{ fontSize:17, fontWeight:800, marginBottom:4 }}>
@@ -350,8 +350,8 @@ function InvoicesTab() {
                   </div>
                   {inv.status === 'pending' && (
                     <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
-                      <button onClick={()=>approveInvoice(inv.id,'approved')} disabled={updating===inv.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #6c8eff40', background:'none', cursor:'pointer', color:'#6c8eff' }}>Approve</button>
-                      <button onClick={()=>approveInvoice(inv.id,'paid')} disabled={updating===inv.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>Mark paid</button>
+                      <button onClick={()=>approveInvoice(inv.id,'approved')} disabled={updating===inv.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--academic)40', background:'none', cursor:'pointer', color:'var(--academic)' }}>Approve</button>
+                      <button onClick={()=>approveInvoice(inv.id,'paid')} disabled={updating===inv.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--fm)40', background:'none', cursor:'pointer', color:'var(--fm)' }}>Mark paid</button>
                     </div>
                   )}
                 </div>
@@ -405,12 +405,12 @@ function RulesTab({ spaces }: { spaces:any[] }) {
           <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>Filing Rules</div>
           <p style={{ fontSize:12, color:'var(--pios-muted)' }}>Rules run automatically when files are scanned or emails are received. Lower priority number = checked first.</p>
         </div>
-        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add rule</button>
+        <button className="btn-v3-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add rule</button>
       </div>
 
       {showAdd && (
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(108,142,255,0.3)' }}>
-          <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'#6c8eff' }}>New Filing Rule</div>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'var(--academic)' }}>New Filing Rule</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
             <input className="pios-input" placeholder="Rule name *" value={form.name} onChange={e=>f('name',e.target.value)} />
             <input className="pios-input" type="number" placeholder="Priority (1=first)" value={form.priority} onChange={e=>f('priority',parseInt(e.target.value)||50)} style={{ width:'auto' }} />
@@ -433,8 +433,8 @@ function RulesTab({ spaces }: { spaces:any[] }) {
           </div>
           <input className="pios-input" placeholder="Action value (project name, folder path, tag name)" value={form.action_value} onChange={e=>f('action_value',e.target.value)} style={{ marginBottom:10 }} />
           <div style={{ display:'flex', gap:8 }}>
-            <button className="pios-btn pios-btn-primary" onClick={saveRule} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save rule'}</button>
-            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="btn-v3-primary" onClick={saveRule} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save rule'}</button>
+            <button className="btn-v3-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -442,7 +442,7 @@ function RulesTab({ spaces }: { spaces:any[] }) {
       {loading ? <Spinner /> : rules.length===0 ? (
         <div className="pios-card" style={{ textAlign:'center' as const, padding:'40px' }}>
           <div style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:12 }}>No rules yet. Run migration 006 to seed default rules, or add your own.</div>
-          <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(true)} style={{ fontSize:13 }}>Add first rule</button>
+          <button className="btn-v3-primary" onClick={()=>setShowAdd(true)} style={{ fontSize:13 }}>Add first rule</button>
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
@@ -458,8 +458,8 @@ function RulesTab({ spaces }: { spaces:any[] }) {
               </div>
               <div style={{ display:'flex', gap:8, flexShrink:0, alignItems:'center' }}>
                 {Number(rule.times_fired ?? 0) > 0 && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>Fired {Number(rule.times_fired ?? 0)}×</span>}
-                <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:rule.is_active?'#22c55e20':'rgba(255,255,255,0.05)', color:rule.is_active?'#22c55e':'var(--pios-dim)', fontWeight:600 }}>{rule.is_active?'Active':'Off'}</span>
-                <button onClick={()=>deleteRule(rule.id)} style={{ fontSize:11, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', cursor:'pointer', color:'#ef4444' }}>Delete</button>
+                <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:rule.is_active?'var(--fm)20':'rgba(255,255,255,0.05)', color:rule.is_active?'var(--fm)':'var(--pios-dim)', fontWeight:600 }}>{rule.is_active?'Active':'Off'}</span>
+                <button onClick={()=>deleteRule(rule.id)} style={{ fontSize:11, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', cursor:'pointer', color:'var(--dng)' }}>Delete</button>
               </div>
             </div>
           ))}

@@ -89,7 +89,7 @@ export default function LearningWizardPage() {
   }
 
   return (
-    <div style={{ minHeight:'100vh', background:C.bg, padding:'32px 16px', fontFamily:'system-ui,sans-serif' }}>
+    <div style={{ minHeight:'100vh', background:C.bg, padding:'32px 16px', fontFamily:'var(--font-sans),sans-serif' }}>
       <div style={{ maxWidth:620, margin:'0 auto' }}>
 
         {/* Header */}

@@ -12,7 +12,7 @@ const DOMAIN_LABELS: Record<string,string> = {
 }
 
 function priorityColor(score: number) {
-  return score >= 8 ? '#ef4444' : score >= 6 ? '#f97316' : score >= 4 ? '#eab308' : '#22c55e'
+  return score >= 8 ? 'var(--dng)' : score >= 6 ? 'var(--ops)' : score >= 4 ? '#eab308' : 'var(--fm)'
 }
 
 
@@ -149,18 +149,18 @@ export default function EmailPage() {
           <h1 style={{ fontSize:22,fontWeight:700,marginBottom:4 }}>Inbox Intelligence</h1>
           <p style={{ fontSize:13,color:'var(--pios-muted)' }}>
             {accounts.length > 0 ? 'AI-triaged · Gmail connected' : 'Connect Gmail to start triaging your inbox'}
-            {unreadCount>0 && <span style={{ marginLeft:10,padding:'2px 8px',borderRadius:10,background:'rgba(239,68,68,0.1)',color:'#ef4444',fontSize:11,fontWeight:600 }}>{unreadCount} unread</span>}
+            {unreadCount>0 && <span style={{ marginLeft:10,padding:'2px 8px',borderRadius:10,background:'rgba(239,68,68,0.1)',color:'var(--dng)',fontSize:11,fontWeight:600 }}>{unreadCount} unread</span>}
           </p>
         </div>
         <div style={{ display:'flex',gap:8 }}>
           {accounts.length === 0 ? (
-            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-primary" style={{ fontSize:12, textDecoration:'none' }}>
+            <a href="/api/auth/connect-gmail" className="btn-v3-primary" style={{ fontSize:12, textDecoration:'none' }}>
               Connect Gmail →
             </a>
           ) : (
             <>
-              <button className="pios-btn pios-btn-ghost" onClick={()=>setShowCompose(!showCompose)} style={{ fontSize:12 }}>✉ Compose</button>
-              <button className="pios-btn pios-btn-primary" onClick={syncGmail} disabled={syncing} style={{ fontSize:12 }}>
+              <button className="btn-v3-ghost" onClick={()=>setShowCompose(!showCompose)} style={{ fontSize:12 }}>✉ Compose</button>
+              <button className="btn-v3-primary" onClick={syncGmail} disabled={syncing} style={{ fontSize:12 }}>
                 {syncing?'⟳ Syncing…':'↻ Sync Gmail'}
               </button>
             </>
@@ -170,12 +170,12 @@ export default function EmailPage() {
 
       {/* Compose panel */}
       {showCompose && (
-        <div className="pios-card" style={{ marginBottom:16,borderColor:'rgba(34,209,194,0.3)' }}>
-          <div style={{ fontSize:13,fontWeight:600,marginBottom:12,color:'#22d3ee' }}>New message</div>
+        <div className="card-v3" style={{ marginBottom:16,borderColor:'rgba(34,209,194,0.3)' }}>
+          <div style={{ fontSize:13,fontWeight:600,marginBottom:12,color:'var(--pro)' }}>New message</div>
           <div style={{ display:'flex',flexDirection:'column' as const,gap:8,marginBottom:10 }}>
-            <input className="pios-input" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...p,to:e.target.value}))} />
-            <input className="pios-input" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...p,subject:e.target.value}))} />
-            <textarea className="pios-input" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
+            <input className="inp-v3" placeholder="To: email@example.com" value={compose.to} onChange={e=>setCompose(p=>({...p,to:e.target.value}))} />
+            <input className="inp-v3" placeholder="Subject" value={compose.subject} onChange={e=>setCompose(p=>({...p,subject:e.target.value}))} />
+            <textarea className="inp-v3" placeholder="Message…" rows={5} value={typeof compose.body === 'string' ? compose.body : String(compose.body ?? '')} onChange={e=>setCompose(p=>({...p,body:e.target.value}))} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
           </div>
           <div style={{ display:'flex',gap:8,alignItems:'center' }}>
             <button onClick={async()=>{
@@ -194,8 +194,8 @@ export default function EmailPage() {
               } else {
                 setBanner({msg:`Send failed: ${d.error ?? 'Unknown error'}`, ok:false})
               }
-            }} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>Send</button>
-            <button onClick={()=>setShowCompose(false)} className="pios-btn pios-btn-ghost" style={{ fontSize:12 }}>Cancel</button>
+            }} className="btn-v3-primary" style={{ fontSize:12 }}>Send</button>
+            <button onClick={()=>setShowCompose(false)} className="btn-v3-ghost" style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -205,39 +205,39 @@ export default function EmailPage() {
         {accounts.length > 1 && (
           <div style={{ display:'flex',gap:4,flexWrap:'wrap' as const,marginBottom:6 }}>
             {[['all','All inboxes'],...accounts.map((a: EmailAccount)=>[a.id, String(a.email ?? a.name ?? '')])].map(([v,l])=>(
-              <button key={v} onClick={()=>setInboxFilter(v)} style={{ padding:'3px 10px',borderRadius:20,fontSize:10,border:'none',cursor:'pointer',background:inboxFilter===v?'#6c8eff':'var(--pios-surface2)',color:inboxFilter===v?'#fff':'var(--pios-muted)',fontWeight:inboxFilter===v?600:400 }}>{l}</button>
+              <button key={v} onClick={()=>setInboxFilter(v)} style={{ padding:'3px 10px',borderRadius:20,fontSize:10,border:'none',cursor:'pointer',background:inboxFilter===v?'var(--academic)':'var(--pios-surface2)',color:inboxFilter===v?'#fff':'var(--pios-muted)',fontWeight:inboxFilter===v?600:400 }}>{l}</button>
             ))}
           </div>
         )}
         {[['all','All'],['high','High priority'],['unread','Unread'],['academic','Academic'],['fm_consulting','FM'],['saas','SaaS'],['business','Business'],['personal','Personal']].map(([v,l])=>(
-          <button key={v} onClick={()=>setFilter(v)} style={{ padding:'4px 12px',borderRadius:20,fontSize:11,border:'none',cursor:'pointer',background:filter===v?domainColour(v==='all'||v==='high'||v==='unread'?'personal':v):'var(--pios-surface2)',color:filter===v?'#0a0b0d':'var(--pios-muted)',fontWeight:filter===v?600:400 }}>{l}</button>
+          <button key={v} onClick={()=>setFilter(v)} style={{ padding:'4px 12px',borderRadius:20,fontSize:11,border:'none',cursor:'pointer',background:filter===v?domainColour(v==='all'||v==='high'||v==='unread'?'personal':v):'var(--pios-surface2)',color:filter===v?'var(--pios-bg)':'var(--pios-muted)',fontWeight:filter===v?600:400 }}>{l}</button>
         ))}
       </div>
 
       {!loading && emails.length===0 ? (
-        <div className="pios-card" style={{ textAlign:'center' as const,padding:'48px' }}>
+        <div className="card-v3" style={{ textAlign:'center' as const,padding:'48px' }}>
           <div style={{ fontSize:32,marginBottom:12 }}>✉</div>
           <h2 style={{ fontSize:16,fontWeight:600,marginBottom:8 }}>Connect Gmail</h2>
           <p style={{ color:'var(--pios-muted)',fontSize:13,marginBottom:20,maxWidth:400,margin:'0 auto 20px' }}>
             PIOS will triage your inbox, prioritise emails by domain, extract action items, and draft replies.
           </p>
-          <button className="pios-btn pios-btn-primary" onClick={syncGmail} style={{ fontSize:13,padding:'10px 24px' }}>Connect Gmail & Start Triaging</button>
+          <button className="btn-v3-primary" onClick={syncGmail} style={{ fontSize:13,padding:'10px 24px' }}>Connect Gmail & Start Triaging</button>
         </div>
       ) : (
         <div style={{ display:'grid',gridTemplateColumns:selected?'1fr 1fr':'1fr',gap:16 }}>
           {/* No accounts connected */}
       {accounts.length === 0 && !loading && (
-        <div className="pios-card" style={{ textAlign:'center' as const, padding:'48px 24px', marginBottom:16 }}>
+        <div className="card-v3" style={{ textAlign:'center' as const, padding:'48px 24px', marginBottom:16 }}>
           <div style={{ fontSize:40, marginBottom:16 }}>📧</div>
           <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>Connect your Gmail</div>
           <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:24, maxWidth:400, margin:'0 auto 24px' }}>
             PIOS will triage your inbox, extract action items from emails, auto-capture receipts, and include email context in your daily brief.
           </p>
           <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' as const }}>
-            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-primary" style={{ textDecoration:'none', fontSize:13 }}>
+            <a href="/api/auth/connect-gmail" className="btn-v3-primary" style={{ textDecoration:'none', fontSize:13 }}>
               🔗 Connect Gmail
             </a>
-            <a href="/platform/settings" className="pios-btn pios-btn-ghost" style={{ textDecoration:'none', fontSize:13 }}>
+            <a href="/platform/settings" className="btn-v3-ghost" style={{ textDecoration:'none', fontSize:13 }}>
               ⚙ Settings
             </a>
           </div>
@@ -245,12 +245,12 @@ export default function EmailPage() {
       )}
 
       {/* Email list */}
-          <div className="pios-card" style={{ padding:0,overflow:'hidden' }}>
+          <div className="card-v3" style={{ padding:0,overflow:'hidden' }}>
             {loading ? <p style={{ textAlign:'center' as const,padding:'40px',color:'var(--pios-muted)' }}>Loading…</p>
             : emails.map((e,i)=>(
               <div key={e.id as string} onClick={()=>setSelected(e as EmailItem)} style={{
                 padding:'12px 16px',borderBottom:'1px solid var(--pios-border)',cursor:'pointer',
-                background:selected?.id===e.id?'rgba(167,139,250,0.08)':e.status==='archived'?'rgba(255,255,255,0.02)':i%2===0?'transparent':'rgba(255,255,255,0.01)',
+                background:selected?.id===e.id?'var(--ai-subtle)':e.status==='archived'?'rgba(255,255,255,0.02)':i%2===0?'transparent':'rgba(255,255,255,0.01)',
                 transition:'background 0.1s',opacity:e.status==='archived'?0.5:1,
               }}>
                 <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8 }}>
@@ -258,13 +258,13 @@ export default function EmailPage() {
                     <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:2 }}>
                       {(Number(Number(e.priority_score ?? 0) ?? 0))>=6&&<div style={{ width:6,height:6,borderRadius:'50%',background:priorityColor((Number(Number(e.priority_score ?? 0) ?? 0))),flexShrink:0 }} />}
                       <span style={{ fontSize:12,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const }}>{String(e.sender_name ?? e.sender_email ?? "")}</span>
-                      {e.status==='actioned'&&<span style={{ fontSize:9,color:'#22c55e',marginLeft:2 }}>✓</span>}
+                      {e.status==='actioned'&&<span style={{ fontSize:9,color:'var(--fm)',marginLeft:2 }}>✓</span>}
                     </div>
                     <div style={{ fontSize:12,color:'var(--pios-muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const }}>{String(e.subject ?? "")}</div>
-                    {Boolean(e.action_required)&&<div style={{ fontSize:11,color:'#6c8eff',marginTop:3 }}>⚡ {String(e.action_required ?? "")}</div>}
+                    {Boolean(e.action_required)&&<div style={{ fontSize:11,color:'var(--academic)',marginTop:3 }}>⚡ {String(e.action_required ?? "")}</div>}
                   </div>
                   <div style={{ textAlign:'right' as const,flexShrink:0 }}>
-                    {Boolean(e.inbox_label)&&<span style={{ fontSize:9,padding:'1px 5px',borderRadius:3,background:'rgba(108,142,255,0.12)',color:'#6c8eff',marginRight:4 }}>{String(e.inbox_label ?? "")}</span>}{Boolean(e.domain_tag)&&<div style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:`${domainColour(String(e.domain_tag ?? ''))}20`,color:domainColour(String(e.domain_tag ?? '')),marginBottom:4,display:'inline-block' }}>{(DOMAIN_LABELS as Record<string,string>)[String(e.domain_tag ?? "")] ?? String(e.domain_tag ?? "")}</div>}
+                    {Boolean(e.inbox_label)&&<span style={{ fontSize:9,padding:'1px 5px',borderRadius:3,background:'rgba(108,142,255,0.12)',color:'var(--academic)',marginRight:4 }}>{String(e.inbox_label ?? "")}</span>}{Boolean(e.domain_tag)&&<div style={{ fontSize:10,padding:'1px 6px',borderRadius:3,background:`${domainColour(String(e.domain_tag ?? ''))}20`,color:domainColour(String(e.domain_tag ?? '')),marginBottom:4,display:'inline-block' }}>{(DOMAIN_LABELS as Record<string,string>)[String(e.domain_tag ?? "")] ?? String(e.domain_tag ?? "")}</div>}
                     <div style={{ fontSize:10,color:'var(--pios-dim)' }}>{e.received_at?formatRelative(String(e.received_at ?? '')):''}</div>
                   </div>
                 </div>
@@ -274,16 +274,16 @@ export default function EmailPage() {
 
           {/* Email detail */}
           {selected && (
-            <div className="pios-card" style={{ padding:20,overflowY:'auto' as const,maxHeight:'80vh' }}>
+            <div className="card-v3" style={{ padding:20,overflowY:'auto' as const,maxHeight:'80vh' }}>
               <div style={{ marginBottom:14,paddingBottom:14,borderBottom:'1px solid var(--pios-border)' }}>
                 <div style={{ fontSize:16,fontWeight:700,marginBottom:4 }}>{String(selected.subject ?? "")}</div>
                 <div style={{ fontSize:12,color:'var(--pios-muted)',marginBottom:8 }}>From: {String(selected.sender_name ?? "")} &lt;{String(selected.sender_email ?? "")}&gt;</div>
                 {/* Action buttons */}
                 <div style={{ display:'flex',gap:8,flexWrap:'wrap' as const }}>
-                  <button onClick={extractInvoice} disabled={extracting} style={{ fontSize:11,padding:'4px 10px',borderRadius:6,border:'1px solid #f59e0b40',background:'none',cursor:'pointer',color:'#f59e0b' }}>
+                  <button onClick={extractInvoice} disabled={extracting} style={{ fontSize:11,padding:'4px 10px',borderRadius:6,border:'1px solid var(--saas)40',background:'none',cursor:'pointer',color:'var(--saas)' }}>
                     {extracting?'⟳':'🧾'} Extract invoice
                   </button>
-                  <button onClick={createTask} disabled={creatingTask} style={{ fontSize:11,padding:'4px 10px',borderRadius:6,border:'1px solid #6c8eff40',background:'none',cursor:'pointer',color:'#6c8eff' }}>
+                  <button onClick={createTask} disabled={creatingTask} style={{ fontSize:11,padding:'4px 10px',borderRadius:6,border:'1px solid var(--academic)40',background:'none',cursor:'pointer',color:'var(--academic)' }}>
                     {creatingTask?'⟳':'✓'} Create task
                   </button>
                   <button onClick={()=>archive(selected.id)} disabled={archiving===selected.id} style={{ fontSize:11,padding:'4px 10px',borderRadius:6,border:'1px solid var(--pios-border)',background:'none',cursor:'pointer',color:'var(--pios-muted)' }}>
@@ -294,7 +294,7 @@ export default function EmailPage() {
 
               {Boolean(selected.action_required)&&(
                 <div style={{ padding:'10px 12px',borderRadius:8,background:'rgba(108,142,255,0.08)',marginBottom:12 }}>
-                  <div style={{ fontSize:11,fontWeight:600,color:'#6c8eff',marginBottom:4 }}>⚡ AI Action Required</div>
+                  <div style={{ fontSize:11,fontWeight:600,color:'var(--academic)',marginBottom:4 }}>⚡ AI Action Required</div>
                   <div style={{ fontSize:12 }}>{String(selected.action_required ?? "")}</div>
                 </div>
               )}
@@ -308,7 +308,7 @@ export default function EmailPage() {
                   <div style={{ padding:'10px 12px',borderRadius:8,background:'var(--pios-surface2)',fontSize:12,lineHeight:1.65,whiteSpace:'pre-wrap' as const,cursor:'pointer' }}
                     onClick={()=>setReplyText(String(selected.ai_draft_reply ?? ""))}>
                     {String(selected.ai_draft_reply ?? "")}
-                    <div style={{ fontSize:10,color:'#6c8eff',marginTop:6 }}>Click to use as reply →</div>
+                    <div style={{ fontSize:10,color:'var(--academic)',marginTop:6 }}>Click to use as reply →</div>
                   </div>
                 </div>
               )}
@@ -320,14 +320,14 @@ export default function EmailPage() {
               {/* Reply box */}
               <div style={{ borderTop:'1px solid var(--pios-border)',paddingTop:14 }}>
                 <div style={{ fontSize:11,fontWeight:600,color:'var(--pios-muted)',marginBottom:8 }}>Reply</div>
-                <textarea value={replyText} onChange={e=>setReplyText(e.target.value)} className="pios-input"
+                <textarea value={replyText} onChange={e=>setReplyText(e.target.value)} className="inp-v3"
                   placeholder={`Reply to ${String(selected.sender_name ?? "")}…`} rows={4}
                   style={{ width:'100%',resize:'vertical' as const,fontFamily:'inherit',marginBottom:8 }} />
                 <div style={{ display:'flex',gap:8,alignItems:'center' }}>
-                  <button className="pios-btn pios-btn-primary" onClick={sendReply} disabled={replying||!replyText.trim()} style={{ fontSize:12 }}>
+                  <button className="btn-v3-primary" onClick={sendReply} disabled={replying||!replyText.trim()} style={{ fontSize:12 }}>
                     {replying?'⟳ Sending…':'Send reply'}
                   </button>
-                  <button className="pios-btn pios-btn-ghost" onClick={()=>setReplyText('')} style={{ fontSize:12 }}>Clear</button>
+                  <button className="btn-v3-ghost" onClick={()=>setReplyText('')} style={{ fontSize:12 }}>Clear</button>
                   <span style={{ fontSize:10,color:'var(--pios-dim)' }}>Requires Gmail send scope</span>
                 </div>
               </div>

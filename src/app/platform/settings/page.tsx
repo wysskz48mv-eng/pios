@@ -13,8 +13,8 @@ const CONTEXT_LABELS: Record<string, string> = {
   secondment:'Secondment', consulting:'FM Consulting', client:'Client', other:'Other',
 }
 const CONTEXT_COLOURS: Record<string, string> = {
-  personal:'#6c8eff', academic:'#a78bfa', work:'#22c55e',
-  secondment:'#f59e0b', consulting:'#0ECFB0', client:'#f97316', other:'#64748b',
+  personal:'var(--academic)', academic:'var(--ai)', work:'var(--fm)',
+  secondment:'var(--saas)', consulting:'#0ECFB0', client:'var(--ops)', other:'#64748b',
 }
 const PROVIDER_LABELS: Record<string, string> = { google:'Gmail / Google', microsoft:'Microsoft 365 / Outlook', imap:'IMAP (App Password)' }
 const PROVIDER_COLOURS: Record<string, string> = { google:'#4285F4', microsoft:'#0078D4', imap:'#64748b' }
@@ -129,13 +129,13 @@ function EmailAccountsSection() {
           </div>
         </div>
         <button onClick={() => { setShowAdd(!showAdd); setError(null) }}
-          className="pios-btn pios-btn-primary" style={{ fontSize:11 }}>
+          className="btn-v3-primary" style={{ fontSize:11 }}>
           + Add inbox
         </button>
       </div>
 
       {error && (
-        <div style={{ fontSize:11, color:'#ef4444', padding:'8px 12px', background:'rgba(239,68,68,0.08)', borderRadius:8, marginBottom:12, border:'1px solid rgba(239,68,68,0.2)' }}>
+        <div style={{ fontSize:11, color:'var(--dng)', padding:'8px 12px', background:'rgba(239,68,68,0.08)', borderRadius:8, marginBottom:12, border:'1px solid rgba(239,68,68,0.2)' }}>
           ⚠ {error}
         </div>
       )}
@@ -170,9 +170,9 @@ function EmailAccountsSection() {
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:10, lineHeight:1.6 }}>
                 Click below to connect your Google account via OAuth. Gmail, Calendar, and Drive access will be requested.
-                {accounts.length > 0 && <span style={{ color:'#f59e0b' }}> To add a second Google account, use IMAP + app password instead.</span>}
+                {accounts.length > 0 && <span style={{ color:'var(--saas)' }}> To add a second Google account, use IMAP + app password instead.</span>}
               </div>
-              <button onClick={connectGoogle} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%' }}>
+              <button onClick={connectGoogle} className="btn-v3-primary" style={{ fontSize:12, width:'100%' }}>
                 Connect Google Account →
               </button>
             </div>
@@ -182,12 +182,12 @@ function EmailAccountsSection() {
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:10, lineHeight:1.6 }}>
                 Connects via Microsoft Entra ID OAuth. Works for personal Outlook, university M365, and work M365.
-                <span style={{ color:'#f59e0b' }}> If your institution blocks third-party apps, use IMAP + app password instead.</span>
+                <span style={{ color:'var(--saas)' }}> If your institution blocks third-party apps, use IMAP + app password instead.</span>
               </div>
               <div style={{ fontSize:10, color:'var(--pios-dim)', padding:'8px 10px', background:'rgba(0,120,212,0.06)', borderRadius:6, marginBottom:10, lineHeight:1.5 }}>
                 <strong style={{ color:'#0078D4' }}>Institutional accounts (NHS, Gov, armed forces):</strong> Your IT team may block OAuth consent for external apps. If sign-in fails, use the IMAP option with an app-specific password generated in your M365 settings.
               </div>
-              <button onClick={connectMicrosoft} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%', background:'#0078D4', borderColor:'#0078D4' }}>
+              <button onClick={connectMicrosoft} className="btn-v3-primary" style={{ fontSize:12, width:'100%', background:'#0078D4', borderColor:'#0078D4' }}>
                 Connect Microsoft / Outlook →
               </button>
             </div>
@@ -206,7 +206,7 @@ function EmailAccountsSection() {
               </div>
               <div style={{ height:8 }} />
               <input type="password" placeholder="App password (not your main password)" value={imapForm.password} onChange={e => setImapForm(p=>({...p,password:e.target.value}))} style={inp} />
-              <button onClick={addImap} disabled={saving} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%' }}>
+              <button onClick={addImap} disabled={saving} className="btn-v3-primary" style={{ fontSize:12, width:'100%' }}>
                 {saving ? 'Adding…' : 'Add IMAP Account'}
               </button>
             </div>
@@ -242,7 +242,7 @@ function EmailAccountsSection() {
                     {(PROVIDER_LABELS as Record<string,string>)[String(acc.provider ?? '')]} · {acc.sync_enabled ? 'Sync on' : 'Sync off'}
                     {Boolean(acc.receipt_scan_enabled) && ' · 📄 Receipt scan'}
                     {Boolean(acc.last_synced_at) && ` · Last synced ${new Date(String(acc.last_synced_at ?? "")).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}`}
-                    {Boolean(acc.last_sync_error) && <span style={{ color:'#ef4444' }}> · ⚠ {String(acc.last_sync_error ?? "")}</span>}
+                    {Boolean(acc.last_sync_error) && <span style={{ color:'var(--dng)' }}> · ⚠ {String(acc.last_sync_error ?? "")}</span>}
                   </div>
                 </div>
                 <div style={{ display:'flex', gap:4, flexShrink:0 }}>
@@ -251,13 +251,13 @@ function EmailAccountsSection() {
                       Set primary
                     </button>
                   )}
-                  <button onClick={() => toggleReceipts(String(acc.id ?? ""), Boolean(acc.receipt_scan_enabled))} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:`1px solid ${acc.receipt_scan_enabled ? 'rgba(34,197,94,0.3)' : 'var(--pios-border)'}`, background: acc.receipt_scan_enabled ? 'rgba(34,197,94,0.08)' : 'transparent', cursor:'pointer', color: acc.receipt_scan_enabled ? '#22c55e' : 'var(--pios-muted)' }}>
+                  <button onClick={() => toggleReceipts(String(acc.id ?? ""), Boolean(acc.receipt_scan_enabled))} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:`1px solid ${acc.receipt_scan_enabled ? 'rgba(34,197,94,0.3)' : 'var(--pios-border)'}`, background: acc.receipt_scan_enabled ? 'rgba(34,197,94,0.08)' : 'transparent', cursor:'pointer', color: acc.receipt_scan_enabled ? 'var(--fm)' : 'var(--pios-muted)' }}>
                     {acc.receipt_scan_enabled ? '📄 Receipts on' : 'Receipts off'}
                   </button>
                   <button onClick={() => syncAccount(String(acc.id ?? ""))} disabled={syncing === acc.id} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'transparent', cursor:'pointer', color:'var(--pios-muted)' }}>
                     {syncing === acc.id ? '⟳' : '↻ Sync'}
                   </button>
-                  <button onClick={() => disconnect(String(acc.id ?? ""))} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'transparent', cursor:'pointer', color:'#ef4444' }}>
+                  <button onClick={() => disconnect(String(acc.id ?? ""))} style={{ fontSize:10, padding:'3px 8px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'transparent', cursor:'pointer', color:'var(--dng)' }}>
                     Remove
                   </button>
                 </div>
@@ -279,7 +279,7 @@ const PLANS: Record<string,{name:string;price:number;credits:number}> = {
 
 function Section({ title, children }: { title:string; children:React.ReactNode }) {
   return (
-    <div className="pios-card">
+    <div className="card-v3">
       <div style={{ fontSize:14,fontWeight:600,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--pios-border)' }}>{title}</div>
       {children}
     </div>
@@ -337,7 +337,7 @@ function PersonaSection() {
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 2 }}>Platform Persona</div>
           <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>Controls your dashboard, AI context, and available modules</div>
         </div>
-        {saved && <span style={{ fontSize: 12, color: '#22c55e' }}>✓ Saved</span>}
+        {saved && <span style={{ fontSize: 12, color: 'var(--fm)' }}>✓ Saved</span>}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
         {PERSONAS.map(p => (
@@ -472,7 +472,7 @@ export default function SettingsPage() {
 
   if (loading) return (
     <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'60vh' }}>
-      <div style={{ width:18,height:18,border:'2px solid rgba(167,139,250,0.2)',borderTop:'2px solid #a78bfa',borderRadius:'50%',animation:'spin 0.8s linear infinite' }} />
+      <div style={{ width:18,height:18,border:'2px solid rgba(139,124,248,0.2)',borderTop:'2px solid var(--ai)',borderRadius:'50%',animation:'spin 0.8s linear infinite' }} />
     </div>
   )
 
@@ -487,7 +487,7 @@ export default function SettingsPage() {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:28 }}>
         <h1 style={{ fontSize:22,fontWeight:700 }}>Settings</h1>
-        {saved && <span style={{ fontSize:12,color:'#22c55e',padding:'4px 12px',borderRadius:20,background:'rgba(34,197,94,0.1)' }}>✓ Saved</span>}
+        {saved && <span style={{ fontSize:12,color:'var(--fm)',padding:'4px 12px',borderRadius:20,background:'rgba(34,197,94,0.1)' }}>✓ Saved</span>}
       </div>
 
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:16 }}>
@@ -504,12 +504,12 @@ export default function SettingsPage() {
               ].map(([k,l]) => (
                 <div key={String(k ?? "")}>
                   <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>{l}</div>
-                  <input className="pios-input" value={String((form as Record<string, unknown>)[k] ?? "")} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
+                  <input className="inp-v3" value={String((form as Record<string, unknown>)[k] ?? "")} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} />
                 </div>
               ))}
               <div style={{ display:'flex',gap:8,marginTop:4 }}>
-                <button className="pios-btn pios-btn-primary" onClick={saveProfile} disabled={saving} style={{ flex:1,fontSize:12 }}>{saving?'Saving…':'Save profile'}</button>
-                <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
+                <button className="btn-v3-primary" onClick={saveProfile} disabled={saving} style={{ flex:1,fontSize:12 }}>{saving?'Saving…':'Save profile'}</button>
+                <button className="btn-v3-ghost" onClick={()=>setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
               </div>
             </div>
           ) : (
@@ -523,7 +523,7 @@ export default function SettingsPage() {
                 ['University',profile?.university ?? '—'],
                 ['Timezone', profile?.timezone ?? 'Europe/London'],
               ].map((row: any) => <Row key={String(row[0] ?? "")} label={String(row[0] ?? "")} value={String(row[1] ?? "")} />)}
-              <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(true)} style={{ fontSize:12,marginTop:12,width:'100%' }}>✎ Edit profile</button>
+              <button className="btn-v3-ghost" onClick={()=>setEditing(true)} style={{ fontSize:12,marginTop:12,width:'100%' }}>✎ Edit profile</button>
             </div>
           )}
         </Section>
@@ -533,25 +533,25 @@ export default function SettingsPage() {
         <Section title="Plan & AI Credits">
           <div style={{ marginBottom:16 }}>
             <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:10 }}>
-              <span style={{ fontSize:22,fontWeight:800,color:'#a78bfa' }}>{String(planInfo.name ?? "")}</span>
-              <span style={{ fontSize:11,padding:'2px 8px',borderRadius:20,background:'rgba(167,139,250,0.1)',color:'#a78bfa' }}>{String(tenant?.subscription_status ?? 'active')}</span>
+              <span style={{ fontSize:22,fontWeight:800,color:'var(--ai)' }}>{String(planInfo.name ?? "")}</span>
+              <span style={{ fontSize:11,padding:'2px 8px',borderRadius:20,background:'var(--ai-subtle)',color:'var(--ai)' }}>{String(tenant?.subscription_status ?? 'active')}</span>
               <span style={{ fontSize:13,color:'var(--pios-muted)',marginLeft:'auto' }}>${String(planInfo.price ?? "")}/mo</span>
             </div>
             <div style={{ height:6,background:'var(--pios-surface2)',borderRadius:3,marginBottom:6 }}>
-              <div style={{ height:'100%',width:`${creditsPct}%`,background:creditsPct>90?'#ef4444':creditsPct>70?'#f59e0b':'#a78bfa',borderRadius:3,transition:'width 0.3s' }} />
+              <div style={{ height:'100%',width:`${creditsPct}%`,background:creditsPct>90?'var(--dng)':creditsPct>70?'var(--saas)':'var(--ai)',borderRadius:3,transition:'width 0.3s' }} />
             </div>
             <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{creditsUsed.toLocaleString()} / {creditsLimit.toLocaleString()} AI credits used</div>
           </div>
           <div style={{ display:'flex',flexDirection:'column' as const,gap:8 }}>
             {Object.entries(PLANS).map(([key,p]) => (
-              <div key={String(key ?? "")} style={{ padding:'10px 12px',borderRadius:8,background:plan===key?'rgba(167,139,250,0.08)':'var(--pios-surface2)',border:`1px solid ${plan===key?'rgba(167,139,250,0.3)':'transparent'}` }}>
+              <div key={String(key ?? "")} style={{ padding:'10px 12px',borderRadius:8,background:plan===key?'var(--ai-subtle)':'var(--pios-surface2)',border:`1px solid ${plan===key?'rgba(167,139,250,0.3)':'transparent'}` }}>
                 <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
                   <div>
                     <span style={{ fontSize:13,fontWeight:600 }}>{String(p.name ?? "")}</span>
                     <span style={{ fontSize:11,color:'var(--pios-dim)',marginLeft:8 }}>{p.credits.toLocaleString()} AI credits</span>
                   </div>
-                  {plan===key?<span style={{ fontSize:11,color:'#a78bfa',fontWeight:600 }}>Current</span>
-                    :<Link href={`/api/stripe/checkout?plan=${key}`} style={{ fontSize:11,color:'#6c8eff',textDecoration:'none' }}>Upgrade →</Link>}
+                  {plan===key?<span style={{ fontSize:11,color:'var(--ai)',fontWeight:600 }}>Current</span>
+                    :<Link href={`/api/stripe/checkout?plan=${key}`} style={{ fontSize:11,color:'var(--academic)',textDecoration:'none' }}>Upgrade →</Link>}
                 </div>
                 <div style={{ fontSize:11,color:'var(--pios-dim)',marginTop:2 }}>${p.price}/month</div>
               </div>
@@ -563,7 +563,7 @@ export default function SettingsPage() {
                 href="/api/stripe/portal"
                 style={{ fontSize:12, padding:'7px 14px', borderRadius:8,
                   background:'rgba(99,91,255,0.1)', border:'1px solid rgba(99,91,255,0.3)',
-                  color:'#a78bfa', textDecoration:'none', fontWeight:600 }}
+                  color:'var(--ai)', textDecoration:'none', fontWeight:600 }}
               >
                 ⚙ Manage subscription →
               </Link>
@@ -576,7 +576,7 @@ export default function SettingsPage() {
           {billingNotice && (
             <div style={{ marginTop:10, padding:'8px 12px', borderRadius:6, fontSize:12,
               background: billingNotice.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
-              color: billingNotice.ok ? '#22c55e' : '#ef4444',
+              color: billingNotice.ok ? 'var(--fm)' : 'var(--dng)',
               border: `1px solid ${billingNotice.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
               {String(billingNotice.msg ?? "")}
             </div>
@@ -589,7 +589,7 @@ export default function SettingsPage() {
         {/* Other Integrations */}
         <Section title="Other Integrations">
           {[
-            { name:'Intelligence Feeds', connected:true, detail:'Configure in Command Centre → Intelligence Feeds', colour:'#22c55e' },
+            { name:'Intelligence Feeds', connected:true, detail:'Configure in Command Centre → Intelligence Feeds', colour:'var(--fm)' },
             { name:'Zotero (Research Library)', connected:false, detail:'Add Zotero Key in Research Hub → Import & Connect', colour:'#CC2936' },
             { name:'Stripe (Billing)', connected:!!tenant?.stripe_customer_id, detail:'Managed automatically', colour:'#635BFF' },
           ].map(i => (
@@ -599,7 +599,7 @@ export default function SettingsPage() {
                   <div style={{ fontSize:13,fontWeight:500,marginBottom:2 }}>{String(i.name ?? "")}</div>
                   <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{String(i.detail ?? "")}</div>
                 </div>
-                <span style={{ fontSize:11,padding:'3px 10px',borderRadius:20,background:i.connected?'rgba(34,197,94,0.1)':'rgba(255,255,255,0.05)',color:i.connected?'#22c55e':'var(--pios-dim)',flexShrink:0,marginLeft:12 }}>
+                <span style={{ fontSize:11,padding:'3px 10px',borderRadius:20,background:i.connected?'rgba(34,197,94,0.1)':'rgba(255,255,255,0.05)',color:i.connected?'var(--fm)':'var(--pios-dim)',flexShrink:0,marginLeft:12 }}>
                   {i.connected?'Connected':'Not connected'}
                 </span>
               </div>
@@ -626,12 +626,12 @@ export default function SettingsPage() {
               ))}
               <div>
                 <div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:6 }}>Brief feed items count (how many top items to include)</div>
-                <input type="number" className="pios-input" min={1} max={10} value={Number(feedSettings.brief_feed_count??3)} onChange={e=>updateFeedSetting('brief_feed_count',parseInt(e.target.value)||3)} style={{ width:80 }} />
+                <input type="number" className="inp-v3" min={1} max={10} value={Number(feedSettings.brief_feed_count??3)} onChange={e=>updateFeedSetting('brief_feed_count',parseInt(e.target.value)||3)} style={{ width:80 }} />
               </div>
-              <Link href="/platform/command" style={{ fontSize:12,color:'#6c8eff',textDecoration:'none' }}>Manage feed topics →</Link>
+              <Link href="/platform/command" style={{ fontSize:12,color:'var(--academic)',textDecoration:'none' }}>Manage feed topics →</Link>
             </div>
           ) : (
-            <div style={{ fontSize:12,color:'var(--pios-dim)' }}>Run migration 005 to enable intelligence feeds. <Link href="/platform/command" style={{ color:'#6c8eff' }}>Go to Command Centre →</Link></div>
+            <div style={{ fontSize:12,color:'var(--pios-dim)' }}>Run migration 005 to enable intelligence feeds. <Link href="/platform/command" style={{ color:'var(--academic)' }}>Go to Command Centre →</Link></div>
           )}
         </Section>
 
@@ -662,7 +662,7 @@ export default function SettingsPage() {
                       URL.revokeObjectURL(url)
                     }
                   }}
-                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(34,197,94,0.3)', background:'rgba(34,197,94,0.06)', color:'#22c55e', cursor:'pointer', whiteSpace:'nowrap' as const }}
+                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(34,197,94,0.3)', background:'rgba(34,197,94,0.06)', color:'var(--fm)', cursor:'pointer', whiteSpace:'nowrap' as const }}
                 >
                   ⬇ Export JSON
                 </button>
@@ -681,7 +681,7 @@ export default function SettingsPage() {
                     const d = await r.json()
                     alert(r.ok ? 'Wellness data deleted.' : d.error ?? 'Failed')
                   }}
-                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(245,158,11,0.3)', background:'rgba(245,158,11,0.06)', color:'#f59e0b', cursor:'pointer', whiteSpace:'nowrap' as const }}
+                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(245,158,11,0.3)', background:'rgba(245,158,11,0.06)', color:'var(--saas)', cursor:'pointer', whiteSpace:'nowrap' as const }}
                 >
                   🗑 Delete Wellness
                 </button>
@@ -690,7 +690,7 @@ export default function SettingsPage() {
               {/* Full erase */}
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.2)', background:'rgba(239,68,68,0.03)' }}>
                 <div>
-                  <div style={{ fontSize:12, fontWeight:600, color:'#ef4444' }}>Delete All My Data</div>
+                  <div style={{ fontSize:12, fontWeight:600, color:'var(--dng)' }}>Delete All My Data</div>
                   <div style={{ fontSize:11, color:'var(--pios-dim)' }}>Permanently erase all PIOS data and pseudonymise your profile (Art.17)</div>
                 </div>
                 <button
@@ -702,7 +702,7 @@ export default function SettingsPage() {
                     if (r.ok) { alert('All data erased. You will be signed out.'); window.location.href = '/auth/login' }
                     else alert(d.error ?? 'Failed')
                   }}
-                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(239,68,68,0.3)', background:'rgba(239,68,68,0.06)', color:'#ef4444', cursor:'pointer', whiteSpace:'nowrap' as const }}
+                  style={{ fontSize:11, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(239,68,68,0.3)', background:'rgba(239,68,68,0.06)', color:'var(--dng)', cursor:'pointer', whiteSpace:'nowrap' as const }}
                 >
                   ⚠ Erase All Data
                 </button>
@@ -728,10 +728,10 @@ export default function SettingsPage() {
               <span style={{ fontSize:12,fontFamily:'monospace',color:'var(--pios-text)' }}>{v}</span>
             </div>
           ))}
-          <Link href="/platform/setup" style={{ display:'block',fontSize:12,color:'#f59e0b',textDecoration:'none',marginTop:14,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(245,158,11,0.25)',background:'rgba(245,158,11,0.06)',textAlign:'center' as const }}>
+          <Link href="/platform/setup" style={{ display:'block',fontSize:12,color:'var(--saas)',textDecoration:'none',marginTop:14,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(245,158,11,0.25)',background:'rgba(245,158,11,0.06)',textAlign:'center' as const }}>
             ⚡ Phase 2 Setup Guide →
           </Link>
-          <button onClick={async()=>{const supabase=createClient();await supabase.auth.signOut();window.location.href='/auth/login'}} style={{ fontSize:12,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'#ef4444',marginTop:8,width:'100%' }}>
+          <button onClick={async()=>{const supabase=createClient();await supabase.auth.signOut();window.location.href='/auth/login'}} style={{ fontSize:12,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'var(--dng)',marginTop:8,width:'100%' }}>
             Sign out
           </button>
         </Section>

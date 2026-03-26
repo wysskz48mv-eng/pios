@@ -27,7 +27,7 @@ const LESSONS = [
 ]
 
 const TAG_COLOR: Record<string, string> = {
-  'Foundation':        '#a78bfa',
+  'Foundation':        'var(--ai)',
   'Policy Management': '#60a5fa',
   'ISO Standards':     '#34d399',
   'Compliance':        '#fbbf24',
@@ -54,7 +54,7 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
 
   function PersonaBar({ children }: { children: React.ReactNode }) {
     return (
-      <div style={{ display: 'flex', gap: 12, padding: '12px 16px', borderRadius: 10, background: 'rgba(155,135,245,0.08)', border: '1px solid rgba(155,135,245,0.2)', margin: '0 0 20px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 12, padding: '12px 16px', borderRadius: 10, background: 'var(--ai-subtle)', border: '1px solid rgba(155,135,245,0.2)', margin: '0 0 20px', alignItems: 'flex-start' }}>
         <span style={{ fontSize: 20, flexShrink: 0 }}>{ROLES.find(r => r.key === role)?.icon ?? '👤'}</span>
         <div style={{ fontSize: 13, color: 'var(--pios-text)', lineHeight: 1.65 }}>{children}</div>
       </div>
@@ -101,7 +101,7 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
             return (
               <button key={i} onClick={() => !isAnswered && setQuizAnswer(i)}
                 style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 8, border: `1px solid ${border}`, background: bg, cursor: isAnswered ? 'default' : 'pointer', fontSize: 13, color: 'var(--pios-text)', transition: 'all 0.15s', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <span style={{ flexShrink: 0, fontSize: 11, marginTop: 2, color: isAnswered && isCorrect ? '#22c55e' : isAnswered && isSelected ? '#ef4444' : 'var(--pios-dim)' }}>
+                <span style={{ flexShrink: 0, fontSize: 11, marginTop: 2, color: isAnswered && isCorrect ? 'var(--fm)' : isAnswered && isSelected ? 'var(--dng)' : 'var(--pios-dim)' }}>
                   {isAnswered && isCorrect ? '✓' : isAnswered && isSelected ? '✗' : `${String.fromCharCode(65+i)}.`}
                 </span>
                 {opt}
@@ -110,7 +110,7 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
           })}
         </div>
         {quizAnswer !== null && (
-          <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 8, background: quizAnswer === correctIdx ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', fontSize: 13, color: 'var(--pios-sub)', lineHeight: 1.65, borderLeft: `3px solid ${quizAnswer === correctIdx ? '#22c55e' : '#ef4444'}` }}>
+          <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 8, background: quizAnswer === correctIdx ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', fontSize: 13, color: 'var(--pios-sub)', lineHeight: 1.65, borderLeft: `3px solid ${quizAnswer === correctIdx ? 'var(--fm)' : 'var(--dng)'}` }}>
             {feedbacks[quizAnswer]}
           </div>
         )}
@@ -120,12 +120,12 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
 
   function NextSteps({ steps }: { steps: { n: string; d: string }[] }) {
     return (
-      <div style={{ margin: '24px 0', padding: '18px', borderRadius: 10, background: 'var(--pios-surface2)', borderLeft: '3px solid #22c55e' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your next steps</div>
+      <div style={{ margin: '24px 0', padding: '18px', borderRadius: 10, background: 'var(--pios-surface2)', borderLeft: '3px solid var(--fm)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fm)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your next steps</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {steps.map((s, i) => (
             <div key={i} style={{ display: 'flex', gap: 10 }}>
-              <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'rgba(34,197,94,0.15)', color: '#22c55e', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>{i+1}</span>
+              <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'rgba(34,197,94,0.15)', color: 'var(--fm)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>{i+1}</span>
               <div><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 2 }}>{s.n}</div><div style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.55 }}>{s.d}</div></div>
             </div>
           ))}
@@ -138,8 +138,8 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
     return (
       <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 20, borderTop: '1px solid var(--pios-border)', marginTop: 24 }}>
         {completed
-          ? <span style={{ fontSize: 13, color: '#22c55e', fontWeight: 600 }}>✓ Lesson complete</span>
-          : <button className="pios-btn pios-btn-primary" onClick={onComplete} style={{ fontSize: 13 }}>Mark complete & continue →</button>
+          ? <span style={{ fontSize: 13, color: 'var(--fm)', fontWeight: 600 }}>✓ Lesson complete</span>
+          : <button className="btn-v3-primary" onClick={onComplete} style={{ fontSize: 13 }}>Mark complete & continue →</button>
         }
       </div>
     )
@@ -349,16 +349,16 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
       <Table
         headers={['Policy', 'Ref', 'Author', 'Approver', 'Deadline', 'ISO Link']}
         rows={[
-          ['<strong>Information Security Policy</strong>', 'VIQ-POL-001', 'Siphathisiwe', 'Douglas', '<span style="color:#ef4444;font-weight:600">May 2026</span>', 'ISO 27001 §5.2'],
-          ['<strong>Data Protection & Privacy Policy</strong>', 'VIQ-POL-002', 'Siphathisiwe', 'Douglas', '<span style="color:#ef4444;font-weight:600">May 2026</span>', 'GDPR / ISO 27001'],
-          ['<strong>Acceptable Use Policy</strong>', 'VIQ-POL-003', 'Siphathisiwe', 'Douglas', '<span style="color:#ef4444;font-weight:600">May 2026</span>', 'ISO 27001 A.8.1'],
-          ['<strong>Code of Conduct</strong>', 'VIQ-POL-004', 'Siphathisiwe', 'Douglas', '<span style="color:#ef4444;font-weight:600">May 2026</span>', 'ISO 27001 A.6.2'],
-          ['<strong>Access Control Policy</strong>', 'VIQ-POL-005', 'Richard', 'Douglas', '<span style="color:#f59e0b;font-weight:600">Jun 2026</span>', 'ISO 27001 A.8.2'],
-          ['<strong>Incident Response Policy</strong>', 'VIQ-POL-006', 'Richard', 'Douglas', '<span style="color:#f59e0b;font-weight:600">Jun 2026</span>', 'ISO 27001 A.5.24'],
-          ['<strong>Business Continuity Policy</strong>', 'VIQ-POL-007', 'Siphathisiwe', 'Douglas', '<span style="color:#22c55e;font-weight:600">Jul 2026</span>', 'ISO 22301'],
-          ['<strong>Quality Management Policy</strong>', 'VIQ-POL-008', 'Siphathisiwe', 'Douglas', '<span style="color:#22c55e;font-weight:600">Jul 2026</span>', 'ISO 9001 §5.2'],
-          ['<strong>Supplier Security Policy</strong>', 'VIQ-POL-009', 'Siphathisiwe', 'Douglas', '<span style="color:#22c55e;font-weight:600">Jul 2026</span>', 'ISO 27001 A.5.19'],
-          ['<strong>HR Security Policy</strong>', 'VIQ-POL-010', 'Siphathisiwe', 'Douglas', '<span style="color:#22c55e;font-weight:600">Aug 2026</span>', 'ISO 27001 A.6.1'],
+          ['<strong>Information Security Policy</strong>', 'VIQ-POL-001', 'Siphathisiwe', 'Douglas', '<span style="color:var(--dng);font-weight:600">May 2026</span>', 'ISO 27001 §5.2'],
+          ['<strong>Data Protection & Privacy Policy</strong>', 'VIQ-POL-002', 'Siphathisiwe', 'Douglas', '<span style="color:var(--dng);font-weight:600">May 2026</span>', 'GDPR / ISO 27001'],
+          ['<strong>Acceptable Use Policy</strong>', 'VIQ-POL-003', 'Siphathisiwe', 'Douglas', '<span style="color:var(--dng);font-weight:600">May 2026</span>', 'ISO 27001 A.8.1'],
+          ['<strong>Code of Conduct</strong>', 'VIQ-POL-004', 'Siphathisiwe', 'Douglas', '<span style="color:var(--dng);font-weight:600">May 2026</span>', 'ISO 27001 A.6.2'],
+          ['<strong>Access Control Policy</strong>', 'VIQ-POL-005', 'Richard', 'Douglas', '<span style="color:var(--saas);font-weight:600">Jun 2026</span>', 'ISO 27001 A.8.2'],
+          ['<strong>Incident Response Policy</strong>', 'VIQ-POL-006', 'Richard', 'Douglas', '<span style="color:var(--saas);font-weight:600">Jun 2026</span>', 'ISO 27001 A.5.24'],
+          ['<strong>Business Continuity Policy</strong>', 'VIQ-POL-007', 'Siphathisiwe', 'Douglas', '<span style="color:var(--fm);font-weight:600">Jul 2026</span>', 'ISO 22301'],
+          ['<strong>Quality Management Policy</strong>', 'VIQ-POL-008', 'Siphathisiwe', 'Douglas', '<span style="color:var(--fm);font-weight:600">Jul 2026</span>', 'ISO 9001 §5.2'],
+          ['<strong>Supplier Security Policy</strong>', 'VIQ-POL-009', 'Siphathisiwe', 'Douglas', '<span style="color:var(--fm);font-weight:600">Jul 2026</span>', 'ISO 27001 A.5.19'],
+          ['<strong>HR Security Policy</strong>', 'VIQ-POL-010', 'Siphathisiwe', 'Douglas', '<span style="color:var(--fm);font-weight:600">Aug 2026</span>', 'ISO 27001 A.6.1'],
         ]}
       />
       <Callout icon="✅" title="What is already done">
@@ -378,22 +378,22 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
       <PersonaBar>
         <strong>{p.name}</strong>, you have completed the Policy Intelligence Coaching Module. Here is your personalised action plan for your role as <strong>{p.roleName}</strong>.
       </PersonaBar>
-      <div style={{ padding: '20px', borderRadius: 12, background: 'rgba(155,135,245,0.08)', border: '1px solid rgba(155,135,245,0.25)', marginBottom: 20 }}>
+      <div style={{ padding: '20px', borderRadius: 12, background: 'var(--ai-subtle)', border: '1px solid rgba(155,135,245,0.25)', marginBottom: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ai)', marginBottom: 16 }}>🎓 Module Complete — Your 30-day action plan</div>
         {[
-          { week: 'This week', color: '#ef4444', items: [
+          { week: 'This week', color: 'var(--dng)', items: [
             'Create VIQ-Policies folder in Google Drive',
             'Build Master Policy Register spreadsheet (20 rows)',
             'Draft VIQ-POL-001 Information Security Policy',
             'Brief Douglas on your plan at next stand-up',
           ]},
-          { week: 'Weeks 2–3', color: '#f59e0b', items: [
+          { week: 'Weeks 2–3', color: 'var(--saas)', items: [
             'Draft VIQ-POL-002 Data Protection & Privacy Policy',
             'Draft VIQ-POL-003 Acceptable Use Policy',
             'Contact BSI, NQA, and Bureau Veritas for Stage 1 quotes',
             'Brief Richard on ISO 27001 Theme D technical controls',
           ]},
-          { week: 'Month 2', color: '#22c55e', items: [
+          { week: 'Month 2', color: 'var(--fm)', items: [
             'Complete all 5 high-priority policies (POL-001 to POL-005)',
             'Conduct first internal policy awareness session with team',
             'Book Stage 1 audit with chosen certifying body',
@@ -412,10 +412,10 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
         ))}
       </div>
       <div style={{ padding: '16px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', fontSize: 13, color: 'var(--pios-sub)', lineHeight: 1.75 }}>
-        <strong style={{ color: '#22c55e' }}>🎯 Your north star:</strong> ISO 27001 Stage 1 audit booked, 20 policies in register, 5 policies approved and signed — all before the Qiddiya City RFP submission in October 2026. The policies are not bureaucracy. They are the commercial unlock.
+        <strong style={{ color: 'var(--fm)' }}>🎯 Your north star:</strong> ISO 27001 Stage 1 audit booked, 20 policies in register, 5 policies approved and signed — all before the Qiddiya City RFP submission in October 2026. The policies are not bureaucracy. They are the commercial unlock.
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 20, borderTop: '1px solid var(--pios-border)', marginTop: 24 }}>
-        <span style={{ fontSize: 13, color: '#22c55e', fontWeight: 600 }}>🎓 Module complete — well done, {name}!</span>
+        <span style={{ fontSize: 13, color: 'var(--fm)', fontWeight: 600 }}>🎓 Module complete — well done, {name}!</span>
       </div>
     </div>
   )
@@ -459,7 +459,7 @@ export default function PolicyCoachPage() {
       </div>
 
       {/* Profile form */}
-      <div className="pios-card">
+      <div className="card-v3">
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Tell us about yourself</h2>
         <p style={{ fontSize: 13, color: 'var(--pios-muted)', marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid var(--pios-border)' }}>
           PIOS™ uses your profile to personalise every lesson — your language, your examples, your pace.
@@ -467,7 +467,7 @@ export default function PolicyCoachPage() {
 
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ai)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 7 }}>Your name</label>
-          <input className="pios-input" placeholder="e.g. Siphathisiwe" value={name} onChange={e => setName(e.target.value)} />
+          <input className="inp-v3" placeholder="e.g. Siphathisiwe" value={name} onChange={e => setName(e.target.value)} />
         </div>
 
         <div style={{ marginBottom: 18 }}>
@@ -475,7 +475,7 @@ export default function PolicyCoachPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
             {ROLES.map(r => (
               <button key={r.key} onClick={() => setRole(r.key)}
-                style={{ padding: '14px 16px', borderRadius: 8, border: `2px solid ${role === r.key ? 'var(--ai)' : 'var(--pios-border2)'}`, background: role === r.key ? 'rgba(155,135,245,0.08)' : 'var(--pios-surface2)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
+                style={{ padding: '14px 16px', borderRadius: 8, border: `2px solid ${role === r.key ? 'var(--ai)' : 'var(--pios-border2)'}`, background: role === r.key ? 'var(--ai-subtle)' : 'var(--pios-surface2)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 18, marginBottom: 5 }}>{r.icon}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pios-text)', marginBottom: 2 }}>{r.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{r.desc}</div>
@@ -486,7 +486,7 @@ export default function PolicyCoachPage() {
 
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ai)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 7 }}>How familiar are you with policies and procedures?</label>
-          <select className="pios-input" value={level} onChange={e => setLevel(e.target.value)}>
+          <select className="inp-v3" value={level} onChange={e => setLevel(e.target.value)}>
             <option value="">Select your starting point…</option>
             <option value="new">🌱 Completely new — I've never worked with formal policies before</option>
             <option value="some">🌿 Some experience — I've seen policies but never owned them</option>
@@ -495,7 +495,7 @@ export default function PolicyCoachPage() {
           </select>
         </div>
 
-        <button className="pios-btn pios-btn-primary" onClick={startCoaching} disabled={!role || !level} style={{ fontSize: 13 }}>
+        <button className="btn-v3-primary" onClick={startCoaching} disabled={!role || !level} style={{ fontSize: 13 }}>
           Begin My Coaching Journey →
         </button>
       </div>
@@ -509,7 +509,7 @@ export default function PolicyCoachPage() {
       <div style={{ background: 'var(--pios-surface)', border: '1px solid var(--pios-border)', borderRadius: 12, padding: 20, position: 'sticky', top: 20 }}>
         {/* Profile */}
         <div style={{ marginBottom: 16, paddingBottom: 14, borderBottom: '1px solid var(--pios-border)' }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--ai), #6c8eff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 8 }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--ai), var(--academic))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 8 }}>
             {(name || 'U').charAt(0).toUpperCase()}
           </div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pios-text)' }}>{name || 'Team Member'}</div>
@@ -539,7 +539,7 @@ export default function PolicyCoachPage() {
               onClick={() => !isLocked && setCurrentLesson(i)}
               style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 6, marginBottom: 2, border: 'none', cursor: isLocked ? 'default' : 'pointer', opacity: isLocked ? 0.4 : 1, background: isActive ? 'rgba(155,135,245,0.15)' : 'transparent', transition: 'all 0.15s' }}>
               <span style={{ fontSize: 14, flexShrink: 0 }}>{isDone ? '✓' : lesson.icon}</span>
-              <span style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isDone ? '#22c55e' : isActive ? 'var(--ai)' : 'var(--pios-muted)', flex: 1, lineHeight: 1.3 }}>{lesson.title}</span>
+              <span style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isDone ? 'var(--fm)' : isActive ? 'var(--ai)' : 'var(--pios-muted)', flex: 1, lineHeight: 1.3 }}>{lesson.title}</span>
               <span style={{ fontSize: 9, color: 'var(--pios-dim)', flexShrink: 0 }}>{lesson.mins}m</span>
             </button>
           )
@@ -560,7 +560,7 @@ export default function PolicyCoachPage() {
         </div>
 
         {/* Lesson body */}
-        <div className="pios-card" style={{ borderColor: `${TAG_COLOR[LESSONS[currentLesson].tag]}30` }}>
+        <div className="card-v3" style={{ borderColor: `${TAG_COLOR[LESSONS[currentLesson].tag]}30` }}>
           <LessonContent
             key={currentLesson}
             lessonId={currentLesson}

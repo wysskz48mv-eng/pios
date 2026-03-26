@@ -96,7 +96,7 @@ function UsageBar({ used, limit, label, color = '#7c3aed' }: {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
         <span style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{label}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: isHigh ? '#ef4444' : 'var(--pios-text)' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: isHigh ? 'var(--dng)' : 'var(--pios-text)' }}>
           {used.toLocaleString()} / {limit > 0 ? limit.toLocaleString() : '∞'}
           {limit > 0 && <span style={{ color: 'var(--pios-dim)', fontWeight: 400 }}> ({pct}%)</span>}
         </span>
@@ -104,7 +104,7 @@ function UsageBar({ used, limit, label, color = '#7c3aed' }: {
       <div style={{ height: 6, background: 'var(--pios-surface3)', borderRadius: 3 }}>
         <div style={{
           height: '100%', width: `${pct}%`,
-          background: isHigh ? '#ef4444' : color,
+          background: isHigh ? 'var(--dng)' : color,
           borderRadius: 3, transition: 'width 0.4s',
         }} />
       </div>
@@ -116,7 +116,7 @@ function StatusBadge({ status }: { status?: string }) {
   const map: Record<string, { label: string; color: string; bg: string }> = {
     active:    { label: 'Active',    color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
     trialing:  { label: 'Trial',     color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-    past_due:  { label: 'Past due',  color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+    past_due:  { label: 'Past due',  color: 'var(--dng)', bg: 'rgba(239,68,68,0.1)' },
     canceled:  { label: 'Canceled',  color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
     inactive:  { label: 'Inactive',  color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
   }
@@ -256,7 +256,7 @@ export default function BillingPage() {
           }}>
             <span style={{ fontSize: 18 }}>{trialDaysLeft <= 3 ? '⚠' : '⏱'}</span>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: trialDaysLeft <= 3 ? '#ef4444' : '#f59e0b' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: trialDaysLeft <= 3 ? 'var(--dng)' : '#f59e0b' }}>
                 {trialDaysLeft === 0 ? 'Trial expires today' : `${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} left in trial`}
               </div>
               <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>

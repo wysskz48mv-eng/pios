@@ -41,7 +41,7 @@ const MODULES = [
   },
   {
     group: '📚 Academic / CPD',
-    colour: '#6c8eff',
+    colour: 'var(--academic)',
     items: [
       { name: 'Academic Hub', path: '/platform/academic', desc: 'Thesis tracker, module grades, supervisor sessions, viva prep' },
       { name: 'Learning Hub', path: '/platform/learning', desc: 'CPD tracker, learning journey, journal, study timer' },
@@ -50,7 +50,7 @@ const MODULES = [
   },
   {
     group: '📡 Intelligence & Comms',
-    colour: '#22d3ee',
+    colour: 'var(--pro)',
     items: [
       { name: 'Email AI', path: '/platform/email', desc: 'Gmail triage, action items, receipt capture, thread summaries' },
       { name: 'Meetings', path: '/platform/meetings', desc: 'Meeting notes, AI action items, auto-task promotion' },
@@ -61,7 +61,7 @@ const MODULES = [
   },
   {
     group: '⚙ Workspace',
-    colour: '#a78bfa',
+    colour: 'var(--ai)',
     items: [
       { name: 'Tasks', path: '/platform/tasks', desc: 'Cross-domain task management with AI prioritisation' },
       { name: 'Calendar', path: '/platform/calendar', desc: 'Google Calendar sync, smart scheduling, meeting prep' },

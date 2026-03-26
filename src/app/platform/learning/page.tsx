@@ -162,7 +162,7 @@ export default function LearningHubPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label:'Progress',      value:`${summary?.pct ?? 0}%`,        sub:`${summary?.passed ?? 0}/${summary?.total ?? 0} done`, icon:Target,       color:'#8B5CF6' },
-          { label:'Overdue',       value:String(summary?.overdue ?? 0),  sub:'need attention',   icon:AlertTriangle, color:Number(summary?.overdue ?? 0) > 0 ? '#ef4444' : '#6b7280' },
+          { label:'Overdue',       value:String(summary?.overdue ?? 0),  sub:'need attention',   icon:AlertTriangle, color:Number(summary?.overdue ?? 0) > 0 ? 'var(--dng)' : '#6b7280' },
           ...(isCpd ? [
             { label:'CPD hours',   value:`${cpdSum?.totalHours ?? 0}h`,  sub:`of ${cpdSum?.target ?? 0}h target (${cpdSum?.pct ?? 0}%)`, icon:Clock, color:'#F59E0B' },
             { label:'Verifiable',  value:`${cpdSum?.verifiable ?? 0}h`,  sub:`of ${cpdSum?.verifiableTarget ?? 0}h required`,       icon:Award,        color:'#10b981' },
@@ -257,7 +257,7 @@ export default function LearningHubPage() {
                 <span className="text-muted-foreground">{cpdSum.totalHours}h / {cpdSum.target}h ({(cpdSum?.pct ?? 0)}%)</span>
               </div>
               <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width:`${Math.min(Number(cpdSum?.pct ?? 0), 100)}%`, background: (cpdSum?.pct ?? 0)>=100 ? '#10b981' : cpdSum.onTrack ? '#F59E0B' : '#ef4444' }} />
+                <div className="h-full rounded-full transition-all" style={{ width:`${Math.min(Number(cpdSum?.pct ?? 0), 100)}%`, background: (cpdSum?.pct ?? 0)>=100 ? '#10b981' : cpdSum.onTrack ? '#F59E0B' : 'var(--dng)' }} />
               </div>
               <div className="flex gap-4 text-xs text-muted-foreground">
                 <span>Verifiable: {cpdSum.verifiable}h / {cpdSum.verifiableTarget}h</span>

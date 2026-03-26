@@ -30,7 +30,7 @@ const STEPS: Step[] = [
     id:        'cron',
     title:     'Morning Brief Cron',
     tag:       'Critical',
-    tagColour: '#ef4444',
+    tagColour: 'var(--dng)',
     items: [
       {
         label:    'Generate CRON_SECRET',
@@ -55,7 +55,7 @@ const STEPS: Step[] = [
     id:        'google',
     title:     'Google OAuth (Gmail + Calendar)',
     tag:       'High',
-    tagColour: '#f59e0b',
+    tagColour: 'var(--saas)',
     items: [
       {
         label:    'Step 1 — Create OAuth credentials',
@@ -97,7 +97,7 @@ const STEPS: Step[] = [
     id:        'resend',
     title:     'Morning Brief Email (Resend)',
     tag:       'High',
-    tagColour: '#f59e0b',
+    tagColour: 'var(--saas)',
     items: [
       {
         label:    'Create Resend account & API key',
@@ -215,7 +215,7 @@ function CopyBtn({ text }: { text: string }) {
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(()=>setCopied(false),2000) }}
       style={{
         background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4,
-        color: copied ? '#22c55e' : '#7a8299', cursor: 'pointer', fontSize: 11,
+        color: copied ? 'var(--fm)' : '#7a8299', cursor: 'pointer', fontSize: 11,
         padding: '2px 8px', marginLeft: 8, fontFamily: 'monospace', transition: '.15s',
       }}
     >{copied ? '✓ Copied' : 'Copy'}</button>
@@ -256,7 +256,7 @@ export default function SetupGuidePage() {
           <span style={{ fontSize: 12, fontWeight: 600, color: '#7a8299', letterSpacing: 0.5 }}>LIVE ENVIRONMENT STATUS</span>
           {statusLoading
             ? <span style={{ fontSize: 11, color: '#454d63' }}>Checking…</span>
-            : <span style={{ fontSize: 11, fontFamily: 'monospace', color: status?.ready ? '#22c55e' : '#f59e0b' }}>
+            : <span style={{ fontSize: 11, fontFamily: 'monospace', color: status?.ready ? 'var(--fm)' : 'var(--saas)' }}>
                 {status?.score} configured · {status?.ready ? '✓ Required complete' : '⚠ Incomplete'}
               </span>
           }
@@ -270,7 +270,7 @@ export default function SetupGuidePage() {
                 <span key={key} title={check.ok ? '' : (check.hint ?? '')} style={{
                   fontSize: 11, padding: '3px 10px', borderRadius: 4, fontFamily: 'monospace', cursor: check.ok ? 'default' : 'help',
                   background: check.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.12)',
-                  color: check.ok ? '#22c55e' : '#ef4444',
+                  color: check.ok ? 'var(--fm)' : 'var(--dng)',
                   border: `1px solid ${check.ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.3)'}`,
                 }}>
                   {check.ok ? '✓' : '✗'} {check.label}{!check.ok && check.hint ? ' ?' : ''}
@@ -284,7 +284,7 @@ export default function SetupGuidePage() {
                 <span key={key} title={check.ok ? '' : (check.hint ?? '')} style={{
                   fontSize: 11, padding: '3px 10px', borderRadius: 4, fontFamily: 'monospace', cursor: check.ok ? 'default' : 'help',
                   background: check.ok ? 'rgba(34,197,94,0.06)' : 'rgba(245,158,11,0.08)',
-                  color: check.ok ? '#22c55e' : '#f59e0b',
+                  color: check.ok ? 'var(--fm)' : 'var(--saas)',
                   border: `1px solid ${check.ok ? 'rgba(34,197,94,0.15)' : 'rgba(245,158,11,0.2)'}`,
                 }}>
                   {check.ok ? '✓' : '○'} {check.label}
@@ -293,8 +293,8 @@ export default function SetupGuidePage() {
             </div>
             {/* Stripe setup action */}
             {status.checks.stripe_keys?.ok && !status.checks.stripe_price_ids?.ok && (
-              <div style={{ marginTop: 4, padding: '10px 14px', borderRadius: 8, background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)' }}>
-                <span style={{ fontSize: 12, color: '#a78bfa', fontWeight: 600 }}>Stripe keys set — run price setup: </span>
+              <div style={{ marginTop: 4, padding: '10px 14px', borderRadius: 8, background: 'var(--ai-subtle)', border: '1px solid rgba(139,124,248,0.2)' }}>
+                <span style={{ fontSize: 12, color: 'var(--ai)', fontWeight: 600 }}>Stripe keys set — run price setup: </span>
                 <button onClick={async () => {
                   const r = await fetch('/api/stripe/setup', { method: 'POST' })
                   const d = await r.json()
@@ -304,7 +304,7 @@ export default function SetupGuidePage() {
                   } else {
                     alert('Error: ' + (d.error ?? 'Unknown'))
                   }
-                }} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 4, background: '#a78bfa', color: '#fff', border: 'none', cursor: 'pointer', marginLeft: 8 }}>
+                }} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 4, background: 'var(--ai)', color: '#fff', border: 'none', cursor: 'pointer', marginLeft: 8 }}>
                   POST /api/stripe/setup
                 </button>
               </div>
@@ -317,7 +317,7 @@ export default function SetupGuidePage() {
       <div style={{ background: '#111318', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '16px 20px', marginBottom: 32, display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{ flex: 1 }}>
           <div style={{ height: 6, background: '#1c2030', borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ height: '100%', background: '#a78bfa', borderRadius: 3, width: `${(completedCount / STEPS.length) * 100}%`, transition: 'width .4s ease' }} />
+            <div style={{ height: '100%', background: 'var(--ai)', borderRadius: 3, width: `${(completedCount / STEPS.length) * 100}%`, transition: 'width .4s ease' }} />
           </div>
         </div>
         <div style={{ fontSize: 12, color: '#7a8299', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
@@ -352,7 +352,7 @@ export default function SetupGuidePage() {
                   style={{
                     background: isDone ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
                     border: `1px solid ${isDone ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                    borderRadius: 6, color: isDone ? '#22c55e' : '#7a8299',
+                    borderRadius: 6, color: isDone ? 'var(--fm)' : '#7a8299',
                     cursor: 'pointer', fontSize: 12, fontWeight: 500,
                     padding: '5px 12px', transition: '.15s',
                   }}
@@ -367,7 +367,7 @@ export default function SetupGuidePage() {
                       {item.label && <div style={{ fontSize: 12, fontWeight: 600, color: '#c8cedd', marginBottom: 6 }}>{item.label}</div>}
                       {item.key && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 6 }}>
-                          <code style={{ background: '#0e1015', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, padding: '4px 10px', fontSize: 12, fontFamily: 'monospace', color: '#a78bfa' }}>{item.key}</code>
+                          <code style={{ background: '#0e1015', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, padding: '4px 10px', fontSize: 12, fontFamily: 'monospace', color: 'var(--ai)' }}>{item.key}</code>
                           <span style={{ fontSize: 12, color: '#454d63', margin: '0 6px' }}>=</span>
                           <code style={{ background: '#0e1015', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, padding: '4px 10px', fontSize: 12, fontFamily: 'monospace', color: '#7a8299', flex: 1 }}>{item.value}</code>
                           <CopyBtn text={`${item.key}=${item.value}`} />
@@ -375,7 +375,7 @@ export default function SetupGuidePage() {
                       )}
                       {item.code && (
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-                          <code style={{ background: '#060709', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 5, padding: '6px 12px', fontSize: 12, fontFamily: 'monospace', color: '#22d3ee', flex: 1, wordBreak: 'break-all' }}>{item.code}</code>
+                          <code style={{ background: '#060709', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 5, padding: '6px 12px', fontSize: 12, fontFamily: 'monospace', color: 'var(--pro)', flex: 1, wordBreak: 'break-all' }}>{item.code}</code>
                           <CopyBtn text={item.code} />
                         </div>
                       )}
@@ -383,7 +383,7 @@ export default function SetupGuidePage() {
                       {item.url && (
                         <a href={item.url} target="_blank" rel="noreferrer" style={{
                           display: 'inline-flex', alignItems: 'center', gap: 4,
-                          fontSize: 12, color: '#a78bfa', textDecoration: 'none',
+                          fontSize: 12, color: 'var(--ai)', textDecoration: 'none',
                           borderBottom: '1px solid rgba(167,139,250,0.3)',
                           paddingBottom: 1,
                         }}>{item.urlLabel ?? item.url}</a>
@@ -401,7 +401,7 @@ export default function SetupGuidePage() {
       {completedCount === STEPS.length && (
         <div style={{ marginTop: 32, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '20px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 24, marginBottom: 8 }}>🎉</div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#22c55e', marginBottom: 4 }}>Phase 2 Setup Complete</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--fm)', marginBottom: 4 }}>Phase 2 Setup Complete</div>
           <div style={{ fontSize: 13, color: '#7a8299' }}>Morning briefs will land in your inbox at 08:00 UAE time. Gmail and Calendar are connected. Live Data is active.</div>
         </div>
       )}

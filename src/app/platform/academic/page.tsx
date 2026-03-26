@@ -2,19 +2,19 @@
 import { useEffect, useState, useCallback } from 'react'
 import { formatRelative, formatDate } from '@/lib/utils'
 
-const ACCENT   = '#6c8eff'
+const ACCENT   = 'var(--academic)'
 const ACCENT10 = 'rgba(108,142,255,0.08)'
 
 const STATUS_COLOURS: Record<string, string> = {
   not_started:    'var(--pios-dim)',
-  in_progress:    '#6c8eff',
-  draft_complete: '#f59e0b',
-  under_review:   '#a78bfa',
-  submitted:      '#2dd4a0',
-  passed:         '#22c55e',
-  failed:         '#ef4444',
-  enrolled:       '#6c8eff',
-  complete:       '#22c55e',
+  in_progress:    'var(--academic)',
+  draft_complete: 'var(--saas)',
+  under_review:   'var(--ai)',
+  submitted:      'var(--fm)',
+  passed:         'var(--fm)',
+  failed:         'var(--dng)',
+  enrolled:       'var(--academic)',
+  complete:       'var(--fm)',
 }
 
 function Badge({ status }: { status: string }) {
@@ -195,9 +195,9 @@ export default function AcademicPage() {
           <p style={{ color:'var(--pios-muted)', fontSize:13 }}>DBA · University of Portsmouth · AI-enabled forecasting in GCC FM contexts</p>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAddMod(!showAddMod)} style={{ fontSize:12 }}>+ Module</button>
-          <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAddSes(!showAddSes)} style={{ fontSize:12 }}>+ Session</button>
-          <button className="pios-btn pios-btn-primary" onClick={()=>setShowAddCh(!showAddCh)} style={{ fontSize:12 }}>+ Chapter</button>
+          <button className="btn-v3-ghost" onClick={()=>setShowAddMod(!showAddMod)} style={{ fontSize:12 }}>+ Module</button>
+          <button className="btn-v3-ghost" onClick={()=>setShowAddSes(!showAddSes)} style={{ fontSize:12 }}>+ Session</button>
+          <button className="btn-v3-primary" onClick={()=>setShowAddCh(!showAddCh)} style={{ fontSize:12 }}>+ Chapter</button>
         </div>
       </div>
 
@@ -205,13 +205,13 @@ export default function AcademicPage() {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
         {[
           { label:'Thesis progress', value:`${thesisPct}%`, sub:`${totalWords.toLocaleString()} / ${targetWords.toLocaleString()} words`, colour:ACCENT },
-          { label:'Chapters done', value:`${chapsDone}/${chapters.length}`, sub:'draft complete or submitted', colour:'#a78bfa' },
-          { label:'Modules done', value:`${modsDone}/${modules.length}`, sub:'passed or complete', colour:'#2dd4a0' },
-          { label:'Supervision', value:sessions.length, sub:'sessions logged', colour:'#f59e0b' },
-          { label:'Words/day needed', value: wordsPerDay ? wordsPerDay.toLocaleString() : '—', sub: daysToDeadline ? `${daysToDeadline} days to deadline` : 'no deadline set', colour: wordsPerDay && wordsPerDay > 500 ? '#ef4444' : wordsPerDay && wordsPerDay > 250 ? '#f59e0b' : '#22c55e' },
-          { label:'Written this week', value: weeklyDelta !== null ? weeklyDelta.toLocaleString() : '—', sub: weeklyDelta !== null ? (weeklyDelta >= (wordsPerDay??0)*7 ? 'On pace ✓' : 'Below pace') : 'No snapshot yet', colour: weeklyDelta === null ? '#64748b' : weeklyDelta >= (wordsPerDay??0)*7 ? '#22c55e' : '#f59e0b' },
+          { label:'Chapters done', value:`${chapsDone}/${chapters.length}`, sub:'draft complete or submitted', colour:'var(--ai)' },
+          { label:'Modules done', value:`${modsDone}/${modules.length}`, sub:'passed or complete', colour:'var(--fm)' },
+          { label:'Supervision', value:sessions.length, sub:'sessions logged', colour:'var(--saas)' },
+          { label:'Words/day needed', value: wordsPerDay ? wordsPerDay.toLocaleString() : '—', sub: daysToDeadline ? `${daysToDeadline} days to deadline` : 'no deadline set', colour: wordsPerDay && wordsPerDay > 500 ? 'var(--dng)' : wordsPerDay && wordsPerDay > 250 ? 'var(--saas)' : 'var(--fm)' },
+          { label:'Written this week', value: weeklyDelta !== null ? weeklyDelta.toLocaleString() : '—', sub: weeklyDelta !== null ? (weeklyDelta >= (wordsPerDay??0)*7 ? 'On pace ✓' : 'Below pace') : 'No snapshot yet', colour: weeklyDelta === null ? '#64748b' : weeklyDelta >= (wordsPerDay??0)*7 ? 'var(--fm)' : 'var(--saas)' },
         ].map(s=>(
-          <div key={(s as Record<string,unknown>).label as string} className="pios-card-sm" style={{ padding:'14px 16px' }}>
+          <div key={(s as Record<string,unknown>).label as string} className="card-v3-sm" style={{ padding:'14px 16px' }}>
             <div style={{ fontSize:22, fontWeight:800, color:s.colour, marginBottom:2, lineHeight:1 }}>{s.value}</div>
             <div style={{ fontSize:12, fontWeight:600, marginBottom:2 }}>{s.label}</div>
             <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{s.sub}</div>
@@ -221,72 +221,72 @@ export default function AcademicPage() {
 
       {/* Add chapter form */}
       {showAddCh && (
-        <div className="pios-card" style={{ marginBottom:16, borderColor:ACCENT+'40' }}>
+        <div className="card-v3" style={{ marginBottom:16, borderColor:ACCENT+'40' }}>
           <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:ACCENT }}>Add Thesis Chapter</div>
           <div style={{ display:'grid', gridTemplateColumns:'60px 1fr auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Ch #" type="number" value={chForm.chapter_num} onChange={e=>setChForm(p=>({...p,chapter_num:e.target.value}))} />
-            <input className="pios-input" placeholder="Chapter title…" value={chForm.title} onChange={e=>setChForm(p=>({...p,title:e.target.value}))} />
-            <input className="pios-input" placeholder="Words" type="number" style={{ width:100 }} value={chForm.word_count} onChange={e=>setChForm(p=>({...p,word_count:e.target.value}))} />
-            <input className="pios-input" placeholder="Target" type="number" style={{ width:100 }} value={chForm.target_words} onChange={e=>setChForm(p=>({...p,target_words:e.target.value}))} />
+            <input className="inp-v3" placeholder="Ch #" type="number" value={chForm.chapter_num} onChange={e=>setChForm(p=>({...p,chapter_num:e.target.value}))} />
+            <input className="inp-v3" placeholder="Chapter title…" value={chForm.title} onChange={e=>setChForm(p=>({...p,title:e.target.value}))} />
+            <input className="inp-v3" placeholder="Words" type="number" style={{ width:100 }} value={chForm.word_count} onChange={e=>setChForm(p=>({...p,word_count:e.target.value}))} />
+            <input className="inp-v3" placeholder="Target" type="number" style={{ width:100 }} value={chForm.target_words} onChange={e=>setChForm(p=>({...p,target_words:e.target.value}))} />
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Notes (optional)…" value={chForm.notes} onChange={e=>setChForm(p=>({...p,notes:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={chForm.status} onChange={e=>setChForm(p=>({...p,status:e.target.value}))}>
+            <input className="inp-v3" placeholder="Notes (optional)…" value={chForm.notes} onChange={e=>setChForm(p=>({...p,notes:e.target.value}))} />
+            <select className="inp-v3" style={{ width:'auto' }} value={chForm.status} onChange={e=>setChForm(p=>({...p,status:e.target.value}))}>
               {['not_started','in_progress','draft_complete','under_review','submitted'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
             </select>
           </div>
           <div style={{ display:'flex', gap:8 }}>
-            <button className="pios-btn pios-btn-primary" onClick={addChapter} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Add Chapter'}</button>
-            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAddCh(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="btn-v3-primary" onClick={addChapter} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Add Chapter'}</button>
+            <button className="btn-v3-ghost" onClick={()=>setShowAddCh(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* Add module form */}
       {showAddMod && (
-        <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
-          <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'#a78bfa' }}>Add Programme Module</div>
+        <div className="card-v3" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'var(--ai)' }}>Add Programme Module</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Module title…" value={modForm.title} onChange={e=>setModForm(p=>({...p,title:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={modForm.module_type} onChange={e=>setModForm(p=>({...p,module_type:e.target.value}))}>
+            <input className="inp-v3" placeholder="Module title…" value={modForm.title} onChange={e=>setModForm(p=>({...p,title:e.target.value}))} />
+            <select className="inp-v3" style={{ width:'auto' }} value={modForm.module_type} onChange={e=>setModForm(p=>({...p,module_type:e.target.value}))}>
               {['taught','research','viva','conference','elective'].map(t=><option key={t} value={t}>{t}</option>)}
             </select>
-            <select className="pios-input" style={{ width:'auto' }} value={modForm.status} onChange={e=>setModForm(p=>({...p,status:e.target.value}))}>
+            <select className="inp-v3" style={{ width:'auto' }} value={modForm.status} onChange={e=>setModForm(p=>({...p,status:e.target.value}))}>
               {['enrolled','in_progress','submitted','passed','failed'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
             </select>
-            <input type="date" className="pios-input" style={{ width:'auto' }} value={modForm.deadline} onChange={e=>setModForm(p=>({...p,deadline:e.target.value}))} />
-            <input className="pios-input" placeholder="Credits" type="number" style={{ width:80 }} value={modForm.credits} onChange={e=>setModForm(p=>({...p,credits:e.target.value}))} />
+            <input type="date" className="inp-v3" style={{ width:'auto' }} value={modForm.deadline} onChange={e=>setModForm(p=>({...p,deadline:e.target.value}))} />
+            <input className="inp-v3" placeholder="Credits" type="number" style={{ width:80 }} value={modForm.credits} onChange={e=>setModForm(p=>({...p,credits:e.target.value}))} />
           </div>
           <div style={{ display:'flex', gap:8 }}>
-            <button className="pios-btn pios-btn-primary" onClick={addModule} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Add Module'}</button>
-            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAddMod(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="btn-v3-primary" onClick={addModule} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Add Module'}</button>
+            <button className="btn-v3-ghost" onClick={()=>setShowAddMod(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* Add session form */}
       {showAddSes && (
-        <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(245,158,11,0.3)' }}>
-          <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'#f59e0b' }}>Log Supervision Session</div>
+        <div className="card-v3" style={{ marginBottom:16, borderColor:'rgba(245,158,11,0.3)' }}>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'var(--saas)' }}>Log Supervision Session</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto', gap:8, marginBottom:8 }}>
-            <input className="pios-input" placeholder="Supervisor name…" value={sesForm.supervisor} onChange={e=>setSesForm(p=>({...p,supervisor:e.target.value}))} />
-            <input type="date" className="pios-input" style={{ width:'auto' }} value={sesForm.session_date} onChange={e=>setSesForm(p=>({...p,session_date:e.target.value}))} />
-            <select className="pios-input" style={{ width:'auto' }} value={sesForm.format} onChange={e=>setSesForm(p=>({...p,format:e.target.value}))}>
+            <input className="inp-v3" placeholder="Supervisor name…" value={sesForm.supervisor} onChange={e=>setSesForm(p=>({...p,supervisor:e.target.value}))} />
+            <input type="date" className="inp-v3" style={{ width:'auto' }} value={sesForm.session_date} onChange={e=>setSesForm(p=>({...p,session_date:e.target.value}))} />
+            <select className="inp-v3" style={{ width:'auto' }} value={sesForm.format} onChange={e=>setSesForm(p=>({...p,format:e.target.value}))}>
               {['online','in_person','phone','email'].map(f=><option key={f} value={f}>{f.replace('_',' ')}</option>)}
             </select>
-            <input className="pios-input" placeholder="Mins" type="number" style={{ width:70 }} value={sesForm.duration_mins} onChange={e=>setSesForm(p=>({...p,duration_mins:e.target.value}))} />
+            <input className="inp-v3" placeholder="Mins" type="number" style={{ width:70 }} value={sesForm.duration_mins} onChange={e=>setSesForm(p=>({...p,duration_mins:e.target.value}))} />
           </div>
-          <textarea className="pios-input" placeholder="Session notes — what was discussed, feedback received…" rows={3} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.notes} onChange={e=>setSesForm(p=>({...p,notes:e.target.value}))} />
-          <textarea className="pios-input" placeholder="Action items (one per line)…" rows={2} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.action_items} onChange={e=>setSesForm(p=>({...p,action_items:e.target.value}))} />
+          <textarea className="inp-v3" placeholder="Session notes — what was discussed, feedback received…" rows={3} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.notes} onChange={e=>setSesForm(p=>({...p,notes:e.target.value}))} />
+          <textarea className="inp-v3" placeholder="Action items (one per line)…" rows={2} style={{ width:'100%', resize:'vertical', marginBottom:8, fontFamily:'inherit' }} value={sesForm.action_items} onChange={e=>setSesForm(p=>({...p,action_items:e.target.value}))} />
           <div style={{ display:'flex', gap:8 }}>
-            <button className="pios-btn pios-btn-primary" onClick={addSession} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Log Session'}</button>
-            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAddSes(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="btn-v3-primary" onClick={addSession} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Log Session'}</button>
+            <button className="btn-v3-ghost" onClick={()=>setShowAddSes(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* Thesis chapters */}
-      <div className="pios-card" style={{ marginBottom:16, borderLeft:`3px solid ${ACCENT}` }}>
+      <div className="card-v3" style={{ marginBottom:16, borderLeft:`3px solid ${ACCENT}` }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
           <div>
             <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>Thesis Chapters</div>
@@ -301,7 +301,7 @@ export default function AcademicPage() {
             </button>
             <button onClick={runAIThesisReview} disabled={aiReviewLoading || chapters.length===0}
               style={{ fontSize:11, padding:'4px 12px', borderRadius:8, border:'1px dashed rgba(167,139,250,0.4)',
-                background:'rgba(167,139,250,0.06)', color:'#a78bfa', cursor:'pointer', whiteSpace:'nowrap' as const }}>
+                background:'rgba(167,139,250,0.06)', color:'var(--ai)', cursor:'pointer', whiteSpace:'nowrap' as const }}>
               {aiReviewLoading ? '⟳ Reviewing…' : '✦ AI Review'}
             </button>
           </div>
@@ -309,26 +309,26 @@ export default function AcademicPage() {
         <Bar value={totalWords} max={targetWords} />
         {aiReview && (
           <div style={{ margin:'12px 0 0', padding:'12px 14px', borderRadius:8,
-            background:'rgba(167,139,250,0.06)', borderLeft:'3px solid #a78bfa' }}>
-            <div style={{ fontSize:11, fontWeight:700, color:'#a78bfa', marginBottom:6 }}>
+            background:'rgba(167,139,250,0.06)', borderLeft:'3px solid var(--ai)' }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'var(--ai)', marginBottom:6 }}>
               ✦ AI Thesis Review
               <span style={{ marginLeft:8, padding:'2px 8px', borderRadius:10, fontSize:10,
                 background: aiReview.pace_status==='on_track'?'rgba(34,197,94,0.15)':aiReview.pace_status==='behind'||aiReview.pace_status==='at_risk'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)',
-                color: aiReview.pace_status==='on_track'?'#22c55e':aiReview.pace_status==='behind'||aiReview.pace_status==='at_risk'?'#ef4444':'#f59e0b',
+                color: aiReview.pace_status==='on_track'?'var(--fm)':aiReview.pace_status==='behind'||aiReview.pace_status==='at_risk'?'var(--dng)':'var(--saas)',
               }}>{String(aiReview.pace_status ?? "").replace('_',' ').toUpperCase()}</span>
             </div>
             <p style={{ fontSize:12, color:'var(--pios-text)', lineHeight:1.6, margin:'0 0 8px' }}>{String(aiReview.overall_assessment ?? "")}</p>
             <p style={{ fontSize:11, color:'var(--pios-muted)', margin:'0 0 6px' }}>{String(aiReview.pace_detail ?? "")}</p>
             {Boolean(aiReview.risk) && (
-              <p style={{ fontSize:11, color:'#f59e0b', margin:'0 0 6px' }}>⚠ {String(aiReview.risk ?? "")}</p>
+              <p style={{ fontSize:11, color:'var(--saas)', margin:'0 0 6px' }}>⚠ {String(aiReview.risk ?? "")}</p>
             )}
             {Array.isArray(aiReview.immediate_actions) && ((aiReview.immediate_actions as string[]) ?? []).length > 0 && (
               <div style={{ marginTop:8 }}>
                 <div style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', marginBottom:4 }}>IMMEDIATE ACTIONS</div>
                 {(aiReview.immediate_actions as string[]).map((a:string, i:number) => (
                   <div key={i} style={{ fontSize:11, color:'var(--pios-text)', padding:'3px 0',
-                    borderTop:'1px solid rgba(167,139,250,0.1)', display:'flex', gap:8 }}>
-                    <span style={{ color:'#a78bfa', minWidth:14 }}>{i+1}.</span>{a}
+                    borderTop:'1px solid var(--ai-subtle)', display:'flex', gap:8 }}>
+                    <span style={{ color:'var(--ai)', minWidth:14 }}>{i+1}.</span>{a}
                   </div>
                 ))}
               </div>
@@ -356,13 +356,13 @@ export default function AcademicPage() {
                     <Bar value={editWords[ch.id]??ch.word_count??0} max={ch.target_words??8000} />
                     {editing ? (
                       <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto', gap:8, marginTop:10 }}>
-                        <input className="pios-input" type="number" placeholder="Word count" value={editWords[ch.id]??0} onChange={e=>setEditWords(p=>({...p,[ch.id]:parseInt(e.target.value)||0}))} autoFocus style={{ fontSize:13 }} />
-                        <select className="pios-input" style={{ width:'auto', fontSize:12 }} value={editStatus[ch.id]??ch.status} onChange={e=>setEditStatus(p=>({...p,[ch.id]:e.target.value}))}>
+                        <input className="inp-v3" type="number" placeholder="Word count" value={editWords[ch.id]??0} onChange={e=>setEditWords(p=>({...p,[ch.id]:parseInt(e.target.value)||0}))} autoFocus style={{ fontSize:13 }} />
+                        <select className="inp-v3" style={{ width:'auto', fontSize:12 }} value={editStatus[ch.id]??ch.status} onChange={e=>setEditStatus(p=>({...p,[ch.id]:e.target.value}))}>
                           {['not_started','in_progress','draft_complete','under_review','submitted','passed'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
                         </select>
                         <div style={{ display:'flex', gap:4 }}>
-                          <button className="pios-btn pios-btn-primary" onClick={()=>saveChapter(ch.id)} disabled={saving} style={{ fontSize:11, padding:'6px 12px' }}>{saving?'…':'Save'}</button>
-                          <button className="pios-btn pios-btn-ghost" onClick={()=>setEditingId(null)} style={{ fontSize:11, padding:'6px 10px' }}>✕</button>
+                          <button className="btn-v3-primary" onClick={()=>saveChapter(ch.id)} disabled={saving} style={{ fontSize:11, padding:'6px 12px' }}>{saving?'…':'Save'}</button>
+                          <button className="btn-v3-ghost" onClick={()=>setEditingId(null)} style={{ fontSize:11, padding:'6px 10px' }}>✕</button>
                         </div>
                       </div>
                     ) : (
@@ -385,7 +385,7 @@ export default function AcademicPage() {
 
       {/* Modules + Sessions */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-        <div className="pios-card">
+        <div className="card-v3">
           <div style={{ fontSize:13, fontWeight:700, marginBottom:14 }}>Programme Modules</div>
           {modules.length===0 ? <p style={{ color:'var(--pios-dim)', fontSize:12, textAlign:'center', padding:'20px 0' }}>No modules yet</p> : (
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
@@ -408,7 +408,7 @@ export default function AcademicPage() {
           )}
         </div>
 
-        <div className="pios-card">
+        <div className="card-v3">
           <div style={{ fontSize:13, fontWeight:700, marginBottom:14 }}>Supervision Log</div>
           {sessions.length===0 ? <p style={{ color:'var(--pios-dim)', fontSize:12, textAlign:'center', padding:'20px 0' }}>No sessions logged yet</p> : (
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
@@ -423,7 +423,7 @@ export default function AcademicPage() {
                   {(Number(s.action_items?.length ?? 0) > 0)&&(
                     <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
                       {String(s.action_items ?? '').split('\n').filter(Boolean).slice(0,3).map((item:string,i:number)=>(
-                        <div key={i} style={{ fontSize:10, color:'#f59e0b', display:'flex', gap:4 }}>
+                        <div key={i} style={{ fontSize:10, color:'var(--saas)', display:'flex', gap:4 }}>
                           <span>▶</span><span style={{ lineHeight:1.4 }}>{item}</span>
                         </div>
                       ))}
@@ -442,8 +442,8 @@ export default function AcademicPage() {
 // ─── DBA Milestones Section ───────────────────────────────────────────────────
 const MILESTONE_STATUS_COLOURS: Record<string, string> = {
   upcoming:    '#60a5fa',
-  in_progress: '#f59e0b',
-  submitted:   '#a78bfa',
+  in_progress: 'var(--saas)',
+  submitted:   'var(--ai)',
   passed:      '#34d399',
   failed:      '#f87171',
   deferred:    '#94a3b8',
@@ -514,7 +514,7 @@ function MilestonesSection() {
   if (loading) return null
 
   return (
-    <div className="pios-card">
+    <div className="card-v3">
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
         <div>
           <div style={{ fontSize:13, fontWeight:700 }}>DBA Programme Milestones</div>

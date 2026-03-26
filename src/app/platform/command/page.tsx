@@ -16,18 +16,18 @@ const BIG: React.CSSProperties   = { fontSize: 28, fontWeight: 800, lineHeight: 
 const SUB: React.CSSProperties   = { fontSize: 12, color: 'var(--pios-muted)', marginTop: 4 }
 
 const CATEGORY_COLOURS: Record<string, string> = {
-  industry: '#2dd4a0', technology: '#6c8eff', regulatory: '#a78bfa',
-  academic: '#f59e0b', business: '#e05a7a', personal: '#94a3b8',
+  industry: 'var(--fm)', technology: 'var(--academic)', regulatory: 'var(--ai)',
+  academic: 'var(--saas)', business: 'var(--dng)', personal: '#94a3b8',
 }
 
 function StatusDot({ ok }: { ok: boolean }) {
-  return <span style={{ display:'inline-block', width:7, height:7, borderRadius:'50%', background:ok?'#22c55e':'#ef4444', marginRight:6, flexShrink:0, boxShadow:ok?'0 0 6px rgba(34,197,94,0.5)':'0 0 6px rgba(239,68,68,0.5)' }} />
+  return <span style={{ display:'inline-block', width:7, height:7, borderRadius:'50%', background:ok?'var(--fm)':'var(--dng)', marginRight:6, flexShrink:0, boxShadow:ok?'0 0 6px rgba(34,197,94,0.5)':'0 0 6px rgba(239,68,68,0.5)' }} />
 }
 function Pill({ color, children }: { color: string; children: React.ReactNode }) {
   return <span style={{ display:'inline-block', padding:'2px 8px', borderRadius:20, fontSize:11, fontWeight:600, background:`${color}20`, color }}>{children}</span>
 }
 function Spinner({ label = 'Loading…' }: { label?: string }) {
-  return <div style={{ display:'flex', alignItems:'center', gap:8, color:'var(--pios-muted)', fontSize:13 }}><div style={{ width:14, height:14, border:'2px solid rgba(167,139,250,0.2)', borderTop:'2px solid #a78bfa', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />{label}</div>
+  return <div style={{ display:'flex', alignItems:'center', gap:8, color:'var(--pios-muted)', fontSize:13 }}><div style={{ width:14, height:14, border:'2px solid rgba(139,124,248,0.2)', borderTop:'2px solid var(--ai)', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />{label}</div>
 }
 function formatSAR(n: number) {
   if (n >= 1_000_000) return `SAR ${(n/1_000_000).toFixed(1)}M`
@@ -56,7 +56,7 @@ function FeedItem({ item, showRelevance }: { item: FeedItemType; showRelevance: 
             <span>·</span>
             <span>{String(item.published_relative ?? 'Recent')}</span>
             {Boolean(item.category_tag) && <Pill color="#64748b">{String(item.category_tag ?? "")}</Pill>}
-            {showRelevance && (item.relevance as number) >= 4 && <Pill color="#22c55e">High relevance</Pill>}
+            {showRelevance && (item.relevance as number) >= 4 && <Pill color="var(--fm)">High relevance</Pill>}
           </div>
         </div>
         <span style={{ fontSize:16, marginTop:1, flexShrink:0 }}>{expanded ? '▲' : '▼'}</span>
@@ -65,13 +65,13 @@ function FeedItem({ item, showRelevance }: { item: FeedItemType; showRelevance: 
         <div style={{ marginTop:10, paddingTop:10, borderTop:'1px solid var(--pios-border)' }}>
           {Boolean(item.summary) && <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.6, marginBottom:8 }}>{typeof item.summary === 'string' ? item.summary : String(item.summary ?? '')}</p>}
           {Boolean(item.insight) && (
-            <div style={{ padding:'8px 12px', borderRadius:6, background:'rgba(108,142,255,0.08)', borderLeft:'2px solid #6c8eff', fontSize:12, color:'var(--pios-text)' }}>
+            <div style={{ padding:'8px 12px', borderRadius:6, background:'rgba(108,142,255,0.08)', borderLeft:'2px solid var(--academic)', fontSize:12, color:'var(--pios-text)' }}>
               💡 {String(item.insight ?? "")}
             </div>
           )}
           {Boolean(item.source_url) && (
             <a href={String(item.source_url ?? "")} target="_blank" rel="noopener noreferrer"
-              style={{ display:'inline-block', marginTop:8, fontSize:11, color:'#6c8eff' }}
+              style={{ display:'inline-block', marginTop:8, fontSize:11, color:'var(--academic)' }}
               onClick={e => e.stopPropagation()}>
               Read source →
             </a>
@@ -124,7 +124,7 @@ function FeedCard({ feed, showRelevance, onRefresh, onEdit, onDelete }: {
             {fetching ? '⟳' : '↻ Refresh'}
           </button>
           <button onClick={() => onEdit(feed)} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--pios-border)', background:'none', color:'var(--pios-muted)', cursor:'pointer' }}>✎</button>
-          <button onClick={() => onDelete(feed.id)} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', color:'#ef4444', cursor:'pointer' }}>✕</button>
+          <button onClick={() => onDelete(feed.id)} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid rgba(239,68,68,0.2)', background:'none', color:'var(--dng)', cursor:'pointer' }}>✕</button>
         </div>
       </div>
 
@@ -202,64 +202,64 @@ function FeedFormModal({ feed, onSave, onClose }: { feed: Record<string,unknown>
           <div style={{ display:'grid', gridTemplateColumns:'52px 1fr', gap:10 }}>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Icon</div>
-              <input className="pios-input" value={String(form.emoji ?? "")} onChange={e=>f('emoji',e.target.value)} style={{ textAlign:'center', fontSize:20 }} maxLength={2} />
+              <input className="inp-v3" value={String(form.emoji ?? "")} onChange={e=>f('emoji',e.target.value)} style={{ textAlign:'center', fontSize:20 }} maxLength={2} />
             </div>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Feed label *</div>
-              <input className="pios-input" placeholder="e.g. GCC FM Market" value={String(form.label ?? "")} onChange={e=>f('label',e.target.value)} />
+              <input className="inp-v3" placeholder="e.g. GCC FM Market" value={String(form.label ?? "")} onChange={e=>f('label',e.target.value)} />
             </div>
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Topic / search prompt * <span style={{ color:'var(--pios-dim)' }}>(what to search for)</span></div>
-            <input className="pios-input" placeholder="e.g. facilities management GCC Saudi Arabia UAE market news" value={String(form.topic ?? "")} onChange={e=>f('topic',e.target.value)} />
+            <input className="inp-v3" placeholder="e.g. facilities management GCC Saudi Arabia UAE market news" value={String(form.topic ?? "")} onChange={e=>f('topic',e.target.value)} />
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Description</div>
-            <input className="pios-input" placeholder="Brief description of what this feed covers" value={String(form.description ?? "")} onChange={e=>f('description',e.target.value)} />
+            <input className="inp-v3" placeholder="Brief description of what this feed covers" value={String(form.description ?? "")} onChange={e=>f('description',e.target.value)} />
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Keywords <span style={{ color:'var(--pios-dim)' }}>(comma-separated)</span></div>
-            <input className="pios-input" placeholder="NEOM, Qiddiya, smart buildings, ISO 55001" value={String(form.keywords ?? "")} onChange={e=>f('keywords',e.target.value)} />
+            <input className="inp-v3" placeholder="NEOM, Qiddiya, smart buildings, ISO 55001" value={String(form.keywords ?? "")} onChange={e=>f('keywords',e.target.value)} />
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Preferred sources <span style={{ color:'var(--pios-dim)' }}>(comma-separated)</span></div>
-            <input className="pios-input" placeholder="FM World, MEED, RICS, Arab News" value={String(form.sources ?? "")} onChange={e=>f('sources',e.target.value)} />
+            <input className="inp-v3" placeholder="FM World, MEED, RICS, Arab News" value={String(form.sources ?? "")} onChange={e=>f('sources',e.target.value)} />
           </div>
 
           <div>
             <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Exclude terms <span style={{ color:'var(--pios-dim)' }}>(comma-separated)</span></div>
-            <input className="pios-input" placeholder="terms to filter out" value={String(form.exclude_terms ?? "")} onChange={e=>f('exclude_terms',e.target.value)} />
+            <input className="inp-v3" placeholder="terms to filter out" value={String(form.exclude_terms ?? "")} onChange={e=>f('exclude_terms',e.target.value)} />
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Category</div>
-              <select className="pios-input" value={String(form.category ?? "")} onChange={e=>f('category',e.target.value)}>
+              <select className="inp-v3" value={String(form.category ?? "")} onChange={e=>f('category',e.target.value)}>
                 {Object.entries({ industry:'Industry', technology:'Technology', regulatory:'Regulatory', academic:'Academic', business:'Business', personal:'Personal' }).map(([k,v])=><option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Refresh</div>
-              <select className="pios-input" value={String(form.refresh_freq ?? "")} onChange={e=>f('refresh_freq',e.target.value)}>
+              <select className="inp-v3" value={String(form.refresh_freq ?? "")} onChange={e=>f('refresh_freq',e.target.value)}>
                 {[['daily','Daily'],['hourly','Hourly'],['weekly','Weekly']].map(([k,v])=><option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4 }}>Max items</div>
-              <input className="pios-input" type="number" min={3} max={20} value={Number(form.max_items ?? 8)} onChange={e=>f('max_items',e.target.value)} />
+              <input className="inp-v3" type="number" min={3} max={20} value={Number(form.max_items ?? 8)} onChange={e=>f('max_items',e.target.value)} />
             </div>
           </div>
         </div>
 
         <div style={{ display:'flex', gap:10, marginTop:20 }}>
-          <button className="pios-btn pios-btn-primary" onClick={save} disabled={saving || !String(form.label).trim() || !String(form.topic).trim()} style={{ flex:1 }}>
+          <button className="btn-v3-primary" onClick={save} disabled={saving || !String(form.label).trim() || !String(form.topic).trim()} style={{ flex:1 }}>
             {saving ? 'Saving…' : feed ? 'Save changes' : 'Add feed'}
           </button>
-          <button className="pios-btn pios-btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn-v3-ghost" onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>
@@ -393,7 +393,7 @@ export default function CommandPage() {
             {lastRefresh && <span style={{ marginLeft:12, color:'var(--pios-dim)' }}>Updated {timeAgo(lastRefresh.toISOString())}</span>}
           </p>
         </div>
-        <button onClick={loadPlatforms} disabled={loading} className="pios-btn pios-btn-ghost" style={{ fontSize:12, opacity:loading?0.5:1 }}>
+        <button onClick={loadPlatforms} disabled={loading} className="btn-v3-ghost" style={{ fontSize:12, opacity:loading?0.5:1 }}>
           {loading ? '⟳ Refreshing…' : '⟳ Refresh'}
         </button>
       </div>
@@ -402,8 +402,8 @@ export default function CommandPage() {
       <div style={{ display:'flex', gap:4, marginBottom:20, borderBottom:'1px solid var(--pios-border)', paddingBottom:0 }}>
         {([['platforms','⚡ Platform Metrics'],['feeds','📡 Intelligence Feeds']] as const).map(([tab, label]) => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
-            padding:'8px 16px', fontSize:13, fontWeight:activeTab===tab?600:400, border:'none', borderBottom: activeTab===tab?'2px solid #6c8eff':'2px solid transparent', background:'none', cursor:'pointer',
-            color: activeTab===tab?'#6c8eff':'var(--pios-muted)', marginBottom:-1,
+            padding:'8px 16px', fontSize:13, fontWeight:activeTab===tab?600:400, border:'none', borderBottom: activeTab===tab?'2px solid var(--academic)':'2px solid transparent', background:'none', cursor:'pointer',
+            color: activeTab===tab?'var(--academic)':'var(--pios-muted)', marginBottom:-1,
           }}>{label}</button>
         ))}
       </div>
@@ -418,7 +418,7 @@ export default function CommandPage() {
               <div key={label} style={{ display:'flex', alignItems:'center', fontSize:13 }}>
                 <StatusDot ok={!!ok} />
                 <span style={{ color:ok?'var(--pios-text)':'var(--pios-dim)' }}>{label}</span>
-                {!ok && <span style={{ marginLeft:6, fontSize:11, color:'#ef4444' }}>· Not configured</span>}
+                {!ok && <span style={{ marginLeft:6, fontSize:11, color:'var(--dng)' }}>· Not configured</span>}
               </div>
             ))}
           </div>
@@ -477,13 +477,13 @@ export default function CommandPage() {
                     <div style={{ fontWeight:700, fontSize:14 }}>{repo.label}</div>
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                       {repo.head && <code style={{ fontSize:11, color:'var(--pios-muted)', background:'rgba(255,255,255,0.05)', padding:'2px 6px', borderRadius:4 }}>{repo.head}</code>}
-                      {repo.openIssues > 0 && <Pill color="#f59e0b">{repo.openIssues} issues</Pill>}
+                      {repo.openIssues > 0 && <Pill color="var(--saas)">{repo.openIssues} issues</Pill>}
                     </div>
                   </div>
                   <div style={{ display:'flex', flexDirection:'column' as const, gap:10 }}>
                     {(repo.commits ?? []).map((c: Record<string, unknown>) => (
                       <div key={(c as Record<string,unknown>).sha as string} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-                        <code style={{ fontSize:10, color:'#a78bfa', flexShrink:0, marginTop:2 }}>{String(c.sha ?? "")}</code>
+                        <code style={{ fontSize:10, color:'var(--ai)', flexShrink:0, marginTop:2 }}>{String(c.sha ?? "")}</code>
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' as const }}>{String(c.message ?? "")}</div>
                           <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{String(c.author ?? "")} · {timeAgo(String(c.date ?? ""))}</div>
@@ -499,11 +499,11 @@ export default function CommandPage() {
 
           {(!se?.connected || !is_?.connected || !gh?.connected) && !loading && (
             <div style={{ ...CARD, marginTop:8, borderColor:'rgba(167,139,250,0.3)', background:'rgba(167,139,250,0.05)' }}>
-              <div style={{ fontWeight:700, fontSize:13, marginBottom:12, color:'#a78bfa' }}>⚙ Vercel Environment Variables Needed</div>
+              <div style={{ fontWeight:700, fontSize:13, marginBottom:12, color:'var(--ai)' }}>⚙ Vercel Environment Variables Needed</div>
               <div style={{ display:'flex', flexDirection:'column' as const, gap:8, fontSize:12 }}>
-                {!se?.connected && <div><code style={{ color:'#f59e0b' }}>SUPABASE_SE_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ VeritasEdge™ service role key (Project oxqqzxvuksgzeeyhufhp)</span></div>}
-                {!is_?.connected && <div><code style={{ color:'#f59e0b' }}>SUPABASE_IS_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ InvestiScript service role key (Project dexsdwqkunnmhxcwayda)</span></div>}
-                {!gh?.connected && <div><code style={{ color:'#f59e0b' }}>GITHUB_PAT</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ GitHub PAT with repo scope</span></div>}
+                {!se?.connected && <div><code style={{ color:'var(--saas)' }}>SUPABASE_SE_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ VeritasEdge™ service role key (Project oxqqzxvuksgzeeyhufhp)</span></div>}
+                {!is_?.connected && <div><code style={{ color:'var(--saas)' }}>SUPABASE_IS_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ InvestiScript service role key (Project dexsdwqkunnmhxcwayda)</span></div>}
+                {!gh?.connected && <div><code style={{ color:'var(--saas)' }}>GITHUB_PAT</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ GitHub PAT with repo scope</span></div>}
               </div>
             </div>
           )}
@@ -521,24 +521,24 @@ export default function CommandPage() {
                   const isAtRisk = o.health === 'at_risk' || o.health === 'off_track'
                   const bar = Math.min(100, Number(o.progress ?? 0))
                   return (
-                    <div key={i} style={{ ...CARD, borderLeft: `3px solid ${isAtRisk ? '#ef4444' : '#22c55e'}` }}>
+                    <div key={i} style={{ ...CARD, borderLeft: `3px solid ${isAtRisk ? 'var(--dng)' : 'var(--fm)'}` }}>
                       <div style={{ fontSize:12, fontWeight:600, marginBottom:6, lineHeight:1.4, color:'var(--pios-text)' }}>{String(o.title ?? '')}</div>
                       <div style={{ height:4, background:'var(--pios-surface2)', borderRadius:2, marginBottom:6 }}>
-                        <div style={{ height:'100%', width:`${bar}%`, background: isAtRisk ? '#ef4444' : '#22c55e', borderRadius:2, transition:'width 0.3s' }} />
+                        <div style={{ height:'100%', width:`${bar}%`, background: isAtRisk ? 'var(--dng)' : 'var(--fm)', borderRadius:2, transition:'width 0.3s' }} />
                       </div>
                       <div style={{ display:'flex', justifyContent:'space-between', fontSize:11 }}>
-                        <span style={{ color: isAtRisk ? '#ef4444' : '#22c55e', fontWeight:700 }}>{bar}%</span>
+                        <span style={{ color: isAtRisk ? 'var(--dng)' : 'var(--fm)', fontWeight:700 }}>{bar}%</span>
                         <span style={{ color:'var(--pios-dim)' }}>{isAtRisk ? '⚠ At risk' : 'On track'} · {String(o.period ?? '')}</span>
                       </div>
                     </div>
                   )
                 })}
                 {decisions.length > 0 && (
-                  <div style={{ ...CARD, borderLeft:'3px solid #f59e0b' }}>
+                  <div style={{ ...CARD, borderLeft:'3px solid var(--saas)' }}>
                     <div style={{ ...LABEL, marginBottom:8 }}>Open Decisions</div>
                     {decisions.slice(0,3).map((d: any, i: number) => (
                       <div key={i} style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:4, display:'flex', gap:6 }}>
-                        <span style={{ color:'#f59e0b', flexShrink:0 }}>·</span>
+                        <span style={{ color:'var(--saas)', flexShrink:0 }}>·</span>
                         <span>{String(d.title ?? '')}</span>
                       </div>
                     ))}
@@ -555,7 +555,7 @@ export default function CommandPage() {
                 {/* Wellness tile */}
                 <a href="/platform/wellness" style={{ textDecoration:'none' }}>
                   {(() => {
-                    const wColor = !wellness?.today_done ? '#6b7280' : (wellness?.mood_score ?? 5) >= 7 ? '#22c55e' : (wellness?.mood_score ?? 5) >= 4 ? '#f59e0b' : '#ef4444'
+                    const wColor = !wellness?.today_done ? '#6b7280' : (wellness?.mood_score ?? 5) >= 7 ? 'var(--fm)' : (wellness?.mood_score ?? 5) >= 4 ? 'var(--saas)' : 'var(--dng)'
                     return (
                   <div style={{ ...CARD, cursor:'pointer', display:'flex', gap:14, alignItems:'center', borderLeft:`3px solid ${wColor}` }}>
                     <div style={{ fontSize:28, flexShrink:0 }}>
@@ -565,14 +565,14 @@ export default function CommandPage() {
                       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
                         <div style={{ ...LABEL }}>Wellness</div>
                         {(wellness?.streak ?? 0) > 0 && (
-                          <span style={{ fontSize:9, fontWeight:700, color:'#f97316', background:'rgba(249,115,22,0.1)', border:'1px solid rgba(249,115,22,0.2)', padding:'1px 5px', borderRadius:8 }}>
+                          <span style={{ fontSize:9, fontWeight:700, color:'var(--ops)', background:'rgba(249,115,22,0.1)', border:'1px solid rgba(249,115,22,0.2)', padding:'1px 5px', borderRadius:8 }}>
                             🔥 {wellness?.streak}d
                           </span>
                         )}
                       </div>
                       {wellness?.today_done ? (
                         <div style={{ display:'flex', gap:6, flexWrap:'wrap' as const }}>
-                          {[{l:'M',v:wellness?.mood_score,c:'#9b87f5'},{l:'E',v:wellness?.energy_score,c:'#22d3ee'},{l:'S',v:wellness?.stress_score,c:'#f97316'}].map(({l,v,c}) => (
+                          {[{l:'M',v:wellness?.mood_score,c:'var(--ai)'},{l:'E',v:wellness?.energy_score,c:'var(--pro)'},{l:'S',v:wellness?.stress_score,c:'var(--ops)'}].map(({l,v,c}) => (
                             <span key={l} style={{ fontSize:11, fontWeight:700, color:c, background:c+'18', border:`1px solid ${c}30`, padding:'1px 6px', borderRadius:5 }}>{l}:{v}</span>
                           ))}
                         </div>
@@ -586,7 +586,7 @@ export default function CommandPage() {
                 </a>
 
                 {/* Renewal alerts tile */}
-                <div style={{ ...CARD, borderLeft:`3px solid ${ipRenewCount + ctRenewCount > 0 ? '#ef4444' : '#22c55e'}` }}>
+                <div style={{ ...CARD, borderLeft:`3px solid ${ipRenewCount + ctRenewCount > 0 ? 'var(--dng)' : 'var(--fm)'}` }}>
                   <div style={{ ...LABEL, marginBottom:8 }}>
                     {ipRenewCount + ctRenewCount > 0 ? `⚠ ${ipRenewCount + ctRenewCount} Renewal${ipRenewCount + ctRenewCount > 1 ? 's' : ''} Due (90d)` : '✓ No Renewals Due'}
                   </div>
@@ -595,8 +595,8 @@ export default function CommandPage() {
                   ) : (
                     <div style={{ display:'flex', gap:12 }}>
                       {ipRenewCount > 0 && (
-                        <a href="/platform/ip-vault" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#a78bfa' }}>
-                          <span style={{ fontSize:9, fontWeight:700, background:'rgba(167,139,250,0.15)', border:'1px solid rgba(167,139,250,0.3)', padding:'2px 6px', borderRadius:6 }}>
+                        <a href="/platform/ip-vault" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:4, fontSize:11, color:'var(--ai)' }}>
+                          <span style={{ fontSize:9, fontWeight:700, background:'var(--ai-subtle)', border:'1px solid rgba(167,139,250,0.3)', padding:'2px 6px', borderRadius:6 }}>
                             {ipRenewCount} IP
                           </span>
                           <span style={{ color:'var(--pios-dim)' }}>→</span>
@@ -622,7 +622,7 @@ export default function CommandPage() {
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:20, flexWrap:'wrap' as const }}>
             <div style={{ display:'flex', gap:10, alignItems:'center' }}>
               <span style={{ fontSize:13, color:'var(--pios-muted)' }}>{activeFeeds.length} active feed{activeFeeds.length !== 1 ? 's' : ''}</span>
-              <button onClick={refreshAllFeeds} className="pios-btn pios-btn-ghost" style={{ fontSize:12 }}>↻ Refresh all</button>
+              <button onClick={refreshAllFeeds} className="btn-v3-ghost" style={{ fontSize:12 }}>↻ Refresh all</button>
             </div>
             <div style={{ display:'flex', gap:8, alignItems:'center' }}>
               {/* Layout toggle */}
@@ -641,7 +641,7 @@ export default function CommandPage() {
                 <input type="checkbox" checked={Boolean(feedSettings.brief_include_feeds)} onChange={e => updateFeedSetting('brief_include_feeds', e.target.checked)} />
                 Include in brief
               </label>
-              <button onClick={() => setShowAddFeed(true)} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>+ Add feed</button>
+              <button onClick={() => setShowAddFeed(true)} className="btn-v3-primary" style={{ fontSize:12 }}>+ Add feed</button>
             </div>
           </div>
 
@@ -654,7 +654,7 @@ export default function CommandPage() {
               <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:20, maxWidth:400, margin:'0 auto 20px' }}>
                 Run migration 005 in Supabase to seed your default feeds, or add your first custom feed now.
               </p>
-              <button onClick={() => setShowAddFeed(true)} className="pios-btn pios-btn-primary" style={{ fontSize:13 }}>Add your first feed</button>
+              <button onClick={() => setShowAddFeed(true)} className="btn-v3-primary" style={{ fontSize:13 }}>Add your first feed</button>
             </div>
           ) : (
             <div style={{

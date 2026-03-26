@@ -27,11 +27,11 @@ interface SmokeResult {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-  pass:    { bg: 'rgba(34,197,94,0.1)',   text: '#22c55e', dot: '#22c55e', label: 'PASS' },
-  fail:    { bg: 'rgba(239,68,68,0.1)',   text: '#ef4444', dot: '#ef4444', label: 'FAIL' },
-  warn:    { bg: 'rgba(245,158,11,0.1)',  text: '#f59e0b', dot: '#f59e0b', label: 'WARN' },
+  pass:    { bg: 'rgba(34,197,94,0.1)',   text: 'var(--fm)', dot: 'var(--fm)', label: 'PASS' },
+  fail:    { bg: 'rgba(239,68,68,0.1)',   text: 'var(--dng)', dot: 'var(--dng)', label: 'FAIL' },
+  warn:    { bg: 'rgba(245,158,11,0.1)',  text: 'var(--saas)', dot: 'var(--saas)', label: 'WARN' },
   skip:    { bg: 'rgba(107,114,128,0.1)', text: '#6b7280', dot: '#6b7280', label: 'SKIP' },
-  running: { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa', dot: '#a78bfa', label: '…' },
+  running: { bg: 'var(--ai-subtle)', text: 'var(--ai)', dot: 'var(--ai)', label: '…' },
   idle:    { bg: 'rgba(107,114,128,0.06)', text: '#9ca3af', dot: '#d1d5db', label: '—' },
 }
 
@@ -78,7 +78,7 @@ export default function SmokePage() {
             disabled={running}
             style={{
               padding: '10px 24px', borderRadius: 8, fontWeight: 600, fontSize: 13,
-              background: running ? 'rgba(167,139,250,0.2)' : 'var(--ai)',
+              background: running ? 'rgba(139,124,248,0.2)' : 'var(--ai)',
               color: running ? 'var(--ai)' : '#fff',
               border: `1px solid ${running ? 'rgba(167,139,250,0.3)' : 'transparent'}`,
               cursor: running ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
@@ -99,7 +99,7 @@ export default function SmokePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 18 }}>{criticalFail ? '🔴' : warnCount > 0 ? '🟡' : '🟢'}</span>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: criticalFail ? '#ef4444' : warnCount > 0 ? '#f59e0b' : '#22c55e' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: criticalFail ? 'var(--dng)' : warnCount > 0 ? 'var(--saas)' : 'var(--fm)' }}>
                   {criticalFail ? 'CRITICAL FAILURE' : warnCount > 0 ? 'DEGRADED' : 'ALL SYSTEMS GO'}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--pios-muted)', marginTop: 1 }}>{result.summary}</div>
@@ -114,7 +114,7 @@ export default function SmokePage() {
       </div>
 
       {error && (
-        <div style={{ padding: '12px 16px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444', fontSize: 13, marginBottom: 16 }}>
+        <div style={{ padding: '12px 16px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: 'var(--dng)', fontSize: 13, marginBottom: 16 }}>
           {error}
         </div>
       )}
@@ -155,7 +155,7 @@ export default function SmokePage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{check.name}</span>
                     {check.critical && (
-                      <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 3, background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 3, background: 'rgba(239,68,68,0.15)', color: 'var(--dng)' }}>
                         CRITICAL
                       </span>
                     )}
@@ -183,7 +183,7 @@ export default function SmokePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {result.checks.filter(c => c.status === 'fail' || c.status === 'warn').map(c => (
               <div key={c.id} style={{ fontSize: 12, color: 'var(--pios-muted)', display: 'flex', gap: 8 }}>
-                <span style={{ color: c.status === 'fail' ? '#ef4444' : '#f59e0b', flexShrink: 0 }}>
+                <span style={{ color: c.status === 'fail' ? 'var(--dng)' : 'var(--saas)', flexShrink: 0 }}>
                   {c.status === 'fail' ? '✗' : '⚠'}
                 </span>
                 <span><strong style={{ color: 'var(--pios-text)' }}>{c.name}:</strong> {c.detail}</span>
@@ -191,7 +191,7 @@ export default function SmokePage() {
             ))}
           </div>
           <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link href="/platform/setup" style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, background: 'rgba(167,139,250,0.1)', color: 'var(--ai)', textDecoration: 'none', fontWeight: 600 }}>
+            <Link href="/platform/setup" style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, background: 'var(--ai-subtle)', color: 'var(--ai)', textDecoration: 'none', fontWeight: 600 }}>
               → Setup Guide
             </Link>
             <Link href="/platform/admin" style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, background: 'rgba(107,114,128,0.1)', color: 'var(--pios-muted)', textDecoration: 'none' }}>

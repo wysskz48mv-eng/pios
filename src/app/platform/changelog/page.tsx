@@ -9,7 +9,7 @@ export default function ChangelogPage() {
       version: 'v3.0.0',
       date: 'March 2026',
       badge: 'Latest',
-      badgeColor: '#a78bfa',
+      badgeColor: 'var(--ai)',
       changes: [
         { type: 'new', text: "Sprint 83: Financials — Add Snapshot form (period, revenue, expenses, payroll, cash, receivables, payables) wired to /api/financials save_snapshot" },
         { type: 'new', text: 'Sprint 82: Smart notification engine — IP/contract renewals, wellness streak break, overdue tasks, trial expiry — all deduplicated by day' },
@@ -39,7 +39,7 @@ export default function ChangelogPage() {
       version: 'v2.9.0',
       date: 'March 2026',
       badge: null,
-      badgeColor: '#22c55e',
+      badgeColor: 'var(--fm)',
       changes: [
         { type: 'new', text: 'Billing page — plan cards (Student/Individual/Team), Stripe checkout, usage limits display' },
         { type: 'new', text: 'Executive OS: Contracts tab (live data, status badges) + Financial tab (Group P&L summary)' },
@@ -111,9 +111,9 @@ export default function ChangelogPage() {
   ]
 
   const typeStyle: Record<string, { bg: string; color: string; label: string }> = {
-    new:     { bg: 'rgba(34,197,94,0.1)',   color: '#22c55e', label: 'New' },
-    fix:     { bg: 'rgba(239,68,68,0.1)',   color: '#ef4444', label: 'Fix' },
-    improve: { bg: 'rgba(167,139,250,0.1)', color: '#a78bfa', label: 'Improved' },
+    new:     { bg: 'rgba(34,197,94,0.1)',   color: 'var(--fm)', label: 'New' },
+    fix:     { bg: 'rgba(239,68,68,0.1)',   color: 'var(--dng)', label: 'Fix' },
+    improve: { bg: 'var(--ai-subtle)', color: 'var(--ai)', label: 'Improved' },
   }
 
   return (

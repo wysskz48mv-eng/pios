@@ -10,7 +10,7 @@ import { domainColour, domainLabel } from '@/lib/utils'
 // PIOS v3.0 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ACCENT  = '#a78bfa'
+const ACCENT  = 'var(--ai)'
 const TYPES   = ['general','supervision','board','client','team','interview','consultation','viva','review','one_on_one','other']
 const DOMAINS = ['academic','fm_consulting','saas','business','personal']
 const PLATFORMS = ['zoom','teams','meet','in_person','phone','other']
@@ -30,7 +30,7 @@ function Badge({ label, colour }: { label: string; colour: string }) {
 }
 
 function PriorityDot({ p }: { p: string }) {
-  const c = p==='critical'?'#ef4444':p==='high'?'#f97316':p==='medium'?'#eab308':'#22c55e'
+  const c = p==='critical'?'var(--dng)':p==='high'?'var(--ops)':p==='medium'?'#eab308':'var(--fm)'
   return <span style={{ display:'inline-block', width:7, height:7, borderRadius:'50%', background:c, marginRight:5 }} />
 }
 
@@ -173,7 +173,7 @@ export default function MeetingsPage() {
             Paste transcripts or write notes → AI extracts decisions, action items, and risks
           </p>
         </div>
-        <button onClick={() => setShowNew(v => !v)} className="pios-btn pios-btn-primary" style={{ fontSize:12 }}>
+        <button onClick={() => setShowNew(v => !v)} className="btn-v3-primary" style={{ fontSize:12 }}>
           + New meeting
         </button>
       </div>
@@ -228,10 +228,10 @@ export default function MeetingsPage() {
                 Auto-extract with AI after saving
               </label>
               <div style={{ display:'flex', gap:8 }}>
-                <button onClick={create} disabled={saving} className="pios-btn pios-btn-primary" style={{ fontSize:11 }}>
+                <button onClick={create} disabled={saving} className="btn-v3-primary" style={{ fontSize:11 }}>
                   {saving ? 'Saving…' : 'Save & Process'}
                 </button>
-                <button onClick={() => { setShowNew(false); setForm(EMPTY_FORM) }} className="pios-btn pios-btn-ghost" style={{ fontSize:11 }}>Cancel</button>
+                <button onClick={() => { setShowNew(false); setForm(EMPTY_FORM) }} className="btn-v3-ghost" style={{ fontSize:11 }}>Cancel</button>
               </div>
             </div>
           )}
@@ -258,7 +258,7 @@ export default function MeetingsPage() {
                   <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background: domainColour(String(m.domain ?? ''))+'20', color: domainColour(String(m.domain ?? '')), fontWeight:600 }}>
                     {domainLabel(String(m.domain ?? ''))}
                   </span>
-                  {m.status === 'processed' && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(34,197,94,0.12)', color:'#22c55e', fontWeight:600 }}>AI done</span>}
+                  {m.status === 'processed' && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(34,197,94,0.12)', color:'var(--fm)', fontWeight:600 }}>AI done</span>}
                   {Boolean(m.tasks_created) && <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(167,139,250,0.12)', color:ACCENT, fontWeight:600 }}>Tasks ✓</span>}
                 </div>
               </div>
@@ -311,7 +311,7 @@ export default function MeetingsPage() {
 
               {/* AI Summary */}
               {selected.ai_summary && (
-                <div style={{ padding:'12px 14px', background:'rgba(167,139,250,0.08)', border:'1px solid rgba(167,139,250,0.2)', borderRadius:10, marginBottom:16, fontSize:12, lineHeight:1.7, color:'var(--pios-text)' }}>
+                <div style={{ padding:'12px 14px', background:'var(--ai-subtle)', border:'1px solid rgba(139,124,248,0.2)', borderRadius:10, marginBottom:16, fontSize:12, lineHeight:1.7, color:'var(--pios-text)' }}>
                   <div style={{ fontSize:10, fontWeight:700, color:ACCENT, marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>✦ AI Summary</div>
                   {String(selected.ai_summary ?? "")}
                 </div>

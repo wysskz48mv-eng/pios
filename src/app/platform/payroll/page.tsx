@@ -11,33 +11,33 @@ const TABS = ['runs', 'transfers', 'claims', 'staff', 'chase'] as const
 type Tab = typeof TABS[number]
 
 const RUN_STATUS: Record<string, string> = {
-  draft:'#6c8eff', approved:'#f59e0b', remittance_sent:'#22c55e',
-  paid:'#2dd4a0', cancelled:'#64748b',
+  draft:'var(--academic)', approved:'var(--saas)', remittance_sent:'var(--fm)',
+  paid:'var(--fm)', cancelled:'#64748b',
 }
 const TRF_STATUS: Record<string, string> = {
-  queued:'#6c8eff', approved:'#f59e0b', completed:'#22c55e',
-  failed:'#ef4444', cancelled:'#64748b',
+  queued:'var(--academic)', approved:'var(--saas)', completed:'var(--fm)',
+  failed:'var(--dng)', cancelled:'#64748b',
 }
 const CLM_STATUS: Record<string, string> = {
-  submitted:'#6c8eff', queued_for_payment:'#f59e0b', paid:'#22c55e',
-  rejected:'#ef4444', draft:'#64748b',
+  submitted:'var(--academic)', queued_for_payment:'var(--saas)', paid:'var(--fm)',
+  rejected:'var(--dng)', draft:'#64748b',
 }
 
 function Badge({ label, colour }: { label: string; colour: string }) {
   return <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:colour+'20', color:colour, fontWeight:600, whiteSpace:'nowrap' as const }}>{label.replace(/_/g,' ')}</span>
 }
 function TabBtn({ active, onClick, children }: { active:boolean; onClick:()=>void; children:React.ReactNode }) {
-  return <button onClick={onClick} style={{ padding:'8px 16px', fontSize:13, fontWeight:active?600:400, border:'none', borderBottom:`2px solid ${active?'#a78bfa':'transparent'}`, background:'none', cursor:'pointer', color:active?'#a78bfa':'var(--pios-muted)', marginBottom:-1, transition:'all 0.15s' }}>{children}</button>
+  return <button onClick={onClick} style={{ padding:'8px 16px', fontSize:13, fontWeight:active?600:400, border:'none', borderBottom:`2px solid ${active?'var(--ai)':'transparent'}`, background:'none', cursor:'pointer', color:active?'var(--ai)':'var(--pios-muted)', marginBottom:-1, transition:'all 0.15s' }}>{children}</button>
 }
 function Spinner() {
   return <div style={{ display:'flex', alignItems:'center', gap:8, color:'var(--pios-muted)', fontSize:13, padding:'32px 0', justifyContent:'center' }}>
-    <div style={{ width:14, height:14, border:'2px solid rgba(167,139,250,0.2)', borderTop:'2px solid #a78bfa', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />Loading…
+    <div style={{ width:14, height:14, border:'2px solid rgba(139,124,248,0.2)', borderTop:'2px solid var(--ai)', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />Loading…
   </div>
 }
 
 const HITL_BANNER = (
-  <div style={{ padding:'10px 14px', borderRadius:8, background:'rgba(239,68,68,0.08)', borderLeft:'3px solid #ef4444', fontSize:12, color:'var(--pios-text)', marginBottom:16 }}>
-    <strong style={{ color:'#ef4444' }}>⚠ HITL Gate — All financial actions require your explicit approval.</strong> No bank transfer, remittance, or payment will execute without you clicking Approve.
+  <div style={{ padding:'10px 14px', borderRadius:8, background:'rgba(239,68,68,0.08)', borderLeft:'3px solid var(--dng)', fontSize:12, color:'var(--pios-text)', marginBottom:16 }}>
+    <strong style={{ color:'var(--dng)' }}>⚠ HITL Gate — All financial actions require your explicit approval.</strong> No bank transfer, remittance, or payment will execute without you clicking Approve.
   </div>
 )
 
@@ -105,8 +105,8 @@ function RunsTab() {
   return (
     <div>
     {banner && (
-      <div className="pios-card flex items-center gap-3 text-sm" style={{ padding:'10px 14px', marginBottom:12, borderLeft:`3px solid ${banner.ok?'#22c55e':'#ef4444'}` }}>
-        <span style={{ color: banner.ok?'#22c55e':'#ef4444' }}>{banner.msg}</span>
+      <div className="pios-card flex items-center gap-3 text-sm" style={{ padding:'10px 14px', marginBottom:12, borderLeft:`3px solid ${banner.ok?'var(--fm)':'var(--dng)'}` }}>
+        <span style={{ color: banner.ok?'var(--fm)':'var(--dng)' }}>{banner.msg}</span>
         <button onClick={()=>setBanner(null)} style={{ marginLeft:'auto', fontSize:11, color:'var(--pios-dim)' }}>✕</button>
       </div>
     )}
@@ -114,14 +114,14 @@ function RunsTab() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <div style={{ fontSize:13, color:'var(--pios-muted)' }}>{runs.length} payroll runs</div>
         <div style={{ display:'flex', gap:8 }}>
-          <button className="pios-btn pios-btn-ghost" onClick={detect} disabled={detecting} style={{ fontSize:12 }}>
+          <button className="btn-v3-ghost" onClick={detect} disabled={detecting} style={{ fontSize:12 }}>
             {detecting ? '⟳ Scanning…' : '📧 Detect from Gmail'}
           </button>
         </div>
       </div>
 
       {detectResult && (
-        <div style={{ padding:'12px 16px', borderRadius:8, background: Boolean(detectResult.detected)?'rgba(34,197,94,0.08)':'rgba(108,142,255,0.08)', borderLeft:`3px solid ${Boolean(detectResult.detected)?'#22c55e':'#6c8eff'}`, marginBottom:16, fontSize:13 }}>
+        <div style={{ padding:'12px 16px', borderRadius:8, background: Boolean(detectResult.detected)?'rgba(34,197,94,0.08)':'rgba(108,142,255,0.08)', borderLeft:`3px solid ${Boolean(detectResult.detected)?'var(--fm)':'var(--academic)'}`, marginBottom:16, fontSize:13 }}>
           {detectResult.detected
             ? <>✓ <strong>{String(detectResult.message ?? "")}</strong></>
             : String(detectResult.message ?? "")}
@@ -136,7 +136,7 @@ function RunsTab() {
               <div style={{ fontSize:32, marginBottom:12 }}>💳</div>
               <div style={{ fontSize:14, fontWeight:700, marginBottom:8 }}>No payroll runs yet</div>
               <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:16 }}>Click "Detect from Gmail" to scan for payroll emails from your accountant.</p>
-              <button className="pios-btn pios-btn-primary" onClick={detect} disabled={detecting} style={{ fontSize:13 }}>{detecting?'Scanning…':'Detect from Gmail'}</button>
+              <button className="btn-v3-primary" onClick={detect} disabled={detecting} style={{ fontSize:13 }}>{detecting?'Scanning…':'Detect from Gmail'}</button>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column' as const, gap:8 }}>
@@ -157,7 +157,7 @@ function RunsTab() {
                   </div>
                   {run.status === 'draft' && (
                     <div style={{ marginTop:10 }}>
-                      <button onClick={e=>{e.stopPropagation();approveRun(run.id)}} style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>
+                      <button onClick={e=>{e.stopPropagation();approveRun(run.id)}} style={{ fontSize:11, padding:'5px 12px', borderRadius:6, border:'1px solid var(--fm)40', background:'none', cursor:'pointer', color:'var(--fm)' }}>
                         ✓ Approve run
                       </button>
                     </div>
@@ -171,7 +171,7 @@ function RunsTab() {
         {/* Run detail */}
         {selectedRun && (
           <div>
-            <div className="pios-card" style={{ borderLeft:'3px solid #a78bfa' }}>
+            <div className="pios-card" style={{ borderLeft:'3px solid var(--ai)' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14 }}>
                 <div>
                   <div style={{ fontSize:15, fontWeight:700, marginBottom:3 }}>{selectedRun.pay_period}</div>
@@ -198,7 +198,7 @@ function RunsTab() {
                           <div style={{ fontSize:13, fontWeight:700 }}>{selectedRun.currency} {(l.net_pay ?? 0).toFixed(2)}</div>
                           <div style={{ fontSize:10, color:'var(--pios-dim)' }}>Gross {(l.gross_pay ?? 0).toFixed(2)}</div>
                         </div>
-                        {l.remittance_sent && <span style={{ fontSize:10, color:'#22c55e', marginLeft:8 }}>✓ Notified</span>}
+                        {l.remittance_sent && <span style={{ fontSize:10, color:'var(--fm)', marginLeft:8 }}>✓ Notified</span>}
                       </div>
                     ))}
                   </div>
@@ -209,12 +209,12 @@ function RunsTab() {
               {selectedRun.status === 'approved' && !selectedRun.remittance_sent_at && (
                 <div>
                   {!remitPreview ? (
-                    <button className="pios-btn pios-btn-primary" onClick={previewRemit} disabled={remitting} style={{ width:'100%', fontSize:12 }}>
+                    <button className="btn-v3-primary" onClick={previewRemit} disabled={remitting} style={{ width:'100%', fontSize:12 }}>
                       {remitting ? '⟳ Generating…' : '📨 Preview remittances'}
                     </button>
                   ) : (
                     <div>
-                      <div style={{ padding:'10px 14px', borderRadius:8, background:'rgba(167,139,250,0.08)', marginBottom:10, fontSize:12 }}>
+                      <div style={{ padding:'10px 14px', borderRadius:8, background:'var(--ai-subtle)', marginBottom:10, fontSize:12 }}>
                         <strong>{remitPreview.remittances?.length} remittance drafts ready.</strong> Review the notifications below, then confirm to queue all transfers.
                       </div>
                       {remitPreview.remittances?.slice(0,2).map((r: {staff_name:string;notification:{body?:string}}, i: number) => (
@@ -224,10 +224,10 @@ function RunsTab() {
                         </div>
                       ))}
                       <div style={{ display:'flex', gap:8, marginTop:10 }}>
-                        <button className="pios-btn pios-btn-primary" onClick={confirmRemit} disabled={remitting} style={{ flex:1, fontSize:12 }}>
+                        <button className="btn-v3-primary" onClick={confirmRemit} disabled={remitting} style={{ flex:1, fontSize:12 }}>
                           {remitting ? '⟳ Queueing…' : '✓ Queue all transfers'}
                         </button>
-                        <button className="pios-btn pios-btn-ghost" onClick={()=>setRemitPreview(null)} style={{ fontSize:12 }}>Cancel</button>
+                        <button className="btn-v3-ghost" onClick={()=>setRemitPreview(null)} style={{ fontSize:12 }}>Cancel</button>
                       </div>
                     </div>
                   )}
@@ -277,9 +277,9 @@ function TransfersTab() {
       {transfers.length > 0 && (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:16 }}>
           {[
-            { label:'Awaiting approval', value:`${transfers.filter(t=>t.status==='queued').length} · ${transfers[0]?.currency??'GBP'} ${totalQueued.toFixed(2)}`, colour:'#6c8eff' },
-            { label:'Approved — ready', value:`${transfers.filter(t=>t.status==='approved').length} · ${transfers[0]?.currency??'GBP'} ${totalApproved.toFixed(2)}`, colour:'#f59e0b' },
-            { label:'Completed', value:transfers.filter(t=>t.status==='completed').length, colour:'#22c55e' },
+            { label:'Awaiting approval', value:`${transfers.filter(t=>t.status==='queued').length} · ${transfers[0]?.currency??'GBP'} ${totalQueued.toFixed(2)}`, colour:'var(--academic)' },
+            { label:'Approved — ready', value:`${transfers.filter(t=>t.status==='approved').length} · ${transfers[0]?.currency??'GBP'} ${totalApproved.toFixed(2)}`, colour:'var(--saas)' },
+            { label:'Completed', value:transfers.filter(t=>t.status==='completed').length, colour:'var(--fm)' },
           ].map((s: {label:string;value:string|number;colour:string})=>(
             <div key={s.label as string} className="pios-card-sm" style={{ padding:'12px 14px' }}>
               <div style={{ fontSize:13, fontWeight:700, color:String(s.colour), marginBottom:3 }}>{String(s.value ?? "")}</div>
@@ -312,18 +312,18 @@ function TransfersTab() {
                 <div style={{ fontSize:11, color:'var(--pios-dim)', display:'flex', gap:10 }}>
                   {Boolean(t.recipient_email) && <span>{String(t.recipient_email ?? "")}</span>}
                   <span>{t.reference}</span>
-                  {Boolean(t.transfer_reference) && t.transfer_reference && <span style={{ color:'#22c55e' }}>Ref: {Boolean(t.transfer_reference) && t.transfer_reference}</span>}
+                  {Boolean(t.transfer_reference) && t.transfer_reference && <span style={{ color:'var(--fm)' }}>Ref: {Boolean(t.transfer_reference) && t.transfer_reference}</span>}
                 </div>
               </div>
               <div style={{ textAlign:'right' as const, flexShrink:0 }}>
                 <div style={{ fontSize:16, fontWeight:800 }}>{t.currency} {Number(t.amount).toFixed(2)}</div>
                 {t.status === 'queued' && (
-                  <button onClick={()=>approve(t.id)} disabled={actioning===t.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e', marginTop:4 }}>
+                  <button onClick={()=>approve(t.id)} disabled={actioning===t.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--fm)40', background:'none', cursor:'pointer', color:'var(--fm)', marginTop:4 }}>
                     {actioning===t.id?'…':'✓ Approve'}
                   </button>
                 )}
                 {t.status === 'approved' && (
-                  <button onClick={()=>complete(t.id)} disabled={actioning===t.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #f59e0b40', background:'none', cursor:'pointer', color:'#f59e0b', marginTop:4 }}>
+                  <button onClick={()=>complete(t.id)} disabled={actioning===t.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--saas)40', background:'none', cursor:'pointer', color:'var(--saas)', marginTop:4 }}>
                     {actioning===t.id?'…':'Mark transferred'}
                   </button>
                 )}
@@ -389,12 +389,12 @@ function ClaimsTab() {
             <button key={v} onClick={()=>{ setFilter(v); load(v) }} style={{ padding:'4px 12px', borderRadius:20, fontSize:11, border:'1px solid var(--pios-border)', background:filter===v?'var(--pios-surface)':'transparent', color:filter===v?'var(--pios-text)':'var(--pios-muted)', fontWeight:filter===v?600:400, cursor:'pointer' }}>{l}</button>
           ))}
         </div>
-        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Submit claim</button>
+        <button className="btn-v3-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Submit claim</button>
       </div>
 
       {showAdd && (
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
-          <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'#a78bfa' }}>Submit Expense Claim</div>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'var(--ai)' }}>Submit Expense Claim</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
             <input className="pios-input" placeholder="Claimant name *" value={form.claimant_name} onChange={e=>setForm(p=>({...p,claimant_name:e.target.value}))} />
             <input className="pios-input" placeholder="Email" value={form.claimant_email} onChange={e=>setForm(p=>({...p,claimant_email:e.target.value}))} />
@@ -409,8 +409,8 @@ function ClaimsTab() {
           <input className="pios-input" placeholder="Category (travel / software / equipment…)" value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))} style={{ marginBottom:8 }} />
           <input className="pios-input" placeholder="Description" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} style={{ marginBottom:10 }} />
           <div style={{ display:'flex', gap:8 }}>
-            <button className="pios-btn pios-btn-primary" onClick={submitClaim} disabled={saving} style={{ fontSize:12 }}>{saving?'Submitting…':'Submit claim'}</button>
-            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="btn-v3-primary" onClick={submitClaim} disabled={saving} style={{ fontSize:12 }}>{saving?'Submitting…':'Submit claim'}</button>
+            <button className="btn-v3-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -432,14 +432,14 @@ function ClaimsTab() {
                 </div>
                 <div style={{ fontSize:12, color:'var(--pios-muted)' }}>{String(c.description ?? "")}</div>
                 {c.claim_period && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>{String(c.claim_period ?? "")}</div>}
-                {c.rejection_reason && <div style={{ fontSize:11, color:'#ef4444' }}>Rejected: {String(c.rejection_reason ?? "")}</div>}
+                {c.rejection_reason && <div style={{ fontSize:11, color:'var(--dng)' }}>Rejected: {String(c.rejection_reason ?? "")}</div>}
               </div>
               <div style={{ textAlign:'right' as const, flexShrink:0 }}>
                 <div style={{ fontSize:16, fontWeight:800 }}>{String(c.currency ?? "")} {Number(c.amount).toFixed(2)}</div>
                 {c.status === 'submitted' && (
                   <div style={{ display:'flex', gap:6, marginTop:6, justifyContent:'flex-end' }}>
-                    <button onClick={()=>approve(c.id)} disabled={actioning===c.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #22c55e40', background:'none', cursor:'pointer', color:'#22c55e' }}>{actioning===c.id?'…':'✓ Approve'}</button>
-                    <button onClick={()=>reject(c.id)} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid #ef444440', background:'none', cursor:'pointer', color:'#ef4444' }}>Reject</button>
+                    <button onClick={()=>approve(c.id)} disabled={actioning===c.id} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--fm)40', background:'none', cursor:'pointer', color:'var(--fm)' }}>{actioning===c.id?'…':'✓ Approve'}</button>
+                    <button onClick={()=>reject(c.id)} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--dng)40', background:'none', cursor:'pointer', color:'var(--dng)' }}>Reject</button>
                   </div>
                 )}
               </div>
@@ -495,12 +495,12 @@ function StaffTab() {
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <span style={{ fontSize:13, color:'var(--pios-muted)' }}>{staff.length} active staff members</span>
-        <button className="pios-btn pios-btn-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add staff</button>
+        <button className="btn-v3-primary" onClick={()=>setShowAdd(!showAdd)} style={{ fontSize:12 }}>+ Add staff</button>
       </div>
 
       {showAdd && (
         <div className="pios-card" style={{ marginBottom:16, borderColor:'rgba(167,139,250,0.3)' }}>
-          <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'#a78bfa' }}>Add Staff Member</div>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'var(--ai)' }}>Add Staff Member</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
             <input className="pios-input" placeholder="Full name *" value={form.full_name} onChange={e=>setForm(p=>({...p,full_name:e.target.value}))} />
             <input className="pios-input" placeholder="Email *" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} />
@@ -520,8 +520,8 @@ function StaffTab() {
           </div>
           <input className="pios-input" placeholder="Bank account (last 4 digits only — never store full number)" value={form.bank_account} onChange={e=>setForm(p=>({...p,bank_account:e.target.value.slice(0,4)}))} style={{ marginBottom:10 }} maxLength={4} />
           <div style={{ display:'flex', gap:8 }}>
-            <button className="pios-btn pios-btn-primary" onClick={addStaff} disabled={saving} style={{ fontSize:12 }}>{saving?'Adding…':'Add staff member'}</button>
-            <button className="pios-btn pios-btn-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
+            <button className="btn-v3-primary" onClick={addStaff} disabled={saving} style={{ fontSize:12 }}>{saving?'Adding…':'Add staff member'}</button>
+            <button className="btn-v3-ghost" onClick={()=>setShowAdd(false)} style={{ fontSize:12 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -536,7 +536,7 @@ function StaffTab() {
           {staff.map(s => (
             <div key={s.id as string}>
             <div className="pios-card" style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(167,139,250,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'#a78bfa', flexShrink:0 }}>{s.full_name?.[0] ?? ""}</div>
+              <div style={{ width:38, height:38, borderRadius:'50%', background:'var(--ai-subtle)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, color:'var(--ai)', flexShrink:0 }}>{s.full_name?.[0] ?? ""}</div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>{String(s.full_name ?? "")}</div>
                 <div style={{ fontSize:11, color:'var(--pios-muted)', display:'flex', gap:8 }}>
@@ -553,7 +553,7 @@ function StaffTab() {
                 <button onClick={() => { setEditingId(s.id as string); setEditForm({ role: s.role, monthly_salary: s.monthly_salary, salary_currency: s.salary_currency, employment_type: s.employment_type }) }}
                   style={{ fontSize:11, padding:'4px 8px', borderRadius:5, border:'1px solid var(--pios-border)', background:'none', cursor:'pointer', color:'var(--pios-dim)' }}>✎</button>
                 <button onClick={() => deleteStaff(s.id as string)} disabled={deleting === (s.id as string)}
-                  style={{ fontSize:11, padding:'4px 8px', borderRadius:5, border:'1px solid rgba(239,68,68,0.3)', background:'none', cursor:'pointer', color:'#ef4444', opacity: deleting === (s.id as string) ? 0.5 : 1 }}>✕</button>
+                  style={{ fontSize:11, padding:'4px 8px', borderRadius:5, border:'1px solid rgba(239,68,68,0.3)', background:'none', cursor:'pointer', color:'var(--dng)', opacity: deleting === (s.id as string) ? 0.5 : 1 }}>✕</button>
               </div>
             </div>
             {editingId === (s.id as string) && (
@@ -567,8 +567,8 @@ function StaffTab() {
                 </select>
                 <input className="pios-input" type="number" placeholder="Monthly salary" value={String(editForm.monthly_salary ?? '')} onChange={e=>setEditForm((p:any)=>({...p,monthly_salary:e.target.value}))} />
                 <div style={{ display:'flex', gap:6, gridColumn:'span 2' }}>
-                  <button className="pios-btn pios-btn-primary" onClick={()=>saveEdit(s.id as string)} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save'}</button>
-                  <button className="pios-btn pios-btn-ghost" onClick={()=>setEditingId(null)} style={{ fontSize:12 }}>Cancel</button>
+                  <button className="btn-v3-primary" onClick={()=>saveEdit(s.id as string)} disabled={saving} style={{ fontSize:12 }}>{saving?'Saving…':'Save'}</button>
+                  <button className="btn-v3-ghost" onClick={()=>setEditingId(null)} style={{ fontSize:12 }}>Cancel</button>
                 </div>
               </div>
             )}
@@ -602,11 +602,11 @@ function ChaseTab() {
     }
   }
 
-  const levelColour = { reminder:'#f59e0b', escalation:'#f97316', formal:'#ef4444' }
+  const levelColour = { reminder:'var(--saas)', escalation:'var(--ops)', formal:'var(--dng)' }
 
   return (
     <div>
-      <div className="pios-card" style={{ marginBottom:16, borderLeft:'3px solid #a78bfa' }}>
+      <div className="pios-card" style={{ marginBottom:16, borderLeft:'3px solid var(--ai)' }}>
         <div style={{ fontSize:14, fontWeight:700, marginBottom:8 }}>Payroll Chase Checker</div>
         <p style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, marginBottom:14 }}>
           Checks whether payroll has been received from your accountant this month.
@@ -617,21 +617,21 @@ function ChaseTab() {
           <input className="pios-input" placeholder="Accountant email (optional)" value={accountantEmail} onChange={e=>setAccountantEmail(e.target.value)} />
           <input type="date" className="pios-input" value={expectedDate} onChange={e=>setExpectedDate(e.target.value)} placeholder="Expected date (defaults to last working day)" />
         </div>
-        <button className="pios-btn pios-btn-primary" onClick={checkPayroll} disabled={checking} style={{ fontSize:12 }}>
+        <button className="btn-v3-primary" onClick={checkPayroll} disabled={checking} style={{ fontSize:12 }}>
           {checking ? '⟳ Checking…' : '🔍 Check payroll status'}
         </button>
       </div>
 
       {chaseResult && (
-        <div className="pios-card" style={{ marginBottom:16, borderLeft:`3px solid ${chaseResult.chase_needed?(levelColour as Record<string,string>)[chaseResult.chase_level ?? ''] ?? '#f59e0b':'#22c55e'}` }}>
+        <div className="pios-card" style={{ marginBottom:16, borderLeft:`3px solid ${chaseResult.chase_needed?(levelColour as Record<string,string>)[chaseResult.chase_level ?? ''] ?? 'var(--saas)':'var(--fm)'}` }}>
           {!chaseResult.chase_needed ? (
-            <div style={{ fontSize:13, color:'#22c55e' }}>✓ {String(chaseResult.message ?? "")}</div>
+            <div style={{ fontSize:13, color:'var(--fm)' }}>✓ {String(chaseResult.message ?? "")}</div>
           ) : chaseResult.already_sent ? (
             <div style={{ fontSize:13, color:'var(--pios-muted)' }}>⚠ {String(chaseResult.message ?? "")}</div>
           ) : (
             <>
               <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:10 }}>
-                <Badge label={String(chaseResult.chase_level ?? "")} colour={(levelColour as Record<string,string>)[chaseResult.chase_level ?? ''] ?? '#f59e0b'} />
+                <Badge label={String(chaseResult.chase_level ?? "")} colour={(levelColour as Record<string,string>)[chaseResult.chase_level ?? ''] ?? 'var(--saas)'} />
                 <span style={{ fontSize:13, fontWeight:600 }}>{Number(chaseResult.days_overdue ?? 0)} days overdue</span>
               </div>
               {Boolean(chaseResult.draft) && (
@@ -641,7 +641,7 @@ function ChaseTab() {
                     <div style={{ fontSize:12, fontWeight:600, marginBottom:4 }}>Subject: {String(chaseResult.draft?.subject ?? '')}</div>
                     <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.65, whiteSpace:'pre-wrap' as const }}>{String(chaseResult.draft?.body ?? '')}</div>
                   </div>
-                  <p style={{ fontSize:11, color:'#f59e0b' }}>⚠ Review and copy this email to send manually. PIOS has not sent this email.</p>
+                  <p style={{ fontSize:11, color:'var(--saas)' }}>⚠ Review and copy this email to send manually. PIOS has not sent this email.</p>
                 </div>
               )}
             </>
@@ -655,7 +655,7 @@ function ChaseTab() {
           <div style={{ display:'flex', flexDirection:'column' as const, gap:6 }}>
             {log.map((l: Record<string,unknown>) => (
               <div key={(l as Record<string,unknown>).id as string} style={{ padding:'10px 14px', borderRadius:8, background:'var(--pios-surface)', border:'1px solid var(--pios-border)', display:'flex', alignItems:'center', gap:10 }}>
-                <Badge label={String(l.chase_level ?? "")} colour={(levelColour as Record<string,string>)[String(l.chase_level ?? '')]??'#f59e0b'} />
+                <Badge label={String(l.chase_level ?? "")} colour={(levelColour as Record<string,string>)[String(l.chase_level ?? '')]??'var(--saas)'} />
                 <span style={{ fontSize:12, flex:1 }}>Payroll {String(l.days_overdue ?? "")}d overdue — expected {String(l.expected_date ?? "")}</span>
                 <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{new Date(String(l.sent_at ?? '')).toLocaleDateString('en-GB')}</span>
               </div>

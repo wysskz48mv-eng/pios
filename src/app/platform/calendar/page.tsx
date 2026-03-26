@@ -8,7 +8,7 @@ const DAYS_HDR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 
 function Spinner() {
   return <div style={{ display:'flex',alignItems:'center',gap:8,color:'var(--pios-muted)',fontSize:13,padding:'32px 0',justifyContent:'center' }}>
-    <div style={{ width:14,height:14,border:'2px solid rgba(34,211,238,0.2)',borderTop:'2px solid #22d3ee',borderRadius:'50%',animation:'spin 0.8s linear infinite' }} />Loading…
+    <div style={{ width:14,height:14,border:'2px solid rgba(34,211,238,0.2)',borderTop:'2px solid var(--pro)',borderRadius:'50%',animation:'spin 0.8s linear infinite' }} />Loading…
   </div>
 }
 function fmt(iso:string){ return new Date(iso).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) }
@@ -43,12 +43,12 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
       <div style={{ position:'relative',background:'var(--pios-surface)',borderRadius:16,border:'1px solid var(--pios-border)',padding:28,width:'100%',maxWidth:520,maxHeight:'90vh',overflowY:'auto' as const }}>
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20 }}>
           <div style={{ flex:1,minWidth:0 }}>
-            {editing?<input className="pios-input" value={form.title} onChange={e=>f('title',e.target.value)} style={{ fontSize:17,fontWeight:700,marginBottom:6 }} autoFocus placeholder="Event title…" />
+            {editing?<input className="inp-v3" value={form.title} onChange={e=>f('title',e.target.value)} style={{ fontSize:17,fontWeight:700,marginBottom:6 }} autoFocus placeholder="Event title…" />
               :<h2 style={{ fontSize:17,fontWeight:700,lineHeight:1.3,marginBottom:4 }}>{String(event.title ?? "")}</h2>}
             <div style={{ display:'flex',gap:8,alignItems:'center',flexWrap:'wrap' as const }}>
               <span style={{ fontSize:11,padding:'2px 8px',borderRadius:20,background:domainColour(event.domain||'personal')+'20',color:domainColour(event.domain||'personal'),fontWeight:600 }}>{domainLabel(event.domain||'personal')}</span>
               {event.source==='google'&&<span style={{ fontSize:11,color:'#4285F4' }}>📅 Google</span>}
-              {event.google_meet_url&&<a href={event.google_meet_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11,color:'#22c55e' }}>🎥 Join Meet</a>}
+              {event.google_meet_url&&<a href={event.google_meet_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11,color:'var(--fm)' }}>🎥 Join Meet</a>}
             </div>
           </div>
           <button onClick={onClose} style={{ background:'none',border:'none',cursor:'pointer',color:'var(--pios-muted)',fontSize:18,marginLeft:12 }}>✕</button>
@@ -57,17 +57,17 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
         {editing?(
           <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8 }}>
-              <div><div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>Start</div><input type="datetime-local" className="pios-input" value={form.start_time} onChange={e=>f('start_time',e.target.value)} /></div>
-              <div><div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>End</div><input type="datetime-local" className="pios-input" value={form.end_time} onChange={e=>f('end_time',e.target.value)} /></div>
+              <div><div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>Start</div><input type="datetime-local" className="inp-v3" value={form.start_time} onChange={e=>f('start_time',e.target.value)} /></div>
+              <div><div style={{ fontSize:11,color:'var(--pios-muted)',marginBottom:4 }}>End</div><input type="datetime-local" className="inp-v3" value={form.end_time} onChange={e=>f('end_time',e.target.value)} /></div>
             </div>
-            <select className="pios-input" value={form.domain} onChange={e=>f('domain',e.target.value)}>
+            <select className="inp-v3" value={form.domain} onChange={e=>f('domain',e.target.value)}>
               {DOMAINS.map(d=><option key={d} value={d}>{domainLabel(d)}</option>)}
             </select>
-            <input className="pios-input" placeholder="Location…" value={form.location} onChange={e=>f('location',e.target.value)} />
-            <textarea className="pios-input" placeholder="Description…" rows={3} value={form.description} onChange={e=>f('description',e.target.value)} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
+            <input className="inp-v3" placeholder="Location…" value={form.location} onChange={e=>f('location',e.target.value)} />
+            <textarea className="inp-v3" placeholder="Description…" rows={3} value={form.description} onChange={e=>f('description',e.target.value)} style={{ resize:'vertical' as const,fontFamily:'inherit' }} />
             <div style={{ display:'flex',gap:8,marginTop:4 }}>
-              <button className="pios-btn pios-btn-primary" onClick={save} disabled={saving} style={{ flex:1,fontSize:12 }}>{saving?'Saving…':isNew?'Create event':'Save changes'}</button>
-              <button className="pios-btn pios-btn-ghost" onClick={()=>isNew?onClose():setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
+              <button className="btn-v3-primary" onClick={save} disabled={saving} style={{ flex:1,fontSize:12 }}>{saving?'Saving…':isNew?'Create event':'Save changes'}</button>
+              <button className="btn-v3-ghost" onClick={()=>isNew?onClose():setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
             </div>
           </div>
         ):(
@@ -97,12 +97,12 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
             {event.id&&(
               <div>
                 {brief?(
-                  <div style={{ padding:'12px 14px',borderRadius:8,background:'rgba(167,139,250,0.08)',borderLeft:'3px solid #a78bfa' }}>
-                    <div style={{ fontSize:11,fontWeight:600,color:'#a78bfa',marginBottom:6 }}>✦ AI Pre-meeting Brief</div>
+                  <div style={{ padding:'12px 14px',borderRadius:8,background:'var(--ai-subtle)',borderLeft:'3px solid var(--ai)' }}>
+                    <div style={{ fontSize:11,fontWeight:600,color:'var(--ai)',marginBottom:6 }}>✦ AI Pre-meeting Brief</div>
                     <div style={{ fontSize:12,color:'var(--pios-text)',lineHeight:1.65 }}>{brief}</div>
                   </div>
                 ):(
-                  <button onClick={getAIBrief} disabled={loadingBrief} style={{ width:'100%',padding:'8px',borderRadius:8,border:'1px dashed rgba(167,139,250,0.3)',background:'none',cursor:'pointer',color:'#a78bfa',fontSize:12 }}>
+                  <button onClick={getAIBrief} disabled={loadingBrief} style={{ width:'100%',padding:'8px',borderRadius:8,border:'1px dashed rgba(167,139,250,0.3)',background:'none',cursor:'pointer',color:'var(--ai)',fontSize:12 }}>
                     {loadingBrief?'⟳ Generating…':'✦ Get AI pre-meeting brief'}
                   </button>
                 )}
@@ -112,14 +112,14 @@ function EventModal({ event, onClose, onSave, onDelete }:{ event:any;onClose:()=
             {event.id && new Date(String(event.start_time ?? "")) < new Date() && (
               <a
                 href={`/platform/meetings?prefill=${encodeURIComponent(event.title ?? '')}&date=${(event.start_time ?? '').slice(0,10)}`}
-                style={{ display:'block',width:'100%',padding:'8px',borderRadius:8,border:'1px dashed rgba(34,197,94,0.3)',background:'none',cursor:'pointer',color:'#22c55e',fontSize:12,textAlign:'center' as const,textDecoration:'none',marginTop:4 }}
+                style={{ display:'block',width:'100%',padding:'8px',borderRadius:8,border:'1px dashed rgba(34,197,94,0.3)',background:'none',cursor:'pointer',color:'var(--fm)',fontSize:12,textAlign:'center' as const,textDecoration:'none',marginTop:4 }}
               >
                 🗒️ Add meeting notes → extract action items
               </a>
             )}
             <div style={{ display:'flex',gap:8,marginTop:4 }}>
-              <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(true)} style={{ flex:1,fontSize:12 }}>✎ Edit</button>
-              {event.source!=='google'&&<button onClick={()=>{onDelete(event.id);onClose()}} style={{ padding:'8px 14px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'#ef4444',fontSize:12 }}>Delete</button>}
+              <button className="btn-v3-ghost" onClick={()=>setEditing(true)} style={{ flex:1,fontSize:12 }}>✎ Edit</button>
+              {event.source!=='google'&&<button onClick={()=>{onDelete(event.id);onClose()}} style={{ padding:'8px 14px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'var(--dng)',fontSize:12 }}>Delete</button>}
             </div>
           </div>
         )}
@@ -149,7 +149,7 @@ function MonthGrid({ year,month,events,onDayClick,onEventClick }:{ year:number;m
           const de=dayEvents(date)
           return (
             <div key={i} onClick={()=>onDayClick(date)} style={{ minHeight:90,padding:'6px 8px',borderRadius:6,background:isToday?'rgba(34,211,238,0.08)':'var(--pios-surface)',border:`1px solid ${isToday?'rgba(34,211,238,0.3)':'var(--pios-border)'}`,cursor:'pointer',transition:'border-color 0.1s' }}>
-              <div style={{ fontSize:12,fontWeight:isToday?700:400,color:isToday?'#22d3ee':'var(--pios-text)',marginBottom:4,lineHeight:1 }}>{date.getDate()}</div>
+              <div style={{ fontSize:12,fontWeight:isToday?700:400,color:isToday?'var(--pro)':'var(--pios-text)',marginBottom:4,lineHeight:1 }}>{date.getDate()}</div>
               <div style={{ display:'flex',flexDirection:'column' as const,gap:2 }}>
                 {de.slice(0,3).map(e=>(
                   <div key={(e as Record<string,unknown>).id as string} onClick={ev=>{ev.stopPropagation();onEventClick(e)}} style={{ fontSize:10,padding:'2px 5px',borderRadius:3,lineHeight:1.3,background:domainColour(e.domain||'personal')+'25',color:domainColour(e.domain||'personal'),overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const,cursor:'pointer' }}>
@@ -241,12 +241,12 @@ export default function CalendarPage() {
               <button key={v} onClick={()=>setView(v as 'month' | 'list')} style={{ padding:'4px 10px',borderRadius:6,border:'none',fontSize:13,cursor:'pointer',background:view===v?'var(--pios-surface)':'transparent',color:view===v?'var(--pios-text)':'var(--pios-dim)' }}>{icon}</button>
             ))}
           </div>
-          <button className="pios-btn pios-btn-ghost" onClick={syncGoogle} disabled={syncing} style={{ fontSize:12 }}>{syncing?'⟳ Syncing…':'↻ Sync Google'}</button>
-          <button className="pios-btn pios-btn-primary" onClick={()=>{const d=new Date();d.setHours(9,0,0,0);setAddingDate(d)}} style={{ fontSize:12 }}>+ Event</button>
+          <button className="btn-v3-ghost" onClick={syncGoogle} disabled={syncing} style={{ fontSize:12 }}>{syncing?'⟳ Syncing…':'↻ Sync Google'}</button>
+          <button className="btn-v3-primary" onClick={()=>{const d=new Date();d.setHours(9,0,0,0);setAddingDate(d)}} style={{ fontSize:12 }}>+ Event</button>
         </div>
       </div>
 
-      {syncMsg&&<div style={{ padding:'8px 14px',borderRadius:8,background:syncMsg.startsWith('Error')?'rgba(239,68,68,0.08)':'rgba(34,197,94,0.08)',borderLeft:`3px solid ${syncMsg.startsWith('Error')?'#ef4444':'#22c55e'}`,fontSize:12,marginBottom:16 }}>{syncMsg}</div>}
+      {syncMsg&&<div style={{ padding:'8px 14px',borderRadius:8,background:syncMsg.startsWith('Error')?'rgba(239,68,68,0.08)':'rgba(34,197,94,0.08)',borderLeft:`3px solid ${syncMsg.startsWith('Error')?'var(--dng)':'var(--fm)'}`,fontSize:12,marginBottom:16 }}>{syncMsg}</div>}
 
       {view==='month'?(
         <>
@@ -261,7 +261,7 @@ export default function CalendarPage() {
       ):(
         <div>
           {loading?<Spinner />:upcoming.length===0?(
-            <div className="pios-card" style={{ textAlign:'center' as const,padding:'48px' }}>
+            <div className="card-v3" style={{ textAlign:'center' as const,padding:'48px' }}>
               <div style={{ fontSize:32,marginBottom:12 }}>📅</div>
               <div style={{ fontSize:14,fontWeight:700,marginBottom:8 }}>No upcoming events</div>
               <p style={{ fontSize:13,color:'var(--pios-muted)' }}>Sync Google Calendar or add an event manually.</p>
@@ -269,7 +269,7 @@ export default function CalendarPage() {
           ):(
             <div style={{ display:'flex',flexDirection:'column' as const,gap:8 }}>
               {upcoming.map(e=>(
-                <div key={(e as Record<string,unknown>).id as string} onClick={()=>setSelectedEvent(e)} className="pios-card" style={{ padding:'12px 16px',cursor:'pointer',display:'flex',alignItems:'flex-start',gap:14,borderLeft:`3px solid ${domainColour(e.domain||'personal')}` }}>
+                <div key={(e as Record<string,unknown>).id as string} onClick={()=>setSelectedEvent(e)} className="card-v3" style={{ padding:'12px 16px',cursor:'pointer',display:'flex',alignItems:'flex-start',gap:14,borderLeft:`3px solid ${domainColour(e.domain||'personal')}` }}>
                   <div style={{ textAlign:'center' as const,minWidth:52,flexShrink:0 }}>
                     <div style={{ fontSize:11,color:'var(--pios-dim)' }}>{new Date(String(e.start_time ?? "")).toLocaleDateString('en-GB',{weekday:'short'})}</div>
                     <div style={{ fontSize:15,fontWeight:700 }}>{new Date(String(e.start_time ?? "")).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
@@ -282,7 +282,7 @@ export default function CalendarPage() {
                       {e.location&&<span style={{ fontSize:11,color:'var(--pios-dim)' }}>📍 {e.location}</span>}
                       {!e.all_day&&<span style={{ fontSize:11,color:'var(--pios-dim)' }}>{dur(String(e.start_time ?? ''),String(e.end_time ?? ''))}</span>}
                       {(e.attendees?.length ?? 0) > 0 &&<span style={{ fontSize:11,color:'var(--pios-dim)' }}>👥 {e.attendees?.length}</span>}
-                      {Boolean(e.google_meet_url)&&<span style={{ fontSize:11,color:'#22c55e' }}>🎥 Meet</span>}
+                      {Boolean(e.google_meet_url)&&<span style={{ fontSize:11,color:'var(--fm)' }}>🎥 Meet</span>}
                     </div>
                   </div>
                 </div>
