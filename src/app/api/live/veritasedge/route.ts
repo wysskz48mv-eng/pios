@@ -1,17 +1,26 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
 // GET /api/live/veritasedge
 // Pulls live metrics from the VeritasEdge™ Supabase project.
 // Uses the ACTUAL SE schema: organisations, projects, maintainable_assets, obe_runs, agent_recommendations
-// PIOS v2.2 | VeritasIQ Technologies Ltd
+// PIOS v2.9 | VeritasIQ Technologies Ltd
+// Security: requires authenticated PIOS session
 
 export const runtime = 'nodejs'
 
 const SE_URL = 'https://oxqqzxvuksgzeeyhufhp.supabase.co'
 const SE_KEY = process.env.SUPABASE_SE_SERVICE_KEY ?? ''
 
-export async function GET() {
+export async function GET(_req: NextRequest) {
+  // Auth guard — must be a signed-in PIOS user
+  const supabase = createRouteHandlerClient({ cookies })
+  const { data: { user }, error: authErr } = await supabase.auth.getUser()
+  if (authErr || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   if (!SE_KEY) {
     return NextResponse.json({
       connected: false,

@@ -1,17 +1,27 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
 // GET /api/live/investiscript
 // Pulls live metrics from the InvestiScript Supabase project.
 // Uses the ACTUAL IS schema: Organisation, User, Topic, Script, UsageRecord
-// PIOS v2.2 | VeritasIQ Technologies Ltd
+// PIOS v2.9 | VeritasIQ Technologies Ltd
+// Security: requires authenticated PIOS session
 
 export const runtime = 'nodejs'
 
 const IS_URL = 'https://dexsdwqkunnmhxcwayda.supabase.co'
 const IS_KEY = process.env.SUPABASE_IS_SERVICE_KEY ?? ''
 
-export async function GET() {
+export async function GET(_req: NextRequest) {
+  // Auth guard — must be a signed-in PIOS user
+  const supabase = createRouteHandlerClient({ cookies })
+  const { data: { user }, error: authErr } = await supabase.auth.getUser()
+  if (authErr || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   if (!IS_KEY) {
     return NextResponse.json({
       connected: false,
