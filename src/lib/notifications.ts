@@ -3,7 +3,7 @@
  * Creates in-app notifications for key PIOS events.
  * Called server-side from API routes after significant actions.
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { createClient } from '@/lib/supabase/server'
 

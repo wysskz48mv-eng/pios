@@ -2,7 +2,7 @@
  * POST /api/academic/export
  * Exports thesis chapters as formatted Markdown (copy to Word / Notion / Obsidian).
  * Supports single chapter or full thesis export.
- * PIOS v2.2 | Sprint 24
+ * PIOS v3.0 | Sprint 24
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'

@@ -146,7 +146,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--pios-text)', letterSpacing: '-0.02em' }}>PIOS</div>
             <div style={{ fontSize: 10, color: 'var(--pios-dim)', letterSpacing: '0.04em', marginTop: 1 }}>
-              v2.9 · {planLabel}
+              v3.0 · {planLabel}
             </div>
           </div>
         )}

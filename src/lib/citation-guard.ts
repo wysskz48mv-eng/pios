@@ -10,7 +10,7 @@
  *   Step 6: Structured output with explicit provenance labels
  *
  * Used in: literature API, research/search API, academic module AI summaries
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 
 export interface CitationInput {

@@ -1,7 +1,7 @@
 /**
  * POST /api/email/sync
  * Syncs emails from ALL connected accounts (Google + Microsoft Graph).
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'

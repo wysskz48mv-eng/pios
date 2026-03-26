@@ -2,7 +2,7 @@
  * GET /api/cron/supervisor-digest
  * Weekly cron (Monday 08:00 UTC) — sends supervisor a digest of each
  * supervised student's progress: word count, milestone completion, CPD hours.
- * PIOS v2.2 | Sprint 25
+ * PIOS v3.0 | Sprint 25
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }               from '@/lib/supabase/server'

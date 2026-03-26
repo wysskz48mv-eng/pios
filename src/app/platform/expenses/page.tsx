@@ -5,7 +5,7 @@ import { domainColour, domainLabel } from '@/lib/utils'
 // ─────────────────────────────────────────────────────────────────────────────
 // Expenses — tracking, tax year breakdown, category summary, delete
 // Server-side via /api/expenses (validation + AI categorise + CSV export)
-// PIOS v2.2 | VeritasIQ Technologies Ltd
+// PIOS v3.0 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CATEGORIES = ['travel','software','research','consulting','equipment','meals','accommodation','professional_fees','other']

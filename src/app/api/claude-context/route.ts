@@ -16,7 +16,7 @@
  * Auth: Supabase session cookie (shared with browser session)
  * Rate: No strict limit but designed for periodic polling (not real-time)
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient }  from '@/lib/supabase/server'
@@ -311,7 +311,7 @@ export async function GET() {
         // Metadata
         _meta: {
           generated_at:  new Date().toISOString(),
-          platform:      'PIOS v2.9',
+          platform:      'PIOS v3.0',
           llms_txt:      '/llms.txt',
           docs:          'https://pios.veritasiq.io/platform/setup'
         ,  llms_txt_url:  'https://pios.veritasiq.io/llms.txt',

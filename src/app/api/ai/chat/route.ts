@@ -24,7 +24,7 @@ export const maxDuration = 60
  * System prompt encodes Douglas's full profile so responses are
  * contextually appropriate without him having to re-explain his work.
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 export async function POST(request: Request) {
   try {

@@ -2,7 +2,7 @@
 /**
  * /platform/smoke — PIOS Platform Smoke Test
  * Runs 12 checks across DB, AI, email, cron, and billing.
- * PIOS v2.4 | Sprint 58 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | Sprint 58 | VeritasIQ Technologies Ltd
  */
 import { useState, useCallback } from 'react'
 import Link from 'next/link'

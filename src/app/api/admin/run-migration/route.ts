@@ -2,7 +2,7 @@
  * POST /api/admin/run-migration
  * Applies PIOS migrations 008–012 via direct pg connection.
  * Auth: owner email (info@veritasiq.io) session.
- * PIOS v2.2 | Sprint 28 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | Sprint 28 | VeritasIQ Technologies Ltd
  */
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -170,7 +170,7 @@ $$ LANGUAGE plpgsql;\`,
     name: 'Learning Hub v2.0 — CPD bodies + journal tracking',
     sentinel: 'cpd_bodies',
     sql: \`-- M013: Learning Hub v2.0 — CPD body expanded support + journal tracking
--- PIOS v2.2 | VeritasIQ Technologies Ltd
+-- PIOS v3.0 | VeritasIQ Technologies Ltd
 
 DO $$
 BEGIN

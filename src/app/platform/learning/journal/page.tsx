@@ -1,6 +1,6 @@
 /**
  * /platform/learning/journal — AI-assisted reflective learning journal
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 "use client"
 import { useState, useEffect } from "react"

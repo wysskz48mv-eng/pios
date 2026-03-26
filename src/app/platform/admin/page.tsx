@@ -151,7 +151,7 @@ export default function AdminPage() {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:24 }}>
         {[
           { label:'Migrations applied', value:`${appliedCount}/${totalCount}`, colour:appliedCount===totalCount?'#22c55e':'#f59e0b' },
-          { label:'Platform version',   value:'v1.0.0',      colour:'#a78bfa' },
+          { label:'Platform version',   value:'v3.0.0',      colour:'#a78bfa' },
           { label:'Database',           value:'Supabase',     colour:'#6c8eff' },
           { label:'Deployment',         value:'Vercel',       colour:'#2dd4a0' },
         ].map(s=>(

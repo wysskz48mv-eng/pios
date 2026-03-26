@@ -1,6 +1,6 @@
 /**
  * GET /api/files/list — flat list of file_items for Document Intelligence page
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'

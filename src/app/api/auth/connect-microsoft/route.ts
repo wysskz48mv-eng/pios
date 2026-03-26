@@ -17,7 +17,7 @@
  * After user consents, Microsoft redirects to:
  *   /api/auth/callback/microsoft?code=...&state=...
  *
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 

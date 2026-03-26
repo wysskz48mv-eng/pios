@@ -1,7 +1,7 @@
 /**
  * PIOS — Edge Middleware
  * Security headers · Rate limiting · Session protection · Auth routing
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  *
  * ISO 27001 A.9.4 — Access control enforcement
  * ISO 27001 A.12.6 — Technical vulnerability management

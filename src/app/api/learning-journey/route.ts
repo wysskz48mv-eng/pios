@@ -2,7 +2,7 @@
  * GET  /api/learning-journey       — fetch milestones, CPD summary, persona config
  * POST /api/learning-journey       — seed milestones for a persona, log CPD activity
  * PATCH /api/learning-journey?id=  — update a milestone
- * VeritasIQ / PIOS v2.2 | Sprint 21
+ * VeritasIQ / PIOS v3.0 | Sprint 21
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'

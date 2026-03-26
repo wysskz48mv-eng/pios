@@ -3,7 +3,7 @@
  * GET    ?domain=&status=&min_priority=&limit=&inbox_context=
  * PATCH  { id, status, domain_tag, action_required }
  * DELETE ?id= — soft delete (set status=ignored)
- * PIOS v2.2 | VeritasIQ Technologies Ltd
+ * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
