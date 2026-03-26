@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createExternalClient } from '@supabase/supabase-js'
+import { Client } from 'pg'
 import { createClient } from '@/lib/supabase/server'
 
 // GET /api/live/investiscript
-// Pulls live metrics from the InvestiScript Supabase project.
-// Uses the ACTUAL IS schema: Organisation, User, Topic, Script, UsageRecord
-// PIOS v2.9 | VeritasIQ Technologies Ltd
-// Security: requires authenticated PIOS session
+// Pulls live metrics from the InvestiScript Supabase project via direct pg connection.
+// Uses SUPABASE_IS_SERVICE_KEY for auth — falls back gracefully if not configured.
+// PIOS v3.0 | VeritasIQ Technologies Ltd
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
-const IS_URL = 'https://dexsdwqkunnmhxcwayda.supabase.co'
-const IS_KEY = process.env.SUPABASE_IS_SERVICE_KEY ?? ''
+const IS_DB_URL = process.env.SUPABASE_IS_DB_URL ?? ''
+const IS_KEY    = process.env.SUPABASE_IS_SERVICE_KEY ?? ''
+const IS_URL    = 'https://dexsdwqkunnmhxcwayda.supabase.co'
 
 export async function GET(_req: NextRequest) {
   // Auth guard — must be a signed-in PIOS user
@@ -21,7 +22,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!IS_KEY) {
+  if (!IS_KEY && !IS_DB_URL) {
     return NextResponse.json({
       connected: false,
       error: 'SUPABASE_IS_SERVICE_KEY not configured',
@@ -30,86 +31,18 @@ export async function GET(_req: NextRequest) {
   }
 
   try {
-    const is = createExternalClient(IS_URL, IS_KEY, { auth: { persistSession: false } })
-    const now = new Date()
+    const now           = new Date()
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400_000).toISOString()
     const sevenDaysAgo  = new Date(Date.now() -  7 * 86400_000).toISOString()
 
-    const [orgsR, usersR, topicsR, scriptsR, usageR] = await Promise.all([
-      // Organisations = IS tenants (each org is a newsroom)
-      is.from('Organisation').select('id, name, plan, "planStatus", "trialEndsAt", "stripeCustomerId", "createdAt"', { count: 'exact', head: false }),
-      // Users (across all orgs)
-      is.from('User').select('id, "createdAt", role', { count: 'exact', head: false }),
-      // Topics = investigations
-      is.from('Topic').select('id, "createdAt", "organisationId"', { count: 'exact', head: false }),
-      // Scripts = published/drafted articles
-      is.from('Script').select('id, "createdAt"', { count: 'exact', head: false }),
-      // UsageRecord = AI token consumption
-      is.from('UsageRecord').select('"inputTokens", "outputTokens", "costUsd", "createdAt"').gte('"createdAt"', thirtyDaysAgo),
-    ])
+    // Use direct pg connection if IS_DB_URL is set, otherwise use REST API
+    if (IS_DB_URL) {
+      return await queryViaPg(IS_DB_URL, now, thirtyDaysAgo, sevenDaysAgo)
+    }
 
-    const orgs   = orgsR.data   ?? []
-    const users  = usersR.data  ?? []
-    const topics = topicsR.data ?? []
-    const usage  = usageR.data  ?? []
+    // Fallback: Supabase REST API with service key
+    return await queryViaRest(IS_KEY, IS_URL, now, thirtyDaysAgo, sevenDaysAgo)
 
-    // Org breakdowns
-    const trialing       = orgs.filter((o: Record<string, unknown>) => (o as any)?.planStatus === 'trialing').length
-    const activeOrgs     = orgs.filter((o: Record<string, unknown>) => (o as any)?.planStatus === 'active').length
-    const expiredTrials  = orgs.filter((o: Record<string, unknown>) => {
-      return (o as any)?.planStatus === 'trialing' && (o as any)?.trialEndsAt && new Date((o as any)?.trialEndsAt) <= now
-    }).length
-    const activeTrial    = orgs.filter((o: Record<string, unknown>) => {
-      return (o as any)?.planStatus === 'trialing' && (o as any)?.trialEndsAt && new Date((o as any)?.trialEndsAt) > now
-    }).length
-    const planBreakdown  = orgs.reduce((acc: Record<string, number>, o: unknown) => {
-      if ((o as any).planStatus === 'active') acc[(o as any).plan] = (acc[(o as any).plan] || 0) + 1
-      return acc
-    }, {})
-
-    // Recency
-    const recentOrgs   = orgs.filter((o: Record<string, unknown>) => (o as any).createdAt > thirtyDaysAgo).length
-    const recentUsers  = users.filter((u: Record<string, unknown>) => (u as any).createdAt > thirtyDaysAgo).length
-    const recentTopics = topics.filter((t: Record<string, unknown>) => (t as any).createdAt > sevenDaysAgo).length
-
-    // Usage
-    const totalInputTokens  = usage.reduce((s: number, r: unknown) => s + (Number((r as any).inputTokens)  || 0), 0)
-    const totalOutputTokens = usage.reduce((s: number, r: unknown) => s + (Number((r as any).outputTokens) || 0), 0)
-    const totalCostUsd      = usage.reduce((s: number, r: unknown) => s + (Number((r as any).costUsd)      || 0), 0)
-
-    return NextResponse.json({
-      connected: true,
-      snapshot: {
-        users: {
-          total:         usersR.count  ?? 0,
-          activeTrial,
-          expiredTrial:  expiredTrials,
-          recentSignups: recentUsers,
-        },
-        organisations: {
-          total:    orgsR.count ?? 0,
-          trialing,
-          active:   activeOrgs,
-          recentNew: recentOrgs,
-          byPlan:   planBreakdown,
-        },
-        investigations: {
-          total:       topicsR.count ?? 0,
-          recentWeek:  recentTopics,
-        },
-        scripts: {
-          total: scriptsR.count ?? 0,
-        },
-        apiUsage: {
-          inputTokens:   totalInputTokens,
-          outputTokens:  totalOutputTokens,
-          totalTokens:   totalInputTokens + totalOutputTokens,
-          costUsd:       Math.round(totalCostUsd * 100) / 100,
-          period:        'last 30 days',
-        },
-        pulledAt: now.toISOString(),
-      },
-    })
   } catch (err: unknown) {
     return NextResponse.json({
       connected: false,
@@ -118,3 +51,127 @@ export async function GET(_req: NextRequest) {
     })
   }
 }
+
+async function queryViaPg(dbUrl: string, now: Date, thirtyDaysAgo: string, sevenDaysAgo: string) {
+  const client = new Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } })
+  try {
+    await client.connect()
+
+    const [userR, orgR, topicR, scriptR, usageR] = await Promise.all([
+      client.query(`SELECT COUNT(*) as total,
+        COUNT(*) FILTER (WHERE "createdAt" > $1) as recent
+        FROM "User"`, [thirtyDaysAgo]),
+      client.query(`SELECT COUNT(*) as total,
+        COUNT(*) FILTER (WHERE "planStatus" = 'trialing') as trialing,
+        COUNT(*) FILTER (WHERE "planStatus" = 'active') as active_orgs,
+        COUNT(*) FILTER (WHERE "createdAt" > $1) as recent
+        FROM "Organisation"`, [thirtyDaysAgo]),
+      client.query(`SELECT COUNT(*) as total,
+        COUNT(*) FILTER (WHERE "createdAt" > $1) as recent_week
+        FROM "Topic"`, [sevenDaysAgo]),
+      client.query(`SELECT COUNT(*) as total FROM "Script"`),
+      client.query(`SELECT
+        COALESCE(SUM("inputTokens"), 0) as input_tokens,
+        COALESCE(SUM("outputTokens"), 0) as output_tokens,
+        COALESCE(SUM("costUsd"), 0) as cost_usd
+        FROM "UsageRecord" WHERE "createdAt" > $1`, [thirtyDaysAgo]),
+    ])
+
+    return buildResponse(now, thirtyDaysAgo,
+      { total: Number(userR.rows[0].total), recent: Number(userR.rows[0].recent) },
+      { total: Number(orgR.rows[0].total), trialing: Number(orgR.rows[0].trialing), active: Number(orgR.rows[0].active_orgs), recent: Number(orgR.rows[0].recent) },
+      { total: Number(topicR.rows[0].total), recentWeek: Number(topicR.rows[0].recent_week) },
+      { total: Number(scriptR.rows[0].total) },
+      { input: Number(usageR.rows[0].input_tokens), output: Number(usageR.rows[0].output_tokens), cost: Number(usageR.rows[0].cost_usd) }
+    )
+  } finally {
+    await client.end().catch(() => {})
+  }
+}
+
+async function queryViaRest(key: string, url: string, now: Date, thirtyDaysAgo: string, sevenDaysAgo: string) {
+  // Use fetch directly against PostgREST — handles PascalCase table names
+  const headers = {
+    'apikey': key,
+    'Authorization': `Bearer ${key}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'count=exact',
+  }
+
+  const base = `${url}/rest/v1`
+
+  const [userR, orgR, topicR, scriptR, usageR] = await Promise.all([
+    fetch(`${base}/User?select=id,createdAt&order=createdAt.desc`, { headers }).then(r => r.json()),
+    fetch(`${base}/Organisation?select=id,name,plan,planStatus,trialEndsAt,createdAt`, { headers }).then(r => r.json()),
+    fetch(`${base}/Topic?select=id,createdAt&order=createdAt.desc`, { headers }).then(r => r.json()),
+    fetch(`${base}/Script?select=id`, { headers }).then(r => r.json()),
+    fetch(`${base}/UsageRecord?select=inputTokens,outputTokens,costUsd,createdAt&createdAt=gte.${thirtyDaysAgo}`, { headers }).then(r => r.json()),
+  ])
+
+  // Check for PostgREST errors
+  if (userR?.code || orgR?.code) {
+    throw new Error(userR?.message ?? orgR?.message ?? `PostgREST error: ${JSON.stringify(userR)}`)
+  }
+
+  const users  = Array.isArray(userR)  ? userR  : []
+  const orgs   = Array.isArray(orgR)   ? orgR   : []
+  const topics = Array.isArray(topicR) ? topicR : []
+  const scripts = Array.isArray(scriptR) ? scriptR : []
+  const usage  = Array.isArray(usageR) ? usageR : []
+
+  const trialing = orgs.filter((o: any) => o.planStatus === 'trialing').length
+  const active   = orgs.filter((o: any) => o.planStatus === 'active').length
+
+  return buildResponse(now, thirtyDaysAgo,
+    { total: users.length, recent: users.filter((u: any) => u.createdAt > thirtyDaysAgo).length },
+    { total: orgs.length, trialing, active, recent: orgs.filter((o: any) => o.createdAt > thirtyDaysAgo).length },
+    { total: topics.length, recentWeek: topics.filter((t: any) => t.createdAt > sevenDaysAgo).length },
+    { total: scripts.length },
+    {
+      input:  usage.reduce((s: number, r: any) => s + Number(r.inputTokens  || 0), 0),
+      output: usage.reduce((s: number, r: any) => s + Number(r.outputTokens || 0), 0),
+      cost:   usage.reduce((s: number, r: any) => s + Number(r.costUsd      || 0), 0),
+    }
+  )
+}
+
+function buildResponse(now: Date, thirtyDaysAgo: string,
+  users: { total: number; recent: number },
+  orgs: { total: number; trialing: number; active: number; recent: number },
+  topics: { total: number; recentWeek: number },
+  scripts: { total: number },
+  usage: { input: number; output: number; cost: number }
+) {
+  return NextResponse.json({
+    connected: true,
+    snapshot: {
+      users: {
+        total:         users.total,
+        recentSignups: users.recent,
+      },
+      organisations: {
+        total:     orgs.total,
+        trialing:  orgs.trialing,
+        active:    orgs.active,
+        recentNew: orgs.recent,
+      },
+      investigations: {
+        total:      topics.total,
+        recentWeek: topics.recentWeek,
+      },
+      scripts: {
+        total: scripts.total,
+      },
+      apiUsage: {
+        inputTokens:  usage.input,
+        outputTokens: usage.output,
+        totalTokens:  usage.input + usage.output,
+        costUsd:      Math.round(usage.cost * 100) / 100,
+        period:       'last 30 days',
+      },
+      pulledAt: now.toISOString(),
+    },
+  })
+}
+
+
