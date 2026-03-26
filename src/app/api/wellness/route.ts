@@ -7,12 +7,11 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { callClaude } from '@/lib/ai/client'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
@@ -124,14 +123,11 @@ Respond with JSON only:
   ]
 }`
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
-        temperature: 0.3,
-        messages: [{ role: 'user', content: prompt }],
-      })
-
-      const raw = (msg.content[0] as { type: string; text: string }).text.trim()
+      const raw = (await callClaude(
+        [{ role: 'user', content: prompt }],
+        'You are a wellness coach integrated into PIOS. Respond with JSON only — no markdown fences.',
+        400
+      )).trim()
       const parsed = JSON.parse(raw.replace(/```json|```/g, ''))
       ai_insight = parsed.insight ?? null
       ai_recommended_actions = parsed.actions ?? []
