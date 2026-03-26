@@ -3,111 +3,200 @@ import { useEffect, useState, useCallback } from 'react'
 import { formatRelative, priorityColour, domainColour, domainLabel } from '@/lib/utils'
 import Link from 'next/link'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Dashboard v3.0 — Investment-Grade UIX
+// Syne display · Domain-coloured KPIs · Brief block · Live platform tiles
+// PIOS v3.0 · VeritasIQ Technologies Ltd
+// ─────────────────────────────────────────────────────────────────────────────
 
 type DashTask = {
   id: string; title?: string; status?: string; deadline?: string
   domain?: string; priority?: string; project_id?: string
   updated_at?: string; created_at?: string; due_date?: string
 }
-
 type DashProject = {
   id: string; name?: string; title?: string; status?: string; deadline?: string
   domain?: string; progress?: number; module_count?: number; colour?: string
 }
-
 type DashModule = {
   id: string; title?: string; status?: string; deadline?: string
   module_type?: string; credits?: number
 }
-
 type DashNotif = {
   id: string; title?: string; message?: string; type?: string
   created_at?: string; read?: boolean; url?: string
 }
-
-type DashEvent = {
-  id: string; title?: string; start_time?: string; end_time?: string
-  meeting_type?: string; platform?: string; attendees?: string
-  calendar_id?: string
+type SnapRecord = {
+  totalBudgetSAR?: number; districts?: number; costUsd?: number
+  thisMonth?: number; total?: number
+  tenants?: {total?: number}; projects?: {total?: number; active?: number}
+  assets?: {total?: number; active?: number} | number
+  organisations?: {total?: number}; obe?: {totalBudgetSAR?: number; lastRun?: string}
+  apiUsage?: {total?: number; thisMonth?: number; costUsd?: number}
+  investigations?: {total?: number; recentWeek?: number}
+  scripts?: {total?: number}; topics?: {total?: number}
+  usage?: {thisMonth?: number; [key:string]: unknown}
+  users?: {total?: number}; [key: string]: unknown
 }
-
 type TenantRecord = {
   id: string; name?: string; plan?: string; subscription_status?: string
   trial_ends_at?: string; company_name?: string
 }
 
-type SnapRecord = {
-  totalBudgetSAR?: number; districts?: number
-  costUsd?: number; thisMonth?: number; total?: number
-  tenants?: {total?: number}
-  projects?: {total?: number; active?: number}
-  assets?: {total?: number; active?: number} | number
-  organisations?: {total?: number}
-  obe?: {totalBudgetSAR?: number; lastRun?: string}
-  apiUsage?: {total?: number; thisMonth?: number; costUsd?: number}
-  agents?: {total?: number; recentRuns?: number}
-  investigations?: {total?: number; recentWeek?: number}
-  topics?: {total?: number}
-  scripts?: {total?: number}
-  usage?: {thisMonth?: number; [key:string]: unknown}
-  users?: {total?: number}
-  [key: string]: unknown
+// ── Shared micro-components ──────────────────────────────────────────────────
+
+function Card({ children, style = {}, onClick }: {
+  children: React.ReactNode; style?: React.CSSProperties; onClick?: () => void
+}) {
+  return (
+    <div onClick={onClick} style={{
+      background: 'var(--pios-surface)', border: '1px solid var(--pios-border)',
+      borderRadius: 14, padding: '18px 20px',
+      transition: 'border-color 0.15s', ...style,
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--pios-border2)' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--pios-border)' }}>
+      {children}
+    </div>
+  )
 }
 
+function CardSm({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={{
+      background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)',
+      borderRadius: 10, padding: '12px 14px', ...style,
+    }}>{children}</div>
+  )
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+      textTransform: 'uppercase' as const, color: 'var(--pios-dim)', marginBottom: 10,
+    }}>{children}</div>
+  )
+}
+
+function ProgressBar({ pct, color }: { pct: number; color: string }) {
+  return (
+    <div style={{ height: 3, background: 'var(--pios-surface3)', borderRadius: 99, overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width 0.5s' }} />
+    </div>
+  )
+}
+
+function Tag({ children, color }: { children: React.ReactNode; color: string }) {
+  return (
+    <span style={{
+      fontSize: 9.5, fontWeight: 600, padding: '2px 7px', borderRadius: 5,
+      background: `${color}14`, color, letterSpacing: '0.02em',
+    }}>{children}</span>
+  )
+}
+
+// ── KPI stat card ────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, delta, deltaUp, accent, icon }: {
+  label: string; value: string; delta?: string; deltaUp?: boolean
+  accent: string; icon?: string
+}) {
+  return (
+    <div style={{
+      background: 'var(--pios-surface)', border: '1px solid var(--pios-border)',
+      borderRadius: 14, padding: '16px 18px', position: 'relative', overflow: 'hidden',
+      transition: 'border-color 0.2s', cursor: 'default',
+    }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--pios-border2)';
+        const bar = e.currentTarget.querySelector('.kpi-bar') as HTMLElement;
+        if (bar) bar.style.opacity = '1';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--pios-border)';
+        const bar = e.currentTarget.querySelector('.kpi-bar') as HTMLElement;
+        if (bar) bar.style.opacity = '0';
+      }}>
+      {/* Top accent bar */}
+      <div className="kpi-bar" style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+        background: accent, opacity: 0, transition: 'opacity 0.2s',
+      }} />
+      <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--pios-dim)', marginBottom: 10 }}>{label}</div>
+      <div style={{
+        fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700,
+        color: 'var(--pios-text)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 6,
+      }}>{value}</div>
+      {delta && (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 3,
+          fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 5,
+          background: deltaUp ? 'rgba(16,217,160,0.1)' : 'rgba(100,104,128,0.12)',
+          color: deltaUp ? 'var(--fm)' : 'var(--pios-muted)',
+        }}>{delta}</span>
+      )}
+      {icon && (
+        <div style={{ position: 'absolute', bottom: 10, right: 14, fontSize: 36, opacity: 0.06, lineHeight: 1 }}>{icon}</div>
+      )}
+    </div>
+  )
+}
+
+// ── Main page ────────────────────────────────────────────────────────────────
+
 export default function DashboardPage() {
-  const [tasks, setTasks]       = useState<DashTask[]>([])
-  const [projects, setProjects] = useState<DashProject[]>([])
-  const [modules, setModules]   = useState<DashModule[]>([])
-  const [brief, setBrief]       = useState<string | null>(null)
-  const [notifs, setNotifs]     = useState<DashNotif[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [loadErr, setLoadErr]   = useState<string|null>(null)
+  const [tasks,        setTasks]        = useState<DashTask[]>([])
+  const [projects,     setProjects]     = useState<DashProject[]>([])
+  const [modules,      setModules]      = useState<DashModule[]>([])
+  const [brief,        setBrief]        = useState<string | null>(null)
+  const [notifs,       setNotifs]       = useState<DashNotif[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [loadErr,      setLoadErr]      = useState<string | null>(null)
   const [briefLoading, setBriefLoading] = useState(false)
-  const [tenant, setTenant]     = useState<TenantRecord|null>(null)
-  const [todayEvents,   setTodayEvents]   = useState<Record<string,unknown>[]>([])
-  const [pendingInvoices, setPendingInvoices] = useState<number>(0)
-  const [actionEmails,    setActionEmails]    = useState<number>(0)
-  const [pendingTransfers,setPendingTransfers]= useState<number>(0)
-  const [seSnap, setSeSnap] = useState<SnapRecord|null>(null)
-  const [isSnap, setIsSnap] = useState<SnapRecord|null>(null)
-  const [meetingActions, setMeetingActions] = useState<number>(0)
-  const [receipts48h,    setReceipts48h]    = useState<number>(0)
-  const [emailAccounts,  setEmailAccounts]  = useState<number>(0)
-  const [overdueCount,   setOverdueCount]   = useState(0)
-  const [dueTodayCount,  setDueTodayCount]  = useState(0)
-  const [persona,        setPersona]        = useState<string>('')
-  const [execSnap,       setExecSnap]       = useState<Record<string,unknown>|null>(null)
+  const [tenant,       setTenant]       = useState<TenantRecord | null>(null)
+  const [todayEvents,  setTodayEvents]  = useState<Record<string,unknown>[]>([])
+  const [seSnap,       setSeSnap]       = useState<SnapRecord | null>(null)
+  const [isSnap,       setIsSnap]       = useState<SnapRecord | null>(null)
+  const [persona,      setPersona]      = useState<string>('')
+  const [execSnap,     setExecSnap]     = useState<Record<string,unknown> | null>(null)
+  const [overdueCount, setOverdueCount] = useState(0)
+  const [dueTodayCount,setDueTodayCount]= useState(0)
+  const [pendingInvoices,  setPendingInvoices]  = useState(0)
+  const [actionEmails,     setActionEmails]     = useState(0)
+  const [pendingTransfers, setPendingTransfers] = useState(0)
+  const [meetingActions,   setMeetingActions]   = useState(0)
+  const [receipts48h,      setReceipts48h]      = useState(0)
+  const [activeDomain,     setActiveDomain]     = useState('all')
 
   const load = useCallback(async () => {
     setLoading(true)
-    // Single aggregated fetch replaces 9 direct Supabase calls
     const [dashRes, notifsRes] = await Promise.all([
       fetch('/api/dashboard'),
       fetch('/api/notifications'),
     ])
-    if (!dashRes.ok) { setLoadErr('Failed to load dashboard data — retrying will help'); }
+    if (!dashRes.ok) setLoadErr('Failed to load dashboard data')
     const [d, nR]: [any, any] = await Promise.all([
       dashRes.ok ? dashRes.json() : {},
       notifsRes.ok ? notifsRes.json() : { notifications: [] },
     ])
-    const overdueList  = d.tasks?.overdue  ?? []
+    const overdueList  = d.tasks?.overdue   ?? []
     const dueTodayList = d.tasks?.due_today ?? []
     const upcomingList = d.tasks?.upcoming  ?? []
     setTasks([...overdueList, ...dueTodayList, ...upcomingList])
     setOverdueCount(overdueList.length)
     setDueTodayCount(dueTodayList.length)
     setProjects(d.projects ?? [])
-    setModules(d.modules ?? [])
+    setModules(d.modules   ?? [])
     setBrief(d.brief ?? null)
     setTenant(d.tenant ?? null)
     setTodayEvents(d.calendar?.today ?? [])
-    setPendingInvoices(d.counts?.pending_invoices  ?? 0)
-    setActionEmails(d.counts?.action_emails        ?? 0)
+    setPendingInvoices(d.counts?.pending_invoices ?? 0)
+    setActionEmails(d.counts?.action_emails ?? 0)
     setPendingTransfers(d.counts?.queued_transfers ?? 0)
     setMeetingActions(d.counts?.pending_meeting_actions ?? 0)
-    setReceipts48h(d.counts?.receipts_48h  ?? 0)
-    setEmailAccounts(d.counts?.email_accounts ?? 0)
-    setNotifs((nR.notifications ?? []).filter((n: Record<string, unknown>) => !n.read))
+    setReceipts48h(d.counts?.receipts_48h ?? 0)
+    setNotifs((nR.notifications ?? []).filter((n: Record<string,unknown>) => !n.read))
     setPersona(d.persona ?? '')
     if (d.exec) setExecSnap(d.exec)
     setLoading(false)
@@ -115,644 +204,583 @@ export default function DashboardPage() {
 
   useEffect(() => { load() }, [load])
 
-  // Fetch cross-platform live snapshots (non-blocking, runs once)
   useEffect(() => {
     fetch('/api/live/veritasedge').then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.connected && d?.snapshot) setSeSnap((d as Record<string,unknown>).snapshot as SnapRecord) })
+      .then(d => { if (d?.connected && d?.snapshot) setSeSnap(d.snapshot as SnapRecord) })
       .catch(() => {})
     fetch('/api/live/investiscript').then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.connected && d?.snapshot) setIsSnap((d as Record<string,unknown>).snapshot as SnapRecord) })
+      .then(d => { if (d?.connected && d?.snapshot) setIsSnap(d.snapshot as SnapRecord) })
       .catch(() => {})
   }, [])
-
-  const domainCounts = tasks.reduce((acc: Record<string,number>, t) => {
-    acc[t.domain as string] = ((acc[t.domain as string] as number) || 0) + 1; return acc
-  }, {})
-
-  const isExecPersona = ['executive','founder','professional'].includes(persona)
-
-  const criticalCount  = tasks.filter((t: Record<string,unknown>) => t.priority === 'critical').length
-  const weekDeadlines  = modules.filter((m: Record<string,unknown>) => m.deadline &&
-    new Date(m.deadline as string) < new Date(Date.now() + 7 * 86400000)).length
 
   async function generateBrief(force = false) {
     setBriefLoading(true)
     try {
-      const url = force ? '/api/brief?force=1' : '/api/brief'
-      const res = await fetch(url, { method: 'POST' })
+      const res  = await fetch(force ? '/api/brief?force=1' : '/api/brief', { method: 'POST' })
       const data = await res.json()
       if (data.content) setBrief(data.content)
     } catch { /* silent */ }
     setBriefLoading(false)
   }
 
-  const DOMAINS = [
-    { key: 'academic',      label: 'Academic',      icon: '🎓', extra: `${modules.length} active` },
-    { key: 'fm_consulting', label: 'FM Consulting',  icon: '🏗',  extra: 'Qiddiya active' },
-    { key: 'saas',          label: 'SaaS',           icon: '⚡',  extra: `${seSnap ? (seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0) + ' tenants' : 'SE · IS · PIOS'}` },
-    { key: 'business',      label: 'Business',       icon: '🏢',  extra: 'Group ops' },
-    { key: 'personal',      label: 'Personal',       icon: '✦',   extra: `${projects.length} projects` },
+  const isExecPersona  = ['executive', 'founder', 'professional'].includes(persona)
+  const criticalCount  = tasks.filter(t => t.priority === 'critical').length
+  const weekDeadlines  = modules.filter(m => m.deadline && new Date(m.deadline) < new Date(Date.now() + 7 * 86400000)).length
+  const activeProjects = projects.filter(p => p.status === 'active' || !p.status).length
+
+  const filteredTasks = activeDomain === 'all' ? tasks : tasks.filter(t => t.domain === activeDomain)
+
+  const DOMAIN_FILTERS = [
+    { key: 'all',          label: 'All', color: 'var(--ai)' },
+    { key: 'academic',     label: 'Academic', color: 'var(--academic)' },
+    { key: 'fm_consulting',label: 'FM / SE', color: 'var(--fm)' },
+    { key: 'saas',         label: 'SaaS', color: 'var(--pro)' },
+    { key: 'business',     label: 'Business', color: 'var(--ops)' },
+    { key: 'personal',     label: 'Personal', color: 'var(--saas)' },
   ]
 
+  const today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  })
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="fade-up">
-      {/* ── Dashboard header ── */}
-      <div style={{
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: 12, marginBottom: 28,
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
-            <h1 style={{
-              fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em',
-              color: 'var(--pios-text)', lineHeight: 1,
-            }}>Command Centre</h1>
-            {tenant?.plan && (
-              <span style={{
-                padding: '3px 10px', borderRadius: 20,
-                background: 'rgba(155,135,245,0.1)', border: '1px solid rgba(155,135,245,0.18)',
-                color: 'var(--ai)', fontSize: 10, fontWeight: 700,
-                letterSpacing: '0.05em', textTransform: 'capitalize' as const,
-              }}>{tenant.plan}</span>
-            )}
-          </div>
-          <p style={{ color: 'var(--pios-muted)', fontSize: 13, letterSpacing: '-0.01em' }}>
-            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-        </div>
 
-        {/* Quick stat pills */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {/* ── Page header ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22 }}>
+        <div>
+          <h1 style={{
+            fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
+            color: 'var(--pios-text)', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 4,
+          }}>Command Centre</h1>
+          <p style={{ fontSize: 12, color: 'var(--pios-muted)' }}>{today}</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {overdueCount > 0 && (
-            <div style={{
-              padding: '6px 12px', borderRadius: 20,
-              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-              fontSize: 12, fontWeight: 600, color: '#ef4444',
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}>
-              <span style={{ fontSize: 10 }}>⚠</span> {overdueCount} overdue
-            </div>
-          )}
-          {criticalCount > 0 && (
-            <div style={{
-              padding: '6px 12px', borderRadius: 20,
-              background: 'rgba(240,160,48,0.08)', border: '1px solid rgba(240,160,48,0.2)',
-              fontSize: 12, fontWeight: 600, color: '#f0a030',
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}>
-              <span style={{ fontSize: 10 }}>●</span> {criticalCount} critical
-            </div>
+            <Link href="/platform/tasks" style={{ textDecoration: 'none' }}>
+              <span style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600,
+                background: 'rgba(224,82,114,0.1)', border: '1px solid rgba(224,82,114,0.25)', color: 'var(--dng)',
+              }}>⚠ {overdueCount} overdue</span>
+            </Link>
           )}
           {dueTodayCount > 0 && (
-            <div style={{
-              padding: '6px 12px', borderRadius: 20,
-              background: 'rgba(155,135,245,0.08)', border: '1px solid rgba(155,135,245,0.18)',
-              fontSize: 12, fontWeight: 600, color: 'var(--ai)',
+            <span style={{
               display: 'flex', alignItems: 'center', gap: 5,
-            }}>
-              <span style={{ fontSize: 10 }}>◉</span> {dueTodayCount} due today
-            </div>
+              padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600,
+              background: 'var(--ai-subtle)', border: '1px solid rgba(139,124,248,0.2)', color: 'var(--ai)',
+            }}>◉ {dueTodayCount} due today</span>
           )}
         </div>
       </div>
 
-      {/* ── Domain health strip ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 20 }}>
-        {DOMAINS.map(d => (
-          <div key={(d as Record<string,unknown>).key as string}
-            className="pios-card-sm"
-            style={{
-              borderLeft: `2px solid ${domainColour(d.key)}`,
-              background: 'var(--pios-surface)',
-              transition: 'border-color 0.15s, box-shadow 0.15s',
-            }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 15 }}>{d.icon}</span>
-              <span style={{
-                fontSize: 18, fontWeight: 800, color: domainColour(d.key),
-                letterSpacing: '-0.03em', lineHeight: 1,
-              }}>{domainCounts[d.key] || 0}</span>
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 2 }}>{d.label}</div>
-            <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{d.extra}</div>
-          </div>
-        ))}
+      {/* ── Error banner ── */}
+      {loadErr && (
+        <div style={{
+          background: 'rgba(224,82,114,0.06)', border: '1px solid rgba(224,82,114,0.2)',
+          borderRadius: 10, padding: '9px 16px', marginBottom: 14,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: 12, color: 'var(--dng)' }}>⚠ {loadErr}</span>
+          <button onClick={load} style={{
+            fontSize: 11, padding: '3px 10px', borderRadius: 6, cursor: 'pointer',
+            background: 'rgba(224,82,114,0.1)', border: '1px solid rgba(224,82,114,0.25)', color: 'var(--dng)',
+          }}>Retry</button>
+        </div>
+      )}
+
+      {/* ── KPI row ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 16 }}>
+        <StatCard
+          label="Active Projects"
+          value={loading ? '—' : String(activeProjects)}
+          delta={`${projects.length} total`}
+          accent="var(--ai)"
+          icon="◈"
+        />
+        <StatCard
+          label="Overdue Tasks"
+          value={loading ? '—' : String(overdueCount)}
+          delta={overdueCount > 0 ? `${dueTodayCount} due today` : 'All clear ✓'}
+          deltaUp={overdueCount === 0}
+          accent="var(--dng)"
+          icon="⚑"
+        />
+        <StatCard
+          label="VE Budget (Annual)"
+          value={seSnap?.obe?.totalBudgetSAR ? `SAR ${(seSnap.obe.totalBudgetSAR / 1e6).toFixed(0)}M` : 'SAR 229M'}
+          delta="KSP baseline"
+          deltaUp
+          accent="var(--fm)"
+          icon="↗"
+        />
+        <StatCard
+          label="Academic Modules"
+          value={loading ? '—' : String(modules.length)}
+          delta={weekDeadlines > 0 ? `${weekDeadlines} due this week` : 'On track'}
+          deltaUp={weekDeadlines === 0}
+          accent="var(--academic)"
+          icon="✍"
+        />
       </div>
 
-      {/* SaaS Platform Live Metrics */}
-      {(seSnap || isSnap) && (
-        <div style={{ display:'grid', gridTemplateColumns: seSnap && isSnap ? '1fr 1fr' : '1fr', gap:10, marginBottom:16 }}>
-          {seSnap && (
-            <div className="pios-card-sm" style={{ borderLeft:'3px solid #0ECFB0' }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:'#0ECFB0' }}>VeritasEdge™</span>
-                <span style={{ fontSize:10, padding:'1px 6px', borderRadius:20, background:'rgba(14,207,176,0.1)', color:'#0ECFB0', fontWeight:600 }}>LIVE</span>
+      {/* ── AI Morning Brief ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(139,124,248,0.06) 0%, rgba(79,142,247,0.04) 100%)',
+        border: '1px solid rgba(139,124,248,0.14)',
+        borderRadius: 14, padding: '16px 20px', marginBottom: 16,
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Top gradient rule */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+          background: 'linear-gradient(90deg, var(--ai), var(--academic))',
+        }} />
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+            background: 'var(--ai-subtle)', border: '1px solid rgba(139,124,248,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+          }}>◉</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <div style={{
+                fontSize: 9.5, fontWeight: 700, color: 'var(--ai)',
+                letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+              }}>NemoClaw™ Morning Brief</div>
+              <span style={{ fontSize: 9, color: 'var(--pios-dim)', fontFamily: 'var(--font-mono)' }}>claude-sonnet-4</span>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+                <button onClick={() => generateBrief(false)} disabled={briefLoading} style={{
+                  fontSize: 11, padding: '4px 12px', borderRadius: 7, cursor: 'pointer',
+                  background: 'var(--ai-subtle)', border: '1px solid rgba(139,124,248,0.2)',
+                  color: 'var(--ai)', fontFamily: 'var(--font-sans)',
+                }}>
+                  {briefLoading ? '⏳ Generating…' : brief ? '↻ Refresh' : 'Generate brief →'}
+                </button>
+                {brief && !briefLoading && (
+                  <button onClick={() => generateBrief(true)} title="Force regenerate" style={{
+                    fontSize: 11, padding: '4px 8px', borderRadius: 7, cursor: 'pointer',
+                    background: 'transparent', border: '1px solid var(--pios-border2)',
+                    color: 'var(--pios-muted)', fontFamily: 'var(--font-sans)',
+                  }}>⟳</button>
+                )}
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
+            </div>
+            {brief ? (
+              <div style={{ fontSize: 13, color: 'var(--pios-sub)', lineHeight: 1.65 }}>
+                {brief.includes('##')
+                  ? brief.split(/^##\s+/m).filter(Boolean).map((section, i) => {
+                      const [title, ...bodyLines] = section.split('\n')
+                      const body = bodyLines.join('\n').trim()
+                      const isAlert = /overdue|at.risk|critical|urgent/i.test(title)
+                      return (
+                        <div key={i} style={{
+                          marginBottom: 10, padding: '9px 13px', borderRadius: 8,
+                          background: isAlert ? 'rgba(224,82,114,0.06)' : 'var(--pios-surface2)',
+                          borderLeft: `2px solid ${isAlert ? 'var(--dng)' : 'rgba(139,124,248,0.4)'}`,
+                        }}>
+                          <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.08em', color: isAlert ? 'var(--dng)' : 'var(--ai)', marginBottom: 5 }}>{title.trim()}</div>
+                          <p style={{ fontSize: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--pios-text)', margin: 0 }}>{body}</p>
+                        </div>
+                      )
+                    })
+                  : <p style={{ fontSize: 13, lineHeight: 1.75, whiteSpace: 'pre-wrap', color: 'var(--pios-text)' }}>{brief}</p>
+                }
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 32 }}>
                 {[
-                  { l:'Tenants', v: seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0 },
-                  { l:'Projects', v: seSnap.projects?.total ?? 0 },
-                  { l:'Assets', v: (typeof seSnap?.assets === "object" ? (seSnap.assets as {total?:number})?.total ?? 0 : Number(seSnap?.assets ?? 0)).toLocaleString() },
-                ].map(m => (
-                  <div key={m.l as string}>
-                    <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{m.v}</div>
-                    <div style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.l}</div>
+                  { v: criticalCount, l: 'critical tasks' },
+                  { v: weekDeadlines, l: 'deadlines this week' },
+                  { v: notifs.length, l: 'unread notifications' },
+                ].map(s => (
+                  <div key={s.l} style={{ textAlign: 'center' as const }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--ai)' }}>{loading ? '—' : s.v}</div>
+                    <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{s.l}</div>
                   </div>
                 ))}
               </div>
-              {seSnap.obe?.totalBudgetSAR && (
-                <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
-                  Last OBE: SAR {(seSnap.obe.totalBudgetSAR/1e6).toFixed(1)}M
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Platform live tiles ── */}
+      {(seSnap || isSnap) && (
+        <div style={{ display: 'grid', gridTemplateColumns: seSnap && isSnap ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 16 }}>
+          {seSnap && (
+            <CardSm style={{ borderLeft: '2px solid var(--fm)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, fontWeight: 700, color: 'var(--fm)' }}>VeritasEdge™</span>
+                  <span style={{ marginLeft: 8, fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--pios-dim)' }}>sustainedge.vercel.app</span>
                 </div>
-              )}
-            </div>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(16,217,160,0.1)', color: 'var(--fm)' }}>LIVE</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                {[
+                  { l: 'Tenants', v: seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0 },
+                  { l: 'Projects', v: seSnap.projects?.total ?? 0 },
+                  { l: 'Assets', v: (typeof seSnap.assets === 'object' ? (seSnap.assets as {total?:number})?.total ?? 0 : Number(seSnap.assets ?? 0)) },
+                ].map(m => (
+                  <div key={m.l}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>{m.v}</div>
+                    <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{m.l}</div>
+                  </div>
+                ))}
+              </div>
+            </CardSm>
           )}
           {isSnap && (
-            <div className="pios-card-sm" style={{ borderLeft:'3px solid #6c8eff' }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:'#6c8eff' }}>InvestiScript</span>
-                <span style={{ fontSize:10, padding:'1px 6px', borderRadius:20, background:'rgba(108,142,255,0.1)', color:'#6c8eff', fontWeight:600 }}>LIVE</span>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6 }}>
-                {[
-                  { l:'Newsrooms', v: isSnap.organisations?.total ?? 0 },
-                  { l:'Investigations', v: isSnap.investigations?.total ?? isSnap.topics?.total ?? 0 },
-                  { l:'Scripts', v: isSnap.scripts?.total ?? 0 },
-                ].map(m => (
-                  <div key={m.l as string}>
-                    <div style={{ fontSize:16, fontWeight:800, color:'var(--pios-text)' }}>{m.v}</div>
-                    <div style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.l}</div>
-                  </div>
-                ))}
-              </div>
-              {(isSnap.apiUsage?.costUsd != null || isSnap.usage?.thisMonth != null) && (
-                <div style={{ marginTop:6, fontSize:11, color:'var(--pios-muted)' }}>
-                  {isSnap.apiUsage?.costUsd != null
-                    ? `$${isSnap.apiUsage.costUsd.toFixed(2)} API cost (30d)`
-                    : `${isSnap?.usage?.thisMonth} AI calls this month`}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Today's Agenda */}
-      {todayEvents.length > 0 && (
-        <div className="pios-card" style={{ marginBottom:16, borderLeft:'3px solid #22d3ee' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-            <span style={{ fontSize:13, fontWeight:600 }}>Today's Calendar</span>
-            <span style={{ fontSize:11, color:'var(--pios-dim)' }}>{todayEvents.length} event{todayEvents.length!==1?'s':''}</span>
-          </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-            {todayEvents.map((e:any) => (
-              <div key={e.id as string} style={{ display:'flex', alignItems:'center', gap:12, padding:'6px 0', borderBottom:'1px solid var(--pios-border)' }}>
-                <div style={{ minWidth:50, fontSize:12, fontWeight:600, color:'#22d3ee' }}>
-                  {e.all_day ? 'All day' : new Date(e.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
-                </div>
-                <div style={{ flex:1, fontSize:13, fontWeight:500 }}>{String(e.title ?? "")}</div>
-                {e.location && <div style={{ fontSize:11, color:'var(--pios-dim)' }}>📍 {e.location}</div>}
-                {e.google_meet_url && <a href={e.google_meet_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'#22c55e' }}>🎥 Join</a>}
-                <span style={{ fontSize:10, padding:'1px 6px', borderRadius:3, background:`${domainColour(e.domain||'personal')}20`, color:domainColour(e.domain||'personal') }}>
-                  {domainLabel(e.domain||'personal')}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-      {loadErr && (
-        <div style={{ background:'rgba(239,68,68,0.07)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:10, padding:'10px 16px', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <span style={{ fontSize:13, color:'#ef4444' }}>⚠ {loadErr}</span>
-          <button onClick={load} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', color:'#ef4444', cursor:'pointer' }}>Retry</button>
-        </div>
-      )}
-      {/* ── First-time welcome ────────────────────────────── */}
-      {!loading && tasks.length === 0 && projects.length === 0 && (
-        <div style={{ background:'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(14,207,176,0.06))', border:'1px solid rgba(167,139,250,0.2)', borderRadius:14, padding:'20px 24px', marginBottom:16 }}>
-          <div style={{ fontSize:20, marginBottom:4 }}>👋 Welcome to PIOS</div>
-          <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:16, maxWidth:520 }}>
-            Your Personal Intelligent Operating System is ready. Here are 5 things to do first:
-          </p>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:8 }}>
-            {[
-              { icon:'🧬', title:'Train NemoClaw™ AI', desc:'Tell it your role, company & goals', href:'/platform/ai' },
-              { icon:'✓',  title:'Add your first task', desc:'Start with something due today', href:'/platform/tasks' },
-              { icon:'🎯', title:'Set an OKR', desc:'What are you trying to achieve this quarter?', href:'/platform/executive' },
-              { icon:'📅', title:'Connect Google Calendar', desc:'Sync your calendar for smart scheduling', href:'/platform/settings' },
-              { icon:'📄', title:'Generate your daily brief', desc:'Your cross-domain AI briefing', href:'/platform/dashboard#brief' },
-            ].map(item => (
-              <a key={item.href} href={item.href} style={{ textDecoration:'none', display:'flex', alignItems:'flex-start', gap:10, padding:'10px 12px', borderRadius:8, background:'var(--pios-surface2)', border:'1px solid var(--pios-border)', cursor:'pointer' }}>
-                <span style={{ fontSize:18, flexShrink:0 }}>{item.icon}</span>
+            <CardSm style={{ borderLeft: '2px solid var(--academic)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div>
-                  <div style={{ fontSize:12, fontWeight:600, color:'var(--pios-text)', marginBottom:2 }}>{item.title}</div>
-                  <div style={{ fontSize:11, color:'var(--pios-muted)' }}>{item.desc}</div>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, fontWeight: 700, color: 'var(--academic)' }}>InvestiScript</span>
+                  <span style={{ marginLeft: 8, fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--pios-dim)' }}>investiscript.vercel.app</span>
                 </div>
-              </a>
-            ))}
-          </div>
-          <a href="/platform/setup" style={{ display:'inline-block', marginTop:14, fontSize:11, color:'var(--ai)', textDecoration:'underline' }}>
-            Or follow the full Setup Guide →
-          </a>
-        </div>
-      )}
-
-
-      {/* ── Stats strip ─────────────────────────────────────────── */}
-      {!loading && (overdueCount > 0 || dueTodayCount > 0 || notifs.length > 0 || pendingTransfers > 0) && (
-        <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' as const }}>
-          {overdueCount > 0 && (
-            <a href="/platform/tasks" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', cursor:'pointer' }}>
-              <span style={{ fontSize:11, fontWeight:700, color:'#ef4444' }}>⚠ {overdueCount} OVERDUE</span>
-            </a>
-          )}
-          {dueTodayCount > 0 && (
-            <a href="/platform/tasks" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)', cursor:'pointer' }}>
-              <span style={{ fontSize:11, fontWeight:700, color:'#f59e0b' }}>⏱ {dueTodayCount} DUE TODAY</span>
-            </a>
-          )}
-          {notifs.length > 0 && (
-            <a href="/platform/notifications" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(167,139,250,0.08)', border:'1px solid rgba(167,139,250,0.2)', cursor:'pointer' }}>
-              <span style={{ fontSize:11, fontWeight:700, color:'#a78bfa' }}>🔔 {notifs.length} UNREAD</span>
-            </a>
-          )}
-          {meetingActions > 0 && (
-            <a href="/platform/meetings" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(34,211,170,0.08)', border:'1px solid rgba(34,211,170,0.2)', cursor:'pointer' }}>
-              <span style={{ fontSize:11, fontWeight:700, color:'#2dd4a0' }}>✓ {meetingActions} ACTIONS PENDING</span>
-            </a>
-          )}
-          {pendingTransfers > 0 && (
-            <a href="/platform/payroll" style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:8, background:'rgba(108,142,255,0.08)', border:'1px solid rgba(108,142,255,0.2)', cursor:'pointer' }}>
-              <span style={{ fontSize:11, fontWeight:700, color:'#6c8eff' }}>💳 {pendingTransfers} TRANSFERS QUEUED</span>
-            </a>
-          )}
-        </div>
-      )}
-
-      {/* Alert banner — pending actions */}
-      {(pendingInvoices > 0 || actionEmails > 0 || pendingTransfers > 0) && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
-          {pendingInvoices > 0 && (
-            <Link href="/platform/files" style={{ textDecoration:'none' }}>
-              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #f59e0b', cursor:'pointer' }}>
-                <div style={{ fontSize:16, fontWeight:800, color:'#f59e0b', lineHeight:1, marginBottom:3 }}>{pendingInvoices}</div>
-                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>invoice{pendingInvoices!==1?'s':''} pending approval</div>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(79,142,247,0.1)', color: 'var(--academic)' }}>LIVE</span>
               </div>
-            </Link>
-          )}
-          {actionEmails > 0 && (
-            <Link href="/platform/email" style={{ textDecoration:'none' }}>
-              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #6c8eff', cursor:'pointer' }}>
-                <div style={{ fontSize:16, fontWeight:800, color:'#6c8eff', lineHeight:1, marginBottom:3 }}>{actionEmails}</div>
-                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>email{actionEmails!==1?'s':''} need action</div>
-              </div>
-            </Link>
-          )}
-          {pendingTransfers > 0 && (
-            <Link href="/platform/payroll" style={{ textDecoration:'none' }}>
-              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #a78bfa', cursor:'pointer' }}>
-                <div style={{ fontSize:16, fontWeight:800, color:'#a78bfa', lineHeight:1, marginBottom:3 }}>{pendingTransfers}</div>
-                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>transfer{pendingTransfers!==1?'s':''} queued for approval</div>
-              </div>
-            </Link>
-          )}
-          {meetingActions > 0 && (
-            <Link href="/platform/meetings" style={{ textDecoration:'none' }}>
-              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #22c55e', cursor:'pointer' }}>
-                <div style={{ fontSize:16, fontWeight:800, color:'#22c55e', lineHeight:1, marginBottom:3 }}>{meetingActions}</div>
-                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>meeting action item{meetingActions!==1?'s':''} to promote</div>
-              </div>
-            </Link>
-          )}
-          {receipts48h > 0 && (
-            <Link href="/platform/expenses" style={{ textDecoration:'none' }}>
-              <div className="pios-card-sm" style={{ padding:'10px 14px', borderLeft:'3px solid #0ECFB0', cursor:'pointer' }}>
-                <div style={{ fontSize:16, fontWeight:800, color:'#0ECFB0', lineHeight:1, marginBottom:3 }}>{receipts48h}</div>
-                <div style={{ fontSize:11, color:'var(--pios-muted)' }}>receipt{receipts48h!==1?'s':''} auto-captured from email</div>
-              </div>
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* AI Morning Brief */}
-      <div id="brief" className="pios-card" style={{ borderColor: 'rgba(167,139,250,0.2)', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ai)' }} className="ai-pulse" />
-            <span style={{ fontSize: 13, fontWeight: 600 }}>AI Morning Brief</span>
-            <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>claude-sonnet-4</span>
-          </div>
-          <div style={{ display:'flex', gap:4 }}>
-            <button onClick={() => generateBrief(false)} disabled={briefLoading} className="pios-btn pios-btn-ghost" style={{ fontSize: 11, padding: '4px 12px' }}>
-              {briefLoading ? '⏳ Generating…' : brief ? '↻ Refresh' : 'Generate today\'s brief →'}
-            </button>
-            {brief && !briefLoading && (
-              <button onClick={() => generateBrief(true)} title="Force regenerate with latest data" className="pios-btn pios-btn-ghost" style={{ fontSize: 11, padding: '4px 8px', color:'var(--pios-muted)' }}>
-                ⟳
-              </button>
-            )}
-          </div>
-        </div>
-        {brief ? (
-          <div>
-            {brief.includes('##')
-              ? brief.split(/^##\s+/m).filter(Boolean).map((section, i) => {
-                  const [title, ...bodyLines] = section.split('\n')
-                  const body = bodyLines.join('\n').trim()
-                  const isAlert = /overdue|at.risk|critical|urgent/i.test(title)
-                  return (
-                    <div key={i} style={{
-                      marginBottom: 12, padding: '10px 14px', borderRadius: 8,
-                      background: isAlert ? 'rgba(239,68,68,0.06)' : 'var(--pios-surface2)',
-                      borderLeft: `3px solid ${isAlert ? '#ef4444' : 'rgba(167,139,250,0.4)'}`,
-                    }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: isAlert ? '#ef4444' : 'var(--ai)', marginBottom: 6 }}>{title.trim()}</div>
-                      <p style={{ fontSize: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap', color: 'var(--pios-text)', margin: 0 }}>{body}</p>
-                    </div>
-                  )
-                })
-              : <p style={{ fontSize: 13, lineHeight: 1.75, whiteSpace: 'pre-wrap', color: 'var(--pios-text)' }}>{brief}</p>
-            }
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <p style={{ color: 'var(--pios-muted)', fontSize: 13, marginBottom: 16 }}>
-              {briefLoading ? 'Generating your cross-domain briefing…' : 'No brief yet today. Generate your cross-domain morning briefing.'}
-            </p>
-            {!briefLoading && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 40 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
                 {[
-                  { v: criticalCount,  l: 'critical tasks' },
-                  { v: weekDeadlines,  l: 'deadlines this week' },
-                  { v: notifs.length,  l: 'unread notifications' },
-                ].map(s => (
-                  <div key={(s as Record<string,unknown>).l as string} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--ai)' }}>{s.v}</div>
-                    <div style={{ fontSize: 11, color: 'var(--pios-dim)' }}>{s.l}</div>
+                  { l: 'Newsrooms', v: isSnap.organisations?.total ?? 0 },
+                  { l: 'Investigations', v: isSnap.investigations?.total ?? 0 },
+                  { l: 'Scripts', v: isSnap.scripts?.total ?? 0 },
+                ].map(m => (
+                  <div key={m.l}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>{m.v}</div>
+                    <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{m.l}</div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        )}
-      </div>
+            </CardSm>
+          )}
+        </div>
+      )}
 
-      {/* Executive OS strip — visible for exec/founder/professional persona */}
+      {/* ── Executive OS strip ── */}
       {isExecPersona && execSnap && (() => {
         const wellness = (execSnap as any).wellness ?? {}
         const ipRenewals = (execSnap as any).ip_renewals_due ?? []
         const contractRenewals = (execSnap as any).contract_renewals_due ?? []
-        const renewalAlerts = (execSnap as any).ip_renewals_count + (execSnap as any).contract_renewals_count
-        const moodColor = !wellness.today_done ? 'var(--pios-muted)'
-          : wellness.mood_score >= 7 ? '#4ade80' : wellness.mood_score >= 4 ? '#fbbf24' : '#f87171'
+        const renewalAlerts = ((execSnap as any).ip_renewals_count ?? 0) + ((execSnap as any).contract_renewals_count ?? 0)
         return (
           <div style={{ marginBottom: 16 }}>
-            {/* Row 1: OKR / Decisions / Stakeholders / IP / Contracts */}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, marginBottom:10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 10 }}>
               {[
-                { dot:'#4ade80', label:'OKR Pulse',        value:`${(execSnap.okr_summary as Record<string,unknown>)?.avg_prog ?? 0}%`, sub:`${(execSnap.okr_summary as Record<string,unknown>)?.total ?? 0} active · ${(execSnap.okr_summary as Record<string,unknown>)?.at_risk ?? 0} at risk`, href:'/platform/executive' },
-                { dot:'#fbbf24', label:'Open Decisions',   value:String(execSnap.open_decisions_count ?? 0), sub:'requiring action',      href:'/platform/executive?tab=decisions' },
-                { dot:'#60a5fa', label:'Stakeholders Due', value:String(execSnap.stakeholders_due_count ?? 0), sub:'this week',           href:'/platform/executive?tab=stakeholders' },
-                { dot:'#a78bfa', label:'IP Assets',        value:String(execSnap.ip_assets_count ?? 0), sub:'in vault',                   href:'/platform/ip-vault' },
-                { dot:'#3b82f6', label:'Active Contracts', value:String(execSnap.active_contracts_count ?? 0), sub:'registered',          href:'/platform/contracts' },
+                { dot: '#4ade80', label: 'OKR Pulse', value: `${(execSnap.okr_summary as any)?.avg_prog ?? 0}%`, sub: `${(execSnap.okr_summary as any)?.total ?? 0} active`, href: '/platform/executive' },
+                { dot: '#fbbf24', label: 'Open Decisions', value: String(execSnap.open_decisions_count ?? 0), sub: 'requiring action', href: '/platform/executive?tab=decisions' },
+                { dot: 'var(--academic)', label: 'Stakeholders', value: String(execSnap.stakeholders_due_count ?? 0), sub: 'due this week', href: '/platform/executive?tab=stakeholders' },
+                { dot: 'var(--ai)', label: 'IP Assets', value: String(execSnap.ip_assets_count ?? 0), sub: 'in vault', href: '/platform/ip-vault' },
+                { dot: 'var(--pro)', label: 'Contracts', value: String(execSnap.active_contracts_count ?? 0), sub: 'active', href: '/platform/contracts' },
               ].map(s => (
-                <a key={s.label} href={s.href} style={{ textDecoration:'none' }}>
-                  <div className="pios-card-sm" style={{ padding:'12px 14px', cursor:'pointer' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:5 }}>
-                      <div style={{ width:5, height:5, borderRadius:'50%', background:s.dot, flexShrink:0 }} />
-                      <span style={{ fontSize:9, fontWeight:600, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</span>
+                <Link key={s.label} href={s.href} style={{ textDecoration: 'none' }}>
+                  <CardSm style={{ cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />
+                      <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--pios-dim)', textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>{s.label}</span>
                     </div>
-                    <div style={{ fontSize:20, fontWeight:700, color:'var(--pios-text)', lineHeight:1 }}>{s.value}</div>
-                    <div style={{ fontSize:10, color:'var(--pios-muted)', marginTop:3 }}>{s.sub}</div>
-                  </div>
-                </a>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.value}</div>
+                    <div style={{ fontSize: 10, color: 'var(--pios-muted)', marginTop: 3 }}>{s.sub}</div>
+                  </CardSm>
+                </Link>
               ))}
             </div>
 
-            {/* Row 2: Wellness tile + Renewal alerts */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-
-              {/* Wellness check-in tile */}
-              <a href="/platform/wellness" style={{ textDecoration:'none' }}>
-                <div className="pios-card-sm" style={{ padding:'14px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:14 }}>
-                  <div style={{ fontSize:28, flexShrink:0 }}>
+            {/* Wellness + renewals row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <Link href="/platform/wellness" style={{ textDecoration: 'none' }}>
+                <CardSm style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ fontSize: 28, flexShrink: 0 }}>
                     {wellness.today_done ? (wellness.mood_score >= 7 ? '😊' : wellness.mood_score >= 4 ? '😐' : '😔') : '🌅'}
                   </div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
-                      <span style={{ fontSize:9, fontWeight:700, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Wellness</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--pios-dim)', textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Wellness</span>
                       {wellness.streak > 0 && (
-                        <span style={{ fontSize:9, fontWeight:700, color:'#f97316', background:'rgba(249,115,22,0.1)', border:'1px solid rgba(249,115,22,0.2)', padding:'1px 5px', borderRadius:8 }}>
-                          🔥 {wellness.streak}d
-                        </span>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: '#f97316', background: 'rgba(249,115,22,0.1)', padding: '1px 5px', borderRadius: 8 }}>🔥 {wellness.streak}d</span>
                       )}
                     </div>
                     {wellness.today_done ? (
-                      <div>
-                        <div style={{ display:'flex', gap:8, marginBottom:3 }}>
-                          {[{l:'M',v:wellness.mood_score,c:'#9b87f5'},{l:'E',v:wellness.energy_score,c:'#22d3ee'},{l:'S',v:wellness.stress_score,c:'#f97316'}].map(({l,v,c}) => (
-                            <span key={l} style={{ fontSize:11, fontWeight:700, color:c, background:c+'18', border:`1px solid ${c}30`, padding:'1px 5px', borderRadius:5 }}>{l}:{v}</span>
-                          ))}
-                        </div>
-                        <div style={{ fontSize:10, color:'var(--pios-muted)' }}>Checked in today ✓</div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {[{ l: 'M', v: wellness.mood_score, c: 'var(--ai)' }, { l: 'E', v: wellness.energy_score, c: 'var(--pro)' }, { l: 'S', v: wellness.stress_score, c: 'var(--ops)' }].map(({ l, v, c }) => (
+                          <span key={l} style={{ fontSize: 11, fontWeight: 700, color: c, background: `${c}18`, padding: '1px 6px', borderRadius: 5 }}>{l}:{v}</span>
+                        ))}
                       </div>
                     ) : (
-                      <div>
-                        <div style={{ fontSize:13, fontWeight:600, color:'var(--pios-text)' }}>Check in →</div>
-                        <div style={{ fontSize:10, color:'var(--pios-muted)' }}>No check-in yet today</div>
-                      </div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--pios-text)' }}>Check in →</div>
                     )}
                   </div>
-                </div>
-              </a>
-
-              {/* Renewal alerts tile */}
-              <div className="pios-card-sm" style={{ padding:'14px 16px' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
-                  <div style={{ width:5, height:5, borderRadius:'50%', background: renewalAlerts > 0 ? '#f87171' : '#4ade80', flexShrink:0 }} />
-                  <span style={{ fontSize:9, fontWeight:700, color:'var(--pios-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Renewals Due (90d)</span>
+                </CardSm>
+              </Link>
+              <CardSm>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: renewalAlerts > 0 ? 'var(--dng)' : 'var(--fm)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--pios-dim)', textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Renewals Due (90d)</span>
                 </div>
                 {renewalAlerts === 0 ? (
-                  <div style={{ fontSize:12, color:'var(--pios-muted)' }}>No renewals due ✓</div>
+                  <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>No renewals due ✓</div>
                 ) : (
-                  <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-                    {[...ipRenewals.slice(0,2).map((a: any) => ({
-                      label: a.name?.length > 28 ? a.name.slice(0,25)+'…' : a.name,
-                      date: a.renewal_date, type: a.asset_type, href: '/platform/ip-vault', color: '#a78bfa',
-                    })), ...contractRenewals.slice(0,2).map((c: any) => ({
-                      label: c.title?.length > 28 ? c.title.slice(0,25)+'…' : c.title,
-                      date: c.end_date, type: c.contract_type, href: '/platform/contracts', color: '#3b82f6',
-                    }))].slice(0,3).map((r, i) => (
-                      <a key={i} href={r.href} style={{ textDecoration:'none', display:'flex', alignItems:'center', gap:6 }}>
-                        <div style={{ width:4, height:4, borderRadius:'50%', background:r.color, flexShrink:0 }} />
-                        <span style={{ fontSize:10, color:'var(--pios-text)', flex:1, minWidth:0 }}>{r.label}</span>
-                        <span style={{ fontSize:9, color:'var(--pios-dim)', whiteSpace:'nowrap' }}>
-                          {new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}
-                        </span>
-                      </a>
+                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 5 }}>
+                    {[...ipRenewals.slice(0, 2).map((a: any) => ({ label: a.name, date: a.renewal_date, href: '/platform/ip-vault', color: 'var(--ai)' })),
+                      ...contractRenewals.slice(0, 2).map((c: any) => ({ label: c.title, date: c.end_date, href: '/platform/contracts', color: 'var(--academic)' }))
+                    ].slice(0, 3).map((r, i) => (
+                      <Link key={i} href={r.href} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <div style={{ width: 4, height: 4, borderRadius: '50%', background: r.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 11, color: 'var(--pios-text)', flex: 1, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.label}</span>
+                        <span style={{ fontSize: 9.5, color: 'var(--pios-dim)', flexShrink: 0 }}>{new Date(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                      </Link>
                     ))}
-                    {renewalAlerts > 3 && (
-                      <div style={{ fontSize:9, color:'var(--pios-dim)', marginTop:2 }}>+{renewalAlerts - 3} more</div>
-                    )}
                   </div>
                 )}
-              </div>
+              </CardSm>
             </div>
           </div>
         )
       })()}
 
-      {/* Notifications strip — show if any unread */}
-      {notifs.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Notifications ({notifs.length})</span>
-            <button onClick={async () => { await fetch('/api/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'mark_read' }) }); setNotifs([]) }}
-              style={{ fontSize: 11, color: 'var(--pios-muted)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Mark all read</button>
+      {/* ── Main two-column grid ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 14, marginBottom: 16 }}>
+
+        {/* Left: Tasks */}
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em' }}>Priority Tasks</span>
+            <Link href="/platform/tasks" style={{ fontSize: 11, color: 'var(--pios-dim)', textDecoration: 'none' }}>View all →</Link>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {notifs.map(n => (
-            <div key={n.id as string} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '5px 12px', borderRadius: 20, fontSize: 11,
-              background: n.type === 'critical' ? 'rgba(239,68,68,0.1)' : n.type === 'warning' ? 'rgba(245,158,11,0.1)' : n.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(167,139,250,0.1)',
-              color: n.type === 'critical' ? '#ef4444' : n.type === 'warning' ? '#f59e0b' : n.type === 'success' ? '#22c55e' : 'var(--ai)',
-              border: `1px solid currentColor`, opacity: 0.85,
-            }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', display: 'inline-block', flexShrink: 0 }} />
-              {String(n.title ?? "")}
+
+          {/* Domain filter chips */}
+          <div style={{ display: 'flex', gap: 5, marginBottom: 14, flexWrap: 'wrap' as const }}>
+            {DOMAIN_FILTERS.map(df => (
+              <button key={df.key} onClick={() => setActiveDomain(df.key)} style={{
+                fontSize: 10.5, padding: '3px 9px', borderRadius: 6,
+                border: activeDomain === df.key ? `1px solid ${df.color}` : '1px solid var(--pios-border)',
+                background: activeDomain === df.key ? `${df.color}12` : 'transparent',
+                color: activeDomain === df.key ? df.color : 'var(--pios-muted)',
+                cursor: 'pointer', transition: 'all 0.12s', fontFamily: 'var(--font-sans)',
+              }}>{df.label}</button>
+            ))}
+          </div>
+
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="pios-skeleton" style={{ height: 44, borderRadius: 8 }} />
+              ))}
             </div>
-          ))}
+          ) : filteredTasks.length === 0 ? (
+            <div style={{ textAlign: 'center' as const, padding: '24px 0' }}>
+              <p style={{ fontSize: 12, color: 'var(--pios-dim)', marginBottom: 10 }}>
+                {activeDomain === 'all' ? 'No open tasks' : `No tasks in ${activeDomain}`}
+              </p>
+              <Link href="/platform/tasks" style={{
+                fontSize: 11.5, padding: '5px 14px', borderRadius: 7,
+                background: 'var(--ai-subtle)', color: 'var(--ai)', textDecoration: 'none',
+              }}>Add task</Link>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6 }}>
+              {filteredTasks.slice(0, 7).map(t => {
+                const isOverdue = overdueCount > 0 && tasks.indexOf(t) < overdueCount
+                return (
+                  <div key={t.id} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                    padding: '9px 12px', borderRadius: 8,
+                    background: isOverdue ? 'rgba(224,82,114,0.05)' : 'var(--pios-surface2)',
+                    borderLeft: isOverdue ? '2px solid var(--dng)' : '2px solid transparent',
+                  }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: priorityColour(String(t.priority ?? '')), flexShrink: 0, marginTop: 4 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: isOverdue ? 600 : 400, color: 'var(--pios-text)', whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>{String(t.title ?? '')}</div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 3 }}>
+                        <Tag color={domainColour(String(t.domain ?? ''))}>{domainLabel(String(t.domain ?? ''))}</Tag>
+                        {t.due_date && <span style={{ fontSize: 10, color: isOverdue ? 'var(--dng)' : 'var(--pios-dim)' }}>{formatRelative(String(t.due_date))}</span>}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </Card>
+
+        {/* Right col */}
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+
+          {/* Pending actions */}
+          <Card style={{ padding: '14px 16px' }}>
+            <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--pios-dim)', marginBottom: 12 }}>Pending Actions</div>
+            {[
+              { icon: '✉', label: 'Action emails', val: actionEmails, color: 'var(--dng)', href: '/platform/email' },
+              { icon: '📄', label: 'Pending invoices', val: pendingInvoices, color: 'var(--saas)', href: '/platform/files' },
+              { icon: '🔔', label: 'Unread notifications', val: notifs.length, color: 'var(--ai)', href: '/platform/notifications' },
+              { icon: '💳', label: 'Transfers queued', val: pendingTransfers, color: 'var(--academic)', href: '/platform/payroll' },
+              { icon: '✓', label: 'Meeting follow-ups', val: meetingActions, color: 'var(--fm)', href: '/platform/meetings' },
+              { icon: '🧾', label: 'Receipts (48h)', val: receipts48h, color: 'var(--pro)', href: '/platform/expenses' },
+            ].filter(a => a.val > 0 || true).map(a => (
+              <Link key={a.label} href={a.href} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--pios-border)' }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>{a.icon}</span>
+                <span style={{ flex: 1, fontSize: 11.5, color: 'var(--pios-sub)' }}>{a.label}</span>
+                <span style={{
+                  fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700,
+                  color: a.val > 0 ? a.color : 'var(--pios-dim)',
+                }}>{a.val}</span>
+              </Link>
+            ))}
+          </Card>
+
+          {/* Today's events */}
+          {todayEvents.length > 0 && (
+            <Card style={{ padding: '14px 16px' }}>
+              <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--pios-dim)', marginBottom: 12 }}>Today's Calendar</div>
+              <div style={{ position: 'relative', paddingLeft: 16 }}>
+                <div style={{ position: 'absolute', left: 5, top: 0, bottom: 0, width: 1, background: 'var(--pios-border)' }} />
+                {todayEvents.slice(0, 4).map((e: any, i: number) => (
+                  <div key={e.id} style={{ position: 'relative', paddingBottom: 12 }}>
+                    <div style={{ position: 'absolute', left: -13, top: 4, width: 7, height: 7, borderRadius: '50%', background: 'var(--pro)', border: '2px solid var(--pios-bg)' }} />
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--pios-text)', marginBottom: 1 }}>{String(e.title ?? '')}</div>
+                    <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>
+                      {e.all_day ? 'All day' : new Date(e.start_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Notifications */}
+          {notifs.length > 0 && (
+            <Card style={{ padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--pios-dim)' }}>Notifications</div>
+                <button onClick={async () => {
+                  await fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'mark_read' }) })
+                  setNotifs([])
+                }} style={{ fontSize: 10, color: 'var(--pios-dim)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                  Mark all read
+                </button>
+              </div>
+              {notifs.slice(0, 4).map(n => (
+                <div key={n.id} style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 8,
+                  padding: '6px 0', borderBottom: '1px solid var(--pios-border)',
+                }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', marginTop: 5, flexShrink: 0, background: n.type === 'critical' ? 'var(--dng)' : n.type === 'warning' ? 'var(--saas)' : 'var(--ai)' }} />
+                  <span style={{ fontSize: 11.5, color: 'var(--pios-sub)' }}>{String(n.title ?? '')}</span>
+                </div>
+              ))}
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* ── Academic modules ── */}
+      {modules.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <SectionLabel>Academic Modules</SectionLabel>
+            <Link href="/platform/academic" style={{ fontSize: 11, color: 'var(--pios-dim)', textDecoration: 'none' }}>View all →</Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+            {modules.slice(0, 3).map(m => (
+              <CardSm key={m.id} style={{ borderLeft: '2px solid var(--academic)' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 6, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <Tag color={m.status === 'in_progress' ? 'var(--fm)' : 'var(--academic)'}>{String(m.status ?? '').replace('_', ' ')}</Tag>
+                  {m.deadline && <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{formatRelative(m.deadline)}</span>}
+                </div>
+              </CardSm>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Tasks + Academic */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-        {/* Priority tasks */}
-        <div className="pios-card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Priority Tasks</span>
-            <Link href="/platform/tasks" style={{ fontSize: 11, color: 'var(--pios-dim)', textDecoration: 'none' }}>View all →</Link>
+      {/* ── Active projects ── */}
+      {projects.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <SectionLabel>Active Projects</SectionLabel>
+            <Link href="/platform/projects" style={{ fontSize: 11, color: 'var(--pios-dim)', textDecoration: 'none' }}>View all →</Link>
           </div>
-          {loading ? (
-            <p style={{ color: 'var(--pios-dim)', fontSize: 12, textAlign: 'center', padding: '20px 0' }}>Loading…</p>
-          ) : tasks.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ color: 'var(--pios-dim)', fontSize: 12, marginBottom: 10 }}>No open tasks</p>
-              <Link href="/platform/tasks" style={{ fontSize: 12, padding: '6px 14px', borderRadius: 6, background: 'rgba(167,139,250,0.1)', color: 'var(--ai)', textDecoration: 'none' }}>Add your first task</Link>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {tasks.slice(0, 6).map(t => (
-                <div key={t.id as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 9, borderRadius: 7, background: 'var(--pios-surface2)' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: priorityColour(String(t.priority ?? '')), flexShrink: 0, marginTop: 4 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{String(t.title ?? "")}</div>
-                    <div style={{ display: 'flex', gap: 6, marginTop: 3 }}>
-                      <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: `${domainColour(String(t.domain ?? ''))}20`, color: domainColour(String(t.domain ?? '')) }}>{domainLabel(String(t.domain ?? ''))}</span>
-                      {Boolean(t.due_date) && <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{formatRelative(String(t.due_date ?? ''))}</span>}
-                    </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+            {projects.slice(0, 4).map(p => {
+              const color = p.colour || domainColour(String(p.domain ?? ''))
+              return (
+                <CardSm key={p.id} style={{ borderTop: `2px solid ${color}` }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 8, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</div>
+                  <ProgressBar pct={p.progress ?? 0} color={color} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                    <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{domainLabel(String(p.domain ?? ''))}</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color }}>{p.progress ?? 0}%</span>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Academic */}
-        <div className="pios-card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Academic</span>
-            <Link href="/platform/academic" style={{ fontSize: 11, color: 'var(--pios-dim)', textDecoration: 'none' }}>View all →</Link>
+                </CardSm>
+              )
+            })}
+            {projects.length < 4 && (
+              <Link href="/platform/projects" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  background: 'transparent', border: '1px dashed var(--pios-border)',
+                  borderRadius: 10, padding: '12px 14px', minHeight: 80,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, color: 'var(--pios-dim)', cursor: 'pointer',
+                }}>+ New project</div>
+              </Link>
+            )}
           </div>
-          {modules.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <p style={{ color: 'var(--pios-dim)', fontSize: 12, marginBottom: 10 }}>No modules set up</p>
-              <Link href="/platform/academic" style={{ fontSize: 12, padding: '6px 14px', borderRadius: 6, background: 'rgba(108,142,255,0.1)', color: '#6c8eff', textDecoration: 'none' }}>Set up academic tracker</Link>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {modules.map(m => (
-                <div key={m.id as string} style={{ padding: 9, borderRadius: 7, background: 'var(--pios-surface2)', borderLeft: '3px solid #6c8eff' }}>
-                  <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 3 }}>{m.title}</div>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: (m.status ?? '') === 'in_progress' ? 'rgba(45,212,160,0.1)' : 'rgba(108,142,255,0.1)', color: (m.status ?? '') === 'in_progress' ? '#2dd4a0' : '#6c8eff' }}>{String(m.status ?? '').replace('_', ' ')}</span>
-                    {m.deadline && <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{formatRelative(m.deadline)}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
-      </div>
+      )}
 
-      {/* Active Projects */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
-        {projects.map(p => (
-          <div key={p.id as string} className="pios-card-sm" style={{ borderTop: `3px solid ${p.colour || domainColour(String(p.domain ?? ''))}` }}>
-            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</div>
-            <div style={{ height: 4, background: 'var(--pios-surface2)', borderRadius: 2, marginBottom: 6 }}>
-              <div style={{ height: '100%', width: `${p.progress}%`, background: p.colour || domainColour(String(p.domain ?? '')), borderRadius: 2, transition: 'width 0.3s' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{domainLabel(String(p.domain ?? ''))}</span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: p.colour || domainColour(String(p.domain ?? '')) }}>{p.progress}%</span>
-            </div>
-          </div>
-        ))}
-        {projects.length < 4 && (
-          <Link href="/platform/projects" style={{ textDecoration: 'none' }}>
-            <div className="pios-card-sm" style={{ border: '1px dashed var(--pios-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--pios-dim)', fontSize: 12, cursor: 'pointer', minHeight: 80 }}>+ New project</div>
-          </Link>
-        )}
-      </div>
-
-      {/* ── CEO Module Quick-Access ─────────────────────────────── */}
-      <div style={{ marginTop: 20 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pios-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-          Professional OS — Quick Access
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 10 }}>
+      {/* ── Quick access grid ── */}
+      <div>
+        <SectionLabel>Professional OS — Quick Access</SectionLabel>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 8 }}>
           {([
-            { href:'/platform/command',      icon:'⚡', label:'Command Centre',     sub:'Live cockpit',          colour:'#6c8eff' },
-            { href:'/platform/executive',    icon:'🎯', label:'Executive OS',       sub:'OKRs + decisions',      colour:'#a78bfa' },
-            { href:'/platform/consulting',   icon:'🧩', label:'Frameworks',         sub:'15 NemoClaw™ tools',    colour:'#4f46e5' },
-            { href:'/platform/ip-vault',     icon:'🔐', label:'IP Vault',           sub:'Frameworks + TMs',      colour:'#7c3aed' },
-            { href:'/platform/contracts',    icon:'📑', label:'Contracts',          sub:'Register + renewals',   colour:'#3b82f6' },
-            { href:'/platform/financials',   icon:'📈', label:'Group P&L',          sub:'YTD burn + pipeline',   colour:'#22c55e' },
-            { href:'/platform/knowledge',    icon:'🧠', label:'SE-MIL',             sub:'Institutional memory',  colour:'#0d9488' },
-            { href:'/platform/time-sovereignty', icon:'⏱', label:'Time Sovereignty', sub:'TSA™ engine',         colour:'#22d3ee' },
-          ] as { href:string; icon:string; label:string; sub:string; colour:string }[]).map(m => (
-            <Link key={m.href} href={m.href} style={{ textDecoration:'none' }}>
-              <div className="pios-card-sm" style={{ cursor:'pointer', padding:'10px 12px', borderLeft:`3px solid ${m.colour}30`, transition:'border-color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.borderLeftColor = m.colour)}
-                onMouseLeave={e => (e.currentTarget.style.borderLeftColor = `${m.colour}30`)}>
-                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
-                  <span style={{ fontSize:16 }}>{m.icon}</span>
-                  <span style={{ fontSize:12, fontWeight:600, color:'var(--pios-text)' }}>{m.label}</span>
+            { href: '/platform/command',      icon: '⬡', label: 'Live Data',       sub: 'Real-time cockpit',   color: 'var(--academic)' },
+            { href: '/platform/executive',    icon: '⚡', label: 'Executive OS',    sub: 'OKRs + decisions',    color: 'var(--pro)' },
+            { href: '/platform/consulting',   icon: '◎', label: 'Frameworks',      sub: 'NemoClaw™ tools',     color: 'var(--ai)' },
+            { href: '/platform/ip-vault',     icon: '⊛', label: 'IP Vault',        sub: 'TMs + frameworks',    color: 'var(--ai)' },
+            { href: '/platform/contracts',    icon: '§', label: 'Contracts',       sub: 'Register + renewals', color: 'var(--academic)' },
+            { href: '/platform/financials',   icon: '↗', label: 'Group P&L',       sub: 'YTD + pipeline',      color: 'var(--fm)' },
+            { href: '/platform/knowledge',    icon: '⊡', label: 'SE-MIL',          sub: 'Institutional memory', color: 'var(--fm)' },
+            { href: '/platform/time-sovereignty', icon: '◷', label: 'Time Sovereignty', sub: 'TSA™ engine', color: 'var(--pro)' },
+          ] as { href: string; icon: string; label: string; sub: string; color: string }[]).map(m => (
+            <Link key={m.href} href={m.href} style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'var(--pios-surface)', border: '1px solid var(--pios-border)',
+                borderRadius: 10, padding: '11px 13px', cursor: 'pointer',
+                borderLeft: `2px solid ${m.color}30`, transition: 'border-left-color 0.15s',
+              }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderLeftColor = m.color }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderLeftColor = `${m.color}30` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
+                  <span style={{ fontSize: 13, color: m.color }}>{m.icon}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: 'var(--pios-text)' }}>{m.label}</span>
                 </div>
-                <div style={{ fontSize:10, color:'var(--pios-dim)' }}>{m.sub}</div>
+                <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{m.sub}</div>
               </div>
             </Link>
           ))}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8 }}>
           {([
-            { href:'/platform/calendar',     icon:'📅', label:'Calendar',       colour:'#0ea5e9' },
-            { href:'/platform/research',     icon:'🔬', label:'Research',       colour:'#8b5cf6' },
-            { href:'/platform/comms',        icon:'📢', label:'Comms Hub',      colour:'#f59e0b' },
-            { href:'/platform/intelligence', icon:'🌐', label:'Intelligence',   colour:'#0d9488' },
-            { href:'/platform/notifications',icon:'🔔', label:'Notifications',  colour:'#ef4444' },
-            { href:'/platform/ai',           icon:'✨', label:'AI Companion',   colour:'#c084fc' },
-          ] as { href:string; icon:string; label:string; colour:string }[]).map(m => (
-            <Link key={m.href} href={m.href} style={{ textDecoration:'none' }}>
-              <div className="pios-card-sm" style={{ padding:'8px 10px', cursor:'pointer', textAlign:'center' as const }}>
-                <div style={{ fontSize:18, marginBottom:3 }}>{m.icon}</div>
-                <div style={{ fontSize:10, color:'var(--pios-muted)', fontWeight:600 }}>{m.label}</div>
+            { href: '/platform/calendar', icon: '▦', label: 'Calendar', color: 'var(--pro)' },
+            { href: '/platform/research', icon: '⊕', label: 'Research', color: 'var(--academic)' },
+            { href: '/platform/comms', icon: '◈', label: 'Comms', color: 'var(--saas)' },
+            { href: '/platform/intelligence', icon: '◉', label: 'Intelligence', color: 'var(--fm)' },
+            { href: '/platform/notifications', icon: '◉', label: 'Alerts', color: 'var(--dng)' },
+            { href: '/platform/ai', icon: '◉', label: 'NemoClaw', color: 'var(--ai)' },
+          ] as { href: string; icon: string; label: string; color: string }[]).map(m => (
+            <Link key={m.href} href={m.href} style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'var(--pios-surface)', border: '1px solid var(--pios-border)',
+                borderRadius: 10, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' as const,
+                transition: 'border-color 0.15s',
+              }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = m.color }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--pios-border)' }}>
+                <div style={{ fontSize: 15, color: m.color, marginBottom: 4 }}>{m.icon}</div>
+                <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--pios-muted)' }}>{m.label}</div>
               </div>
             </Link>
           ))}
