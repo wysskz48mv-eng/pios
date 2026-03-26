@@ -8,12 +8,12 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 interface Message { role: 'user' | 'assistant'; content: string; timestamp?: string }
 
 const DOMAIN_MODES = [
-  { key:'general',      label:'General',      icon:'◉', colour:'#a78bfa', prompt:'' },
-  { key:'academic',     label:'DBA Research', icon:'🎓', colour:'#6c8eff', prompt:'Focus on my DBA research at University of Portsmouth. Topic: AI-enabled forecasting in GCC FM. Theory: STS + sensemaking.' },
-  { key:'fm_consulting',label:'FM Consulting', icon:'🏗️', colour:'#2dd4a0', prompt:'Focus on FM consulting. Key projects: Qiddiya (QPMO-410-CT-07922), King Salman Park (SAR 229.6M). Reference VeritasEdge™ platform.' },
-  { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'#f59e0b', prompt:'Focus on my SaaS platforms: VeritasEdge™ v5.8 (service charge), InvestiScript v3 (AI journalism), PIOS v2.7. Stack: Next.js 14, Supabase, Claude API.' },
-  { key:'executive_os', label:'Executive OS',  icon:'⚡', colour:'#22d3ee', prompt:'Focus on my Executive OS — OKRs, open decisions, stakeholder management. Apply EOSA™ thinking. Reference my active OKRs and open decisions.' },
-  { key:'business',     label:'Business',     icon:'🏢', colour:'#e05a7a', prompt:'Focus on company management: VeritasIQ Technologies Ltd (UK SaaS), VeritasIQ Technologies Ltd (FM consultancy), VeritasIQ Technologies Ltd (UAE holding). Governance, compliance, financials.' },
+  { key:'general',      label:'General',      icon:'◉', colour:'var(--ai)', prompt:'' },
+  { key:'academic',     label:'DBA Research', icon:'🎓', colour:'var(--academic)', prompt:'Focus on my DBA research at University of Portsmouth. Topic: AI-enabled forecasting in GCC FM. Theory: STS + sensemaking.' },
+  { key:'fm_consulting',label:'FM Consulting', icon:'🏗️', colour:'var(--fm)', prompt:'Focus on FM consulting. Key projects: Qiddiya (QPMO-410-CT-07922), King Salman Park (SAR 229.6M). Reference VeritasEdge™ platform.' },
+  { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'var(--saas)', prompt:'Focus on my SaaS platforms: VeritasEdge™ v5.8 (service charge), InvestiScript v3 (AI journalism), PIOS v2.7. Stack: Next.js 14, Supabase, Claude API.' },
+  { key:'executive_os', label:'Executive OS',  icon:'⚡', colour:'var(--pro)', prompt:'Focus on my Executive OS — OKRs, open decisions, stakeholder management. Apply EOSA™ thinking. Reference my active OKRs and open decisions.' },
+  { key:'business',     label:'Business',     icon:'🏢', colour:'var(--dng)', prompt:'Focus on company management: VeritasIQ Technologies Ltd (UK SaaS), VeritasIQ Technologies Ltd (FM consultancy), VeritasIQ Technologies Ltd (UAE holding). Governance, compliance, financials.' },
 ] as const
 
 const SHORTCUTS = [
@@ -233,7 +233,7 @@ export default function AiPage() {
               {sessions.map(s => (
                 <div key={(s as any).id} onClick={() => loadSession((s as any).id)} style={{
                   padding: '8px 10px', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 6,
-                  background: activeId === (s as any).id ? 'rgba(167,139,250,0.1)' : 'transparent',
+                  background: activeId === (s as any).id ? 'var(--ai-subtle)' : 'transparent',
                   border: `1px solid ${activeId === (s as any).id ? 'rgba(167,139,250,0.25)' : 'transparent'}`,
                 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -249,7 +249,7 @@ export default function AiPage() {
       )}
 
       {/* ── Main chat area ──────────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--pios-surface)', borderRadius: 12, border: '1px solid rgba(167,139,250,0.2)', overflow: 'hidden', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--pios-surface)', borderRadius: 12, border: '1px solid rgba(139,124,248,0.2)', overflow: 'hidden', minWidth: 0 }}>
 
         {/* Chat header */}
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--pios-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
@@ -281,7 +281,7 @@ export default function AiPage() {
             /* Empty state with shortcuts */
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '20px 0' }}>
               <div style={{ fontSize: 36, marginBottom: 16 }}>◉</div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>PIOS AI Companion</div>
+              <div style={{ fontSize: 16, fontFamily: "var(--font-display)", fontWeight: 700, marginBottom: 6 }}>PIOS AI Companion</div>
               <p style={{ fontSize: 13, color: 'var(--pios-muted)', textAlign: 'center', maxWidth: 420, marginBottom: 28, lineHeight: 1.65 }}>
                 Your cross-domain intelligence layer. Switch domain modes on the left or start with a quick prompt below.
               </p>
@@ -303,7 +303,7 @@ export default function AiPage() {
               <div key={i} className="msg-enter" style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexDirection: m.role === 'user' ? 'row-reverse' : 'row' }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                  background: m.role === 'user' ? 'rgba(255,255,255,0.1)' : `linear-gradient(135deg, #a78bfa, #6c8eff)`,
+                  background: m.role === 'user' ? 'rgba(255,255,255,0.1)' : `linear-gradient(135deg, var(--ai), var(--academic))`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 11, fontWeight: 700, color: '#fff', marginTop: 2,
                 }}>
@@ -311,7 +311,7 @@ export default function AiPage() {
                 </div>
                 <div style={{
                   maxWidth: '78%', padding: '11px 15px', borderRadius: m.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-                  background: m.role === 'user' ? 'rgba(167,139,250,0.15)' : 'var(--pios-surface2)',
+                  background: m.role === 'user' ? 'var(--ai-subtle)' : 'var(--pios-surface2)',
                   fontSize: 13, lineHeight: 1.7, color: 'var(--pios-text)',
                   whiteSpace: 'pre-wrap',
                 }}>
@@ -325,7 +325,7 @@ export default function AiPage() {
           {/* Typing indicator */}
           {loading && (
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #a78bfa, #6c8eff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>P</div>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--ai), var(--academic))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>P</div>
               <div style={{ padding: '11px 16px', borderRadius: '12px 12px 12px 4px', background: 'var(--pios-surface2)', display: 'flex', gap: 5, alignItems: 'center' }}>
                 {[0,1,2].map(i => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ai)', animation: `pulse 1.2s ${i*0.2}s ease-in-out infinite` }} />)}
               </div>
@@ -366,7 +366,7 @@ export default function AiPage() {
             width: 42, height: 42, borderRadius: 10, flexShrink: 0,
             background: input.trim() && !loading ? 'var(--ai)' : 'var(--pios-surface2)',
             border: 'none', cursor: input.trim() && !loading ? 'pointer' : 'default',
-            color: input.trim() && !loading ? '#0a0b0d' : 'var(--pios-dim)',
+            color: input.trim() && !loading ? 'var(--pios-bg)' : 'var(--pios-dim)',
             fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.15s',
           }}>↑</button>
