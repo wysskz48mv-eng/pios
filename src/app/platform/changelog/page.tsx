@@ -8,7 +8,7 @@ export default function ChangelogPage() {
     {
       version: 'v3.0.2',
       date: 'March 2026',
-      badge: 'Latest',
+      badge: null,
       badgeColor: 'var(--ai)',
       changes: [
         { type: 'new', text: 'DBA Chapter AI Writer (/platform/academic/writer) — section-by-section drafting with NemoClaw™, section picker mapped per chapter type, word target selector, editable output with append-to-chapter' },
@@ -35,11 +35,16 @@ export default function ChangelogPage() {
       ],
     },
     {
-      version: 'v3.0.0',
+      version: 'v3.0.3',
       date: 'March 2026',
-      badge: '',
+      badge: 'Latest',
       badgeColor: 'var(--ai)',
       changes: [
+        { type: 'new', text: 'NemoClaw™ Training page (/platform/ai/train) — configure AI persona context, company context, goals, custom instructions, tone preference, and response style' },
+        { type: 'new', text: 'NemoClaw™ Training: auto-generate context from 3-field description, test persona with live response, CV calibration panel with in-place re-upload' },
+        { type: 'new', text: 'Migration M022 — nemoclaw_calibration table (CV intelligence profile per user), user_profiles CV columns (cv_processing_status, cv_filename, cv_uploaded_at, cv_storage_path, job_title, organisation), pios-cv storage bucket created automatically with owner RLS' },
+        { type: 'new', text: 'Migration M023 — exec_intelligence_config table (NemoClaw training config: persona/company/goals/instructions/tone/style), ai_credits_resets audit table' },
+        { type: 'fix', text: 'M017 sentinel corrected: was pointing to exec_intelligence_config (not in M017) → now sia_signal_briefs — platform health check no longer falsely marks M017 as unapplied' },
         { type: 'new', text: "Sprint 84: NemoClaw™ calibration status card in AI sidebar — shows calibration summary, seniority, industry, recommended frameworks; prompts CV upload if uncalibrated" },
         { type: 'new', text: "Sprint 84: AI welcome message is calibration-aware — hints CV upload when NemoClaw is not yet calibrated" },
         { type: 'new', text: "Sprint 84: Migration M023 — nemoclaw_calibration index + ai_sessions index + ai_credits_resets audit table" },

@@ -368,7 +368,7 @@ export default function LoginPage() {
                 </Link>
               </p>
               <p style={{ fontFamily:"'DM Mono',monospace", fontSize:9, color:'rgba(255,255,255,0.1)', letterSpacing:'0.05em' }}>
-                PIOS v3.0.2 · VeritasIQ Technologies Ltd
+                PIOS v3.0.3 · VeritasIQ Technologies Ltd
               </p>
             </div>
 
