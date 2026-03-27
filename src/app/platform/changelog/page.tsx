@@ -11,6 +11,9 @@ export default function ChangelogPage() {
       badge: 'Latest',
       badgeColor: 'var(--ai)',
       changes: [
+        { type: 'new', text: 'Board Pack generator — auto-compiles board-ready report from financials, OKRs, IP vault, contracts, tasks and projects with NemoClaw™ AI narrative' },
+        { type: 'new', text: 'Board Pack: risk register auto-populated from IP expiries, contract renewals, critical and overdue tasks' },
+        { type: 'new', text: 'Board Pack: collapsible sections — financial snapshot, OKR progress bars, key decisions log, IP portfolio, operations' },
         { type: 'new', text: 'Obsidian Command design system — Option A: true black #080808 palette replaces navy #0e0f1a across all surfaces' },
         { type: 'new', text: 'Unified font system: Instrument Serif + DM Sans + DM Mono replaces Fraunces + Plus Jakarta Sans + JetBrains Mono' },
         { type: 'new', text: 'Sidebar rebuilt: 36 unique SVG icons replace unicode glyph set (◎ ⊛ ◈ etc.) — OS/browser consistent' },
