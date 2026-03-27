@@ -68,6 +68,55 @@ export async function POST(req: NextRequest) {
     const body   = await req.json()
     const action = body.action
 
+    // ── AI draft chapter section ──────────────────────────────────────
+    if (action === 'ai_draft_section') {
+      const { chapter_id, chapter_title, chapter_type, section_heading, section_notes,
+              existing_content, literature_context, word_target = 500 } = body
+      const { data: profile } = await supabase.from('user_profiles')
+        .select('full_name,organisation').eq('id', user.id).single()
+      const prof = profile as Record<string,unknown> | null
+
+      const system = `You are an expert academic writing assistant helping ${prof?.full_name ?? 'Douglas Masuku'} write their DBA thesis at University of Portsmouth.
+Research focus: AI-enabled FM cost forecasting and governance in GCC mixed-use developments.
+Theoretical framework: Socio-technical systems theory + sensemaking theory.
+Three-level evidential typology: Level 1 (technical feasibility), Level 2 (operational analytics), Level 3 (governance-integrated forecasting).
+Context: VeritasEdge™ platform as the artefact; KSP-001 (King Salman Park) and Qiddiya City as case study sites.
+
+Write in academic third-person prose. Use proper citation placeholders like (Author, Year) where evidence is needed.
+Maintain consistent doctoral voice — rigorous but readable. No bullet points in the output — flowing paragraphs only.
+Do NOT reproduce copyrighted text. Generate original academic writing only.`
+
+      const prompt = `Write a ${word_target}-word draft for this thesis section:
+
+Chapter ${chapter_type}: "${chapter_title}"
+Section: "${section_heading}"
+${section_notes ? `Section notes: ${section_notes}` : ''}
+${existing_content ? `Existing content to build on:
+${existing_content.slice(0, 2000)}` : ''}
+${literature_context ? `Key literature to reference:
+${literature_context.slice(0, 1000)}` : ''}
+
+Write approximately ${word_target} words of rigorous academic prose for this section. Include:
+- A clear topic sentence introducing the section's argument
+- Evidence-based development with citation placeholders
+- Critical engagement with relevant theory
+- A linking sentence to the next logical section
+
+Output the draft text only — no headers, no preamble.`
+
+      const draft = await callClaude([{ role: 'user', content: prompt }], system, 2000)
+      const wordCount = draft.split(/\s+/).filter(Boolean).length
+
+      // Save draft to chapter content if chapter_id provided
+      if (chapter_id) {
+        await supabase.from('thesis_chapters')
+          .update({ content: (existing_content ? existing_content + '\n\n' : '') + draft, updated_at: new Date().toISOString() })
+          .eq('id', chapter_id).eq('user_id', user.id)
+      }
+
+      return NextResponse.json({ draft, wordCount, section_heading })
+    }
+
     if (action === 'ai_thesis_review') {
       const { chapters, modules, programme_name, university, expected_graduation } = body
       const chapterSummary = (chapters ?? []).map((c: Record<string, unknown>) =>
@@ -154,7 +203,7 @@ export async function PATCH(req: NextRequest) {
     const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
 
     if (entity === 'chapter') {
-      for (const k of ['title','chapter_num','status','word_count','target_words','notes']) { if (k in updates) safe[k] = updates[k] }
+      for (const k of ['title','chapter_num','status','word_count','target_words','notes','content','ai_summary']) { if (k in updates) safe[k] = updates[k] }
       if ((safe as any).status && !CHAPTER_STATUSES.includes((safe as any).status)) return NextResponse.json({ error: 'invalid status' }, { status: 400 })
       if ((safe as any).word_count !== undefined)   (safe as any).word_count   = parseInt((safe as any).word_count)   || 0
       if ((safe as any).target_words !== undefined) (safe as any).target_words = parseInt((safe as any).target_words) || 8000
