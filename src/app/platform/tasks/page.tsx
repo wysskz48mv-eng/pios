@@ -93,7 +93,7 @@ function TaskDrawer({ task, onClose, onSave, onDelete }: {
           <div style={{ flex:1,minWidth:0 }}>
             {editing
               ? <input style={{ ...inp,fontSize:16,fontWeight:700,marginBottom:8 }} value={form.title} onChange={e=>f('title',e.target.value)} autoFocus />
-              : <h2 style={{ fontFamily:'var(--font-display)',fontSize:16,fontWeight:700,letterSpacing:'-0.02em',lineHeight:1.3,marginBottom:6,textDecoration:task.status==='done'?'line-through':'none',color:task.status==='done'?'var(--pios-dim)':'var(--pios-text)' }}>{task.title}</h2>
+              : <h2 style={{ fontFamily:'var(--font-display)',fontSize:16,fontWeight:400,letterSpacing:'-0.02em',lineHeight:1.3,marginBottom:6,textDecoration:task.status==='done'?'line-through':'none',color:task.status==='done'?'var(--pios-dim)':'var(--pios-text)' }}>{task.title}</h2>
             }
             <div style={{ display:'flex',gap:6,flexWrap:'wrap',alignItems:'center' }}>
               <StatusPill status={task.status} />
@@ -128,7 +128,7 @@ function TaskDrawer({ task, onClose, onSave, onDelete }: {
               ))}
             </div>
             <div style={{ display:'flex',gap:8,marginTop:4 }}>
-              <button onClick={save} disabled={saving} style={{ flex:1,padding:'10px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,cursor:'pointer' }}>
+              <button onClick={save} disabled={saving} style={{ flex:1,padding:'10px',borderRadius:9,border:'none',background:'var(--ai)',color:'#fff',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:500,cursor:'pointer' }}>
                 {saving?'Saving…':'Save changes'}
               </button>
               <button onClick={()=>setEditing(false)} style={{ padding:'10px 16px',borderRadius:9,border:'1px solid var(--pios-border2)',background:'transparent',color:'var(--pios-muted)',fontSize:13,cursor:'pointer',fontFamily:'var(--font-sans)' }}>Cancel</button>
@@ -190,7 +190,7 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
 
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:22 }}>
           <div>
-            <div style={{ fontFamily:'var(--font-display)',fontSize:16,fontWeight:700,letterSpacing:'-0.02em',marginBottom:3 }}>AI Prioritisation</div>
+            <div style={{ fontFamily:'var(--font-display)',fontSize:16,fontWeight:400,letterSpacing:'-0.02em',marginBottom:3 }}>AI Prioritisation</div>
             <div style={{ fontSize:12,color:'var(--pios-muted)' }}>NemoClaw™ analysing your open tasks…</div>
           </div>
           <button onClick={onClose} style={{ background:'none',border:'none',cursor:'pointer',color:'var(--pios-muted)',fontSize:18 }}>✕</button>
@@ -205,7 +205,7 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
           <div style={{ display:'flex',flexDirection:'column',gap:14 }}>
             {result.focus_recommendation && (
               <div style={{ padding:'14px 16px',borderRadius:10,background:'var(--ai-subtle)',border:'1px solid rgba(139,124,248,0.2)',borderLeft:'3px solid var(--ai)',fontSize:13,lineHeight:1.65,color:'var(--pios-text)' }}>
-                <div style={{ fontFamily:'var(--font-display)',fontWeight:700,color:'var(--ai)',marginBottom:6,fontSize:12 }}>◉ Focus recommendation</div>
+                <div style={{ fontFamily:'var(--font-display)',fontWeight:400,color:'var(--ai)',marginBottom:6,fontSize:12 }}>◉ Focus recommendation</div>
                 {result.focus_recommendation}
               </div>
             )}
@@ -225,7 +225,7 @@ function AIPrioritisePanel({ tasks, onClose }: { tasks:any[]; onClose:()=>void }
                     const uc = PRIORITY_COLOR[p.urgency??'']??'var(--pios-dim)'
                     return (
                       <div key={p.id} style={{ display:'flex',gap:12,padding:'10px 14px',borderRadius:9,background:'var(--pios-surface2)',alignItems:'flex-start' }}>
-                        <span style={{ fontFamily:'var(--font-display)',fontSize:18,fontWeight:700,color:'var(--pios-dim)',minWidth:28,lineHeight:1.2 }}>#{p.rank}</span>
+                        <span style={{ fontFamily:'var(--font-display)',fontSize:18,fontWeight:400,color:'var(--pios-dim)',minWidth:28,lineHeight:1.2 }}>#{p.rank}</span>
                         <div style={{ flex:1,minWidth:0 }}>
                           <div style={{ fontSize:13,fontWeight:600,marginBottom:4 }}>{task.title}</div>
                           <div style={{ display:'flex',gap:6,alignItems:'center',marginBottom:p.reasoning?4:0 }}>
@@ -329,7 +329,7 @@ export default function TasksPage() {
       {/* Header */}
       <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:22,flexWrap:'wrap',gap:10 }}>
         <div>
-          <h1 style={{ fontFamily:'var(--font-display)',fontSize:22,fontWeight:700,color:'var(--pios-text)',letterSpacing:'-0.03em',marginBottom:4 }}>Tasks</h1>
+          <h1 style={{ fontFamily:'var(--font-display)',fontSize:22,fontWeight:400,color:'var(--pios-text)',letterSpacing:'-0.03em',marginBottom:4 }}>Tasks</h1>
           <p style={{ fontSize:12,color:'var(--pios-muted)' }}>
             {openCount} open
             {criticalCount>0&&<span style={{ color:'var(--dng)',fontWeight:600,marginLeft:8 }}>· {criticalCount} critical</span>}
@@ -337,8 +337,8 @@ export default function TasksPage() {
           </p>
         </div>
         <div style={{ display:'flex',gap:8 }}>
-          <button onClick={()=>setShowAI(true)} style={{ padding:'7px 14px',borderRadius:9,border:'1px solid var(--pios-border2)',background:'transparent',color:'var(--ai)',fontSize:12,cursor:'pointer',fontFamily:'var(--font-sans)',fontWeight:500 }}>◉ AI Prioritise</button>
-          <button onClick={()=>setShowAdd(!showAdd)} style={{ padding:'7px 16px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,cursor:'pointer' }}>+ Add task</button>
+          <button onClick={()=>setShowAI(true)} style={{ padding:'7px 14px',borderRadius:8,border:'1px solid rgba(99,73,255,0.25)',background:'rgba(99,73,255,0.07)',color:'var(--ai)',fontSize:12,cursor:'pointer',fontFamily:'var(--font-sans)',fontWeight:500,letterSpacing:'-0.01em' }}>NemoClaw™ Prioritise</button>
+          <button onClick={()=>setShowAdd(!showAdd)} style={{ padding:'7px 16px',borderRadius:9,border:'none',background:'var(--ai)',color:'#fff',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:500,cursor:'pointer' }}>+ Add task</button>
         </div>
       </div>
 
@@ -362,7 +362,7 @@ export default function TasksPage() {
           </div>
           <textarea style={{ ...inp,resize:'vertical',fontFamily:'inherit',marginBottom:10,minHeight:60 }} placeholder="Description (optional)…" rows={2} value={newTask.description} onChange={e=>setNewTask(p=>({...p,description:e.target.value}))} />
           <div style={{ display:'flex',gap:8 }}>
-            <button onClick={createTask} disabled={saving} style={{ padding:'8px 18px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,cursor:'pointer' }}>
+            <button onClick={createTask} disabled={saving} style={{ padding:'8px 18px',borderRadius:9,border:'none',background:'var(--ai)',color:'#fff',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:500,cursor:'pointer' }}>
               {saving?'Adding…':'Add task'}
             </button>
             <button onClick={()=>setShowAdd(false)} style={{ padding:'8px 14px',borderRadius:9,border:'1px solid var(--pios-border2)',background:'transparent',color:'var(--pios-muted)',fontSize:13,cursor:'pointer',fontFamily:'var(--font-sans)' }}>Cancel</button>
@@ -400,7 +400,7 @@ export default function TasksPage() {
 
         {/* Source filter */}
         <div style={{ display:'flex',gap:3,flexWrap:'wrap' }}>
-          {([['all','All sources'],['manual','Manual'],['meeting_notes','Meetings'],['email','Email'],['ai','AI']] as [string,string][]).map(([v,l])=>(
+          {([['all','All sources'],['manual','Manual'],['email','Email'],['ai','AI'],['calendar','Calendar']] as [string,string][]).map(([v,l])=>(
             <button key={v} onClick={()=>setSourceFilter(v)} style={{
               fontSize:10.5,padding:'3px 9px',borderRadius:20,border:'1px solid var(--pios-border)',cursor:'pointer',fontFamily:'var(--font-sans)',
               background:sourceFilter===v?'var(--ai-subtle)':'transparent',
@@ -432,11 +432,11 @@ export default function TasksPage() {
       {loading ? <Spinner /> : visible.length===0 ? (
         <div style={{ background:'var(--pios-surface)',border:'1px solid var(--pios-border)',borderRadius:14,padding:'52px 24px',textAlign:'center' }}>
           <div style={{ fontSize:32,marginBottom:12,opacity:0.25 }}>✓</div>
-          <div style={{ fontFamily:'var(--font-display)',fontSize:15,fontWeight:700,marginBottom:8 }}>No tasks here</div>
+          <div style={{ fontFamily:'var(--font-display)',fontSize:15,fontWeight:400,marginBottom:8 }}>No tasks here</div>
           <p style={{ fontSize:13,color:'var(--pios-muted)',marginBottom:18 }}>
             {statusFilter==='done'?'No completed tasks yet.':'All clear! Add a task to get started.'}
           </p>
-          <button onClick={()=>setShowAdd(true)} style={{ padding:'8px 18px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,cursor:'pointer' }}>+ Add task</button>
+          <button onClick={()=>setShowAdd(true)} style={{ padding:'8px 18px',borderRadius:9,border:'none',background:'var(--ai)',color:'#fff',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:500,cursor:'pointer' }}>+ Add task</button>
         </div>
       ) : statusFilter==='done' ? (
         // Done list
@@ -461,7 +461,7 @@ export default function TasksPage() {
                 <div style={{ display:'flex',alignItems:'center',gap:7,marginBottom:10 }}>
                   <div style={{ width:7,height:7,borderRadius:'50%',background:m.color }} />
                   <span style={{ fontSize:10.5,fontWeight:700,color:'var(--pios-muted)',textTransform:'uppercase',letterSpacing:'0.08em' }}>{m.label}</span>
-                  <span style={{ fontSize:10.5,padding:'1px 7px',borderRadius:99,background:'var(--pios-surface2)',color:'var(--pios-muted)',fontWeight:600 }}>{col.length}</span>
+                  <span style={{ fontSize:10.5,padding:'1px 7px',borderRadius:99,background:'var(--pios-surface2)',border:'1px solid var(--pios-border)',color:'var(--pios-muted)',fontWeight:600 }}>{col.length}</span>
                 </div>
 
                 <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
@@ -485,11 +485,11 @@ export default function TasksPage() {
                               {isOverdue?'⚠ ':''}{formatRelative(String(t.due_date))}
                             </span>
                           )}
-                          {t.description&&<span style={{ fontSize:10,color:'var(--pios-dim)' }}>📝</span>}
+                          {t.description&&<span style={{ width:5,height:5,borderRadius:'50%',background:'var(--pios-dim)',display:'inline-block',flexShrink:0,marginTop:1 }} />}
                         </div>
                         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
                           <StatusPill status={String(t.status??'')} onClick={()=>cycleStatus(t.id,String(t.status??''))} />
-                          <button onClick={e=>{e.stopPropagation?.();deleteTask(t.id)}} style={{ background:'none',border:'none',cursor:'pointer',color:'var(--pios-dim)',fontSize:12,padding:'0 2px',lineHeight:1,opacity:0.5 }}>✕</button>
+                          <button onClick={e=>{e.stopPropagation?.();if(window.confirm(`Delete "${t.title}"?`))deleteTask(t.id)}} style={{ background:'none',border:'none',cursor:'pointer',color:'var(--pios-dim)',fontSize:12,padding:'0 2px',lineHeight:1,opacity:0.5 }}>✕</button>
                         </div>
                       </div>
                     )

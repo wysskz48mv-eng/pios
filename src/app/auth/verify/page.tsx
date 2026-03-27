@@ -38,7 +38,7 @@ function VerifyContent() {
         </div>
 
         <h1 style={{
-          fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
+          fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400,
           color: 'var(--pios-text)', letterSpacing: '-0.03em', marginBottom: 10,
         }}>Check your email</h1>
 

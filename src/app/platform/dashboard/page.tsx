@@ -125,7 +125,7 @@ function StatCard({ label, value, delta, deltaUp, accent, icon }: {
       }} />
       <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--pios-dim)', marginBottom: 10 }}>{label}</div>
       <div style={{
-        fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700,
+        fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 400,
         color: 'var(--pios-text)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 6,
       }}>{value}</div>
       {delta && (
@@ -251,7 +251,7 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22 }}>
         <div>
           <h1 style={{
-            fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
+            fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400,
             color: 'var(--pios-text)', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 4,
           }}>Command Centre</h1>
           <p style={{ fontSize: 12, color: 'var(--pios-muted)' }}>{today}</p>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
                   { v: notifs.length, l: 'unread notifications' },
                 ].map(s => (
                   <div key={s.l} style={{ textAlign: 'center' as const }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--ai)' }}>{loading ? '—' : s.v}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400, color: 'var(--ai)' }}>{loading ? '—' : s.v}</div>
                     <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{s.l}</div>
                   </div>
                 ))}
@@ -414,7 +414,7 @@ export default function DashboardPage() {
             <CardSm style={{ borderLeft: '2px solid var(--fm)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, fontWeight: 700, color: 'var(--fm)' }}>VeritasEdge™</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, fontWeight: 400, color: 'var(--fm)' }}>VeritasEdge™</span>
                   <span style={{ marginLeft: 8, fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--pios-dim)' }}>sustainedge.vercel.app</span>
                 </div>
                 <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(16,217,160,0.1)', color: 'var(--fm)' }}>LIVE</span>
@@ -426,7 +426,7 @@ export default function DashboardPage() {
                   { l: 'Assets', v: (typeof seSnap.assets === 'object' ? (seSnap.assets as {total?:number})?.total ?? 0 : Number(seSnap.assets ?? 0)) },
                 ].map(m => (
                   <div key={m.l}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>{m.v}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>{m.v}</div>
                     <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{m.l}</div>
                   </div>
                 ))}
@@ -437,7 +437,7 @@ export default function DashboardPage() {
             <CardSm style={{ borderLeft: '2px solid var(--academic)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, fontWeight: 700, color: 'var(--academic)' }}>InvestiScript</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, fontWeight: 400, color: 'var(--academic)' }}>InvestiScript</span>
                   <span style={{ marginLeft: 8, fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--pios-dim)' }}>investiscript.vercel.app</span>
                 </div>
                 <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(79,142,247,0.1)', color: 'var(--academic)' }}>LIVE</span>
@@ -449,7 +449,7 @@ export default function DashboardPage() {
                   { l: 'Scripts', v: isSnap.scripts?.total ?? 0 },
                 ].map(m => (
                   <div key={m.l}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>{m.v}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>{m.v}</div>
                     <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{m.l}</div>
                   </div>
                 ))}
@@ -481,7 +481,7 @@ export default function DashboardPage() {
                       <div style={{ width: 5, height: 5, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />
                       <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--pios-dim)', textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>{s.label}</span>
                     </div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.value}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.value}</div>
                     <div style={{ fontSize: 10, color: 'var(--pios-muted)', marginTop: 3 }}>{s.sub}</div>
                   </CardSm>
                 </Link>
@@ -546,7 +546,7 @@ export default function DashboardPage() {
         {/* Left: Tasks */}
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em' }}>Priority Tasks</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 13.5, fontWeight: 400, letterSpacing: '-0.01em' }}>Priority Tasks</span>
             <Link href="/platform/tasks" style={{ fontSize: 11, color: 'var(--pios-dim)', textDecoration: 'none' }}>View all →</Link>
           </div>
 
@@ -623,7 +623,7 @@ export default function DashboardPage() {
                 <span style={{ fontSize: 14, flexShrink: 0 }}>{a.icon}</span>
                 <span style={{ flex: 1, fontSize: 11.5, color: 'var(--pios-sub)' }}>{a.label}</span>
                 <span style={{
-                  fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700,
+                  fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 400,
                   color: a.val > 0 ? a.color : 'var(--pios-dim)',
                 }}>{a.val}</span>
               </Link>
@@ -712,7 +712,7 @@ export default function DashboardPage() {
                   <ProgressBar pct={p.progress ?? 0} color={color} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
                     <span style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{domainLabel(String(p.domain ?? ''))}</span>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color }}>{p.progress ?? 0}%</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 400, color }}>{p.progress ?? 0}%</span>
                   </div>
                 </CardSm>
               )
@@ -755,7 +755,7 @@ export default function DashboardPage() {
                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderLeftColor = `${m.color}30` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
                   <span style={{ fontSize: 13, color: m.color }}>{m.icon}</span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: 'var(--pios-text)' }}>{m.label}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 400, color: 'var(--pios-text)' }}>{m.label}</span>
                 </div>
                 <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{m.sub}</div>
               </div>

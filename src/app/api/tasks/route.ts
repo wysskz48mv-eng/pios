@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createNotification } from '@/lib/notifications'
 import { callClaude } from '@/lib/ai/client'
-import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
+import { auditLog } from '@/lib/security-middleware'
 
 export const runtime = 'nodejs'
 
 const VALID_STATUSES   = ['todo','in_progress','blocked','done','cancelled']
 const VALID_PRIORITIES = ['critical','high','medium','low']
 const VALID_DOMAINS    = ['academic','fm_consulting','saas','business','personal']
-const VALID_SOURCES    = ['manual','meeting_notes','email','ai','calendar','import']
+const VALID_SOURCES    = ['manual','email','ai','calendar']
 
 export async function GET(request: Request) {
   try {
@@ -31,9 +31,8 @@ export async function GET(request: Request) {
     if (priority && priority !== 'all') q = q.eq('priority', priority)
     if (project)                        q = q.eq('project_id', project)
     if (overdue  === '1')               q = q.lt('due_date', today)
-    if (status   && status   !== 'all') q = q.eq('status',   status)
-    else if (!status)                   q = q.not('status', 'in', '("done","cancelled")'  )
-    if (status && status !== 'all') q = q.eq('status', status)
+    if (status && status !== 'all')    q = q.eq('status', status)
+    else if (!status)                  q = q.not('status', 'in', '(done,cancelled)')
     const { data } = await q
     return NextResponse.json({ tasks: data ?? [] })
   } catch (err: unknown) {

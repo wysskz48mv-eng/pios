@@ -71,7 +71,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: {
           <div style={{ flex:1,minWidth:0 }}>
             {editing
               ? <input style={{ ...inp, fontSize:17, fontWeight:700, marginBottom:6 }} value={form.title} onChange={e=>f('title',e.target.value)} autoFocus placeholder="Project title…" />
-              : <h2 style={{ fontFamily:'var(--font-display)',fontSize:17,fontWeight:700,letterSpacing:'-0.02em',lineHeight:1.3,marginBottom:6 }}>{project.title}</h2>}
+              : <h2 style={{ fontFamily:'var(--font-display)',fontSize:17,fontWeight:400,letterSpacing:'-0.02em',lineHeight:1.3,marginBottom:6 }}>{project.title}</h2>}
             {!editing && (
               <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
                 <Tag color={STATUS_COLOUR[project.status]??'var(--pios-dim)'}>{project.status?.replace('_',' ')}</Tag>
@@ -106,7 +106,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: {
               ))}
             </div>
             <div style={{ display:'flex',gap:8,marginTop:4 }}>
-              <button onClick={save} disabled={saving} style={{ flex:1,padding:'11px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,cursor:'pointer' }}>
+              <button onClick={save} disabled={saving} style={{ flex:1,padding:'11px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:400,cursor:'pointer' }}>
                 {saving?'Saving…':project.id?'Save changes':'Create project'}
               </button>
               <button onClick={()=>project.id?setEditing(false):onClose()} style={{ padding:'11px 16px',borderRadius:9,border:'1px solid var(--pios-border2)',background:'transparent',color:'var(--pios-muted)',fontSize:13,cursor:'pointer',fontFamily:'var(--font-sans)' }}>Cancel</button>
@@ -118,7 +118,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: {
             <div>
               <div style={{ display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:12 }}>
                 <span style={{ color:'var(--pios-muted)' }}>Progress</span>
-                <span style={{ fontFamily:'var(--font-display)',fontWeight:700,color:form.colour }}>{project.progress}%</span>
+                <span style={{ fontFamily:'var(--font-display)',fontWeight:400,color:form.colour }}>{project.progress}%</span>
               </div>
               <Bar v={project.progress} c={form.colour} />
               <input type="range" min={0} max={100} value={form.progress}
@@ -219,10 +219,10 @@ export default function ProjectsPage() {
       {/* Header */}
       <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:22 }}>
         <div>
-          <h1 style={{ fontFamily:'var(--font-display)',fontSize:22,fontWeight:700,color:'var(--pios-text)',letterSpacing:'-0.03em',marginBottom:4 }}>Projects</h1>
+          <h1 style={{ fontFamily:'var(--font-display)',fontSize:22,fontWeight:400,color:'var(--pios-text)',letterSpacing:'-0.03em',marginBottom:4 }}>Projects</h1>
           <p style={{ fontSize:12,color:'var(--pios-muted)' }}>{totalActive} active · avg {Math.round(avgProgress)}% complete</p>
         </div>
-        <button onClick={()=>setAdding(true)} style={{ padding:'8px 16px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,cursor:'pointer' }}>+ New project</button>
+        <button onClick={()=>setAdding(true)} style={{ padding:'8px 16px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:400,cursor:'pointer' }}>+ New project</button>
       </div>
 
       {/* Filters */}
@@ -249,9 +249,9 @@ export default function ProjectsPage() {
       ) : visible.length===0 ? (
         <div style={{ background:'var(--pios-surface)',border:'1px solid var(--pios-border)',borderRadius:14,padding:'52px 24px',textAlign:'center' }}>
           <div style={{ fontSize:32,marginBottom:12,opacity:0.3 }}>◈</div>
-          <div style={{ fontFamily:'var(--font-display)',fontSize:15,fontWeight:700,marginBottom:8 }}>No projects here</div>
+          <div style={{ fontFamily:'var(--font-display)',fontSize:15,fontWeight:400,marginBottom:8 }}>No projects here</div>
           <p style={{ fontSize:13,color:'var(--pios-muted)',marginBottom:18 }}>{filter==='completed'?'No completed projects yet.':'Add your first project to start tracking progress.'}</p>
-          <button onClick={()=>setAdding(true)} style={{ padding:'8px 18px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,cursor:'pointer' }}>+ New project</button>
+          <button onClick={()=>setAdding(true)} style={{ padding:'8px 18px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:400,cursor:'pointer' }}>+ New project</button>
         </div>
       ) : (
         <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14 }}>
@@ -266,7 +266,7 @@ export default function ProjectsPage() {
                 onMouseLeave={e=>{ (e.currentTarget as HTMLDivElement).style.borderColor='var(--pios-border)'; (e.currentTarget as HTMLDivElement).style.borderTopColor=color }}>
                 <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:8 }}>
                   <div style={{ flex:1,minWidth:0 }}>
-                    <div style={{ fontFamily:'var(--font-display)',fontSize:13.5,fontWeight:700,marginBottom:5,lineHeight:1.3,letterSpacing:'-0.01em' }}>{p.title}</div>
+                    <div style={{ fontFamily:'var(--font-display)',fontSize:13.5,fontWeight:400,marginBottom:5,lineHeight:1.3,letterSpacing:'-0.01em' }}>{p.title}</div>
                     <div style={{ display:'flex',gap:5,flexWrap:'wrap' }}>
                       <Tag color={domainColour(String(p.domain??''))}>{domainLabel(String(p.domain??''))}</Tag>
                       <Tag color={STATUS_COLOUR[String(p.status??'')]??'var(--pios-dim)'}>{String(p.status??'').replace('_',' ')}</Tag>
@@ -277,7 +277,7 @@ export default function ProjectsPage() {
                 <div style={{ marginBottom:8 }}>
                   <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
                     <span style={{ fontSize:10.5,color:'var(--pios-dim)' }}>Progress</span>
-                    <span style={{ fontFamily:'var(--font-display)',fontSize:11,fontWeight:700,color }}>{p.progress}%</span>
+                    <span style={{ fontFamily:'var(--font-display)',fontSize:11,fontWeight:400,color }}>{p.progress}%</span>
                   </div>
                   <Bar v={Number(p.progress??0)} c={color} />
                 </div>

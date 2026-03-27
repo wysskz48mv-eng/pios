@@ -103,7 +103,7 @@ function PrimaryBtn({ onClick, disabled, children, color = 'var(--ai)' }: {
       width: '100%', padding: '12px', borderRadius: 11, border: 'none',
       background: disabled ? 'rgba(139,124,248,0.3)' : color,
       color: 'var(--pios-bg)', fontFamily: 'var(--font-display)',
-      fontSize: 14, fontWeight: 700, cursor: disabled ? 'not-allowed' : 'pointer',
+      fontSize: 14, fontWeight: 400, cursor: disabled ? 'not-allowed' : 'pointer',
       transition: 'opacity 0.15s',
     }}
       onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
@@ -244,7 +244,7 @@ export default function OnboardingPage() {
             fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20, color: '#fff',
             boxShadow: '0 4px 24px rgba(139,124,248,0.3)',
           }}>P</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
             PIOS
           </div>
           <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>Personal Intelligence Operating System</div>
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div>
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.03em', marginBottom: 6 }}>
                 How will you use PIOS?
               </div>
               <div style={{ fontSize: 13, color: 'var(--pios-muted)' }}>
@@ -286,7 +286,7 @@ export default function OnboardingPage() {
                   )}
 
                   <div style={{ fontSize: 26, marginBottom: 12, color: p.color }}>{p.icon}</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 14.5, fontWeight: 700, color: 'var(--pios-text)', marginBottom: 5, letterSpacing: '-0.01em' }}>{p.label}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 14.5, fontWeight: 400, color: 'var(--pios-text)', marginBottom: 5, letterSpacing: '-0.01em' }}>{p.label}</div>
                   <div style={{ fontSize: 11.5, color: 'var(--pios-muted)', marginBottom: 16, lineHeight: 1.55 }}>{p.sub}</div>
 
                   <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 5 }}>
@@ -308,7 +308,7 @@ export default function OnboardingPage() {
           <div style={{ background: 'var(--pios-surface)', border: '1px solid var(--pios-border2)', borderRadius: 18, padding: 30, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, var(--ai), var(--academic))', opacity: 0.5 }} />
 
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 6 }}>Your profile</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 6 }}>Your profile</div>
             <div style={{ fontSize: 12.5, color: 'var(--pios-muted)', marginBottom: 24 }}>NemoClaw™ uses this to personalise every interaction.</div>
 
             <TextInput label="Full name *" value={fullName} onChange={setFullName} placeholder="Douglas Masuku" />
@@ -352,7 +352,7 @@ export default function OnboardingPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 20 }}>
               <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ai-subtle)', border: '1px solid rgba(139,124,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>◉</div>
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
                   Intelligence Calibration
                 </div>
                 <div style={{ fontSize: 12.5, color: 'var(--pios-muted)', lineHeight: 1.6 }}>
@@ -401,7 +401,7 @@ export default function OnboardingPage() {
                 {cvProcessing ? (
                   <div>
                     <div style={{ fontSize: 28, marginBottom: 12, animation: 'ai-pulse 1.5s ease-in-out infinite', color: 'var(--ai)' }}>◉</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--pios-text)', marginBottom: 6 }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 400, color: 'var(--pios-text)', marginBottom: 6 }}>
                       NemoClaw™ is reading your CV…
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>Extracting profile · Calibrating intelligence · Selecting frameworks</div>
@@ -409,7 +409,7 @@ export default function OnboardingPage() {
                 ) : (
                   <div>
                     <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📄</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--pios-text)', marginBottom: 4 }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 400, color: 'var(--pios-text)', marginBottom: 4 }}>
                       {cvFile ? cvFile.name : 'Drop your CV here'}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
@@ -515,7 +515,7 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div>
             <div style={{ textAlign: 'center', marginBottom: 26 }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.03em', marginBottom: 5 }}>Choose your plan</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.03em', marginBottom: 5 }}>Choose your plan</div>
               <div style={{ fontSize: 13, color: 'var(--pios-muted)' }}>14-day free trial on all plans · Cancel anytime</div>
             </div>
 
@@ -534,7 +534,7 @@ export default function OnboardingPage() {
                   )}
                   <div style={{ textAlign: 'left' as const }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                      <span style={{ fontFamily: 'var(--font-display)', fontSize: 14.5, fontWeight: 700, color: 'var(--pios-text)' }}>{p.name}</span>
+                      <span style={{ fontFamily: 'var(--font-display)', fontSize: 14.5, fontWeight: 400, color: 'var(--pios-text)' }}>{p.name}</span>
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--pios-muted)', marginBottom: 8 }}>{p.description}</div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
@@ -544,7 +544,7 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.04em' }}>{p.price}</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.04em' }}>{p.price}</span>
                     <span style={{ fontSize: 12, color: 'var(--pios-muted)' }}>{p.period}</span>
                   </div>
                 </button>
@@ -567,7 +567,7 @@ export default function OnboardingPage() {
 
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>✉</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 6 }}>Connect Gmail</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.02em', marginBottom: 6 }}>Connect Gmail</div>
               <div style={{ fontSize: 13, color: 'var(--pios-muted)', lineHeight: 1.65, maxWidth: 340, margin: '0 auto' }}>
                 PIOS auto-triages your inbox, captures action items, and extracts receipts — unlocking the full autonomous intelligence layer.
               </div>

@@ -347,7 +347,7 @@ export default function AiPage() {
             /* Empty state with shortcuts */
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '20px 0' }}>
               <div style={{ fontSize: 36, marginBottom: 16 }}>◉</div>
-              <div style={{ fontSize: 16, fontFamily: "var(--font-display)", fontWeight: 700, marginBottom: 6 }}>PIOS AI Companion</div>
+              <div style={{ fontSize: 16, fontFamily: "var(--font-display)", fontWeight: 400, marginBottom: 6 }}>PIOS AI Companion</div>
               <p style={{ fontSize: 13, color: 'var(--pios-muted)', textAlign: 'center', maxWidth: 420, marginBottom: 28, lineHeight: 1.65 }}>
                 Your cross-domain intelligence layer. Switch domain modes on the left or start with a quick prompt below.
               </p>

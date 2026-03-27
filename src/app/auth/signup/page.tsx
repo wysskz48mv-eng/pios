@@ -107,7 +107,7 @@ export default function SignupPage() {
             boxShadow: '0 4px 28px rgba(139,124,248,0.3)',
           }}>P</div>
           <div style={{
-            fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700,
+            fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400,
             color: 'var(--pios-text)', letterSpacing: '-0.03em', marginBottom: 5,
           }}>Create your PIOS account</div>
           <div style={{ fontSize: 13, color: 'var(--pios-muted)' }}>
@@ -222,7 +222,7 @@ export default function SignupPage() {
               <button onClick={signUpWithEmail} style={{
                 width: '100%', padding: '12px', borderRadius: 11, border: 'none',
                 background: 'var(--ai)', color: 'var(--pios-bg)',
-                fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700,
+                fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 400,
                 cursor: 'pointer', marginTop: 2, transition: 'opacity 0.15s',
               }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
@@ -237,7 +237,7 @@ export default function SignupPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <div style={{
-                  fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700,
+                  fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 400,
                   color: 'var(--pios-text)', letterSpacing: '-0.01em', marginBottom: 4,
                 }}>Tell us about yourself</div>
                 <p style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.65 }}>
@@ -295,7 +295,7 @@ export default function SignupPage() {
                   flex: 2, padding: '11px', borderRadius: 11, border: 'none',
                   background: loading ? 'rgba(139,124,248,0.4)' : 'var(--ai)',
                   color: 'var(--pios-bg)', fontFamily: 'var(--font-display)',
-                  fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+                  fontSize: 14, fontWeight: 400, cursor: loading ? 'not-allowed' : 'pointer',
                 }}>
                   {loading ? '⟳ Creating account…' : 'Create PIOS account'}
                 </button>

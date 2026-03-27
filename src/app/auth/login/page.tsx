@@ -86,7 +86,7 @@ export default function LoginPage() {
     root: {
       minHeight: '100vh', display: 'flex',
       background: C.black,
-      fontFamily: "'DM Sans','Plus Jakarta Sans',system-ui,sans-serif",
+      fontFamily: "'DM Sans',system-ui,sans-serif",
     } as React.CSSProperties,
     left: {
       width: '54%', flexShrink: 0,

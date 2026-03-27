@@ -214,7 +214,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
                 </div>
                 <span style={{
                   fontSize: 9.5, color: 'rgba(255,255,255,0.3)',
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "'DM Mono', monospace",
                   letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums',
                 }}>
                   {creditsUsed.toLocaleString()}/{creditsLimit.toLocaleString()}
@@ -229,7 +229,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
                 background: 'rgba(155,135,245,0.1)',
                 border: '1px solid rgba(155,135,245,0.2)',
                 padding: '3px 10px', borderRadius: 20,
-                letterSpacing: '0.06em', fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '0.06em', fontFamily: "'DM Mono', monospace",
               }}>TRIAL</div>
             )}
 

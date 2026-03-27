@@ -160,14 +160,14 @@ export default function ConsultingPage() {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:24 }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-            <h1 style={{ fontFamily:'var(--font-display)', fontSize:22, fontWeight:700, color:'var(--pios-text)', letterSpacing:'-0.03em' }}>Consulting Strategist</h1>
+            <h1 style={{ fontFamily:'var(--font-display)', fontSize:22, fontWeight:400, color:'var(--pios-text)', letterSpacing:'-0.03em' }}>Consulting Strategist</h1>
             <Tag color="var(--ai)">CSA™</Tag>
           </div>
           <p style={{ fontSize:12, color:'var(--pios-muted)' }}>
             {frameworks.length} proprietary frameworks · {engagements.length} active engagements
           </p>
         </div>
-        <button onClick={()=>setShowEngModal(true)} style={{ padding:'7px 16px', borderRadius:9, border:'none', background:'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+        <button onClick={()=>setShowEngModal(true)} style={{ padding:'7px 16px', borderRadius:9, border:'none', background:'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:400, cursor:'pointer' }}>
           + New Engagement
         </button>
       </div>
@@ -213,7 +213,7 @@ export default function ConsultingPage() {
                   <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, var(--ai), var(--academic))' }} />
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                     <span style={{ fontFamily:'var(--font-display)', fontSize:13, fontWeight:800, color:'var(--ai)' }}>{selFw.key}™</span>
-                    <span style={{ fontFamily:'var(--font-display)', fontSize:14, fontWeight:700, color:'var(--pios-text)', letterSpacing:'-0.01em' }}>{selFw.name}</span>
+                    <span style={{ fontFamily:'var(--font-display)', fontSize:14, fontWeight:400, color:'var(--pios-text)', letterSpacing:'-0.01em' }}>{selFw.name}</span>
                   </div>
                   <div style={{ fontSize:12.5, color:'var(--pios-muted)', lineHeight:1.55 }}>{selFw.desc}</div>
                 </div>
@@ -244,7 +244,7 @@ export default function ConsultingPage() {
                 <button onClick={runAnalysis} disabled={analysing||!situation.trim()} style={{
                   padding:'10px 20px', borderRadius:9, border:'none',
                   background:analysing||!situation.trim()?'rgba(139,124,248,0.3)':'var(--ai)',
-                  color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700,
+                  color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:400,
                   cursor:analysing||!situation.trim()?'not-allowed':'pointer', transition:'opacity 0.15s',
                   display:'flex', alignItems:'center', gap:8,
                 }}>
@@ -259,7 +259,7 @@ export default function ConsultingPage() {
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid var(--pios-border)' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                         <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--ai)' }} className="ai-pulse" />
-                        <span style={{ fontFamily:'var(--font-display)', fontSize:12.5, fontWeight:700, color:'var(--pios-text)' }}>{selFw.key}™ Analysis</span>
+                        <span style={{ fontFamily:'var(--font-display)', fontSize:12.5, fontWeight:400, color:'var(--pios-text)' }}>{selFw.key}™ Analysis</span>
                       </div>
                       <button onClick={copyAnalysis} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid var(--pios-border2)', background:'transparent', color:'var(--pios-muted)', fontSize:11, cursor:'pointer', fontFamily:'var(--font-sans)' }}>
                         {copied?'✓ Copied':'⎘ Copy'}
@@ -274,7 +274,7 @@ export default function ConsultingPage() {
             ) : (
               <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:320, textAlign:'center' }}>
                 <div style={{ fontSize:32, marginBottom:14, opacity:0.25 }}>◎</div>
-                <div style={{ fontFamily:'var(--font-display)', fontSize:15, fontWeight:700, color:'var(--pios-text)', marginBottom:6 }}>Select a framework</div>
+                <div style={{ fontFamily:'var(--font-display)', fontSize:15, fontWeight:400, color:'var(--pios-text)', marginBottom:6 }}>Select a framework</div>
                 <p style={{ fontSize:13, color:'var(--pios-muted)', maxWidth:340, lineHeight:1.65 }}>
                   Choose one of the {frameworks.length} NemoClaw™ proprietary frameworks from the left, describe your situation, and get a structured strategic analysis.
                 </p>
@@ -290,16 +290,16 @@ export default function ConsultingPage() {
           {engagements.length===0 ? (
             <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:14, padding:'52px 24px', textAlign:'center' }}>
               <div style={{ fontSize:32, marginBottom:12, opacity:0.25 }}>◎</div>
-              <div style={{ fontFamily:'var(--font-display)', fontSize:15, fontWeight:700, marginBottom:8 }}>No engagements yet</div>
+              <div style={{ fontFamily:'var(--font-display)', fontSize:15, fontWeight:400, marginBottom:8 }}>No engagements yet</div>
               <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:18 }}>Track your consulting engagements and link framework analyses to client work.</p>
-              <button onClick={()=>setShowEngModal(true)} style={{ padding:'8px 18px', borderRadius:9, border:'none', background:'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700, cursor:'pointer' }}>+ New Engagement</button>
+              <button onClick={()=>setShowEngModal(true)} style={{ padding:'8px 18px', borderRadius:9, border:'none', background:'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:400, cursor:'pointer' }}>+ New Engagement</button>
             </div>
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
               {engagements.map(e=>(
                 <div key={e.id} style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:12, padding:'14px 16px', borderLeft:`2px solid ${STATUS_COLOR[e.status]??'var(--pios-dim)'}` }}>
                   <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
-                    <div style={{ fontFamily:'var(--font-display)', fontSize:13.5, fontWeight:700, color:'var(--pios-text)', letterSpacing:'-0.01em' }}>{e.client_name}</div>
+                    <div style={{ fontFamily:'var(--font-display)', fontSize:13.5, fontWeight:400, color:'var(--pios-text)', letterSpacing:'-0.01em' }}>{e.client_name}</div>
                     <Tag color={STATUS_COLOR[e.status]??'var(--pios-dim)'}>{e.status.replace('_',' ')}</Tag>
                   </div>
                   <div style={{ display:'flex', gap:5, marginBottom:8, flexWrap:'wrap' }}>
@@ -347,7 +347,7 @@ export default function ConsultingPage() {
             <button onClick={generateProposal} disabled={generating||!propClient.trim()||!propScope.trim()} style={{
               padding:'10px 20px', borderRadius:9, border:'none',
               background:generating||!propClient.trim()||!propScope.trim()?'rgba(139,124,248,0.3)':'var(--ai)',
-              color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700,
+              color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:400,
               cursor:generating||!propClient.trim()||!propScope.trim()?'not-allowed':'pointer',
               display:'flex', alignItems:'center', gap:8,
             }}>
@@ -363,7 +363,7 @@ export default function ConsultingPage() {
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid var(--pios-border)' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                     <div style={{ width:6, height:6, borderRadius:'50%', background:'var(--ai)' }} className="ai-pulse" />
-                    <span style={{ fontFamily:'var(--font-display)', fontSize:12.5, fontWeight:700 }}>Proposal — {propClient}</span>
+                    <span style={{ fontFamily:'var(--font-display)', fontSize:12.5, fontWeight:400 }}>Proposal — {propClient}</span>
                   </div>
                   <button onClick={()=>{navigator.clipboard.writeText(proposal||'');setCopied(true);setTimeout(()=>setCopied(false),2000)}} style={{ padding:'4px 10px', borderRadius:6, border:'1px solid var(--pios-border2)', background:'transparent', color:'var(--pios-muted)', fontSize:11, cursor:'pointer', fontFamily:'var(--font-sans)' }}>
                     {copied?'✓ Copied':'⎘ Copy'}
@@ -390,7 +390,7 @@ export default function ConsultingPage() {
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, padding:20 }}>
           <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border2)', borderRadius:16, padding:28, width:'100%', maxWidth:440, position:'relative', overflow:'hidden' }}>
             <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, var(--ai), var(--academic))' }} />
-            <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:700, color:'var(--pios-text)', letterSpacing:'-0.02em', marginBottom:18 }}>New Engagement</div>
+            <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:400, color:'var(--pios-text)', letterSpacing:'-0.02em', marginBottom:18 }}>New Engagement</div>
 
             {[
               { label:'Client name', key:'client_name', type:'text', placeholder:'QPMO / KSP / Acme Corp' },
@@ -427,7 +427,7 @@ export default function ConsultingPage() {
 
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={()=>setShowEngModal(false)} style={{ flex:1, padding:'10px', borderRadius:9, border:'1px solid var(--pios-border2)', background:'transparent', color:'var(--pios-muted)', fontSize:13, cursor:'pointer', fontFamily:'var(--font-sans)' }}>Cancel</button>
-              <button onClick={saveEngagement} disabled={!engForm.client_name||saving} style={{ flex:2, padding:'10px', borderRadius:9, border:'none', background:!engForm.client_name||saving?'rgba(139,124,248,0.35)':'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:700, cursor:!engForm.client_name||saving?'not-allowed':'pointer' }}>
+              <button onClick={saveEngagement} disabled={!engForm.client_name||saving} style={{ flex:2, padding:'10px', borderRadius:9, border:'none', background:!engForm.client_name||saving?'rgba(139,124,248,0.35)':'var(--ai)', color:'var(--pios-bg)', fontFamily:'var(--font-display)', fontSize:13, fontWeight:400, cursor:!engForm.client_name||saving?'not-allowed':'pointer' }}>
                 {saving?'Saving…':'Save Engagement'}
               </button>
             </div>
