@@ -271,21 +271,21 @@ export default function AiPage() {
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ai)', flexShrink: 0 }} />
                   <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--ai)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>NemoClaw™ Calibrated</span>
                 </div>
-                {nemo.calibration_summary && (
+                {!!(nemo as any).calibration_summary && (
                   <p style={{ fontSize: 11, color: 'var(--pios-muted)', margin: '0 0 6px', lineHeight: 1.5,
                     display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as never}>
-                    {nemo.calibration_summary as string}
+                    {String((nemo as any).calibration_summary)}
                   </p>
                 )}
-                {(nemo.recommended_frameworks as string[] | undefined)?.length ? (
+                {!!(nemo as any).recommended_frameworks && ((nemo as any).recommended_frameworks as string[]).length ? (
                   <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 4 }}>
-                    Frameworks: {(nemo.recommended_frameworks as string[]).slice(0, 3).join(', ')}
-                    {(nemo.recommended_frameworks as string[]).length > 3 ? ` +${(nemo.recommended_frameworks as string[]).length - 3}` : ''}
+                    Frameworks: {((nemo as any).recommended_frameworks as string[]).slice(0, 3).join(', ')}
+                    {((nemo as any).recommended_frameworks as string[]).length > 3 ? ` +${((nemo as any).recommended_frameworks as string[]).length - 3}` : ''}
                   </div>
                 ) : null}
-                {nemo.seniority_level && (
+                {!!(nemo as any).seniority_level && (
                   <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 6 }}>
-                    {nemo.seniority_level as string} · {nemo.primary_industry as string ?? 'professional'} · {nemo.career_years ? `${nemo.career_years}y exp` : ''}
+                    {String((nemo as any).seniority_level)} · {String((nemo as any).primary_industry ?? 'professional')} · {(nemo as any).career_years ? `${(nemo as any).career_years}y exp` : ''}
                   </div>
                 )}
                 <a href="/platform/onboarding" style={{ fontSize: 10, color: 'var(--ai)', opacity: 0.7, display: 'block', textDecoration: 'none' }}>
