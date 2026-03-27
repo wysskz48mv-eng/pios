@@ -8,9 +8,9 @@ type Session = { mode: Mode; duration: number; completedAt: string; subject?: st
 
 const DEFAULTS = { focus: 25, short_break: 5, long_break: 15 }
 const MODE_CONFIG: Record<Mode, { label: string; color: string; bg: string; icon: typeof Brain }> = {
-  focus:       { label: 'Focus',       color: '#6C8EFF', bg: 'rgba(108,142,255,0.12)', icon: Brain    },
-  short_break: { label: 'Short Break', color: '#2DD4A0', bg: 'rgba(45,212,160,0.12)',  icon: Coffee   },
-  long_break:  { label: 'Long Break',  color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  icon: Coffee   },
+  focus:       { label: 'Focus',       color: 'var(--academic)', bg: 'rgba(79,142,247,0.12)', icon: Brain    },
+  short_break: { label: 'Short Break', color: 'var(--fm)',       bg: 'rgba(16,185,129,0.12)',  icon: Coffee   },
+  long_break:  { label: 'Long Break',  color: 'var(--saas)',     bg: 'rgba(245,158,11,0.12)',  icon: Coffee   },
 }
 
 function fmt(s: number) {

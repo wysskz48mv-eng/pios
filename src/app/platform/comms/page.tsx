@@ -14,10 +14,10 @@ type SIABrief  = { id: string; title: string; content: string; sectors: string[]
 type Sector    = { key: string; label: string }
 
 const STATUS_COLOR: Record<string,string> = {
-  draft:    'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
-  reviewed: 'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
-  sent:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
-  archived: 'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
+  draft:    'bg-[var(--saas)]/10 text-[var(--saas)] border-[rgba(245,158,11,0.2)]',
+  reviewed: 'bg-[var(--academic)]/10 text-[var(--academic)] border-[rgba(79,142,247,0.2)]',
+  sent:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-[rgba(16,185,129,0.2)]',
+  archived: 'bg-[var(--pios-surface2)] text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 const TONES = ['formal','confident','balanced','direct']
 
@@ -155,7 +155,7 @@ export default function CommsPage() {
           <div className="flex items-center gap-2 mb-1">
             <MessageSquare className="w-5 h-5 text-[var(--academic)]" />
             <h1 className="text-xl font-bold">Intelligence & Comms</h1>
-            <span className="text-xs bg-[var(--academic)]/10 text-[var(--academic)] border border-blue-500/20 px-2 py-0.5 rounded-full font-medium">BICA™ · SIA™</span>
+            <span className="text-xs bg-[var(--academic)]/10 text-[var(--academic)] border border-[rgba(79,142,247,0.2)] px-2 py-0.5 rounded-full font-medium">BICA™ · SIA™</span>
           </div>
           <p className="text-sm text-[var(--pios-muted)]">Board packs · investor updates · strategic signal briefs</p>
         </div>

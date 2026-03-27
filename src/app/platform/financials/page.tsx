@@ -21,7 +21,7 @@ const DOMAIN_COLOR: Record<string, string> = {
   fm_consulting: 'bg-teal-500/10 text-teal-400',
   saas:          'bg-[var(--academic)]/10 text-[var(--academic)]',
   business:      'bg-[var(--saas)]/10 text-[var(--saas)]',
-  personal:      'bg-slate-500/10 text-[var(--pios-muted)]',
+  personal:      'bg-[var(--pios-surface2)] text-[var(--pios-muted)]',
 }
 
 export default function FinancialsPage() {
@@ -156,7 +156,7 @@ export default function FinancialsPage() {
             <button onClick={() => setShowSnap(false)} className="px-4 py-2 rounded-lg text-sm text-[var(--pios-muted)] border border-[var(--pios-border)] hover:bg-[var(--pios-surface)]">
               Cancel
             </button>
-            <button onClick={saveSnapshot} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border border-green-500/20 hover:bg-green-500/15 disabled:opacity-50">
+            <button onClick={saveSnapshot} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border border-[rgba(16,185,129,0.2)] hover:bg-green-500/15 disabled:opacity-50">
               {saving ? 'Saving…' : 'Save snapshot'}
             </button>
           </div>
@@ -200,7 +200,7 @@ export default function FinancialsPage() {
                     return (
                       <div key={domain}>
                         <div className="flex justify-between items-center mb-1">
-                          <span className={`text-xs px-2 py-0.5 rounded capitalize ${DOMAIN_COLOR[domain] ?? 'bg-slate-500/10 text-[var(--pios-muted)]'}`}>{domain.replace('_', ' ')}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded capitalize ${DOMAIN_COLOR[domain] ?? 'bg-[var(--pios-surface2)] text-[var(--pios-muted)]'}`}>{domain.replace('_', ' ')}</span>
                           <span className="text-sm font-medium">£{amount.toLocaleString('en-GB', { maximumFractionDigits: 0 })}</span>
                         </div>
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">

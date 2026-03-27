@@ -270,7 +270,7 @@ export default function OperatorPage() {
                 return (
                   <button key={f.key} onClick={() => toggleFeature(f.key)}
                     className={`flex items-center gap-2 p-2.5 rounded-lg border text-left transition-all text-xs ${enabled
-                      ? 'bg-green-500/8 border-green-500/20 text-foreground'
+                      ? 'bg-green-500/8 border-[rgba(16,185,129,0.2)] text-foreground'
                       : 'bg-muted/20 border-[var(--pios-border)] text-[var(--pios-muted)]'}`}>
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${enabled ? 'bg-green-500' : 'bg-muted-foreground/40'}`} />
                     {f.label}

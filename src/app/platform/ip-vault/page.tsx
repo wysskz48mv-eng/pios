@@ -15,21 +15,21 @@ type IPAsset = {
 
 const TYPE_COLOR: Record<string, string> = {
   framework:    'bg-[var(--ai)]/10 text-[var(--ai3)] border-[rgba(99,73,255,0.2)]',
-  trademark:    'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
-  patent:       'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
-  trade_secret: 'bg-red-500/10 text-[var(--dng)] border-red-500/20',
-  copyright:    'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
-  methodology:  'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+  trademark:    'bg-[var(--academic)]/10 text-[var(--academic)] border-[rgba(79,142,247,0.2)]',
+  patent:       'bg-[var(--saas)]/10 text-[var(--saas)] border-[rgba(245,158,11,0.2)]',
+  trade_secret: 'bg-red-500/10 text-[var(--dng)] border-[rgba(244,63,94,0.2)]',
+  copyright:    'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-[rgba(16,185,129,0.2)]',
+  methodology:  'bg-[rgba(56,217,245,0.08)] text-[var(--pro)] border-[rgba(56,217,245,0.2)]',
   process:      'bg-pink-500/10 text-pink-400 border-pink-500/20',
-  brand:        'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  brand:        'bg-[rgba(249,115,22,0.08)] text-[var(--saas)] border-[rgba(249,115,22,0.2)]',
 }
 const STATUS_COLOR: Record<string, string> = {
-  active:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
-  pending:    'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
-  filed:      'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
+  active:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-[rgba(16,185,129,0.2)]',
+  pending:    'bg-[var(--saas)]/10 text-[var(--saas)] border-[rgba(245,158,11,0.2)]',
+  filed:      'bg-[var(--academic)]/10 text-[var(--academic)] border-[rgba(79,142,247,0.2)]',
   registered: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  lapsed:     'bg-red-500/10 text-[var(--dng)] border-red-500/20',
-  archived:   'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
+  lapsed:     'bg-red-500/10 text-[var(--dng)] border-[rgba(244,63,94,0.2)]',
+  archived:   'bg-[var(--pios-surface2)] text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 
 const BLANK = { name:'', asset_type:'framework', description:'', status:'active', jurisdiction:[] as string[], filing_date:'', registration_no:'', renewal_date:'', owner_entity:'VeritasIQ Technologies Ltd', notes:'' }
@@ -188,7 +188,7 @@ export default function IPVaultPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="font-semibold text-sm">{a.name}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_COLOR[a.asset_type] ?? 'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20'}`}>{a.asset_type.replace('_', ' ')}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_COLOR[a.asset_type] ?? 'bg-[var(--pios-surface2)] text-[var(--pios-muted)] border-[var(--pios-border2)]/20'}`}>{a.asset_type.replace('_', ' ')}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLOR[a.status] ?? ''}`}>{a.status}</span>
                   </div>
                   {a.description && <p className="text-xs text-[var(--pios-muted)] mt-1 line-clamp-2">{a.description}</p>}

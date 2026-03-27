@@ -41,8 +41,8 @@ type FeedItem = {
 const DOMAINS: Omit<DomainBriefing, 'items'|'ai_synthesis'|'generated_at'|'loading'|'error'|'expanded'>[] = [
   { domain: 'fm_industry',  label: 'FM & Real Estate',    icon: '🏗',  color: 'text-teal-400',    borderColor: 'border-teal-500/20'    },
   { domain: 'academic',     label: 'Academic & DBA',       icon: '📚',  color: 'text-[var(--ai3)]',  borderColor: 'border-[rgba(99,73,255,0.2)]'  },
-  { domain: 'saas',         label: 'SaaS & PropTech',      icon: '⚡',  color: 'text-[var(--academic)]',    borderColor: 'border-blue-500/20'    },
-  { domain: 'regulatory',   label: 'Regulatory & Legal',   icon: '⚖',  color: 'text-[var(--saas)]',   borderColor: 'border-amber-500/20'   },
+  { domain: 'saas',         label: 'SaaS & PropTech',      icon: '⚡',  color: 'text-[var(--academic)]',    borderColor: 'border-[rgba(79,142,247,0.2)]'    },
+  { domain: 'regulatory',   label: 'Regulatory & Legal',   icon: '⚖',  color: 'text-[var(--saas)]',   borderColor: 'border-[rgba(245,158,11,0.2)]'   },
   { domain: 'gcc_market',   label: 'GCC Market',           icon: '🌍',  color: 'text-emerald-400', borderColor: 'border-emerald-500/20' },
 ]
 

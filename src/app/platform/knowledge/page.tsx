@@ -14,24 +14,24 @@ type KnowledgeEntry = {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  note:               'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
-  article:            'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
-  book:               'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
+  note:               'bg-[var(--pios-surface2)] text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
+  article:            'bg-[var(--academic)]/10 text-[var(--academic)] border-[rgba(79,142,247,0.2)]',
+  book:               'bg-[var(--saas)]/10 text-[var(--saas)] border-[rgba(245,158,11,0.2)]',
   paper:              'bg-[var(--ai)]/10 text-[var(--ai3)] border-[rgba(99,73,255,0.2)]',
   case_study:         'bg-teal-500/10 text-teal-400 border-teal-500/20',
   framework:          'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  lesson_learned:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
-  client_insight:     'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  market_intelligence:'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+  lesson_learned:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-[rgba(16,185,129,0.2)]',
+  client_insight:     'bg-[rgba(249,115,22,0.08)] text-[var(--saas)] border-[rgba(249,115,22,0.2)]',
+  market_intelligence:'bg-[rgba(56,217,245,0.08)] text-[var(--pro)] border-[rgba(56,217,245,0.2)]',
   ai_search_result:   'bg-pink-500/10 text-pink-400 border-pink-500/20',
-  other:              'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
+  other:              'bg-[var(--pios-surface2)] text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 const DOMAIN_COLOR: Record<string, string> = {
   fm_consulting: 'bg-teal-500/10 text-teal-400',
   academic:      'bg-[var(--ai)]/10 text-[var(--ai3)]',
   saas:          'bg-[var(--academic)]/10 text-[var(--academic)]',
   business:      'bg-[var(--saas)]/10 text-[var(--saas)]',
-  personal:      'bg-slate-500/10 text-[var(--pios-muted)]',
+  personal:      'bg-[var(--pios-surface2)] text-[var(--pios-muted)]',
 }
 
 const BLANK_FORM = { title:'', summary:'', full_text:'', entry_type:'note', domain:'business', source:'', url:'', tags_raw:'', paste_text:'' }
@@ -194,7 +194,7 @@ export default function KnowledgePage() {
           <div className="flex gap-2 flex-wrap">
             {Object.entries(byDomain).sort((a,b) => b[1]-a[1]).map(([d, count]) => (
               <button key={d} onClick={() => { setDomain(d); load(query, d) }}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-all capitalize ${DOMAIN_COLOR[d] ?? 'bg-slate-500/10 text-[var(--pios-muted)]'} ${domain === d ? 'ring-1 ring-current' : 'opacity-70 hover:opacity-100'}`}>
+                className={`text-xs px-2.5 py-1 rounded-full border transition-all capitalize ${DOMAIN_COLOR[d] ?? 'bg-[var(--pios-surface2)] text-[var(--pios-muted)]'} ${domain === d ? 'ring-1 ring-current' : 'opacity-70 hover:opacity-100'}`}>
                 {d.replace('_',' ')} ({count})
               </button>
             ))}
@@ -224,7 +224,7 @@ export default function KnowledgePage() {
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_COLOR[e.entry_type] ?? ''}`}>
                           {e.entry_type.replace(/_/g,' ')}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${DOMAIN_COLOR[e.domain] ?? 'bg-slate-500/10 text-[var(--pios-muted)]'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${DOMAIN_COLOR[e.domain] ?? 'bg-[var(--pios-surface2)] text-[var(--pios-muted)]'}`}>
                           {e.domain.replace(/_/g,' ')}
                         </span>
                       </div>

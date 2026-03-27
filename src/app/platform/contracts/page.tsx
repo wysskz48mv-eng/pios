@@ -16,23 +16,23 @@ type Contract = {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  client:      'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
-  supplier:    'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
+  client:      'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-[rgba(16,185,129,0.2)]',
+  supplier:    'bg-[var(--academic)]/10 text-[var(--academic)] border-[rgba(79,142,247,0.2)]',
   employment:  'bg-[var(--ai)]/10 text-[var(--ai3)] border-[rgba(99,73,255,0.2)]',
-  nda:         'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
-  licence:     'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+  nda:         'bg-[var(--saas)]/10 text-[var(--saas)] border-[rgba(245,158,11,0.2)]',
+  licence:     'bg-[rgba(56,217,245,0.08)] text-[var(--pro)] border-[rgba(56,217,245,0.2)]',
   partnership: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  lease:       'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  lease:       'bg-[rgba(249,115,22,0.08)] text-[var(--saas)] border-[rgba(249,115,22,0.2)]',
   service:     'bg-pink-500/10 text-pink-400 border-pink-500/20',
-  other:       'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
+  other:       'bg-[var(--pios-surface2)] text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 const STATUS_COLOR: Record<string, string> = {
-  active:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
-  draft:      'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
-  expired:    'bg-red-500/10 text-[var(--dng)] border-red-500/20',
-  terminated: 'bg-red-500/10 text-[var(--dng)] border-red-500/20',
+  active:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-[rgba(16,185,129,0.2)]',
+  draft:      'bg-[var(--saas)]/10 text-[var(--saas)] border-[rgba(245,158,11,0.2)]',
+  expired:    'bg-red-500/10 text-[var(--dng)] border-[rgba(244,63,94,0.2)]',
+  terminated: 'bg-red-500/10 text-[var(--dng)] border-[rgba(244,63,94,0.2)]',
   renewed:    'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  pending:    'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
+  pending:    'bg-[var(--academic)]/10 text-[var(--academic)] border-[rgba(79,142,247,0.2)]',
 }
 
 const BLANK = { title:'', contract_type:'client', counterparty:'', status:'active', value:'', currency:'GBP', start_date:'', end_date:'', auto_renewal:false, notice_period_days:'', renewal_date:'', key_terms:'', obligations:'', domain:'business', notes:'' }
