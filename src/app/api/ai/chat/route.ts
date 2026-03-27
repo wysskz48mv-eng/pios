@@ -58,13 +58,22 @@ export async function POST(request: Request) {
     const aiPersona = (aiProfile as Record<string,unknown> | null)?.persona_type as string ?? 'individual'
     const aiIsExec  = ['executive','founder','professional'].includes(aiPersona)
 
-    // Fetch user training config (NemoClaw context)
-    const { data: trainCfg } = await (supabase as any)
-      .from('exec_intelligence_config')
-      .select('persona_context,company_context,goals_context,custom_instructions,tone_preference,response_style')
-      .eq('user_id', user.id)
-      .maybeSingle()
-    const tc = trainCfg as any
+    // Fetch training config + NemoClaw calibration in parallel
+    const [trainCfgR, nemoCfgR] = await Promise.allSettled([
+      (supabase as any)
+        .from('exec_intelligence_config')
+        .select('persona_context,company_context,goals_context,custom_instructions,tone_preference,response_style')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      (supabase as any)
+        .from('nemoclaw_calibration')
+        .select('calibration_summary,seniority_level,primary_industry,career_years,education_detail,recommended_frameworks,growth_areas,communication_register,coaching_intensity')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1),
+    ])
+    const tc   = trainCfgR.status === 'fulfilled' ? (trainCfgR.value as any).data as any : null
+    const nemo = nemoCfgR.status  === 'fulfilled' ? ((nemoCfgR.value as any).data?.[0] ?? null) as any : null
 
     const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR, calendarR] = await Promise.all([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
@@ -245,7 +254,24 @@ export async function POST(request: Request) {
       tc.custom_instructions && `CUSTOM INSTRUCTIONS (follow these precisely):\n${tc.custom_instructions}`,
     ].filter(Boolean).join('\n\n') : ''
 
-    const trainingSection = trainingCtx ? `\n\n${trainingCtx}` : ''
+    // NemoClaw calibration block — injected from CV analysis
+    const nemoSection = nemo ? [
+      `NEMOCLAW™ CALIBRATION PROFILE:`,
+      nemo.calibration_summary && `  Summary: ${nemo.calibration_summary}`,
+      nemo.seniority_level     && `  Seniority: ${nemo.seniority_level}`,
+      nemo.primary_industry    && `  Industry: ${nemo.primary_industry}`,
+      nemo.career_years        && `  Experience: ${nemo.career_years} years`,
+      nemo.education_detail    && `  Education: ${nemo.education_detail}`,
+      nemo.communication_register && `  Communication register: ${nemo.communication_register}`,
+      nemo.coaching_intensity  && `  Coaching intensity: ${nemo.coaching_intensity}`,
+      nemo.recommended_frameworks?.length && `  Lead frameworks: ${(nemo.recommended_frameworks as string[]).join(', ')}`,
+      nemo.growth_areas?.length && `  Growth areas: ${(nemo.growth_areas as string[]).join(', ')}`,
+    ].filter(Boolean).join('\n') : ''
+
+    const trainingSection = [
+      trainingCtx  ? `\n\n${trainingCtx}`  : '',
+      nemoSection  ? `\n\n${nemoSection}`  : '',
+    ].join('')
 
     // Tone/style from training config
     const toneNote = tc?.tone_preference === 'direct'       ? 'Be blunt and direct. Skip preamble.'
