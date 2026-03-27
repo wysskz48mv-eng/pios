@@ -11,6 +11,10 @@ export default function ChangelogPage() {
       badge: 'Latest',
       badgeColor: 'var(--ai)',
       changes: [
+        { type: 'new', text: 'DBA Chapter AI Writer (/platform/academic/writer) — section-by-section drafting with NemoClaw™, section picker mapped per chapter type, word target selector, editable output with append-to-chapter' },
+        { type: 'new', text: 'DBA Writer: academic system prompt grounded in STT + sensemaking theory, GCC FM context, KSP-001 + Qiddiya case sites' },
+        { type: 'new', text: 'Stakeholder CRM (/platform/stakeholders) — investor/client/partner/academic tracker with NemoClaw™ pre-meeting briefing (opening, objectives, talking points, risk, the ask)' },
+        { type: 'new', text: 'Stakeholder CRM: overdue follow-up alerts, relationship health scoring, log contact, importance dots, category colour coding' },
         { type: 'new', text: 'TSA™ Time Sovereignty dashboard v2 — visual time map grid (7am–8pm × Mon–Fri), sovereignty score (Sovereign/Contested/Fragmented), protection zones with lock toggle' },
         { type: 'new', text: 'TSA™ weekly log with stacked bar history — strategic/operational/stakeholder/admin/recovery breakdown, admin drag warning at >30%' },
         { type: 'new', text: 'TSA™ NemoClaw™ audit button — AI analysis of time allocation and recommendations' },
