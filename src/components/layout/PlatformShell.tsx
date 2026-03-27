@@ -104,7 +104,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
 
       {/* Main area */}
       <main style={{
-        flex: 1, overflowY: 'auto', background: 'var(--pios-bg)',
+        flex: 1, overflowY: 'auto', background: '#0a0c1a',
         display: 'flex', flexDirection: 'column',
         paddingBottom: isMobile ? 64 : 0,
       }}>
@@ -116,37 +116,40 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
         {/* ── Top bar ── */}
         <header style={{
           position: 'sticky', top: 0, zIndex: 10,
-          background: 'rgba(7,8,16,0.9)', backdropFilter: 'blur(16px)',
-          borderBottom: '1px solid var(--pios-border)',
-          padding: '0 24px', height: 56,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          background: 'rgba(10,12,26,0.85)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          padding: '0 28px', height: 60,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
           flexShrink: 0,
         }}>
 
           {/* Left: mobile hamburger OR desktop page title */}
           {isMobile ? (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <button onClick={() => setMenuOpen(true)} style={{
-                background: 'none', border: '1px solid var(--pios-border2)',
-                borderRadius: 7, padding: '5px 9px',
-                color: 'var(--pios-muted)', cursor: 'pointer', fontSize: 14,
+                background: 'none', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, padding: '6px 10px',
+                color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 14,
                 display: 'flex', alignItems: 'center', gap: 5,
               }}>
                 <span>☰</span>
               </button>
               <div style={{
-                width: 26, height: 26, borderRadius: 7,
-                background: 'linear-gradient(135deg, #9b87f5, #5b8def)',
+                width: 28, height: 28, borderRadius: 8,
+                background: 'linear-gradient(135deg, #6c5ce7, #4f8ef7)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 800, color: '#fff',
+                boxShadow: '0 0 16px rgba(108,92,231,0.35)',
               }}>P</div>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: 15, fontWeight: 700, color: 'var(--pios-text)',
-                letterSpacing: '-0.02em',
+                fontSize: 17, fontWeight: 800, color: '#f0f2ff',
+                letterSpacing: '-0.03em', lineHeight: 1,
               }}>{title}</span>
             </div>
           )}
@@ -158,41 +161,59 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
                 window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                padding: '5px 14px', borderRadius: 8, cursor: 'pointer',
-                background: 'var(--pios-surface2)', border: '1px solid var(--pios-border2)',
-                color: 'var(--pios-dim)', fontSize: 12, transition: 'all 0.15s',
-                minWidth: 200,
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '7px 16px', borderRadius: 10, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.09)',
+                color: 'rgba(255,255,255,0.35)', fontSize: 12.5,
+                transition: 'all 0.15s', minWidth: 220,
+                fontFamily: 'var(--font-sans)',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--pios-border3)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--pios-muted)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--pios-border2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--pios-dim)' }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(108,92,231,0.4)'
+                ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(108,92,231,0.06)'
+                ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.09)'
+                ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'
+                ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.35)'
+              }}
             >
-              <span style={{ fontSize: 13 }}>🔍</span>
+              <span style={{ fontSize: 12, opacity: 0.7 }}>🔍</span>
               <span style={{ flex: 1, textAlign: 'left' as const }}>Search anything…</span>
               <span style={{
-                fontSize: 10, padding: '1px 5px', borderRadius: 5,
-                background: 'var(--pios-surface)', border: '1px solid var(--pios-border)',
-                color: 'var(--pios-dim)', fontFamily: 'var(--font-mono)',
+                fontSize: 9.5, padding: '2px 6px', borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.3)',
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '0.02em',
               }}>⌘K</span>
             </button>
           )}
 
           {/* Right: credits + trial badge + AI button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* Credit meter — desktop only */}
             {tenant && !isMobile && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{
-                  width: 56, height: 4, borderRadius: 2, background: 'var(--pios-surface3)', overflow: 'hidden',
+                  width: 60, height: 3, borderRadius: 2,
+                  background: 'rgba(255,255,255,0.08)', overflow: 'hidden',
                 }}>
                   <div style={{
                     height: '100%', borderRadius: 2,
                     width: `${creditPct}%`,
-                    background: creditPct > 80 ? '#ef4444' : creditPct > 50 ? '#f59e0b' : 'var(--ai)',
+                    background: creditPct > 80 ? '#ef4444' : creditPct > 50 ? '#f59e0b' : '#6c5ce7',
                     transition: 'width 0.3s',
                   }} />
                 </div>
-                <span style={{ fontSize: 10, color: 'var(--pios-dim)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.01em' }}>
+                <span style={{
+                  fontSize: 9.5, color: 'rgba(255,255,255,0.3)',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums',
+                }}>
                   {creditsUsed.toLocaleString()}/{creditsLimit.toLocaleString()}
                 </span>
               </div>
@@ -201,25 +222,32 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
             {/* Trial badge */}
             {isTrialing && (
               <div style={{
-                fontSize: 10, fontWeight: 600, color: '#9b87f5',
-                background: 'rgba(155,135,245,0.08)', border: '1px solid rgba(155,135,245,0.18)',
-                padding: '3px 10px', borderRadius: 20, letterSpacing: '0.03em',
-              }}>Trial</div>
+                fontSize: 9.5, fontWeight: 700, color: '#9b87f5',
+                background: 'rgba(155,135,245,0.1)',
+                border: '1px solid rgba(155,135,245,0.2)',
+                padding: '3px 10px', borderRadius: 20,
+                letterSpacing: '0.06em', fontFamily: "'JetBrains Mono', monospace",
+              }}>TRIAL</div>
             )}
 
-            {/* AI chat toggle */}
+            {/* NemoClaw AI toggle */}
             <button onClick={() => setChatOpen(!chatOpen)} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 14px', borderRadius: 20,
-              background: chatOpen ? 'rgba(139,124,248,0.14)' : 'var(--pios-surface2)',
-              border: `1px solid ${chatOpen ? 'rgba(139,124,248,0.3)' : 'var(--pios-border2)'}`,
-              color: chatOpen ? 'var(--ai)' : 'var(--pios-muted)',
-              cursor: 'pointer', fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
-              letterSpacing: '-0.01em', fontFamily: 'var(--font-sans)',
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '7px 16px', borderRadius: 20,
+              background: chatOpen
+                ? 'rgba(108,92,231,0.18)'
+                : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${chatOpen ? 'rgba(108,92,231,0.4)' : 'rgba(255,255,255,0.1)'}`,
+              color: chatOpen ? '#a99dff' : 'rgba(255,255,255,0.5)',
+              cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+              transition: 'all 0.15s', letterSpacing: '-0.01em',
+              fontFamily: 'var(--font-sans)',
+              boxShadow: chatOpen ? '0 0 20px rgba(108,92,231,0.2)' : 'none',
             }}>
               <span style={{
                 width: 6, height: 6, borderRadius: '50%',
-                background: 'var(--ai)', display: 'inline-block',
+                background: '#6c5ce7', display: 'inline-block',
+                boxShadow: '0 0 8px rgba(108,92,231,0.7)',
               }} className="ai-pulse" />
               {isMobile ? 'AI' : 'NemoClaw™'}
             </button>
@@ -228,8 +256,8 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
 
         {/* ── Page content ── */}
         <div style={{
-          padding: isMobile ? '16px 16px 28px' : '24px 28px 60px',
-          flex: 1,
+          padding: isMobile ? '20px 16px 32px' : '28px 32px 72px',
+          flex: 1, maxWidth: '100%',
         }}>
           {children}
         </div>

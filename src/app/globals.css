@@ -3,46 +3,47 @@
 @tailwind utilities;
 
 :root {
-  /* ── Backgrounds — deep navy-black with subtle warmth ── */
-  --pios-bg:       #070810;
-  --pios-surface:  #0b0d18;
-  --pios-surface2: #0f1120;
-  --pios-surface3: #141728;
-  --pios-surface4: #1b1f32;
+  /* ── Backgrounds — mockup design system ── */
+  --pios-bg:       #0e0f1a;
+  --pios-surface:  #13152a;
+  --pios-surface2: #1a1d35;
+  --pios-surface3: #21254a;
+  --pios-surface4: #252a50;
 
   /* ── Borders ── */
-  --pios-border:  rgba(255,255,255,0.055);
-  --pios-border2: rgba(255,255,255,0.09);
-  --pios-border3: rgba(255,255,255,0.14);
+  --pios-border:  rgba(255,255,255,0.07);
+  --pios-border2: rgba(255,255,255,0.10);
+  --pios-border3: rgba(255,255,255,0.16);
 
   /* ── Text ── */
-  --pios-text:  #f0f2fa;
-  --pios-sub:   #a8adc8;
-  --pios-muted: #636880;
-  --pios-dim:   #3a3e58;
+  --pios-text:  #f8f9ff;
+  --pios-sub:   #c4c8e8;
+  --pios-muted: #8890bb;
+  --pios-dim:   #4a5080;
 
-  /* ── Brand: NemoClaw violet primary ── */
-  --ai:        #8b7cf8;
-  --ai2:       #6d5ee8;
-  --ai-glow:   rgba(139,124,248,0.22);
-  --ai-subtle: rgba(139,124,248,0.08);
+  /* ── Brand: NemoClaw violet primary — matches mockup --vi ── */
+  --ai:        #6c5ce7;
+  --ai2:       #8b7cf7;
+  --ai3:       #a99dff;
+  --ai-glow:   rgba(108,92,231,0.22);
+  --ai-subtle: rgba(108,92,231,0.08);
 
   /* ── Domain colours ── */
-  --academic:  #4f8ef7;   /* academic blue */
-  --fm:        #10d9a0;   /* teal — VeritasEdge */
-  --saas:      #f0a030;   /* amber */
-  --ops:       #f4845f;   /* coral */
-  --dng:       #e05272;   /* red-coral */
-  --pro:       #22d3ee;   /* cyan — professional */
+  --academic:  #4f8ef7;
+  --fm:        #00c896;
+  --saas:      #f4b942;
+  --ops:       #ff6b9d;
+  --dng:       #ff6b9d;
+  --pro:       #38d9f5;
 
   /* ── Sidebar width ── */
-  --sidebar-w:           220px;
+  --sidebar-w:           224px;
   --sidebar-w-collapsed:  56px;
 
-  /* ── Fonts ── */
-  --font-display: 'Syne', system-ui, sans-serif;
-  --font-sans:    'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono:    'DM Mono', 'SF Mono', 'Fira Code', monospace;
+  /* ── Fonts — Plus Jakarta Sans + Fraunces + JetBrains Mono ── */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans:    'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
