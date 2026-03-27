@@ -6,9 +6,19 @@
 export default function ChangelogPage() {
   const entries = [
     {
-      version: 'v3.0.0',
+      version: 'v3.0.2',
       date: 'March 2026',
       badge: 'Latest',
+      badgeColor: 'var(--ai)',
+      items: [
+        { type: 'fix', text: "UIX consistency pass: 6 pages migrated from Tailwind opacity utilities to pios design tokens — comms, executive, financials, intelligence, operator, time-sovereignty" },
+        { type: 'fix', text: "246 class replacements: bg-white/5→var(--pios-surface2), border-white/10→var(--pios-border2), text-foreground→var(--pios-text) etc." },
+      ],
+    },
+    {
+      version: 'v3.0.0',
+      date: 'March 2026',
+      badge: '',
       badgeColor: 'var(--ai)',
       changes: [
         { type: 'new', text: "Sprint 84: NemoClaw™ calibration status card in AI sidebar — shows calibration summary, seniority, industry, recommended frameworks; prompts CV upload if uncalibrated" },
