@@ -94,14 +94,15 @@ export default function LoginPage() {
       borderRight: `1px solid ${C.border}`,
       padding: '48px 52px',
       display: 'flex', flexDirection: 'column' as const,
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
+      gap: 0,
       position: 'relative' as const, overflow: 'hidden',
     },
     right: {
       flex: 1, display: 'flex',
       flexDirection: 'column' as const,
       justifyContent: 'center',
-      padding: wide ? '52px 48px' : '40px 24px',
+      padding: wide ? '52px 44px' : '40px 24px',
       background: C.black2,
       minHeight: '100vh',
     },
@@ -121,6 +122,7 @@ export default function LoginPage() {
         .pios-trial-link:hover { color: #6349FF; }
         .pios-manifesto-item { border-bottom: 1px solid rgba(255,255,255,0.05); }
         .pios-manifesto-item:last-child { border-bottom: none; }
+        em { background: transparent !important; }
       `}</style>
 
       <div style={s.root}>
@@ -142,7 +144,7 @@ export default function LoginPage() {
             </div>
 
             {/* Hero copy */}
-            <div style={{ position:'relative', zIndex:1 }}>
+            <div style={{ position:'relative', zIndex:1, marginTop:'auto', marginBottom:'auto', paddingTop:48, paddingBottom:40 }}>
 
               {/* Eyebrow */}
               <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
@@ -154,8 +156,8 @@ export default function LoginPage() {
 
               {/* Headline */}
               <h1 style={{ fontFamily:"'Instrument Serif',Georgia,serif", fontSize:40, lineHeight:1.1, letterSpacing:'-0.028em', color:'#fff', marginBottom:10 }}>
-                Unifying the <em style={{ fontStyle:'italic', color:'rgba(130,108,255,0.92)' }}>art</em> of leadership<br />
-                with the <em style={{ fontStyle:'italic', color:'rgba(130,108,255,0.92)' }}>science</em><br />
+                Unifying the <em style={{ fontStyle:'italic', color:'rgba(130,108,255,0.92)', background:'transparent' }}>art</em> of leadership<br />
+                with the <em style={{ fontStyle:'italic', color:'rgba(130,108,255,0.92)', background:'transparent' }}>science</em><br />
                 of intelligence.
               </h1>
 
