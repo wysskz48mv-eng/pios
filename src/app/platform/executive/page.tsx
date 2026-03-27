@@ -89,6 +89,8 @@ export default function ExecutivePage() {
 
   // Modals
   const [showOKRModal, setShowOKRModal]       = useState(false)
+  const [editKr,       setEditKr]             = useState<Record<string,number>>({})
+  const [savingKr,     setSavingKr]           = useState<string|null>(null)
   const [showDecisionModal, setShowDecisionModal] = useState(false)
   const [showStakeModal, setShowStakeModal]   = useState(false)
   const [saving, setSaving] = useState(false)
@@ -212,6 +214,29 @@ export default function ExecutivePage() {
     setGenReport(false)
   }
 
+
+  async function updateKrProgress(krId: string, okrId: string, newVal: number) {
+    setSavingKr(krId)
+    try {
+      await fetch('/api/exec', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table: 'exec_key_results', id: krId, payload: { current_value: newVal } }),
+      })
+      // Update OKR progress based on avg of KRs
+      setOkrs(prev => prev.map(o => {
+        if (o.id !== okrId) return o
+        const updKrs = o.exec_key_results.map(kr =>
+          kr.id === krId ? { ...kr, current: newVal } : kr
+        )
+        const avgPct = updKrs.length
+          ? Math.round(updKrs.reduce((s, kr) => s + (kr.target > 0 ? Math.min(100, (kr.current / kr.target) * 100) : 0), 0) / updKrs.length)
+          : o.progress
+        return { ...o, exec_key_results: updKrs, progress: avgPct }
+      }))
+      setEditKr(p => { const n = {...p}; delete n[krId]; return n })
+    } catch { /* silent */ }
+    setSavingKr(null)
+  }
 
   return (
     <div className="p-6 min-h-screen max-w-6xl">
@@ -408,13 +433,43 @@ export default function ExecutivePage() {
                 </div>
                 {o.exec_key_results?.length > 0 && (
                   <div className="space-y-1.5 mt-2">
-                    {o.exec_key_results.map(kr => (
-                      <div key={kr.id} className="flex items-center gap-2 text-xs text-[var(--pios-muted)]">
-                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${kr.status === 'on_track' ? 'bg-green-400' : kr.status === 'at_risk' ? 'bg-[var(--saas)]' : 'bg-red-400'}`} />
-                        <span className="flex-1">{kr.title}</span>
-                        <span className="font-medium">{kr.current}/{kr.target}{kr.unit ? ` ${kr.unit}` : ''}</span>
-                      </div>
-                    ))}
+                    {o.exec_key_results.map(kr => {
+                      const isEditing = kr.id in editKr
+                      const isSaving  = savingKr === kr.id
+                      const pct       = kr.target > 0 ? Math.min(100, (kr.current / kr.target) * 100) : 0
+                      return (
+                        <div key={kr.id} className="flex items-center gap-2 text-xs text-[var(--pios-muted)] group">
+                          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${kr.status === 'on_track' ? 'bg-green-400' : kr.status === 'at_risk' ? 'bg-[var(--saas)]' : 'bg-red-400'}`} />
+                          <span className="flex-1">{kr.title}</span>
+                          {/* Progress bar */}
+                          <div style={{ width:48, height:3, background:'var(--pios-surface3)', borderRadius:2, overflow:'hidden' }}>
+                            <div style={{ width:`${pct}%`, height:'100%', background:'var(--fm)', borderRadius:2 }} />
+                          </div>
+                          {isEditing ? (
+                            <div className="flex items-center gap-1">
+                              <input type="number" autoFocus min={0} max={kr.target * 2} step={1}
+                                value={editKr[kr.id] ?? kr.current}
+                                onChange={e => setEditKr(p => ({...p, [kr.id]: parseFloat(e.target.value)||0}))}
+                                className="w-14 px-1.5 py-0.5 rounded border text-xs bg-[var(--pios-surface2)] border-[var(--pios-border2)]"
+                              />
+                              <button disabled={isSaving}
+                                onClick={() => updateKrProgress(kr.id, o.id, editKr[kr.id] ?? kr.current)}
+                                className="text-[var(--fm)] hover:opacity-80 disabled:opacity-40 px-1.5 py-0.5 rounded text-xs font-semibold">
+                                {isSaving ? '…' : '✓'}
+                              </button>
+                              <button onClick={() => setEditKr(p => { const n={...p}; delete n[kr.id]; return n })}
+                                className="text-[var(--pios-dim)] hover:text-[var(--pios-muted)] px-1 text-xs">✕</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => setEditKr(p => ({...p, [kr.id]: kr.current}))}
+                              className="font-medium hover:text-[var(--pios-text)] transition-colors"
+                              title="Click to update progress">
+                              {kr.current}/{kr.target}{kr.unit ? ` ${kr.unit}` : ''}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>
