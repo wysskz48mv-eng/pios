@@ -10,9 +10,18 @@ export default function ChangelogPage() {
       date: 'March 2026',
       badge: 'Latest',
       badgeColor: 'var(--ai)',
-      items: [
-        { type: 'fix', text: "UIX consistency pass: 6 pages migrated from Tailwind opacity utilities to pios design tokens — comms, executive, financials, intelligence, operator, time-sovereignty" },
-        { type: 'fix', text: "246 class replacements: bg-[var(--pios-surface2)]→var(--pios-surface2), border-[var(--pios-border2)]→var(--pios-border2), text-foreground→var(--pios-text) etc." },
+      changes: [
+        { type: 'new', text: 'Obsidian Command design system — Option A: true black #080808 palette replaces navy #0e0f1a across all surfaces' },
+        { type: 'new', text: 'Unified font system: Instrument Serif + DM Sans + DM Mono replaces Fraunces + Plus Jakarta Sans + JetBrains Mono' },
+        { type: 'new', text: 'Sidebar rebuilt: 36 unique SVG icons replace unicode glyph set (◎ ⊛ ◈ etc.) — OS/browser consistent' },
+        { type: 'new', text: 'Sidebar wordmark: PIOS in Instrument Serif italic with hex logomark SVG — matches login page exactly' },
+        { type: 'new', text: 'Topbar: page title changed from Fraunces 800 to Instrument Serif italic 400 — editorial, not domineering' },
+        { type: 'new', text: 'Login page: brand voice — "The operating system for the relentless" · manifesto 01/02/03 · serif stats' },
+        { type: 'new', text: 'Login page: JS-driven responsive layout (no CSS class injection) — brand panel shows/hides reliably' },
+        { type: 'fix', text: 'Button text: color var(--pios-bg) was invisible on true black — changed to #fff across 6 pages' },
+        { type: 'fix', text: 'Tasks API: duplicate status filter removed; VALID_SOURCES aligned with DB constraint' },
+        { type: 'fix', text: 'Design system: 341 token replacements — 100% pios-* token coverage across all 18 platform pages' },
+        { type: 'fix', text: 'em tag highlight: browser selection background on italic headline words — fixed with background:transparent' },
       ],
     },
     {
