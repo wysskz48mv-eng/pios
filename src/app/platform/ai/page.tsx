@@ -288,9 +288,14 @@ export default function AiPage() {
                     {String((nemo as any).seniority_level)} · {String((nemo as any).primary_industry ?? 'professional')} · {(nemo as any).career_years ? `${(nemo as any).career_years}y exp` : ''}
                   </div>
                 )}
-                <a href="/platform/onboarding" style={{ fontSize: 10, color: 'var(--ai)', opacity: 0.7, display: 'block', textDecoration: 'none' }}>
-                  ↺ Recalibrate via CV upload
-                </a>
+                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                  <a href="/platform/ai/train" style={{ fontSize: 10, color: 'var(--ai)', textDecoration: 'none', padding: '3px 8px', borderRadius: 6, background: 'rgba(139,124,248,0.12)', border: '1px solid rgba(139,124,248,0.2)' }}>
+                    ⚙ Configure
+                  </a>
+                  <a href="/platform/onboarding" style={{ fontSize: 10, color: 'var(--pios-dim)', textDecoration: 'none', padding: '3px 8px', borderRadius: 6, background: 'var(--pios-surface)', border: '1px solid var(--pios-border)' }}>
+                    ↺ Recalibrate CV
+                  </a>
+                </div>
               </div>
             ) : (
               <div style={{
@@ -305,9 +310,11 @@ export default function AiPage() {
                 <p style={{ fontSize: 11, color: 'var(--pios-muted)', margin: '0 0 6px', lineHeight: 1.5 }}>
                   Upload your CV so NemoClaw™ personalises every conversation to your background and goals.
                 </p>
-                <a href="/platform/onboarding" style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', textDecoration: 'none' }}>
-                  Upload CV → Calibrate
-                </a>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <a href="/platform/ai/train" style={{ fontSize: 11, fontWeight: 600, color: 'var(--ai)', textDecoration: 'none', padding: '4px 10px', borderRadius: 7, background: 'rgba(139,124,248,0.12)', border: '1px solid rgba(139,124,248,0.25)' }}>
+                    Configure NemoClaw
+                  </a>
+                </div>
               </div>
             )}
           </div>
