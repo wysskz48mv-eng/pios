@@ -106,7 +106,7 @@ function ProjectDrawer({ project, tasks, onClose, onSave, onDelete }: {
               ))}
             </div>
             <div style={{ display:'flex',gap:8,marginTop:4 }}>
-              <button onClick={save} disabled={saving} style={{ flex:1,padding:'11px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:400,cursor:'pointer' }}>
+              <button onClick={save} disabled={saving} style={{ flex:1,padding:'11px',borderRadius:9,border:'none',background:'var(--ai)',color:'#fff',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:400,cursor:'pointer' }}>
                 {saving?'Saving…':project.id?'Save changes':'Create project'}
               </button>
               <button onClick={()=>project.id?setEditing(false):onClose()} style={{ padding:'11px 16px',borderRadius:9,border:'1px solid var(--pios-border2)',background:'transparent',color:'var(--pios-muted)',fontSize:13,cursor:'pointer',fontFamily:'var(--font-sans)' }}>Cancel</button>
@@ -222,7 +222,7 @@ export default function ProjectsPage() {
           <h1 style={{ fontFamily:'var(--font-display)',fontSize:22,fontWeight:400,color:'var(--pios-text)',letterSpacing:'-0.03em',marginBottom:4 }}>Projects</h1>
           <p style={{ fontSize:12,color:'var(--pios-muted)' }}>{totalActive} active · avg {Math.round(avgProgress)}% complete</p>
         </div>
-        <button onClick={()=>setAdding(true)} style={{ padding:'8px 16px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:400,cursor:'pointer' }}>+ New project</button>
+        <button onClick={()=>setAdding(true)} style={{ padding:'8px 16px',borderRadius:9,border:'none',background:'var(--ai)',color:'#fff',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:400,cursor:'pointer' }}>+ New project</button>
       </div>
 
       {/* Filters */}
@@ -251,7 +251,7 @@ export default function ProjectsPage() {
           <div style={{ fontSize:32,marginBottom:12,opacity:0.3 }}>◈</div>
           <div style={{ fontFamily:'var(--font-display)',fontSize:15,fontWeight:400,marginBottom:8 }}>No projects here</div>
           <p style={{ fontSize:13,color:'var(--pios-muted)',marginBottom:18 }}>{filter==='completed'?'No completed projects yet.':'Add your first project to start tracking progress.'}</p>
-          <button onClick={()=>setAdding(true)} style={{ padding:'8px 18px',borderRadius:9,border:'none',background:'var(--ai)',color:'var(--pios-bg)',fontFamily:'var(--font-display)',fontSize:13,fontWeight:400,cursor:'pointer' }}>+ New project</button>
+          <button onClick={()=>setAdding(true)} style={{ padding:'8px 18px',borderRadius:9,border:'none',background:'var(--ai)',color:'#fff',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:400,cursor:'pointer' }}>+ New project</button>
         </div>
       ) : (
         <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14 }}>

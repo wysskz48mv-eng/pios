@@ -279,7 +279,7 @@ export default function ExpensesPage() {
         <div style={{ width:'1px',height:20,background:'var(--pios-border)' }} />
         <div style={{ display:'flex',gap:4,flexWrap:'wrap' as const }}>
           {(['all',...DOMAINS] as const).map(d=>(
-            <button key={d} onClick={()=>setDomainFilter(d)} style={{ padding:'4px 12px',borderRadius:20,fontSize:11,border:'none',cursor:'pointer',background:domainFilter===d?domainColour(d==='all'?'personal':d):'var(--pios-surface2)',color:domainFilter===d?'var(--pios-bg)':'var(--pios-muted)',fontWeight:domainFilter===d?600:400 }}>
+            <button key={d} onClick={()=>setDomainFilter(d)} style={{ padding:'4px 12px',borderRadius:20,fontSize:11,border:'none',cursor:'pointer',background:domainFilter===d?domainColour(d==='all'?'personal':d):'var(--pios-surface2)',color:domainFilter===d?'#fff':'var(--pios-muted)',fontWeight:domainFilter===d?600:400 }}>
               {d==='all'?'All':domainLabel(d)}
             </button>
           ))}

@@ -432,7 +432,7 @@ export default function AiPage() {
             width: 42, height: 42, borderRadius: 10, flexShrink: 0,
             background: input.trim() && !loading ? 'var(--ai)' : 'var(--pios-surface2)',
             border: 'none', cursor: input.trim() && !loading ? 'pointer' : 'default',
-            color: input.trim() && !loading ? 'var(--pios-bg)' : 'var(--pios-dim)',
+            color: input.trim() && !loading ? '#fff' : 'var(--pios-dim)',
             fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.15s',
           }}>↑</button>
