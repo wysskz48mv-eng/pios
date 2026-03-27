@@ -146,10 +146,10 @@ export default function StudyTimerPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold">Study Timer</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Pomodoro focus sessions · logged to CPD</p>
+          <p className="text-sm text-[var(--pios-muted)] mt-0.5">Pomodoro focus sessions · logged to CPD</p>
         </div>
         <button onClick={() => setShowSettings(s => !s)}
-          className="p-2 rounded-lg border border-border text-muted-foreground hover:bg-card">
+          className="p-2 rounded-lg border border-[var(--pios-border)] text-[var(--pios-muted)] hover:bg-[var(--pios-surface)]">
           <Settings2 className="w-4 h-4" />
         </button>
       </div>
@@ -178,7 +178,7 @@ export default function StudyTimerPage() {
       <div className="mb-6">
         <input value={subject} onChange={e => setSubject(e.target.value)}
           placeholder="What are you studying? (optional — logged to CPD)"
-          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary/60" />
+          className="w-full px-3 py-2 text-sm border border-[var(--pios-border)] rounded-lg bg-background focus:outline-none focus:border-primary/60" />
       </div>
 
       {/* Timer circle */}
@@ -208,7 +208,7 @@ export default function StudyTimerPage() {
         {/* Controls */}
         <div className="flex items-center gap-4 mt-6">
           <button onClick={reset}
-            className="p-3 rounded-full border border-border text-muted-foreground hover:bg-card">
+            className="p-3 rounded-full border border-[var(--pios-border)] text-[var(--pios-muted)] hover:bg-[var(--pios-surface)]">
             <RotateCcw className="w-5 h-5" />
           </button>
           <button onClick={toggle}
@@ -218,9 +218,9 @@ export default function StudyTimerPage() {
               ? <Pause className="w-7 h-7" />
               : <Play  className="w-7 h-7 ml-1" />}
           </button>
-          <div className="p-3 rounded-full border border-border text-center min-w-[48px]">
+          <div className="p-3 rounded-full border border-[var(--pios-border)] text-center min-w-[48px]">
             <span className="text-sm font-bold" style={{ color: cfg.color }}>{pomCount}</span>
-            <div className="text-[9px] text-muted-foreground">done</div>
+            <div className="text-[9px] text-[var(--pios-muted)]">done</div>
           </div>
         </div>
       </div>
@@ -232,19 +232,19 @@ export default function StudyTimerPage() {
           { label: 'Total focus', value: totalFocusMins, unit: 'min',     icon: TrendingUp },
           { label: 'Streak',      value: pomCount,       unit: 'today',   icon: CheckCircle2 },
         ].map(({ label, value, unit, icon: I }) => (
-          <div key={label} className="bg-card border border-border rounded-xl p-3 text-center">
-            <I className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+          <div key={label} className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-3 text-center">
+            <I className="w-4 h-4 mx-auto mb-1 text-[var(--pios-muted)]" />
             <div className="text-lg font-bold">{value}</div>
-            <div className="text-[10px] text-muted-foreground">{unit}</div>
-            <div className="text-[10px] text-muted-foreground">{label}</div>
+            <div className="text-[10px] text-[var(--pios-muted)]">{unit}</div>
+            <div className="text-[10px] text-[var(--pios-muted)]">{label}</div>
           </div>
         ))}
       </div>
 
       {/* Recent sessions */}
       {sessions.length > 0 && (
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
+        <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--pios-border)]">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-primary" /> Recent Sessions
             </h2>
@@ -259,8 +259,8 @@ export default function StudyTimerPage() {
                   <div className="flex-1 min-w-0">
                     <span className="text-sm">{s.subject ?? sc.label}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{s.duration} min</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-[var(--pios-muted)]">{s.duration} min</span>
+                  <span className="text-xs text-[var(--pios-muted)]">
                     {date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -278,15 +278,15 @@ function SettingsPanel({
 }: { current: typeof DEFAULTS; onSave: (s: typeof DEFAULTS) => void; onClose: () => void }) {
   const [v, setV] = useState(current)
   return (
-    <div className="bg-card border border-primary/20 rounded-xl p-5 mb-6">
+    <div className="bg-[var(--pios-surface)] border border-primary/20 rounded-xl p-5 mb-6">
       <h3 className="text-sm font-semibold mb-4">Timer Settings (minutes)</h3>
       <div className="grid grid-cols-3 gap-4 mb-4">
         {([['focus','Focus'], ['short_break','Short Break'], ['long_break','Long Break']] as const).map(([k, label]) => (
           <div key={k}>
-            <label className="text-xs text-muted-foreground mb-1 block">{label}</label>
+            <label className="text-xs text-[var(--pios-muted)] mb-1 block">{label}</label>
             <input type="number" min={1} max={90} value={v[k]}
               onChange={e => setV(p => ({ ...p, [k]: Math.max(1, Math.min(90, +e.target.value)) }))}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none" />
+              className="w-full px-3 py-2 text-sm border border-[var(--pios-border)] rounded-lg bg-background focus:outline-none" />
           </div>
         ))}
       </div>
@@ -296,7 +296,7 @@ function SettingsPanel({
           Save
         </button>
         <button onClick={onClose}
-          className="px-4 py-2 text-muted-foreground border border-border rounded-lg text-sm">
+          className="px-4 py-2 text-[var(--pios-muted)] border border-[var(--pios-border)] rounded-lg text-sm">
           Cancel
         </button>
       </div>

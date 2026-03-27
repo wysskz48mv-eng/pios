@@ -21,7 +21,7 @@ const DOMAIN_COLOR: Record<string, string> = {
   fm_consulting: 'bg-teal-500/10 text-teal-400',
   saas:          'bg-blue-500/10 text-blue-400',
   business:      'bg-amber-500/10 text-amber-400',
-  personal:      'bg-slate-500/10 text-slate-400',
+  personal:      'bg-slate-500/10 text-[var(--pios-muted)]',
 }
 
 export default function FinancialsPage() {
@@ -200,7 +200,7 @@ export default function FinancialsPage() {
                     return (
                       <div key={domain}>
                         <div className="flex justify-between items-center mb-1">
-                          <span className={`text-xs px-2 py-0.5 rounded capitalize ${DOMAIN_COLOR[domain] ?? 'bg-slate-500/10 text-slate-400'}`}>{domain.replace('_', ' ')}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded capitalize ${DOMAIN_COLOR[domain] ?? 'bg-slate-500/10 text-[var(--pios-muted)]'}`}>{domain.replace('_', ' ')}</span>
                           <span className="text-sm font-medium">£{amount.toLocaleString('en-GB', { maximumFractionDigits: 0 })}</span>
                         </div>
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">

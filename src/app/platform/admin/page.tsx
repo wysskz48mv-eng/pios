@@ -382,12 +382,12 @@ export default function AdminPage() {
 
 
       {/* ── Supabase Storage Setup ───────────────── */}
-      <div className="mt-4 bg-card border border-amber-500/20 rounded-xl p-5">
+      <div className="mt-4 bg-[var(--pios-surface)] border border-amber-500/20 rounded-xl p-5">
         <h3 className="text-sm font-semibold mb-1">Supabase Storage — pios-files bucket</h3>
-        <p className="text-xs text-muted-foreground mb-3">
+        <p className="text-xs text-[var(--pios-muted)] mb-3">
           File uploads require a storage bucket. Create it once in Supabase Dashboard.
         </p>
-        <div className="space-y-2 text-xs font-mono bg-muted/30 rounded-lg p-3 text-muted-foreground">
+        <div className="space-y-2 text-xs font-mono bg-muted/30 rounded-lg p-3 text-[var(--pios-muted)]">
           <div>1. Go to Supabase → Storage → New bucket</div>
           <div>2. Name: <span className="text-amber-400">pios-files</span> · Public: <span className="text-amber-400">false</span></div>
           <div>3. File size limit: <span className="text-amber-400">26214400</span> (25 MB)</div>
@@ -402,11 +402,11 @@ export default function AdminPage() {
       </div>
 
       {/* ── NemoClaw™ Framework Seeder ────────────────── */}
-      <div className="mt-8 bg-card border border-violet-500/20 rounded-xl p-5">
+      <div className="mt-8 bg-[var(--pios-surface)] border border-violet-500/20 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h3 className="text-sm font-semibold">NemoClaw™ IP Framework Seed</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-[var(--pios-muted)] mt-0.5">
               Seeds all 15 proprietary NemoClaw™ frameworks into your IP Vault (SDL, POM, OAE, CVDM, CPA, UMS, VFO, CFE, ADF, GSM, SPA, RTE, IML, SCE, AAM).
               Requires M019 to be applied first.
             </p>
@@ -429,17 +429,17 @@ export default function AdminPage() {
             ✦ Seed NemoClaw™
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-[var(--pios-muted)]">
           Idempotent — safe to run multiple times. Already-present frameworks are skipped. View results in IP Vault → Frameworks.
         </p>
       </div>
 
       {/* ── Demo Data Seeder ────────────────────────── */}
-      <div className="mt-8 bg-card border border-amber-500/20 rounded-xl p-5">
+      <div className="mt-8 bg-[var(--pios-surface)] border border-amber-500/20 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h3 className="text-sm font-semibold">Demo Data Seeder</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Seeds realistic CEO/founder demo data — tasks, OKRs, decisions, stakeholders, IP assets</p>
+            <p className="text-xs text-[var(--pios-muted)] mt-0.5">Seeds realistic CEO/founder demo data — tasks, OKRs, decisions, stakeholders, IP assets</p>
           </div>
           <button
             onClick={async () => {
@@ -456,7 +456,7 @@ export default function AdminPage() {
             🌱 Seed Demo Data
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-[var(--pios-muted)]">
           Seeded: 6 tasks · 3 OKRs · 3 decisions · 3 stakeholders · 5 IP assets · 3 knowledge entries · 3 contracts
           (requires M019+M020 for IP/knowledge/contracts)
         </p>

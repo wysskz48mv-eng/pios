@@ -111,7 +111,7 @@ export default function HelpPage() {
         <BookOpen className="w-6 h-6 text-violet-400" />
         <div>
           <h1 className="text-xl font-semibold">Help & Quick Reference</h1>
-          <p className="text-sm text-muted-foreground">Module guide, keyboard shortcuts, and FAQs</p>
+          <p className="text-sm text-[var(--pios-muted)]">Module guide, keyboard shortcuts, and FAQs</p>
         </div>
       </div>
 
@@ -124,7 +124,7 @@ export default function HelpPage() {
           { icon: <BookOpen className="w-4 h-4" />, label: 'Settings', href: '/platform/settings', colour: 'text-violet-400' },
         ].map(item => (
           <Link key={item.href} href={item.href}
-            className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:bg-card/80 transition-colors no-underline">
+            className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4 flex items-center gap-3 hover:bg-[var(--pios-surface)]/80 transition-colors no-underline">
             <span className={item.colour}>{item.icon}</span>
             <span className="text-sm font-medium">{item.label}</span>
           </Link>
@@ -132,17 +132,17 @@ export default function HelpPage() {
       </div>
 
       {/* Keyboard shortcuts */}
-      <div className="bg-card border border-border rounded-xl p-5">
+      <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Keyboard className="w-4 h-4 text-muted-foreground" />
+          <Keyboard className="w-4 h-4 text-[var(--pios-muted)]" />
           <h2 className="text-sm font-semibold">Keyboard Shortcuts</h2>
-          <span className="text-xs text-muted-foreground ml-auto">Coming soon — navigation shortcuts</span>
+          <span className="text-xs text-[var(--pios-muted)] ml-auto">Coming soon — navigation shortcuts</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {SHORTCUTS.map(s => (
             <div key={s.key} className="flex items-center gap-3">
-              <kbd className="text-xs bg-muted/60 border border-border rounded px-2 py-1 font-mono min-w-[90px] text-center">{s.key}</kbd>
-              <span className="text-xs text-muted-foreground">{s.action}</span>
+              <kbd className="text-xs bg-muted/60 border border-[var(--pios-border)] rounded px-2 py-1 font-mono min-w-[90px] text-center">{s.key}</kbd>
+              <span className="text-xs text-[var(--pios-muted)]">{s.action}</span>
             </div>
           ))}
         </div>
@@ -153,30 +153,30 @@ export default function HelpPage() {
         <h2 className="text-sm font-semibold mb-3">Module Reference</h2>
         <div className="space-y-2">
           {MODULES.map(group => (
-            <div key={group.group} className="bg-card border border-border rounded-xl overflow-hidden">
+            <div key={group.group} className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl overflow-hidden">
               <button
                 onClick={() => setOpenGroup(openGroup === group.group ? null : group.group)}
                 className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/20 transition-colors"
               >
                 <span className="text-sm font-semibold" style={{ color: group.colour }}>{group.group}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{group.items.length} modules</span>
+                  <span className="text-xs text-[var(--pios-muted)]">{group.items.length} modules</span>
                   {openGroup === group.group
-                    ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    : <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    ? <ChevronDown className="w-4 h-4 text-[var(--pios-muted)]" />
+                    : <ChevronRight className="w-4 h-4 text-[var(--pios-muted)]" />
                   }
                 </div>
               </button>
               {openGroup === group.group && (
-                <div className="border-t border-border">
+                <div className="border-t border-[var(--pios-border)]">
                   {group.items.map(item => (
                     <Link key={item.path} href={item.path}
-                      className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/20 transition-colors no-underline">
+                      className="flex items-start gap-3 px-4 py-3 border-b border-[var(--pios-border)] last:border-0 hover:bg-muted/20 transition-colors no-underline">
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium">{item.name}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{item.desc}</div>
+                        <div className="text-xs text-[var(--pios-muted)] mt-0.5">{item.desc}</div>
                       </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      <ChevronRight className="w-3.5 h-3.5 text-[var(--pios-muted)] flex-shrink-0 mt-0.5" />
                     </Link>
                   ))}
                 </div>
@@ -191,20 +191,20 @@ export default function HelpPage() {
         <h2 className="text-sm font-semibold mb-3">Frequently Asked Questions</h2>
         <div className="space-y-2">
           {FAQ.map((item, i) => (
-            <div key={i} className="bg-card border border-border rounded-xl overflow-hidden">
+            <div key={i} className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl overflow-hidden">
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/20 transition-colors"
               >
                 <span className="text-sm font-medium">{item.q}</span>
                 {openFaq === i
-                  ? <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  : <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  ? <ChevronDown className="w-4 h-4 text-[var(--pios-muted)] flex-shrink-0" />
+                  : <ChevronRight className="w-4 h-4 text-[var(--pios-muted)] flex-shrink-0" />
                 }
               </button>
               {openFaq === i && (
-                <div className="px-4 pb-4 border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+                <div className="px-4 pb-4 border-t border-[var(--pios-border)] pt-3">
+                  <p className="text-sm text-[var(--pios-muted)] leading-relaxed">{item.a}</p>
                 </div>
               )}
             </div>
@@ -213,8 +213,8 @@ export default function HelpPage() {
       </div>
 
       {/* Support */}
-      <div className="bg-card border border-border rounded-xl p-5 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5 text-center">
+        <p className="text-sm text-[var(--pios-muted)]">
           Need help?{' '}
           <a href="mailto:support@veritasiq.io" className="text-violet-400 hover:underline">support@veritasiq.io</a>
           {' '}·{' '}

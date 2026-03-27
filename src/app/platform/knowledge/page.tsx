@@ -14,7 +14,7 @@ type KnowledgeEntry = {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  note:               'bg-slate-500/10 text-slate-400 border-slate-500/20',
+  note:               'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
   article:            'bg-blue-500/10 text-blue-400 border-blue-500/20',
   book:               'bg-amber-500/10 text-amber-400 border-amber-500/20',
   paper:              'bg-violet-500/10 text-violet-400 border-violet-500/20',
@@ -24,14 +24,14 @@ const TYPE_COLOR: Record<string, string> = {
   client_insight:     'bg-orange-500/10 text-orange-400 border-orange-500/20',
   market_intelligence:'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   ai_search_result:   'bg-pink-500/10 text-pink-400 border-pink-500/20',
-  other:              'bg-slate-500/10 text-slate-400 border-slate-500/20',
+  other:              'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 const DOMAIN_COLOR: Record<string, string> = {
   fm_consulting: 'bg-teal-500/10 text-teal-400',
   academic:      'bg-violet-500/10 text-violet-400',
   saas:          'bg-blue-500/10 text-blue-400',
   business:      'bg-amber-500/10 text-amber-400',
-  personal:      'bg-slate-500/10 text-slate-400',
+  personal:      'bg-slate-500/10 text-[var(--pios-muted)]',
 }
 
 const BLANK_FORM = { title:'', summary:'', full_text:'', entry_type:'note', domain:'business', source:'', url:'', tags_raw:'', paste_text:'' }
@@ -146,13 +146,13 @@ export default function KnowledgePage() {
           <Brain className="w-6 h-6 text-teal-400" />
           <div>
             <h1 className="text-xl font-semibold">SE-MIL Knowledge Base</h1>
-            <p className="text-sm text-muted-foreground">Structured Expert Memory &amp; Institutional Learning — {total} entries</p>
+            <p className="text-sm text-[var(--pios-muted)]">Structured Expert Memory &amp; Institutional Learning — {total} entries</p>
           </div>
         </div>
         <div className="flex gap-2">
           {(['browse','add','ai'] as const).map(m => (
             <button key={m} onClick={() => setMode(m)}
-              className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all capitalize ${mode === m ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'border-border text-muted-foreground hover:text-foreground'}`}>
+              className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all capitalize ${mode === m ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-foreground'}`}>
               {m === 'ai' ? '🧠 AI Search' : m === 'add' ? '+ Add Entry' : '📚 Browse'}
             </button>
           ))}
@@ -161,14 +161,14 @@ export default function KnowledgePage() {
 
       {/* Stats strip */}
       <div className="grid grid-cols-5 gap-3">
-        <div className="bg-card border border-border rounded-xl p-4">
+        <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4">
           <div className="text-2xl font-semibold">{total}</div>
-          <div className="text-xs text-muted-foreground mt-1">Total entries</div>
+          <div className="text-xs text-[var(--pios-muted)] mt-1">Total entries</div>
         </div>
         {Object.entries(byType).sort((a,b) => b[1]-a[1]).slice(0,4).map(([type, count]) => (
-          <div key={type} className="bg-card border border-border rounded-xl p-4">
+          <div key={type} className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4">
             <div className="text-2xl font-semibold">{count}</div>
-            <div className="text-xs text-muted-foreground mt-1 capitalize">{type.replace(/_/g,' ')}</div>
+            <div className="text-xs text-[var(--pios-muted)] mt-1 capitalize">{type.replace(/_/g,' ')}</div>
           </div>
         ))}
       </div>
@@ -179,7 +179,7 @@ export default function KnowledgePage() {
           {/* Search + filter bar */}
           <div className="flex gap-3">
             <div className="flex-1 relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--pios-muted)]" />
               <input value={query} onChange={e => { setQuery(e.target.value); load(e.target.value, domain) }}
                 placeholder="Search titles, summaries, tags…"
                 className="pios-input w-full pl-9" />
@@ -194,7 +194,7 @@ export default function KnowledgePage() {
           <div className="flex gap-2 flex-wrap">
             {Object.entries(byDomain).sort((a,b) => b[1]-a[1]).map(([d, count]) => (
               <button key={d} onClick={() => { setDomain(d); load(query, d) }}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-all capitalize ${DOMAIN_COLOR[d] ?? 'bg-slate-500/10 text-slate-400'} ${domain === d ? 'ring-1 ring-current' : 'opacity-70 hover:opacity-100'}`}>
+                className={`text-xs px-2.5 py-1 rounded-full border transition-all capitalize ${DOMAIN_COLOR[d] ?? 'bg-slate-500/10 text-[var(--pios-muted)]'} ${domain === d ? 'ring-1 ring-current' : 'opacity-70 hover:opacity-100'}`}>
                 {d.replace('_',' ')} ({count})
               </button>
             ))}
@@ -202,9 +202,9 @@ export default function KnowledgePage() {
 
           {/* Entry list */}
           {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[var(--pios-muted)]" /></div>
           ) : entries.length === 0 ? (
-            <div className="text-center py-12 text-sm text-muted-foreground">
+            <div className="text-center py-12 text-sm text-[var(--pios-muted)]">
               <Brain className="w-8 h-8 mx-auto mb-3 opacity-20" />
               <p>No knowledge entries yet. Use + Add Entry to capture case studies, client insights, market intelligence, or lessons learned. The AI can also search and save from Research Hub.</p>
               <p className="mt-1 text-xs">Start by adding notes, articles, case studies, and lessons learned from your work.</p>
@@ -215,7 +215,7 @@ export default function KnowledgePage() {
           ) : (
             <div className="space-y-2">
               {entries.filter(e => !e.is_search_result).map(e => (
-                <div key={e.id} className="bg-card border border-border rounded-xl overflow-hidden">
+                <div key={e.id} className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl overflow-hidden">
                   <div className="p-4 flex items-start justify-between gap-4 cursor-pointer"
                     onClick={() => setExpanded(expanded === e.id ? null : e.id)}>
                     <div className="flex-1 min-w-0">
@@ -224,17 +224,17 @@ export default function KnowledgePage() {
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_COLOR[e.entry_type] ?? ''}`}>
                           {e.entry_type.replace(/_/g,' ')}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${DOMAIN_COLOR[e.domain] ?? 'bg-slate-500/10 text-slate-400'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${DOMAIN_COLOR[e.domain] ?? 'bg-slate-500/10 text-[var(--pios-muted)]'}`}>
                           {e.domain.replace(/_/g,' ')}
                         </span>
                       </div>
                       {e.summary && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">{e.summary}</p>
+                        <p className="text-xs text-[var(--pios-muted)] line-clamp-2">{e.summary}</p>
                       )}
                       <div className="flex gap-3 mt-1.5 flex-wrap">
-                        {e.source && <span className="text-xs text-muted-foreground flex items-center gap-1"><BookOpen className="w-3 h-3" />{e.source}</span>}
+                        {e.source && <span className="text-xs text-[var(--pios-muted)] flex items-center gap-1"><BookOpen className="w-3 h-3" />{e.source}</span>}
                         {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer" onClick={ev => ev.stopPropagation()} className="text-xs text-blue-400 flex items-center gap-1 hover:underline"><ExternalLink className="w-3 h-3" />Link</a>}
-                        <span className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</span>
+                        <span className="text-xs text-[var(--pios-muted)]">{new Date(e.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</span>
                       </div>
                       {e.tags?.length ? (
                         <div className="flex gap-1 mt-1.5 flex-wrap">
@@ -247,12 +247,12 @@ export default function KnowledgePage() {
                       ) : null}
                     </div>
                     <button onClick={ev => { ev.stopPropagation(); deleteEntry(e.id) }} disabled={deleting === e.id}
-                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 flex-shrink-0">
+                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--pios-muted)] hover:text-red-400 flex-shrink-0">
                       {deleting === e.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                   {expanded === e.id && e.summary && (
-                    <div className="px-4 pb-4 border-t border-border pt-3">
+                    <div className="px-4 pb-4 border-t border-[var(--pios-border)] pt-3">
                       <pre className="text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap font-sans">{e.summary}</pre>
                     </div>
                   )}
@@ -266,12 +266,12 @@ export default function KnowledgePage() {
       {/* ── AI SEARCH MODE ── */}
       {mode === 'ai' && (
         <div className="space-y-4">
-          <div className="bg-card border border-border rounded-xl p-5">
+          <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Brain className="w-4 h-4 text-teal-400" />
               <span className="text-sm font-semibold">SE-MIL Semantic Search</span>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">Ask a question and the AI will search your knowledge base, surface relevant entries, and identify gaps.</p>
+            <p className="text-xs text-[var(--pios-muted)] mb-4">Ask a question and the AI will search your knowledge base, surface relevant entries, and identify gaps.</p>
             <div className="flex gap-3 mb-3">
               <input value={query} onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && aiSearch()}
@@ -291,21 +291,21 @@ export default function KnowledgePage() {
           </div>
 
           {searching && (
-            <div className="flex items-center gap-3 text-sm text-muted-foreground p-4">
+            <div className="flex items-center gap-3 text-sm text-[var(--pios-muted)] p-4">
               <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
               SE-MIL is searching your knowledge base…
             </div>
           )}
 
           {aiAnswer && (
-            <div className="bg-card border border-border rounded-xl p-5">
+            <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Brain className="w-4 h-4 text-teal-400" />
                   <span className="text-sm font-semibold text-teal-400">SE-MIL Answer</span>
                 </div>
                 <button onClick={() => { navigator.clipboard.writeText(aiAnswer); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                  className="flex items-center gap-1 text-xs text-[var(--pios-muted)] hover:text-foreground">
                   {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
                   {copied ? 'Copied' : 'Copy'}
                 </button>
@@ -318,21 +318,21 @@ export default function KnowledgePage() {
 
       {/* ── ADD ENTRY MODE ── */}
       {mode === 'add' && (
-        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-6 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <Plus className="w-4 h-4 text-teal-400" /> Add Knowledge Entry
           </h3>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="text-xs text-muted-foreground mb-1 block">Title *</label>
+              <label className="text-xs text-[var(--pios-muted)] mb-1 block">Title *</label>
               <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
                 placeholder="e.g. GCC Service Charge Benchmarking — 2025 Market Rate Analysis"
                 className="pios-input w-full" />
             </div>
 
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Type</label>
+              <label className="text-xs text-[var(--pios-muted)] mb-1 block">Type</label>
               <select value={form.entry_type} onChange={e => setForm(p => ({ ...p, entry_type: e.target.value }))}
                 className="pios-input w-full capitalize">
                 {TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g,' ')}</option>)}
@@ -340,7 +340,7 @@ export default function KnowledgePage() {
             </div>
 
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Domain</label>
+              <label className="text-xs text-[var(--pios-muted)] mb-1 block">Domain</label>
               <select value={form.domain} onChange={e => setForm(p => ({ ...p, domain: e.target.value }))}
                 className="pios-input w-full capitalize">
                 {DOMAINS.filter(d => d !== 'all').map(d => <option key={d} value={d}>{d.replace(/_/g,' ')}</option>)}
@@ -348,26 +348,26 @@ export default function KnowledgePage() {
             </div>
 
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Source / Author</label>
+              <label className="text-xs text-[var(--pios-muted)] mb-1 block">Source / Author</label>
               <input value={form.source} onChange={e => setForm(p => ({ ...p, source: e.target.value }))}
                 placeholder="e.g. CBRE Research 2025 or John Smith" className="pios-input w-full" />
             </div>
 
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">URL (optional)</label>
+              <label className="text-xs text-[var(--pios-muted)] mb-1 block">URL (optional)</label>
               <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
                 placeholder="https://..." className="pios-input w-full" />
             </div>
 
             <div className="col-span-2">
-              <label className="text-xs text-muted-foreground mb-1 block">Tags (comma-separated)</label>
+              <label className="text-xs text-[var(--pios-muted)] mb-1 block">Tags (comma-separated)</label>
               <input value={form.tags_raw} onChange={e => setForm(p => ({ ...p, tags_raw: e.target.value }))}
                 placeholder="e.g. benchmarking, gcc, service-charge, 2025" className="pios-input w-full" />
             </div>
 
             <div className="col-span-2">
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-muted-foreground">Paste text for AI summarisation (optional)</label>
+                <label className="text-xs text-[var(--pios-muted)]">Paste text for AI summarisation (optional)</label>
                 <button onClick={summariseText} disabled={!form.paste_text.trim() || summarising}
                   className="flex items-center gap-1 text-xs text-teal-400 hover:text-teal-300 disabled:opacity-50">
                   {summarising ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lightbulb className="w-3 h-3" />}
@@ -391,7 +391,7 @@ export default function KnowledgePage() {
             )}
 
             <div className="col-span-2">
-              <label className="text-xs text-muted-foreground mb-1 block">Summary (edit or write manually)</label>
+              <label className="text-xs text-[var(--pios-muted)] mb-1 block">Summary (edit or write manually)</label>
               <textarea value={form.summary}
                 onChange={e => setForm(p => ({ ...p, summary: e.target.value }))}
                 rows={3} className="pios-input w-full resize-none"
@@ -401,7 +401,7 @@ export default function KnowledgePage() {
 
           <div className="flex gap-2 justify-end pt-2">
             <button onClick={() => { setMode('browse'); setForm({ ...BLANK_FORM }); setAiSummary(null) }}
-              className="px-4 py-2 rounded-xl border border-border text-sm hover:bg-muted">Cancel</button>
+              className="px-4 py-2 rounded-xl border border-[var(--pios-border)] text-sm hover:bg-muted">Cancel</button>
             <button onClick={saveEntry} disabled={!form.title.trim() || saving}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500 text-white text-sm font-medium hover:bg-teal-600 disabled:opacity-50">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}

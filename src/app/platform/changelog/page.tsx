@@ -12,7 +12,7 @@ export default function ChangelogPage() {
       badgeColor: 'var(--ai)',
       items: [
         { type: 'fix', text: "UIX consistency pass: 6 pages migrated from Tailwind opacity utilities to pios design tokens — comms, executive, financials, intelligence, operator, time-sovereignty" },
-        { type: 'fix', text: "246 class replacements: bg-white/5→var(--pios-surface2), border-white/10→var(--pios-border2), text-foreground→var(--pios-text) etc." },
+        { type: 'fix', text: "246 class replacements: bg-[var(--pios-surface2)]→var(--pios-surface2), border-[var(--pios-border2)]→var(--pios-border2), text-foreground→var(--pios-text) etc." },
       ],
     },
     {
@@ -150,10 +150,10 @@ export default function ChangelogPage() {
               <span style={{ fontSize: 12, color: 'var(--pios-dim)', marginLeft: 'auto' }}>{entry.date}</span>
             </div>
             <div style={{ padding: '12px 20px' }}>
-              {entry.changes.map((change, i) => {
+              {(entry.changes ?? []).map((change, i) => {
                 const ts = typeStyle[change.type]
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '5px 0', borderBottom: i < entry.changes.length - 1 ? '1px solid var(--pios-border)' : 'none' }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '5px 0', borderBottom: i < (entry.changes ?? []).length - 1 ? '1px solid var(--pios-border)' : 'none' }}>
                     <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: ts.bg, color: ts.color, flexShrink: 0, marginTop: 2, letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
                       {ts.label}
                     </span>

@@ -125,17 +125,17 @@ export default function NotificationsPage() {
               </span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">Renewal alerts, wellness signals, task overdue, trial warnings</p>
+          <p className="text-sm text-[var(--pios-muted)]">Renewal alerts, wellness signals, task overdue, trial warnings</p>
         </div>
         <div className="flex gap-2">
           <button onClick={generate} disabled={generating}
-            className="flex items-center gap-1.5 text-xs border border-border rounded-lg px-3 py-1.5 hover:bg-card disabled:opacity-50 text-muted-foreground">
+            className="flex items-center gap-1.5 text-xs border border-[var(--pios-border)] rounded-lg px-3 py-1.5 hover:bg-[var(--pios-surface)] disabled:opacity-50 text-[var(--pios-muted)]">
             <RefreshCw className={`w-3.5 h-3.5 ${generating ? 'animate-spin' : ''}`} />
             {generating ? 'Scanning…' : 'Scan for alerts'}
           </button>
           {unread > 0 && (
             <button onClick={markAll} disabled={marking}
-              className="flex items-center gap-1.5 text-xs border border-border rounded-lg px-3 py-1.5 hover:bg-card disabled:opacity-50 text-muted-foreground">
+              className="flex items-center gap-1.5 text-xs border border-[var(--pios-border)] rounded-lg px-3 py-1.5 hover:bg-[var(--pios-surface)] disabled:opacity-50 text-[var(--pios-muted)]">
               {marking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
               Mark all read
             </button>
@@ -150,7 +150,7 @@ export default function NotificationsPage() {
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
               filter === f
                 ? 'border-violet-500/60 bg-violet-500/10 text-violet-400'
-                : 'border-border text-muted-foreground hover:text-foreground'
+                : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-foreground'
             }`}>
             {f === 'all' ? `All (${notifs.length})`
              : f === 'unread' ? `Unread (${unread})`
@@ -161,11 +161,11 @@ export default function NotificationsPage() {
 
       {/* List */}
       {loading ? (
-        <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm py-12">
+        <div className="flex items-center justify-center gap-2 text-[var(--pios-muted)] text-sm py-12">
           <Loader2 className="w-4 h-4 animate-spin" /> Loading…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
+        <div className="text-center py-16 text-[var(--pios-muted)]">
           <Bell className="w-10 h-10 mx-auto mb-3 opacity-20" />
           <p className="text-sm">{filter === 'unread' ? 'All caught up!' : 'No notifications'}</p>
           <p className="text-xs mt-1">
@@ -184,7 +184,7 @@ export default function NotificationsPage() {
           {filtered.map(n => {
             const meta = TYPE_META[n.type] ?? TYPE_META.info
             const Icon = meta.icon
-            const bg   = !n.read ? meta.bg : 'bg-card border-border opacity-70'
+            const bg   = !n.read ? meta.bg : 'bg-[var(--pios-surface)] border-[var(--pios-border)] opacity-70'
             const body = n.body ?? n.message
 
             const inner = (
@@ -197,11 +197,11 @@ export default function NotificationsPage() {
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-medium leading-snug">{n.title}</p>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className="text-xs text-muted-foreground">{timeAgo(n.created_at)}</span>
+                      <span className="text-xs text-[var(--pios-muted)]">{timeAgo(n.created_at)}</span>
                       <button
                         onClick={e => { e.preventDefault(); e.stopPropagation(); deleteOne(n.id) }}
                         disabled={deleting === n.id}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-muted-foreground hover:text-red-400"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-[var(--pios-muted)] hover:text-red-400"
                       >
                         {deleting === n.id
                           ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -209,10 +209,10 @@ export default function NotificationsPage() {
                       </button>
                     </div>
                   </div>
-                  {body && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{body}</p>}
+                  {body && <p className="text-xs text-[var(--pios-muted)] mt-0.5 leading-relaxed">{body}</p>}
                   <div className="flex items-center gap-2 mt-1.5">
                     {n.domain && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-[var(--pios-muted)]">
                         {DOMAIN_LABELS[n.domain] ?? n.domain}
                       </span>
                     )}

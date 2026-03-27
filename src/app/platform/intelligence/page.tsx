@@ -119,7 +119,7 @@ export default function IntelligencePage() {
           </div>
           <p className="text-sm text-[var(--pios-muted)]">
             AI-curated domain briefings across FM, academic, SaaS, regulatory and GCC markets
-            {lastRefreshed && <span className="ml-2 text-xs text-slate-500">· Refreshed {lastRefreshed}</span>}
+            {lastRefreshed && <span className="ml-2 text-xs text-[var(--pios-muted)]">· Refreshed {lastRefreshed}</span>}
           </p>
         </div>
         <button
@@ -172,19 +172,19 @@ export default function IntelligencePage() {
                   <div>
                     <div className={'text-sm font-semibold ' + b.color}>{b.label}</div>
                     {b.generated_at && !b.loading && (
-                      <div className="text-xs text-slate-500 mt-0.5">{b.items.length} items · {b.generated_at}</div>
+                      <div className="text-xs text-[var(--pios-muted)] mt-0.5">{b.items.length} items · {b.generated_at}</div>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {b.loading && <Loader2 className="w-4 h-4 animate-spin text-slate-500" />}
+                  {b.loading && <Loader2 className="w-4 h-4 animate-spin text-[var(--pios-muted)]" />}
                   {!b.loading && (
                     <button onClick={e => { e.stopPropagation(); loadBriefing(b.domain) }}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-[var(--pios-text)] hover:bg-[var(--pios-surface2)] transition-colors" title="Refresh">
+                      className="p-1.5 rounded-lg text-[var(--pios-muted)] hover:text-[var(--pios-text)] hover:bg-[var(--pios-surface2)] transition-colors" title="Refresh">
                       <RefreshCw className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {b.expanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+                  {b.expanded ? <ChevronUp className="w-4 h-4 text-[var(--pios-muted)]" /> : <ChevronDown className="w-4 h-4 text-[var(--pios-muted)]" />}
                 </div>
               </button>
 
@@ -219,7 +219,7 @@ export default function IntelligencePage() {
                         <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
                         <span className="text-[10px] font-bold text-violet-400 uppercase tracking-wider">NemoClaw Synthesis</span>
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">{b.ai_synthesis}</p>
+                      <p className="text-xs text-[var(--pios-sub)] leading-relaxed">{b.ai_synthesis}</p>
                     </div>
                   )}
 
@@ -232,7 +232,7 @@ export default function IntelligencePage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap mb-1.5">
                                 {item.category_tag && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--pios-surface2)] text-slate-400 uppercase tracking-wide">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--pios-surface2)] text-[var(--pios-muted)] uppercase tracking-wide">
                                     {item.category_tag}
                                   </span>
                                 )}
@@ -241,9 +241,9 @@ export default function IntelligencePage() {
                                     High relevance
                                   </span>
                                 )}
-                                <span className="text-xs text-slate-500">{item.source}</span>
+                                <span className="text-xs text-[var(--pios-muted)]">{item.source}</span>
                                 {item.published_relative && (
-                                  <span className="text-xs text-slate-600 flex items-center gap-1">
+                                  <span className="text-xs text-[var(--pios-dim)] flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />{item.published_relative}
                                   </span>
                                 )}
@@ -259,7 +259,7 @@ export default function IntelligencePage() {
                             </div>
                             {item.source_url && (
                               <a href={item.source_url} target="_blank" rel="noopener noreferrer"
-                                className="flex-shrink-0 p-2 text-slate-500 hover:text-[var(--pios-text)] border border-[var(--pios-border)] rounded-lg hover:bg-[var(--pios-surface)] transition-colors">
+                                className="flex-shrink-0 p-2 text-[var(--pios-muted)] hover:text-[var(--pios-text)] border border-[var(--pios-border)] rounded-lg hover:bg-[var(--pios-surface)] transition-colors">
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </a>
                             )}
@@ -322,7 +322,7 @@ export default function IntelligencePage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--pios-surface2)] text-slate-400 uppercase tracking-wide">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--pios-surface2)] text-[var(--pios-muted)] uppercase tracking-wide">
                           {item.category?.replace(/_/g, ' ')}
                         </span>
                         {item.relevance_score && item.relevance_score > 0.7 && (

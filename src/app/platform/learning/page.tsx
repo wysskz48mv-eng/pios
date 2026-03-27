@@ -123,7 +123,7 @@ export default function LearningHubPage() {
     setCpdData(cpd)
   }
 
-  if (loading) return <div className="flex items-center justify-center p-16"><Loader2 size={22} className="animate-spin text-muted-foreground" /></div>
+  if (loading) return <div className="flex items-center justify-center p-16"><Loader2 size={22} className="animate-spin text-[var(--pios-muted)]" /></div>
 
   const profile  = data?.profile
   const summary  = data?.summary
@@ -140,19 +140,19 @@ export default function LearningHubPage() {
             <GraduationCap size={20} className="text-purple-500" />
             Learning Hub
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-[var(--pios-muted)] mt-0.5">
             {profile?.programme_name ?? profile?.persona?.replace('_',' ')} · {profile?.university ?? ''}
             {isCpd && profile?.cpd_body && ` · ${profile.cpd_body}`}
           </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs text-muted-foreground hover:bg-accent">
+          <button onClick={load} className="flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs text-[var(--pios-muted)] hover:bg-accent">
             <RefreshCw size={12} /> Refresh
           </button>
-          <Link href="/platform/learning/wizard" className="flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs text-muted-foreground hover:bg-accent">
+          <Link href="/platform/learning/wizard" className="flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs text-[var(--pios-muted)] hover:bg-accent">
             New journey
           </Link>
-          <Link href="/platform/learning/journal" className="flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs text-muted-foreground hover:bg-accent">
+          <Link href="/platform/learning/journal" className="flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs text-[var(--pios-muted)] hover:bg-accent">
             Edit setup
           </Link>
         </div>
@@ -171,13 +171,13 @@ export default function LearningHubPage() {
             { label:'Completed',   value:String(summary?.passed ?? 0),   sub:'milestones passed',                                   icon:CheckCircle2,  color:'#10b981' },
           ]),
         ].map(k => (
-          <div key={k.label} className="rounded-xl border bg-card p-3 shadow-sm">
+          <div key={k.label} className="rounded-xl border bg-[var(--pios-surface)] p-3 shadow-sm">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">{k.label}</span>
+              <span className="text-xs text-[var(--pios-muted)]">{k.label}</span>
               <k.icon size={13} style={{ color: k.color }} />
             </div>
             <p className="text-base font-bold">{k.value}</p>
-            <p className="text-xs text-muted-foreground">{k.sub}</p>
+            <p className="text-xs text-[var(--pios-muted)]">{k.sub}</p>
           </div>
         ))}
       </div>
@@ -189,7 +189,7 @@ export default function LearningHubPage() {
           ...(isCpd ? [['activities','CPD Log']] : []),
         ] as [string,string][]).map(([t,l]) => (
           <button key={t} onClick={() => setTab(t as 'milestones' | 'cpd' | 'activities' | 'journal')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${tab===t ? 'border-purple-500 text-purple-600' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${tab===t ? 'border-purple-500 text-purple-600' : 'border-transparent text-[var(--pios-muted)] hover:text-foreground'}`}>
             {l}
           </button>
         ))}
@@ -197,13 +197,13 @@ export default function LearningHubPage() {
 
       {/* Milestones tab */}
       {tab==='milestones' && (
-        <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="rounded-xl border bg-[var(--pios-surface)] overflow-hidden">
           <div className="divide-y">
             {ms.length === 0 ? (
               <div className="p-10 text-center space-y-4">
                 <div className="text-4xl">🎓</div>
                 <p className="text-base font-semibold">Set up your learning journey</p>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                <p className="text-sm text-[var(--pios-muted)] max-w-xs mx-auto">
                   PIOS tracks your academic milestones, CPD hours, and thesis progress — configured around your programme in 2 minutes.
                 </p>
                 <Link
@@ -221,13 +221,13 @@ export default function LearningHubPage() {
                 <div key={m.id} className="px-4 py-3 flex items-center gap-4 hover:bg-muted/10">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className={`text-sm font-medium ${(m.status ?? '')==='passed' ? 'line-through text-muted-foreground' : ''}`}>{String(m.title ?? "")}</p>
+                      <p className={`text-sm font-medium ${(m.status ?? '')==='passed' ? 'line-through text-[var(--pios-muted)]' : ''}`}>{String(m.title ?? "")}</p>
                       <span className="text-xs px-1.5 py-0.5 rounded-full font-medium capitalize" style={{ background:sc.bg, color:sc.text }}>
                         {isOverdue ? 'OVERDUE' : String(m.status ?? '').replace('_',' ')}
                       </span>
                     </div>
                     {Boolean(m.target_date) && (
-                      <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+                      <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-medium' : 'text-[var(--pios-muted)]'}`}>
                         {(m.status ?? '')==='passed' ? `Completed ${fmt(m.completed_date ?? null)}` : `Due ${fmt(m.target_date ?? null)}`}
                       </p>
                     )}
@@ -251,15 +251,15 @@ export default function LearningHubPage() {
         <div className="space-y-4">
           {/* CPD progress bar */}
           {cpdSum && (
-            <div className="rounded-xl border bg-card p-4 space-y-3">
+            <div className="rounded-xl border bg-[var(--pios-surface)] p-4 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="font-medium">CPD {new Date().getFullYear()} progress</span>
-                <span className="text-muted-foreground">{cpdSum.totalHours}h / {cpdSum.target}h ({(cpdSum?.pct ?? 0)}%)</span>
+                <span className="text-[var(--pios-muted)]">{cpdSum.totalHours}h / {cpdSum.target}h ({(cpdSum?.pct ?? 0)}%)</span>
               </div>
               <div className="h-2.5 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full transition-all" style={{ width:`${Math.min(Number(cpdSum?.pct ?? 0), 100)}%`, background: (cpdSum?.pct ?? 0)>=100 ? '#10b981' : cpdSum.onTrack ? '#F59E0B' : 'var(--dng)' }} />
               </div>
-              <div className="flex gap-4 text-xs text-muted-foreground">
+              <div className="flex gap-4 text-xs text-[var(--pios-muted)]">
                 <span>Verifiable: {cpdSum.verifiable}h / {cpdSum.verifiableTarget}h</span>
                 <span>Non-verifiable: {Number(cpdSum?.nonVerifiable ?? 0)}h</span>
               </div>
@@ -276,41 +276,41 @@ export default function LearningHubPage() {
 
           {/* Log CPD form */}
           {showCpdForm && (
-            <div className="rounded-xl border bg-card p-4 space-y-3">
+            <div className="rounded-xl border bg-[var(--pios-surface)] p-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-1">
-                  <label className="text-xs text-muted-foreground">Activity title *</label>
+                  <label className="text-xs text-[var(--pios-muted)]">Activity title *</label>
                   <input className="w-full border rounded-md px-3 py-2 text-sm bg-background" placeholder="e.g. RICS Annual Conference 2026"
                     value={cpdForm.title} onChange={e => setCpdForm(p => ({...p,title:e.target.value}))} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Type</label>
+                  <label className="text-xs text-[var(--pios-muted)]">Type</label>
                   <select className="w-full border rounded-md px-3 py-2 text-sm bg-background" value={cpdForm.activity_type} onChange={e => setCpdForm(p => ({...p,activity_type:e.target.value}))}>
                     {['course','webinar','conference','workshop','reading','podcast','mentoring','coaching','research','publication','presentation','other'].map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Provider</label>
+                  <label className="text-xs text-[var(--pios-muted)]">Provider</label>
                   <input className="w-full border rounded-md px-3 py-2 text-sm bg-background" placeholder="e.g. RICS, Coursera"
                     value={cpdForm.provider} onChange={e => setCpdForm(p => ({...p,provider:e.target.value}))} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Verifiable hours</label>
+                  <label className="text-xs text-[var(--pios-muted)]">Verifiable hours</label>
                   <input type="number" step="0.5" className="w-full border rounded-md px-3 py-2 text-sm bg-background"
                     value={cpdForm.hours_verifiable} onChange={e => setCpdForm(p => ({...p,hours_verifiable:e.target.value}))} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Non-verifiable hours</label>
+                  <label className="text-xs text-[var(--pios-muted)]">Non-verifiable hours</label>
                   <input type="number" step="0.5" className="w-full border rounded-md px-3 py-2 text-sm bg-background"
                     value={cpdForm.hours_non_verifiable} onChange={e => setCpdForm(p => ({...p,hours_non_verifiable:e.target.value}))} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Completion date</label>
+                  <label className="text-xs text-[var(--pios-muted)]">Completion date</label>
                   <input type="date" className="w-full border rounded-md px-3 py-2 text-sm bg-background"
                     value={cpdForm.completed_date} onChange={e => setCpdForm(p => ({...p,completed_date:e.target.value}))} />
                 </div>
                 <div className="col-span-2 space-y-1">
-                  <label className="text-xs text-muted-foreground">Reflection (optional)</label>
+                  <label className="text-xs text-[var(--pios-muted)]">Reflection (optional)</label>
                   <textarea rows={2} className="w-full border rounded-md px-3 py-2 text-sm bg-background resize-none" placeholder="What did you learn and how will you apply it?"
                     value={cpdForm.reflection} onChange={e => setCpdForm(p => ({...p,reflection:e.target.value}))} />
                 </div>
@@ -319,24 +319,24 @@ export default function LearningHubPage() {
                 <button onClick={logCpd} disabled={savingCpd || !cpdForm.title} className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-amber-500 text-white text-sm font-medium disabled:opacity-50">
                   {savingCpd ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Save
                 </button>
-                <button onClick={() => setShowCpdForm(false)} className="text-sm text-muted-foreground hover:text-foreground">Cancel</button>
+                <button onClick={() => setShowCpdForm(false)} className="text-sm text-[var(--pios-muted)] hover:text-foreground">Cancel</button>
               </div>
             </div>
           )}
 
           {/* Activities list */}
-          <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="rounded-xl border bg-[var(--pios-surface)] overflow-hidden">
             {(cpdData?.activities ?? []).length === 0 ? (
-              <p className="p-6 text-center text-sm text-muted-foreground">No CPD activities logged yet this year.</p>
+              <p className="p-6 text-center text-sm text-[var(--pios-muted)]">No CPD activities logged yet this year.</p>
             ) : (cpdData?.activities ?? []).map((a: CpdActivity) => (
               <div key={a.id} className="px-4 py-3 border-b last:border-0 flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">{String(a.title ?? "")}</p>
-                  <p className="text-xs text-muted-foreground">{String(a.activity_type ?? "")} · {a.provider ?? '—'} · {fmt(String(a.completion_date ?? ""))}</p>
+                  <p className="text-xs text-[var(--pios-muted)]">{String(a.activity_type ?? "")} · {a.provider ?? '—'} · {fmt(String(a.completion_date ?? ""))}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   {Number(a.hours_verifiable ?? 0)>0 && <p className="text-xs font-semibold text-green-600">{Number(a.hours_verifiable ?? 0)}h verifiable</p>}
-                  {Number(a.hours_non_verifiable)>0 && <p className="text-xs text-muted-foreground">{a.hours_non_verifiable}h non-ver.</p>}
+                  {Number(a.hours_non_verifiable)>0 && <p className="text-xs text-[var(--pios-muted)]">{a.hours_non_verifiable}h non-ver.</p>}
                 </div>
               </div>
             ))}

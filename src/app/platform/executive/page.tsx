@@ -23,7 +23,7 @@ const HEALTH_BG: Record<string, string> = {
   off_track: 'bg-red-500/10 border-red-500/20',
 }
 const IMP_COLOR: Record<string, string> = {
-  critical: 'text-red-400', high: 'text-amber-400', medium: 'text-blue-400', low: 'text-slate-500'
+  critical: 'text-red-400', high: 'text-amber-400', medium: 'text-blue-400', low: 'text-[var(--pios-muted)]'
 }
 
 function StatCard({ icon: Icon, label, value, sub, color = 'text-violet-400' }: { icon: React.ElementType; label: string; value: string | number; sub?: string; color?: string }) {
@@ -283,7 +283,7 @@ export default function ExecutivePage() {
               <div key={o.id} className="mb-3 last:mb-0">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm text-[var(--pios-text)] truncate flex-1 mr-2">{o.title}</span>
-                  <span className={`text-xs font-medium ${HEALTH_COLOR[o.health] ?? 'text-slate-400'}`}>{o.progress}%</span>
+                  <span className={`text-xs font-medium ${HEALTH_COLOR[o.health] ?? 'text-[var(--pios-muted)]'}`}>{o.progress}%</span>
                 </div>
                 <ProgressBar value={o.progress} color={o.health === 'on_track' ? 'bg-green-500' : o.health === 'at_risk' ? 'bg-amber-500' : 'bg-red-500'} />
               </div>
@@ -548,7 +548,7 @@ export default function ExecutivePage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-medium">{c.value ? '£' + Number(c.value).toLocaleString() : '—'}</p>
-                    <p className={`text-[10px] px-2 py-0.5 rounded-full ${c.status === 'active' ? 'bg-green-100 text-green-700' : c.status === 'expiring_soon' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+                    <p className={`text-[10px] px-2 py-0.5 rounded-full ${c.status === 'active' ? 'bg-green-100 text-green-700' : c.status === 'expiring_soon' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-[var(--pios-dim)]'}`}>
                       {c.status?.replace('_',' ') ?? 'unknown'}
                     </p>
                   </div>

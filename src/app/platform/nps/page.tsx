@@ -59,11 +59,11 @@ export default function NPSSurveyPage() {
             className={`w-10 h-10 rounded-lg text-sm font-bold border transition-all
               ${value === v
                 ? 'bg-primary text-primary-foreground border-primary'
-                : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'}`}>
+                : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:border-primary/50 hover:text-foreground'}`}>
             {v}
           </button>
         ))}
-        <span className="text-xs text-muted-foreground self-center ml-1">
+        <span className="text-xs text-[var(--pios-muted)] self-center ml-1">
           {value ? ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'][value] : ''}
         </span>
       </div>
@@ -75,13 +75,13 @@ export default function NPSSurveyPage() {
       <div className="p-6 max-w-lg mx-auto text-center space-y-4 pt-20">
         <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
         <h1 className="text-xl font-bold">Thank you for your feedback</h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-[var(--pios-muted)] text-sm">
           Your response helps improve PIOS. It has been recorded anonymously.
         </p>
         {cps !== null && (
-          <div className="inline-block bg-card border border-border rounded-xl px-6 py-4">
+          <div className="inline-block bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl px-6 py-4">
             <p className="text-3xl font-bold text-primary">{cps.toFixed(0)}%</p>
-            <p className="text-xs text-muted-foreground">Composite Platform Score</p>
+            <p className="text-xs text-[var(--pios-muted)]">Composite Platform Score</p>
           </div>
         )}
       </div>
@@ -94,52 +94,52 @@ export default function NPSSurveyPage() {
         <h1 className="text-xl font-bold flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-primary" /> Platform Feedback
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-[var(--pios-muted)] mt-1">
           SRAF D-02 pilot — takes 2 minutes. Helps us improve PIOS before wider rollout.
         </p>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-5 space-y-5">
+      <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5 space-y-5">
         <ScoreRow label="Platform stability (uptime, no crashes)" value={stability} onChange={setStability} />
         <ScoreRow label="Response speed & performance" value={performance} onChange={setPerformance} />
         <ScoreRow label="Feature fit for your workflow" value={featureFit} onChange={setFeatureFit} />
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+      <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5 space-y-3">
         <p className="text-sm font-medium">
           How likely are you to recommend PIOS to a colleague?
         </p>
-        <p className="text-xs text-muted-foreground">0 = Not at all likely · 10 = Extremely likely</p>
+        <p className="text-xs text-[var(--pios-muted)]">0 = Not at all likely · 10 = Extremely likely</p>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: 11 }, (_, i) => i).map(v => (
             <button key={v} onClick={() => setNps(v)}
               className={`w-9 h-9 rounded-lg text-xs font-bold border transition-all
                 ${nps === v
                   ? 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border text-muted-foreground hover:border-primary/50'}`}>
+                  : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:border-primary/50'}`}>
               {v}
             </button>
           ))}
         </div>
         {nps !== null && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-[var(--pios-muted)]">
             {nps >= 9 ? '🟢 Promoter' : nps >= 7 ? '🟡 Passive' : '🔴 Detractor'}
           </p>
         )}
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+      <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5 space-y-3">
         <p className="text-sm font-medium">Any other feedback? (optional)</p>
         <textarea
           value={feedback}
           onChange={e => setFeedback(e.target.value)}
           rows={3}
           placeholder="What's working well? What should we improve?"
-          className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary/60 resize-none" />
+          className="w-full px-3 py-2 text-sm border border-[var(--pios-border)] rounded-lg bg-background focus:outline-none focus:border-primary/60 resize-none" />
       </div>
 
       {cps !== null && (
-        <div className="text-center text-xs text-muted-foreground">
+        <div className="text-center text-xs text-[var(--pios-muted)]">
           Your composite score: <span className="font-bold text-primary">{cps.toFixed(0)}%</span>
         </div>
       )}
