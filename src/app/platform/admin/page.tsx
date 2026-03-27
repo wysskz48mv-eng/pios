@@ -25,11 +25,11 @@ const MIGRATION_DETAILS: Record<string, { file: string; tables: string[] }> = {
   '016': { file: '016_consulting_decision_time.sql', tables: ['consulting_engagements','exec_decision_analyses','exec_time_audits'] },
   '017': { file: '017_sia_bica.sql',                 tables: ['sia_signal_briefs','bica_comms'] },
   '018': { file: '018_operator_whitelabel.sql',      tables: ['operator_configs','okr_notification_prefs'] },
-  '019': { file: '019_ip_vault_contracts_financials.sql', tables: ['ip_assets','contracts','financial_snapshots','exec_intelligence_config','exec_board_comms','exec_stakeholder_interactions'] },
+  '019': { file: '019_ip_vault_contracts_financials.sql', tables: ['ip_assets','contracts','financial_snapshots'] },
   '020': { file: '020_ip_vault_seed.sql',                 tables: ['knowledge_entries'] },
   '021': { file: '021_wellness_tables.sql',               tables: ['wellness_sessions','wellness_streaks','wellness_patterns','purpose_anchors'] },
-  '022': { file: '022_cv_intelligence_calibration.sql',   tables: ['nemoclaw_calibration'] },
-  '023': { file: '023_nemoclaw_sprint84.sql',             tables: ['ai_credits_resets'] },
+  '022': { file: '022_cv_intelligence_calibration.sql',   tables: ['nemoclaw_calibration','user_profiles(cv cols)','pios-cv(bucket)'] },
+  '023': { file: '023_exec_intelligence_config.sql',      tables: ['exec_intelligence_config','ai_credits_resets'] },
 }
 
 const SUPABASE_URL = 'https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/sql/new'

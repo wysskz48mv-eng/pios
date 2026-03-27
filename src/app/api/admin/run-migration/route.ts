@@ -548,7 +548,7 @@ create index if not exists idx_tsa_week               on public.exec_time_audits
   },
   '017': {
     name: 'M017: SIA™ + BICA™ — Strategic Intelligence & Board Comms — Sprint 24',
-    sentinel: 'exec_intelligence_config',
+    sentinel: 'sia_signal_briefs',
     sql: `-- ============================================================
 -- PIOS Sprint 24 — SIA™ · BICA™
 -- M017: exec intelligence config, board comms, investor updates
@@ -993,6 +993,171 @@ COMMENT ON TABLE public.wellness_patterns  IS 'PIOS Wellness Phase 1 — AI-dete
 COMMENT ON TABLE public.purpose_anchors    IS 'PIOS Wellness Phase 1 — purpose anchors and mantras';
 `,
   },
+  '022': {
+    name: 'M022: NemoClaw™ CV Calibration — Sprint 84',
+    sentinel: 'nemoclaw_calibration',
+    sql: `-- ============================================================
+-- PIOS Sprint 84 — NemoClaw™ CV Intelligence Calibration
+-- M022: nemoclaw_calibration
+-- Stores per-user AI calibration data extracted from CV upload.
+-- Used by /api/cv + /api/ai/chat for personalised AI responses.
+-- VeritasIQ Technologies Ltd
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.nemoclaw_calibration (
+  id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                 UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  tenant_id               UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
+  -- CV-extracted fields
+  education_level         TEXT,
+  education_detail        TEXT,
+  career_years            INTEGER,
+  seniority_level         TEXT CHECK (seniority_level IN (
+                            'junior','mid','senior','lead','director','c_suite','founder','other'
+                          )),
+  primary_industry        TEXT,
+  industries              TEXT[]  DEFAULT '{}',
+  skills                  TEXT[]  DEFAULT '{}',
+  qualifications          TEXT[]  DEFAULT '{}',
+  employers               TEXT[]  DEFAULT '{}',
+  key_achievements        TEXT[]  DEFAULT '{}',
+  -- AI calibration fields
+  communication_register  TEXT    DEFAULT 'professional',
+  coaching_intensity      TEXT    DEFAULT 'medium'
+                            CHECK (coaching_intensity IN ('light','medium','high')),
+  recommended_frameworks  TEXT[]  DEFAULT '{}',
+  growth_areas            TEXT[]  DEFAULT '{}',
+  strengths               TEXT[]  DEFAULT '{}',
+  work_life_signals       TEXT,
+  decision_style          TEXT,
+  calibration_summary     TEXT,
+  -- CV file reference
+  cv_file_url             TEXT,
+  cv_processed_at         TIMESTAMPTZ,
+  -- Metadata
+  created_at              TIMESTAMPTZ DEFAULT NOW(),
+  updated_at              TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id)
+);
+
+ALTER TABLE public.nemoclaw_calibration ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "nemoclaw_calibration_own"
+  ON public.nemoclaw_calibration FOR ALL
+  USING (user_id = auth.uid());
+
+CREATE INDEX IF NOT EXISTS idx_nemoclaw_calibration_user
+  ON public.nemoclaw_calibration(user_id);
+
+COMMENT ON TABLE public.nemoclaw_calibration IS
+  'NemoClaw™ AI calibration — CV-derived intelligence profile per user. PIOS v3.0.';
+
+-- ── Add CV columns to user_profiles ──────────────────────────
+ALTER TABLE public.user_profiles
+  ADD COLUMN IF NOT EXISTS cv_filename          TEXT,
+  ADD COLUMN IF NOT EXISTS cv_processing_status TEXT DEFAULT 'none'
+    CHECK (cv_processing_status IN ('none','processing','complete','failed')),
+  ADD COLUMN IF NOT EXISTS cv_uploaded_at       TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS cv_storage_path      TEXT,
+  ADD COLUMN IF NOT EXISTS job_title            TEXT,
+  ADD COLUMN IF NOT EXISTS organisation         TEXT;
+
+-- ── Create pios-cv storage bucket ────────────────────────────
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'pios-cv', 'pios-cv', false, 10485760,
+  ARRAY['application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/msword']
+)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY IF NOT EXISTS "pios_cv_owner_upload"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'pios-cv' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY IF NOT EXISTS "pios_cv_owner_read"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'pios-cv' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY IF NOT EXISTS "pios_cv_owner_delete"
+  ON storage.objects FOR DELETE
+  USING (bucket_id = 'pios-cv' AND auth.uid()::text = (storage.foldername(name))[1]);
+`,
+  },
+
+  '023': {
+    name: 'M023: Executive Intelligence Config + AI Credits Reset — Sprint 84',
+    sentinel: 'exec_intelligence_config',
+    sql: `-- ============================================================
+-- PIOS Sprint 84 — Executive Intelligence Config + AI Credits
+-- M023: exec_intelligence_config, ai_credits_resets
+-- VeritasIQ Technologies Ltd
+-- ============================================================
+
+-- ── 1. Executive Intelligence Config (NemoClaw™ training) ────
+CREATE TABLE IF NOT EXISTS public.exec_intelligence_config (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id              UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  tenant_id            UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
+  -- Training context
+  persona_context      TEXT,   -- "I am a DBA candidate + FM consultant + SaaS founder"
+  company_context      TEXT,   -- "VeritasIQ Technologies Ltd, three SaaS platforms"
+  goals_context        TEXT,   -- "Qiddiya RFP by April 14, trademark filings, DBA Chapter 3"
+  custom_instructions  TEXT,   -- "Always respond with executive brevity. Lead with insight."
+  -- Style preferences
+  tone_preference      TEXT    DEFAULT 'professional'
+                         CHECK (tone_preference IN ('professional','direct','academic','casual','coaching')),
+  response_style       TEXT    DEFAULT 'structured'
+                         CHECK (response_style IN ('structured','narrative','bullet','conversational')),
+  -- NemoClaw calibration link
+  calibration_version  INTEGER DEFAULT 1,
+  last_trained_at      TIMESTAMPTZ,
+  -- Metadata
+  created_at           TIMESTAMPTZ DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id)
+);
+
+-- ── 2. AI Credits Reset Log ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.ai_credits_resets (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id    UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
+  user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  reset_type   TEXT NOT NULL DEFAULT 'monthly'
+                 CHECK (reset_type IN ('monthly','manual','plan_upgrade','trial_start')),
+  credits_prev INTEGER NOT NULL DEFAULT 0,
+  credits_after INTEGER NOT NULL DEFAULT 0,
+  triggered_by TEXT,   -- 'cron', 'admin', 'stripe_webhook'
+  notes        TEXT,
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ── 3. RLS ────────────────────────────────────────────────────
+ALTER TABLE public.exec_intelligence_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_credits_resets        ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "exec_intel_config_own"
+  ON public.exec_intelligence_config FOR ALL
+  USING (user_id = auth.uid());
+
+CREATE POLICY IF NOT EXISTS "ai_credits_resets_own"
+  ON public.ai_credits_resets FOR ALL
+  USING (user_id = auth.uid());
+
+-- ── 4. Indexes ────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_exec_intel_config_user
+  ON public.exec_intelligence_config(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_credits_resets_tenant
+  ON public.ai_credits_resets(tenant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_credits_resets_user
+  ON public.ai_credits_resets(user_id, created_at DESC);
+
+COMMENT ON TABLE public.exec_intelligence_config IS
+  'NemoClaw™ Executive Intelligence — per-user AI training config. PIOS v3.0.';
+COMMENT ON TABLE public.ai_credits_resets IS
+  'AI credits reset audit log — tracks monthly resets and plan upgrades. PIOS v3.0.';
+`,
+  },
+
 }
 
 async function runPg(sql: string): Promise<{ ok: boolean; result?: string; err?: string }> {
