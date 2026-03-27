@@ -11,6 +11,9 @@ export default function ChangelogPage() {
       badge: 'Latest',
       badgeColor: 'var(--ai)',
       changes: [
+        { type: 'new', text: 'TSA™ Time Sovereignty dashboard v2 — visual time map grid (7am–8pm × Mon–Fri), sovereignty score (Sovereign/Contested/Fragmented), protection zones with lock toggle' },
+        { type: 'new', text: 'TSA™ weekly log with stacked bar history — strategic/operational/stakeholder/admin/recovery breakdown, admin drag warning at >30%' },
+        { type: 'new', text: 'TSA™ NemoClaw™ audit button — AI analysis of time allocation and recommendations' },
         { type: 'new', text: 'Board Pack generator — auto-compiles board-ready report from financials, OKRs, IP vault, contracts, tasks and projects with NemoClaw™ AI narrative' },
         { type: 'new', text: 'Board Pack: risk register auto-populated from IP expiries, contract renewals, critical and overdue tasks' },
         { type: 'new', text: 'Board Pack: collapsible sections — financial snapshot, OKR progress bars, key decisions log, IP portfolio, operations' },
