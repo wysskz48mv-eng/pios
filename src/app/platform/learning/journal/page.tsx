@@ -86,7 +86,7 @@ export default function LearningJournalPage() {
     <div className="p-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => { setView("list"); setAiReflection("") }}
-          className="text-[var(--pios-muted)] hover:text-foreground">
+          className="text-[var(--pios-muted)] hover:text-[var(--pios-text)]">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-bold">New Journal Entry</h1>
@@ -95,13 +95,13 @@ export default function LearningJournalPage() {
       <div className="space-y-4">
         <input value={form.title} onChange={e => setForm(p=>({...p,title:e.target.value}))}
           placeholder="What are you reflecting on?"
-          className="w-full px-3 py-2.5 text-sm border border-[var(--pios-border)] rounded-lg bg-[var(--pios-surface)] outline-none focus:border-primary/60" />
+          className="w-full px-3 py-2.5 text-sm border border-[var(--pios-border)] rounded-lg bg-[var(--pios-surface)] outline-none focus:border-[var(--ai)]/60" />
 
         <div className="flex gap-2 flex-wrap">
           {MOODS.map(m => (
             <button key={m} onClick={() => setForm(p=>({...p,mood:p.mood===m?"":m}))}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                form.mood===m ? "border-primary/60 bg-primary/10 text-primary" : "border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-foreground"
+                form.mood===m ? "border-[var(--ai)]/60 bg-[var(--ai)]/10 text-[var(--ai)]" : "border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-[var(--pios-text)]"
               }`}>{m}</button>
           ))}
         </div>
@@ -109,17 +109,17 @@ export default function LearningJournalPage() {
         <textarea value={form.content} onChange={e => setForm(p=>({...p,content:e.target.value}))}
           placeholder="Write your reflection… What did you learn? What questions do you have? What will you do differently?"
           rows={10}
-          className="w-full px-3 py-2.5 text-sm border border-[var(--pios-border)] rounded-lg bg-[var(--pios-surface)] outline-none focus:border-primary/60 resize-none" />
+          className="w-full px-3 py-2.5 text-sm border border-[var(--pios-border)] rounded-lg bg-[var(--pios-surface)] outline-none focus:border-[var(--ai)]/60 resize-none" />
 
         <input value={form.tags} onChange={e => setForm(p=>({...p,tags:e.target.value}))}
           placeholder="Tags (comma-separated): research methods, statistics, writing…"
-          className="w-full px-3 py-2.5 text-sm border border-[var(--pios-border)] rounded-lg bg-[var(--pios-surface)] outline-none focus:border-primary/60" />
+          className="w-full px-3 py-2.5 text-sm border border-[var(--pios-border)] rounded-lg bg-[var(--pios-surface)] outline-none focus:border-[var(--ai)]/60" />
 
         {aiReflection && (
-          <div className="p-4 bg-violet-500/5 border border-violet-500/20 rounded-xl">
+          <div className="p-4 bg-[var(--ai-subtle)] border border-[rgba(99,73,255,0.2)] rounded-xl">
             <div className="flex items-center gap-2 mb-2">
-              <Brain className="w-4 h-4 text-violet-500" />
-              <span className="text-xs font-semibold text-violet-500 uppercase tracking-wider">AI Reflection</span>
+              <Brain className="w-4 h-4 text-[var(--ai)]" />
+              <span className="text-xs font-semibold text-[var(--ai)] uppercase tracking-wider">AI Reflection</span>
             </div>
             <p className="text-sm text-[var(--pios-muted)] leading-relaxed">{aiReflection}</p>
           </div>
@@ -127,7 +127,7 @@ export default function LearningJournalPage() {
 
         <div className="flex gap-3">
           <button onClick={save} disabled={saving || !form.title || !form.content}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--ai)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Entry
           </button>
@@ -146,16 +146,16 @@ export default function LearningJournalPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Link href="/platform/learning" className="text-[var(--pios-muted)] hover:text-foreground">
+            <Link href="/platform/learning" className="text-[var(--pios-muted)] hover:text-[var(--pios-text)]">
               <ChevronLeft className="w-5 h-5" />
             </Link>
-            <BookOpen className="w-5 h-5 text-violet-500" />
+            <BookOpen className="w-5 h-5 text-[var(--ai)]" />
             <h1 className="text-xl font-bold">Learning Journal</h1>
           </div>
           <p className="text-sm text-[var(--pios-muted)] ml-12">{entries.length} entries</p>
         </div>
         <button onClick={() => setView("write")}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:opacity-90">
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ai)] text-white rounded-lg text-sm font-medium hover:opacity-90">
           <Plus className="w-4 h-4" /> New Entry
         </button>
       </div>
@@ -170,14 +170,14 @@ export default function LearningJournalPage() {
           <p className="text-sm font-medium">No journal entries yet</p>
           <p className="text-xs mt-1">Start reflecting on your learning journey</p>
           <button onClick={() => setView("write")}
-            className="mt-4 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm">
+            className="mt-4 px-4 py-2 bg-[var(--ai)] text-white rounded-lg text-sm">
             Write First Entry
           </button>
         </div>
       ) : (
         <div className="space-y-3">
           {entries.map(entry => (
-            <div key={entry.id} className="p-4 bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl hover:border-violet-500/30 transition-colors cursor-pointer"
+            <div key={entry.id} className="p-4 bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl hover:border-[rgba(99,73,255,0.3)] transition-colors cursor-pointer"
               onClick={() => { setSelected(selected?.id===entry.id ? null : entry) }}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -201,10 +201,10 @@ export default function LearningJournalPage() {
                         {entry.content}
                       </p>
                       {entry.ai_reflection && (
-                        <div className="p-3 bg-violet-500/5 border border-violet-500/20 rounded-lg">
+                        <div className="p-3 bg-[var(--ai-subtle)] border border-[rgba(99,73,255,0.2)] rounded-lg">
                           <div className="flex items-center gap-1.5 mb-1.5">
-                            <Brain className="w-3.5 h-3.5 text-violet-500" />
-                            <span className="text-[10px] font-bold text-violet-500 uppercase tracking-wider">AI Reflection</span>
+                            <Brain className="w-3.5 h-3.5 text-[var(--ai)]" />
+                            <span className="text-[10px] font-bold text-[var(--ai)] uppercase tracking-wider">AI Reflection</span>
                           </div>
                           <p className="text-xs text-[var(--pios-muted)] leading-relaxed">{entry.ai_reflection}</p>
                         </div>
