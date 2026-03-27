@@ -1,6 +1,6 @@
 /**
  * /api/wellness — Wellness Phase 1 session CRUD + AI insight
- * PIOS v2.9 | VeritasIQ Technologies Ltd
+ *  PIOS v3.0 | VeritasIQ Technologies Ltd
  *
  * GET  — fetch sessions (today / last 30d) + streaks + purpose anchors
  * POST — create session, update streak, trigger AI pattern analysis

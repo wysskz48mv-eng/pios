@@ -7,7 +7,7 @@
  * persona, fires seed_frameworks via /api/ip-vault to pre-populate the
  * 15 NemoClaw™ framework cards in the IP Vault.
  *
- * PIOS v2.9 | VeritasIQ Technologies Ltd
+ *  PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'

@@ -70,7 +70,7 @@ export default function SmokePage() {
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px' }}>Platform Smoke Test</h1>
             <p style={{ fontSize: 13, color: 'var(--pios-muted)', margin: 0 }}>
-              12 checks · DB · AI · email · cron · billing · PIOS v2.4
+              12 checks · DB · AI · email · cron · billing · PIOS v3.0
             </p>
           </div>
           <button
@@ -202,7 +202,7 @@ export default function SmokePage() {
       )}
 
       <p style={{ fontSize: 11, color: 'var(--pios-dim)', textAlign: 'center', marginTop: 24 }}>
-        PIOS v2.4 · Sprint 58 · VeritasIQ Technologies Ltd
+        PIOS v3.0 · Sprint 58 · VeritasIQ Technologies Ltd
       </p>
     </div>
   )

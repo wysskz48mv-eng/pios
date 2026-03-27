@@ -1,6 +1,6 @@
 /**
  * /pricing — PIOS Pricing Page
- * Redesigned v2.9 | VeritasIQ Technologies Ltd
+ * Redesigned v3.0 | VeritasIQ Technologies Ltd
  */
 import Link from 'next/link'
 

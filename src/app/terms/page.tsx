@@ -13,7 +13,7 @@ export default function TermsPage() {
         </div>
         <div style={{ marginBottom:32 }}>
           <h1 style={{ fontSize:28, fontWeight:700, marginBottom:8, color:'#f1f5f9' }}>Terms of Service</h1>
-          <p style={{ fontSize:13, color:'#64748b' }}>Effective: {EFFECTIVE} · PIOS v2.2</p>
+          <p style={{ fontSize:13, color:'#64748b' }}>Effective: {EFFECTIVE} · PIOS v3.0</p>
         </div>
 
         {[

@@ -321,7 +321,7 @@ export async function GET() {
         headers: {
           'Cache-Control': 'no-store, must-revalidate',
           'Content-Type':  'application/json',
-          'X-PIOS-Version': '2.9',
+          'X-PIOS-Version': '3.0',
         },
       }
     )

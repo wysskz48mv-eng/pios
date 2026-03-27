@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 // WellnessCheckIn — Wellness Phase 1
 // NemoClaw-powered daily check-in with mood/energy/stress/focus scoring,
 // purpose anchors, streaks, and AI insight
-// PIOS v2.9 | VeritasIQ Technologies Ltd
+//  PIOS v3.0 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 type SessionType = 'morning_checkin' | 'evening_review' | 'crisis_support' | 'energy_audit' | 'focus_block' | 'recovery'

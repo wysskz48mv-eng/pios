@@ -11,7 +11,7 @@ const DOMAIN_MODES = [
   { key:'general',      label:'General',      icon:'◉', colour:'var(--ai)', prompt:'' },
   { key:'academic',     label:'DBA Research', icon:'🎓', colour:'var(--academic)', prompt:'Focus on my DBA research at University of Portsmouth. Topic: AI-enabled forecasting in GCC FM. Theory: STS + sensemaking.' },
   { key:'fm_consulting',label:'FM Consulting', icon:'🏗️', colour:'var(--fm)', prompt:'Focus on FM consulting. Key projects: Qiddiya (QPMO-410-CT-07922), King Salman Park (SAR 229.6M). Reference VeritasEdge™ platform.' },
-  { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'var(--saas)', prompt:'Focus on my SaaS platforms: VeritasEdge™ v5.8 (service charge), InvestiScript v3 (AI journalism), PIOS v2.7. Stack: Next.js 14, Supabase, Claude API.' },
+  { key:'saas',         label:'SaaS / Tech',  icon:'⚡', colour:'var(--saas)', prompt:'Focus on my SaaS platforms: VeritasEdge™ v6.6 (service charge), InvestiScript v3 (AI journalism), PIOS v3.0. Stack: Next.js 14, Supabase, Claude API.' },
   { key:'executive_os', label:'Executive OS',  icon:'⚡', colour:'var(--pro)', prompt:'Focus on my Executive OS — OKRs, open decisions, stakeholder management. Apply EOSA™ thinking. Reference my active OKRs and open decisions.' },
   { key:'business',     label:'Business',     icon:'🏢', colour:'var(--dng)', prompt:'Focus on company management: VeritasIQ Technologies Ltd (UK SaaS), VeritasIQ Technologies Ltd (FM consultancy), VeritasIQ Technologies Ltd (UAE holding). Governance, compliance, financials.' },
 ] as const

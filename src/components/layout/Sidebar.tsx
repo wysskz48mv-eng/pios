@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 // ─────────────────────────────────────────────────────────────────────────────
 // Sidebar v3.0 — Investment-Grade UIX
 // Syne display font · Domain-coloured icon tiles · Smooth collapse
-// PIOS v2.9 · VeritasIQ Technologies Ltd
+// PIOS v3.0 · VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 const NAV_GROUPS = [
@@ -155,7 +155,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
               color: 'var(--pios-text)', letterSpacing: '-0.02em', whiteSpace: 'nowrap',
             }}>PIOS</div>
             <div style={{ fontSize: 10, color: 'var(--pios-dim)', fontFamily: 'var(--font-mono)', marginTop: 1 }}>
-              v2.9 · {planLabel}
+              v3.0 · {planLabel}
             </div>
           </div>
         )}

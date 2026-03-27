@@ -5,7 +5,7 @@ import { useState } from 'react'
 // Policy Intelligence Coach — adaptive learning module
 // Based on PIOS_Policy_Intelligence_Coach.html
 // 7 lessons: Why Policies, Register, ISO 9001, ISO 27001, Auditing, VIQ Register, Action Plan
-// PIOS v2.9 | VeritasIQ Technologies Ltd
+//  PIOS v3.0 | VeritasIQ Technologies Ltd
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ROLES = [
