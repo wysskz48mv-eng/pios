@@ -54,8 +54,18 @@ export default function AiPage() {
   const [domainMode,    setDomainMode]   = useState<string>('general')
   const [showHistory,   setShowHistory]  = useState(true)
   const [copying,       setCopying]      = useState(false)
+  const [nemo,          setNemo]         = useState<Record<string,unknown>|null|undefined>(undefined)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef  = useRef<HTMLTextAreaElement>(null)
+
+  // Fetch NemoClaw calibration status once on mount
+  useEffect(() => {
+    fetch('/api/cv')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setNemo((d?.calibration as Record<string,unknown>) ?? null))
+      .catch(() => setNemo(null))
+  }, [])
+
   // Load session list
   const loadSessions = useCallback(async () => {
     const res = await fetch('/api/ai/sessions')
@@ -78,11 +88,12 @@ export default function AiPage() {
     setActiveId(d.id)
     setDomainMode(domain)
     const mode = DOMAIN_MODES.find(m => m.key === domain)
+    const calibNote = nemo === null ? ' (Tip: upload your CV at /platform/onboarding to calibrate me to your background.)' : ''
     const welcome: Message = {
       role: 'assistant',
       content: mode?.prompt
         ? `I'm in **${mode.label}** mode. ${mode.prompt.replace(/\.$/, '')}. What do you need?`
-        : "Good morning, Douglas. I'm across all your domains — academic, consulting, SaaS, and business. What do you need?",
+        : `Good morning, Douglas. I'm across all your domains — academic, consulting, SaaS, and business. What do you need?${calibNote}`,
       timestamp: new Date().toISOString(),
     }
     setMessages([welcome])
@@ -245,6 +256,61 @@ export default function AiPage() {
               ))}
             </div>
           )}
+
+          {/* ── NemoClaw™ calibration status ─────────────── */}
+          <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+            {nemo === undefined ? (
+              <div style={{ fontSize: 10, color: 'var(--pios-dim)', padding: '6px 2px' }}>Checking calibration…</div>
+            ) : nemo ? (
+              <div style={{
+                padding: '10px 12px', borderRadius: 8,
+                background: 'rgba(139,124,248,0.07)',
+                border: '1px solid rgba(139,124,248,0.2)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ai)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--ai)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>NemoClaw™ Calibrated</span>
+                </div>
+                {nemo.calibration_summary && (
+                  <p style={{ fontSize: 11, color: 'var(--pios-muted)', margin: '0 0 6px', lineHeight: 1.5,
+                    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as never}>
+                    {nemo.calibration_summary as string}
+                  </p>
+                )}
+                {(nemo.recommended_frameworks as string[] | undefined)?.length ? (
+                  <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 4 }}>
+                    Frameworks: {(nemo.recommended_frameworks as string[]).slice(0, 3).join(', ')}
+                    {(nemo.recommended_frameworks as string[]).length > 3 ? ` +${(nemo.recommended_frameworks as string[]).length - 3}` : ''}
+                  </div>
+                ) : null}
+                {nemo.seniority_level && (
+                  <div style={{ fontSize: 10, color: 'var(--pios-dim)', marginBottom: 6 }}>
+                    {nemo.seniority_level as string} · {nemo.primary_industry as string ?? 'professional'} · {nemo.career_years ? `${nemo.career_years}y exp` : ''}
+                  </div>
+                )}
+                <a href="/platform/onboarding" style={{ fontSize: 10, color: 'var(--ai)', opacity: 0.7, display: 'block', textDecoration: 'none' }}>
+                  ↺ Recalibrate via CV upload
+                </a>
+              </div>
+            ) : (
+              <div style={{
+                padding: '10px 12px', borderRadius: 8,
+                background: 'rgba(245,158,11,0.06)',
+                border: '1px solid rgba(245,158,11,0.2)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', flexShrink: 0 }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Not Calibrated</span>
+                </div>
+                <p style={{ fontSize: 11, color: 'var(--pios-muted)', margin: '0 0 6px', lineHeight: 1.5 }}>
+                  Upload your CV so NemoClaw™ personalises every conversation to your background and goals.
+                </p>
+                <a href="/platform/onboarding" style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', textDecoration: 'none' }}>
+                  Upload CV → Calibrate
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

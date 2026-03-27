@@ -11,6 +11,10 @@ export default function ChangelogPage() {
       badge: 'Latest',
       badgeColor: 'var(--ai)',
       changes: [
+        { type: 'new', text: "Sprint 84: NemoClaw™ calibration status card in AI sidebar — shows calibration summary, seniority, industry, recommended frameworks; prompts CV upload if uncalibrated" },
+        { type: 'new', text: "Sprint 84: AI welcome message is calibration-aware — hints CV upload when NemoClaw is not yet calibrated" },
+        { type: 'new', text: "Sprint 84: Migration M023 — nemoclaw_calibration index + ai_sessions index + ai_credits_resets audit table" },
+        { type: 'fix', text: "Sprint 84: Migration runner updated with M023 entry" },
         { type: 'new', text: "Sprint 83: Financials — Add Snapshot form (period, revenue, expenses, payroll, cash, receivables, payables) wired to /api/financials save_snapshot" },
         { type: 'new', text: 'Sprint 82: Smart notification engine — IP/contract renewals, wellness streak break, overdue tasks, trial expiry — all deduplicated by day' },
         { type: 'new', text: 'Sprint 82: Notifications page v2 — Scan for alerts button, category/domain filters, per-item delete, body text, action links' },
