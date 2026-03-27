@@ -84,9 +84,11 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: 8,
-                background: 'linear-gradient(135deg, #9b87f5, #5b8def)',
+                background: 'rgba(99,73,255,0.12)',
+                border: '1px solid rgba(99,73,255,0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, fontWeight: 800, color: '#fff',
+                fontFamily: 'Georgia, serif', fontSize: 11, fontWeight: 900,
+                color: 'rgba(130,108,255,0.9)',
               }}>P</div>
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pios-text)', letterSpacing: '-0.01em' }}>PIOS</span>
             </div>
@@ -104,7 +106,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
 
       {/* Main area */}
       <main style={{
-        flex: 1, overflowY: 'auto', background: '#0a0c1a',
+        flex: 1, overflowY: 'auto', background: '#080808',
         display: 'flex', flexDirection: 'column',
         paddingBottom: isMobile ? 64 : 0,
       }}>
@@ -116,11 +118,11 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
         {/* ── Top bar ── */}
         <header style={{
           position: 'sticky', top: 0, zIndex: 10,
-          background: 'rgba(10,12,26,0.85)',
+          background: 'rgba(8,8,8,0.92)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          padding: '0 28px', height: 60,
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          padding: '0 24px', height: 56,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
           flexShrink: 0,
         }}>
@@ -138,18 +140,19 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
               </button>
               <div style={{
                 width: 28, height: 28, borderRadius: 8,
-                background: 'linear-gradient(135deg, #6c5ce7, #4f8ef7)',
+                background: 'rgba(99,73,255,0.12)',
+                border: '1px solid rgba(99,73,255,0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 800, color: '#fff',
-                boxShadow: '0 0 16px rgba(108,92,231,0.35)',
+                fontFamily: 'Georgia, serif', fontSize: 10, fontWeight: 900,
+                color: 'rgba(130,108,255,0.9)',
               }}>P</div>
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 17, fontWeight: 800, color: '#f0f2ff',
-                letterSpacing: '-0.03em', lineHeight: 1,
+                fontFamily: "'Instrument Serif', Georgia, serif",
+                fontStyle: 'italic', fontSize: 17, fontWeight: 400,
+                color: 'rgba(255,255,255,0.88)', letterSpacing: '-0.02em', lineHeight: 1,
               }}>{title}</span>
             </div>
           )}
@@ -170,7 +173,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
                 fontFamily: 'var(--font-sans)',
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(108,92,231,0.4)'
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(99,73,255,0.4)'
                 ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(108,92,231,0.06)'
                 ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
               }}
@@ -187,8 +190,8 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 color: 'rgba(255,255,255,0.3)',
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: '0.02em',
+                fontFamily: "'DM Mono', monospace",
+                letterSpacing: '0.03em',
               }}>⌘K</span>
             </button>
           )}
@@ -205,7 +208,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
                   <div style={{
                     height: '100%', borderRadius: 2,
                     width: `${creditPct}%`,
-                    background: creditPct > 80 ? '#ef4444' : creditPct > 50 ? '#f59e0b' : '#6c5ce7',
+                    background: creditPct > 80 ? '#ef4444' : creditPct > 50 ? '#f59e0b' : '#6349FF',
                     transition: 'width 0.3s',
                   }} />
                 </div>
@@ -235,19 +238,19 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
               display: 'flex', alignItems: 'center', gap: 7,
               padding: '7px 16px', borderRadius: 20,
               background: chatOpen
-                ? 'rgba(108,92,231,0.18)'
+                ? 'rgba(99,73,255,0.14)'
                 : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${chatOpen ? 'rgba(108,92,231,0.4)' : 'rgba(255,255,255,0.1)'}`,
-              color: chatOpen ? '#a99dff' : 'rgba(255,255,255,0.5)',
+              border: `1px solid ${chatOpen ? 'rgba(99,73,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
+              color: chatOpen ? '#a99dff' : 'rgba(255,255,255,0.45)',
               cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
               transition: 'all 0.15s', letterSpacing: '-0.01em',
               fontFamily: 'var(--font-sans)',
-              boxShadow: chatOpen ? '0 0 20px rgba(108,92,231,0.2)' : 'none',
+              boxShadow: chatOpen ? '0 0 20px rgba(99,73,255,0.18)' : 'none',
             }}>
               <span style={{
                 width: 6, height: 6, borderRadius: '50%',
-                background: '#6c5ce7', display: 'inline-block',
-                boxShadow: '0 0 8px rgba(108,92,231,0.7)',
+                background: '#6349FF', display: 'inline-block',
+                boxShadow: '0 0 8px rgba(99,73,255,0.7)',
               }} className="ai-pulse" />
               {isMobile ? 'AI' : 'NemoClaw™'}
             </button>
