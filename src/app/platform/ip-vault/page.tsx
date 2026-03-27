@@ -14,21 +14,21 @@ type IPAsset = {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  framework:    'bg-violet-500/10 text-violet-400 border-violet-500/20',
-  trademark:    'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  patent:       'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  trade_secret: 'bg-red-500/10 text-red-400 border-red-500/20',
-  copyright:    'bg-green-500/10 text-green-400 border-green-500/20',
+  framework:    'bg-[var(--ai)]/10 text-[var(--ai3)] border-[rgba(99,73,255,0.2)]',
+  trademark:    'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
+  patent:       'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
+  trade_secret: 'bg-red-500/10 text-[var(--dng)] border-red-500/20',
+  copyright:    'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
   methodology:  'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   process:      'bg-pink-500/10 text-pink-400 border-pink-500/20',
   brand:        'bg-orange-500/10 text-orange-400 border-orange-500/20',
 }
 const STATUS_COLOR: Record<string, string> = {
-  active:     'bg-green-500/10 text-green-400 border-green-500/20',
-  pending:    'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  filed:      'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  active:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
+  pending:    'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
+  filed:      'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
   registered: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  lapsed:     'bg-red-500/10 text-red-400 border-red-500/20',
+  lapsed:     'bg-red-500/10 text-[var(--dng)] border-red-500/20',
   archived:   'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 
@@ -116,21 +116,21 @@ export default function IPVaultPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Shield className="w-6 h-6 text-violet-400" />
+          <Shield className="w-6 h-6 text-[var(--ai3)]" />
           <div>
             <h1 className="text-xl font-semibold">IP Vault</h1>
             <p className="text-sm text-[var(--pios-muted)]">Proprietary frameworks · trademarks · trade secrets · methodologies</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={generateBrief} disabled={briefing || assets.length === 0} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--pios-border)] bg-violet-500/10 text-violet-400 text-sm font-medium hover:bg-violet-500/15 disabled:opacity-50">
+          <button onClick={generateBrief} disabled={briefing || assets.length === 0} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--pios-border)] bg-[var(--ai)]/10 text-[var(--ai3)] text-sm font-medium hover:bg-[var(--ai)]/15 disabled:opacity-50">
             {briefing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
             IP Brief
           </button>
-          <button onClick={seedFrameworks} disabled={seeding} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-violet-500/30 text-violet-400 text-sm hover:bg-violet-500/10 disabled:opacity-50">
+          <button onClick={seedFrameworks} disabled={seeding} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[rgba(99,73,255,0.3)] text-[var(--ai3)] text-sm hover:bg-[var(--ai)]/10 disabled:opacity-50">
             {seeding ? <Loader2 className="w-3 h-3 animate-spin" /> : '🧬'} Seed NemoClaw™
           </button>
-          <button onClick={() => { setEditing(null); setForm({ ...BLANK }); setShowModal(true) }} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-500 text-white text-sm font-medium hover:bg-violet-600">
+          <button onClick={() => { setEditing(null); setForm({ ...BLANK }); setShowModal(true) }} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--ai)] text-white text-sm font-medium hover:bg-[var(--ai)]">
             <Plus className="w-3 h-3" /> Add Asset
           </button>
         </div>
@@ -138,10 +138,10 @@ export default function IPVaultPage() {
 
       {/* Renewal alerts */}
       {alerts.length > 0 && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4 text-amber-400" /><span className="text-sm font-semibold text-amber-400">Renewal alerts — {alerts.length} asset{alerts.length > 1 ? 's' : ''} require attention within 90 days</span></div>
+        <div className="bg-[var(--saas)]/10 border border-amber-500/30 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4 text-[var(--saas)]" /><span className="text-sm font-semibold text-[var(--saas)]">Renewal alerts — {alerts.length} asset{alerts.length > 1 ? 's' : ''} require attention within 90 days</span></div>
           {alerts.map(a => (
-            <div key={a.id} className="text-sm text-amber-300/80 ml-6">· {a.name} ({a.asset_type}) — renewal due {a.renewal_date}</div>
+            <div key={a.id} className="text-sm text-[rgba(245,158,11,0.8)] ml-6">· {a.name} ({a.asset_type}) — renewal due {a.renewal_date}</div>
           ))}
         </div>
       )}
@@ -165,7 +165,7 @@ export default function IPVaultPage() {
       <div className="flex gap-2 flex-wrap">
         {types.map(t => (
           <button key={t} onClick={() => setActiveType(t)}
-            className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all capitalize ${activeType === t ? 'bg-violet-500/15 text-violet-400 border-violet-500/30' : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-foreground'}`}>
+            className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all capitalize ${activeType === t ? 'bg-[var(--ai)]/15 text-[var(--ai3)] border-[rgba(99,73,255,0.3)]' : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-foreground'}`}>
             {t.replace('_', ' ')} {t !== 'all' && <span className="opacity-60">({byType[t] ?? 0})</span>}
           </button>
         ))}
@@ -196,7 +196,7 @@ export default function IPVaultPage() {
                     {a.owner_entity && <span className="text-xs text-[var(--pios-muted)]">Owner: {a.owner_entity}</span>}
                     {a.jurisdiction?.length ? <span className="text-xs text-[var(--pios-muted)]">Jurisdictions: {a.jurisdiction.join(', ')}</span> : null}
                     {a.registration_no && <span className="text-xs text-[var(--pios-muted)]">Reg: {a.registration_no}</span>}
-                    {a.renewal_date && <span className="text-xs text-amber-400">Renewal: {a.renewal_date}</span>}
+                    {a.renewal_date && <span className="text-xs text-[var(--saas)]">Renewal: {a.renewal_date}</span>}
                     {a.filing_date && <span className="text-xs text-[var(--pios-muted)]">Filed: {a.filing_date}</span>}
                   </div>
                   {a.tags?.length ? (
@@ -207,7 +207,7 @@ export default function IPVaultPage() {
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <button onClick={() => { setEditing(a); setForm({ name:a.name, asset_type:a.asset_type, description:a.description??'', status:a.status, jurisdiction:a.jurisdiction??[], filing_date:a.filing_date??'', registration_no:a.registration_no??'', renewal_date:a.renewal_date??'', owner_entity:a.owner_entity??'VeritasIQ Technologies Ltd', notes:a.notes??'' }); setShowModal(true) }} className="p-1.5 rounded-lg hover:bg-muted text-[var(--pios-muted)] hover:text-foreground"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => deleteAsset(a.id)} disabled={deleting === a.id} className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--pios-muted)] hover:text-red-400">{deleting === a.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}</button>
+                  <button onClick={() => deleteAsset(a.id)} disabled={deleting === a.id} className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--pios-muted)] hover:text-[var(--dng)]">{deleting === a.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}</button>
                 </div>
               </div>
             </div>
@@ -219,9 +219,9 @@ export default function IPVaultPage() {
       {brief && (
         <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-violet-400" /><span className="text-sm font-semibold text-violet-400">IP Strategy Brief — AI Generated</span></div>
+            <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-[var(--ai3)]" /><span className="text-sm font-semibold text-[var(--ai3)]">IP Strategy Brief — AI Generated</span></div>
             <button onClick={() => { navigator.clipboard.writeText(brief); setCopied(true); setTimeout(() => setCopied(false), 2000) }} className="flex items-center gap-1 text-xs text-[var(--pios-muted)] hover:text-foreground">
-              {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />} {copied ? 'Copied' : 'Copy'}
+              {copied ? <Check className="w-3 h-3 text-[var(--fm)]" /> : <Copy className="w-3 h-3" />} {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
           <pre className="text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap font-sans">{brief}</pre>
@@ -230,7 +230,7 @@ export default function IPVaultPage() {
 
       {/* Add / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50 p-4" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="bg-background border border-[var(--pios-border)] rounded-2xl p-6 w-full max-w-lg space-y-4">
             <h3 className="text-base font-semibold">{editing ? 'Edit IP Asset' : 'Register IP Asset'}</h3>
 
@@ -279,7 +279,7 @@ export default function IPVaultPage() {
 
             <div className="flex gap-2 justify-end pt-2">
               <button onClick={() => { setShowModal(false); setEditing(null) }} className="px-4 py-2 rounded-xl border border-[var(--pios-border)] text-sm hover:bg-muted">Cancel</button>
-              <button onClick={save} disabled={!form.name.trim() || saving} className="px-4 py-2 rounded-xl bg-violet-500 text-white text-sm font-medium hover:bg-violet-600 disabled:opacity-50">
+              <button onClick={save} disabled={!form.name.trim() || saving} className="px-4 py-2 rounded-xl bg-[var(--ai)] text-white text-sm font-medium hover:bg-[var(--ai)] disabled:opacity-50">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editing ? 'Update' : 'Register'}
               </button>
             </div>

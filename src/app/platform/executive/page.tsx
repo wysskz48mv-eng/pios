@@ -15,18 +15,18 @@ type Principle = { id: string; title: string; category: string; description: str
 type Summary = { okrs: { total: number; on_track: number; at_risk: number; off_track: number; avg_progress: number }; stakeholders: { critical_count: number; needs_touchpoint: number } }
 
 const HEALTH_COLOR: Record<string, string> = {
-  on_track: 'text-green-400', at_risk: 'text-amber-400', off_track: 'text-red-400'
+  on_track: 'text-[var(--fm)]', at_risk: 'text-[var(--saas)]', off_track: 'text-[var(--dng)]'
 }
 const HEALTH_BG: Record<string, string> = {
-  on_track: 'bg-green-500/10 border-green-500/20',
-  at_risk: 'bg-amber-500/10 border-amber-500/20',
+  on_track: 'bg-[rgba(16,185,129,0.1)] border-green-500/20',
+  at_risk: 'bg-[var(--saas)]/10 border-amber-500/20',
   off_track: 'bg-red-500/10 border-red-500/20',
 }
 const IMP_COLOR: Record<string, string> = {
-  critical: 'text-red-400', high: 'text-amber-400', medium: 'text-blue-400', low: 'text-[var(--pios-muted)]'
+  critical: 'text-[var(--dng)]', high: 'text-[var(--saas)]', medium: 'text-[var(--academic)]', low: 'text-[var(--pios-muted)]'
 }
 
-function StatCard({ icon: Icon, label, value, sub, color = 'text-violet-400' }: { icon: React.ElementType; label: string; value: string | number; sub?: string; color?: string }) {
+function StatCard({ icon: Icon, label, value, sub, color = 'text-[var(--ai3)]' }: { icon: React.ElementType; label: string; value: string | number; sub?: string; color?: string }) {
   return (
     <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4">
       <div className="flex items-center gap-2 mb-2">
@@ -39,7 +39,7 @@ function StatCard({ icon: Icon, label, value, sub, color = 'text-violet-400' }: 
   )
 }
 
-function ProgressBar({ value, color = 'bg-violet-500' }: { value: number; color?: string }) {
+function ProgressBar({ value, color = 'bg-[var(--ai)]' }: { value: number; color?: string }) {
   return (
     <div className="h-1.5 bg-[var(--pios-surface2)] rounded-full overflow-hidden">
       <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${Math.min(100, value)}%` }} />
@@ -226,7 +226,7 @@ export default function ExecutivePage() {
           <p className="text-sm text-[var(--pios-muted)]">Your personal operating system — decisions, performance, intelligence</p>
         </div>
         <button onClick={generateBrief} disabled={briefLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg text-sm font-medium hover:bg-violet-500/20 disabled:opacity-50 transition-colors">
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ai)]/10 border border-[rgba(99,73,255,0.2)] text-[var(--ai3)] rounded-lg text-sm font-medium hover:bg-[var(--ai)]/20 disabled:opacity-50 transition-colors">
           <RefreshCw className={`w-3.5 h-3.5 ${briefLoading ? 'animate-spin' : ''}`} />
           {briefLoading ? 'Generating…' : 'Generate Brief'}
         </button>
@@ -234,10 +234,10 @@ export default function ExecutivePage() {
 
       {/* AI Brief */}
       {brief && (
-        <div className="mb-6 bg-violet-500/5 border border-violet-500/20 rounded-xl p-5">
+        <div className="mb-6 bg-[var(--ai)]/5 border border-[rgba(99,73,255,0.2)] rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-            <span className="text-xs font-semibold text-violet-400 uppercase tracking-wide">Executive Brief — EOSA™</span>
+            <div className="w-2 h-2 rounded-full bg-[var(--ai)] animate-pulse" />
+            <span className="text-xs font-semibold text-[var(--ai3)] uppercase tracking-wide">Executive Brief — EOSA™</span>
           </div>
           <div className="text-sm text-[var(--pios-text)]/90 whitespace-pre-wrap leading-relaxed">{brief}</div>
         </div>
@@ -246,13 +246,13 @@ export default function ExecutivePage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <StatCard icon={Target} label="OKR Progress" value={`${summary?.okrs.avg_progress ?? 0}%`}
-          sub={`${summary?.okrs.on_track ?? 0} on track · ${summary?.okrs.at_risk ?? 0} at risk`} color="text-green-400" />
+          sub={`${summary?.okrs.on_track ?? 0} on track · ${summary?.okrs.at_risk ?? 0} at risk`} color="text-[var(--fm)]" />
         <StatCard icon={AlertTriangle} label="Open Decisions" value={decisions.filter(d => d.status === 'open').length}
-          sub="requiring action" color="text-amber-400" />
+          sub="requiring action" color="text-[var(--saas)]" />
         <StatCard icon={Users} label="Stakeholders" value={stakeholders.length}
-          sub={`${summary?.stakeholders.needs_touchpoint ?? 0} need contact`} color="text-blue-400" />
+          sub={`${summary?.stakeholders.needs_touchpoint ?? 0} need contact`} color="text-[var(--academic)]" />
         <StatCard icon={BookOpen} label="Principles" value={principles.length}
-          sub="active" color="text-violet-400" />
+          sub="active" color="text-[var(--ai3)]" />
       </div>
 
       {/* Tabs */}
@@ -272,7 +272,7 @@ export default function ExecutivePage() {
           <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-green-400" />
+                <Target className="w-4 h-4 text-[var(--fm)]" />
                 <span className="text-sm font-semibold">OKR Pulse</span>
               </div>
               <button onClick={() => setActiveTab('okrs')} className="text-xs text-[var(--pios-muted)] hover:text-[var(--pios-text)] flex items-center gap-1">
@@ -285,7 +285,7 @@ export default function ExecutivePage() {
                   <span className="text-sm text-[var(--pios-text)] truncate flex-1 mr-2">{o.title}</span>
                   <span className={`text-xs font-medium ${HEALTH_COLOR[o.health] ?? 'text-[var(--pios-muted)]'}`}>{o.progress}%</span>
                 </div>
-                <ProgressBar value={o.progress} color={o.health === 'on_track' ? 'bg-green-500' : o.health === 'at_risk' ? 'bg-amber-500' : 'bg-red-500'} />
+                <ProgressBar value={o.progress} color={o.health === 'on_track' ? 'bg-green-500' : o.health === 'at_risk' ? 'bg-[var(--saas)]' : 'bg-red-500'} />
               </div>
             ))}
             {okrs.length === 0 && (
@@ -313,7 +313,7 @@ export default function ExecutivePage() {
                 <span className="text-sm font-semibold text-cyan-400">Board Report Pack — AI Generated</span>
                 <button onClick={() => { navigator.clipboard.writeText(reportPack); setRepCopied(true); setTimeout(() => setRepCopied(false), 2000) }}
                   className="flex items-center gap-1 text-xs text-[var(--pios-muted)] hover:text-[var(--pios-text)]">
-                  {reportCopied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                  {reportCopied ? <Check className="w-3 h-3 text-[var(--fm)]" /> : <Copy className="w-3 h-3" />}
                   {reportCopied ? 'Copied' : 'Copy'}
                 </button>
               </div>
@@ -324,7 +324,7 @@ export default function ExecutivePage() {
           <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <AlertTriangle className="w-4 h-4 text-[var(--saas)]" />
                 <span className="text-sm font-semibold">Open Decisions</span>
               </div>
               <button onClick={() => setActiveTab('decisions')} className="text-xs text-[var(--pios-muted)] hover:text-[var(--pios-text)] flex items-center gap-1">
@@ -333,7 +333,7 @@ export default function ExecutivePage() {
             </div>
             {decisions.filter(d => d.status === 'open').slice(0,4).map(d => (
               <div key={d.id} className="flex items-center gap-3 py-2 border-b border-[var(--pios-border)] last:border-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--saas)] flex-shrink-0" />
                 <div>
                   <div className="text-sm text-[var(--pios-text)]">{d.title}</div>
                   {d.framework_used && <div className="text-xs text-[var(--pios-muted)]">{d.framework_used}™</div>}
@@ -347,7 +347,7 @@ export default function ExecutivePage() {
           <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
+                <Users className="w-4 h-4 text-[var(--academic)]" />
                 <span className="text-sm font-semibold">Stakeholder Alerts</span>
               </div>
             </div>
@@ -367,12 +367,12 @@ export default function ExecutivePage() {
           {/* Principles */}
           <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
             <div className="flex items-center gap-2 mb-4">
-              <BookOpen className="w-4 h-4 text-violet-400" />
+              <BookOpen className="w-4 h-4 text-[var(--ai3)]" />
               <span className="text-sm font-semibold">Active Principles</span>
             </div>
             {principles.slice(0,4).map(p => (
               <div key={p.id} className="flex items-start gap-3 py-2 border-b border-[var(--pios-border)] last:border-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-violet-400 mt-1.5 flex-shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--ai)] mt-1.5 flex-shrink-0" />
                 <div>
                   <div className="text-sm font-medium text-[var(--pios-text)]">{p.title}</div>
                   <div className="text-xs text-[var(--pios-muted)] capitalize">{p.category}</div>
@@ -388,7 +388,7 @@ export default function ExecutivePage() {
       {activeTab === 'okrs' && (
         <div>
           <div className="flex justify-end mb-4">
-            <button onClick={() => setShowOKRModal(true)} className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg text-sm font-medium hover:bg-violet-500/20">
+            <button onClick={() => setShowOKRModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[var(--ai)]/10 border border-[rgba(99,73,255,0.2)] text-[var(--ai3)] rounded-lg text-sm font-medium hover:bg-[var(--ai)]/20">
               <Plus className="w-4 h-4" /> Add Objective
             </button>
           </div>
@@ -403,14 +403,14 @@ export default function ExecutivePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 mb-3">
-                  <ProgressBar value={o.progress} color={o.health === 'on_track' ? 'bg-green-500' : o.health === 'at_risk' ? 'bg-amber-500' : 'bg-red-500'} />
+                  <ProgressBar value={o.progress} color={o.health === 'on_track' ? 'bg-green-500' : o.health === 'at_risk' ? 'bg-[var(--saas)]' : 'bg-red-500'} />
                   <span className="text-sm font-medium text-[var(--pios-text)] min-w-[36px]">{o.progress}%</span>
                 </div>
                 {o.exec_key_results?.length > 0 && (
                   <div className="space-y-1.5 mt-2">
                     {o.exec_key_results.map(kr => (
                       <div key={kr.id} className="flex items-center gap-2 text-xs text-[var(--pios-muted)]">
-                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${kr.status === 'on_track' ? 'bg-green-400' : kr.status === 'at_risk' ? 'bg-amber-400' : 'bg-red-400'}`} />
+                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${kr.status === 'on_track' ? 'bg-green-400' : kr.status === 'at_risk' ? 'bg-[var(--saas)]' : 'bg-red-400'}`} />
                         <span className="flex-1">{kr.title}</span>
                         <span className="font-medium">{kr.current}/{kr.target}{kr.unit ? ` ${kr.unit}` : ''}</span>
                       </div>
@@ -434,7 +434,7 @@ export default function ExecutivePage() {
       {activeTab === 'decisions' && (
         <div>
           <div className="flex justify-end mb-4">
-            <button onClick={() => setShowDecisionModal(true)} className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg text-sm font-medium hover:bg-violet-500/20">
+            <button onClick={() => setShowDecisionModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[var(--ai)]/10 border border-[rgba(99,73,255,0.2)] text-[var(--ai3)] rounded-lg text-sm font-medium hover:bg-[var(--ai)]/20">
               <Plus className="w-4 h-4" /> Log Decision
             </button>
           </div>
@@ -445,24 +445,24 @@ export default function ExecutivePage() {
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-[var(--pios-text)] mb-1">{d.title}</div>
                     {d.context && <div className="text-xs text-[var(--pios-muted)] line-clamp-2">{d.context}</div>}
-                    {d.framework_used && <div className="text-xs text-violet-400 mt-1">{d.framework_used}™</div>}
+                    {d.framework_used && <div className="text-xs text-[var(--ai3)] mt-1">{d.framework_used}™</div>}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className={`text-xs px-2 py-0.5 rounded-full border font-medium ${d.status === 'open' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
+                    <div className={`text-xs px-2 py-0.5 rounded-full border font-medium ${d.status === 'open' ? 'bg-[var(--saas)]/10 border-amber-500/20 text-[var(--saas)]' : 'bg-[rgba(16,185,129,0.1)] border-green-500/20 text-[var(--fm)]'}`}>
                       {d.status}
                     </div>
                     {d.status === 'open' && (
                       <button onClick={() => analyseDecision(d)}
                         disabled={daaLoading === d.id}
-                        className="text-xs px-2 py-0.5 rounded-full border border-violet-500/20 text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 disabled:opacity-50 flex items-center gap-1 transition-colors">
+                        className="text-xs px-2 py-0.5 rounded-full border border-[rgba(99,73,255,0.2)] text-[var(--ai3)] bg-[var(--ai)]/10 hover:bg-[var(--ai)]/20 disabled:opacity-50 flex items-center gap-1 transition-colors">
                         {daaLoading === d.id ? '…' : '⚡ DAA™'}
                       </button>
                     )}
                   </div>
                 </div>
                 {daaAnalysis[d.id] && (
-                  <div className="mt-2 bg-violet-500/5 border border-violet-500/15 rounded-lg p-3">
-                    <div className="text-xs font-semibold text-violet-400 mb-1.5">DAA™ Analysis</div>
+                  <div className="mt-2 bg-[var(--ai)]/5 border border-violet-500/15 rounded-lg p-3">
+                    <div className="text-xs font-semibold text-[var(--ai3)] mb-1.5">DAA™ Analysis</div>
                     <div className="text-xs text-[var(--pios-text)]/80 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">{daaAnalysis[d.id]}</div>
                   </div>
                 )}
@@ -482,7 +482,7 @@ export default function ExecutivePage() {
       {activeTab === 'stakeholders' && (
         <div>
           <div className="flex justify-end mb-4">
-            <button onClick={() => setShowStakeModal(true)} className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg text-sm font-medium hover:bg-violet-500/20">
+            <button onClick={() => setShowStakeModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[var(--ai)]/10 border border-[rgba(99,73,255,0.2)] text-[var(--ai3)] rounded-lg text-sm font-medium hover:bg-[var(--ai)]/20">
               <Plus className="w-4 h-4" /> Add Stakeholder
             </button>
           </div>
@@ -498,12 +498,12 @@ export default function ExecutivePage() {
                 </div>
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex-1 h-1 bg-[var(--pios-surface2)] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${s.health_score}%` }} />
+                    <div className="h-full bg-[var(--academic)] rounded-full" style={{ width: `${s.health_score}%` }} />
                   </div>
                   <span className="text-xs text-[var(--pios-muted)]">{s.health_score}</span>
                 </div>
                 {s.next_touchpoint && (
-                  <div className={`text-xs mt-2 ${new Date(s.next_touchpoint) <= new Date() ? 'text-amber-400' : 'text-[var(--pios-muted)]'}`}>
+                  <div className={`text-xs mt-2 ${new Date(s.next_touchpoint) <= new Date() ? 'text-[var(--saas)]' : 'text-[var(--pios-muted)]'}`}>
                     {new Date(s.next_touchpoint) <= new Date() ? '⚠ Overdue: ' : 'Next: '}
                     {new Date(s.next_touchpoint).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                   </div>
@@ -529,14 +529,14 @@ export default function ExecutivePage() {
               <h2 className="text-base font-semibold">Contract Register</h2>
               <p className="text-xs text-[var(--pios-muted)] mt-0.5">Active and expiring contracts across all entities</p>
             </div>
-            <a href="/platform/contracts" className="text-xs text-violet-500 hover:underline">Open full register →</a>
+            <a href="/platform/contracts" className="text-xs text-[var(--ai)] hover:underline">Open full register →</a>
           </div>
           {ctLoading ? (
             <div className="text-xs text-[var(--pios-muted)] animate-pulse p-8 text-center">Loading contracts…</div>
           ) : contracts.length === 0 ? (
             <div className="rounded-xl border p-10 text-center text-sm text-[var(--pios-muted)]">
               <p className="mb-2 font-medium">No contracts registered</p>
-              <a href="/platform/contracts" className="text-violet-500 text-xs hover:underline">+ Register a contract</a>
+              <a href="/platform/contracts" className="text-[var(--ai)] text-xs hover:underline">+ Register a contract</a>
             </div>
           ) : (
             <div className="space-y-2">
@@ -566,7 +566,7 @@ export default function ExecutivePage() {
               <h2 className="text-base font-semibold">Group P&L</h2>
               <p className="text-xs text-[var(--pios-muted)] mt-0.5">Aggregated expenses, payroll and contracts</p>
             </div>
-            <a href="/platform/financials" className="text-xs text-violet-500 hover:underline">Full P&L →</a>
+            <a href="/platform/financials" className="text-xs text-[var(--ai)] hover:underline">Full P&L →</a>
           </div>
           {finLoading ? (
             <div className="text-xs text-[var(--pios-muted)] animate-pulse p-8 text-center">Loading financials…</div>
@@ -578,9 +578,9 @@ export default function ExecutivePage() {
           ) : (
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'Total Expenses', value: financial?.total_expenses ?? 0, colour: 'text-red-500' },
+                { label: 'Total Expenses', value: financial?.total_expenses ?? 0, colour: 'text-[var(--dng)]' },
                 { label: 'Payroll', value: financial?.total_payroll ?? 0, colour: 'text-amber-500' },
-                { label: 'Contracts', value: financial?.total_contracts ?? 0, colour: 'text-blue-500' },
+                { label: 'Contracts', value: financial?.total_contracts ?? 0, colour: 'text-[var(--academic)]' },
               ].map(({ label, value, colour }) => (
                 <div key={label} className="rounded-xl border p-4 text-center">
                   <p className="text-xs text-[var(--pios-muted)] mb-1">{label}</p>
@@ -605,7 +605,7 @@ export default function ExecutivePage() {
 
       {/* ── OKR MODAL ────────────────────────────────────── */}
       {showOKRModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-[var(--pios-border)] rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-base font-semibold mb-4">Add Objective</h3>
             <label className="text-xs text-[var(--pios-muted)] uppercase tracking-wide block mb-1">Objective title</label>
@@ -616,7 +616,7 @@ export default function ExecutivePage() {
             <textarea className={inp + ' h-20 resize-none'} placeholder="Context or strategic intent…" value={okrForm.description} onChange={e => setOkrForm(f => ({...f, description: e.target.value}))} />
             <div className="flex gap-2 mt-2">
               <button onClick={() => setShowOKRModal(false)} className="flex-1 py-2 rounded-lg border border-[var(--pios-border)] text-sm text-[var(--pios-muted)] hover:bg-[var(--pios-surface2)]">Cancel</button>
-              <button onClick={saveOKR} disabled={!okrForm.title || saving} className="flex-1 py-2 rounded-lg bg-violet-500 text-white text-sm font-medium disabled:opacity-50">
+              <button onClick={saveOKR} disabled={!okrForm.title || saving} className="flex-1 py-2 rounded-lg bg-[var(--ai)] text-white text-sm font-medium disabled:opacity-50">
                 {saving ? 'Saving…' : 'Add Objective'}
               </button>
             </div>
@@ -626,7 +626,7 @@ export default function ExecutivePage() {
 
       {/* ── DECISION MODAL ───────────────────────────────── */}
       {showDecisionModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-[var(--pios-border)] rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-base font-semibold mb-4">Log Decision</h3>
             <label className="text-xs text-[var(--pios-muted)] uppercase tracking-wide block mb-1">Decision title</label>
@@ -639,7 +639,7 @@ export default function ExecutivePage() {
             </select>
             <div className="flex gap-2 mt-2">
               <button onClick={() => setShowDecisionModal(false)} className="flex-1 py-2 rounded-lg border border-[var(--pios-border)] text-sm text-[var(--pios-muted)] hover:bg-[var(--pios-surface2)]">Cancel</button>
-              <button onClick={saveDecision} disabled={!decForm.title || saving} className="flex-1 py-2 rounded-lg bg-violet-500 text-white text-sm font-medium disabled:opacity-50">
+              <button onClick={saveDecision} disabled={!decForm.title || saving} className="flex-1 py-2 rounded-lg bg-[var(--ai)] text-white text-sm font-medium disabled:opacity-50">
                 {saving ? 'Saving…' : 'Log Decision'}
               </button>
             </div>
@@ -649,7 +649,7 @@ export default function ExecutivePage() {
 
       {/* ── STAKEHOLDER MODAL ────────────────────────────── */}
       {showStakeModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-[var(--pios-border)] rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-base font-semibold mb-4">Add Stakeholder</h3>
             <input className={inp} placeholder="Full name" value={stakeForm.name} onChange={e => setStakeForm(f => ({...f, name: e.target.value}))} />
@@ -661,7 +661,7 @@ export default function ExecutivePage() {
             </select>
             <div className="flex gap-2 mt-2">
               <button onClick={() => setShowStakeModal(false)} className="flex-1 py-2 rounded-lg border border-[var(--pios-border)] text-sm text-[var(--pios-muted)] hover:bg-[var(--pios-surface2)]">Cancel</button>
-              <button onClick={saveStakeholder} disabled={!stakeForm.name || saving} className="flex-1 py-2 rounded-lg bg-violet-500 text-white text-sm font-medium disabled:opacity-50">
+              <button onClick={saveStakeholder} disabled={!stakeForm.name || saving} className="flex-1 py-2 rounded-lg bg-[var(--ai)] text-white text-sm font-medium disabled:opacity-50">
                 {saving ? 'Saving…' : 'Add Stakeholder'}
               </button>
             </div>

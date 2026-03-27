@@ -108,7 +108,7 @@ export default function HelpPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <BookOpen className="w-6 h-6 text-violet-400" />
+        <BookOpen className="w-6 h-6 text-[var(--ai3)]" />
         <div>
           <h1 className="text-xl font-semibold">Help & Quick Reference</h1>
           <p className="text-sm text-[var(--pios-muted)]">Module guide, keyboard shortcuts, and FAQs</p>
@@ -118,10 +118,10 @@ export default function HelpPage() {
       {/* Quick links */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: <Zap className="w-4 h-4" />, label: 'Run smoke test', href: '/platform/smoke', colour: 'text-green-400' },
-          { icon: <MessageSquare className="w-4 h-4" />, label: 'Admin panel', href: '/platform/admin', colour: 'text-amber-400' },
-          { icon: <ExternalLink className="w-4 h-4" />, label: 'Setup guide', href: '/platform/setup', colour: 'text-blue-400' },
-          { icon: <BookOpen className="w-4 h-4" />, label: 'Settings', href: '/platform/settings', colour: 'text-violet-400' },
+          { icon: <Zap className="w-4 h-4" />, label: 'Run smoke test', href: '/platform/smoke', colour: 'text-[var(--fm)]' },
+          { icon: <MessageSquare className="w-4 h-4" />, label: 'Admin panel', href: '/platform/admin', colour: 'text-[var(--saas)]' },
+          { icon: <ExternalLink className="w-4 h-4" />, label: 'Setup guide', href: '/platform/setup', colour: 'text-[var(--academic)]' },
+          { icon: <BookOpen className="w-4 h-4" />, label: 'Settings', href: '/platform/settings', colour: 'text-[var(--ai3)]' },
         ].map(item => (
           <Link key={item.href} href={item.href}
             className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4 flex items-center gap-3 hover:bg-[var(--pios-surface)]/80 transition-colors no-underline">
@@ -216,9 +216,9 @@ export default function HelpPage() {
       <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5 text-center">
         <p className="text-sm text-[var(--pios-muted)]">
           Need help?{' '}
-          <a href="mailto:support@veritasiq.io" className="text-violet-400 hover:underline">support@veritasiq.io</a>
+          <a href="mailto:support@veritasiq.io" className="text-[var(--ai3)] hover:underline">support@veritasiq.io</a>
           {' '}·{' '}
-          <a href="https://github.com/wysskz48mv-eng/pios/issues" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">GitHub Issues</a>
+          <a href="https://github.com/wysskz48mv-eng/pios/issues" target="_blank" rel="noopener noreferrer" className="text-[var(--ai3)] hover:underline">GitHub Issues</a>
         </p>
       </div>
 

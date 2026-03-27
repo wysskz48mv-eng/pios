@@ -15,12 +15,12 @@ type KnowledgeEntry = {
 
 const TYPE_COLOR: Record<string, string> = {
   note:               'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
-  article:            'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  book:               'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  paper:              'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  article:            'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
+  book:               'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
+  paper:              'bg-[var(--ai)]/10 text-[var(--ai3)] border-[rgba(99,73,255,0.2)]',
   case_study:         'bg-teal-500/10 text-teal-400 border-teal-500/20',
   framework:          'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  lesson_learned:     'bg-green-500/10 text-green-400 border-green-500/20',
+  lesson_learned:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
   client_insight:     'bg-orange-500/10 text-orange-400 border-orange-500/20',
   market_intelligence:'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   ai_search_result:   'bg-pink-500/10 text-pink-400 border-pink-500/20',
@@ -28,9 +28,9 @@ const TYPE_COLOR: Record<string, string> = {
 }
 const DOMAIN_COLOR: Record<string, string> = {
   fm_consulting: 'bg-teal-500/10 text-teal-400',
-  academic:      'bg-violet-500/10 text-violet-400',
-  saas:          'bg-blue-500/10 text-blue-400',
-  business:      'bg-amber-500/10 text-amber-400',
+  academic:      'bg-[var(--ai)]/10 text-[var(--ai3)]',
+  saas:          'bg-[var(--academic)]/10 text-[var(--academic)]',
+  business:      'bg-[var(--saas)]/10 text-[var(--saas)]',
   personal:      'bg-slate-500/10 text-[var(--pios-muted)]',
 }
 
@@ -233,7 +233,7 @@ export default function KnowledgePage() {
                       )}
                       <div className="flex gap-3 mt-1.5 flex-wrap">
                         {e.source && <span className="text-xs text-[var(--pios-muted)] flex items-center gap-1"><BookOpen className="w-3 h-3" />{e.source}</span>}
-                        {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer" onClick={ev => ev.stopPropagation()} className="text-xs text-blue-400 flex items-center gap-1 hover:underline"><ExternalLink className="w-3 h-3" />Link</a>}
+                        {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer" onClick={ev => ev.stopPropagation()} className="text-xs text-[var(--academic)] flex items-center gap-1 hover:underline"><ExternalLink className="w-3 h-3" />Link</a>}
                         <span className="text-xs text-[var(--pios-muted)]">{new Date(e.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</span>
                       </div>
                       {e.tags?.length ? (
@@ -247,7 +247,7 @@ export default function KnowledgePage() {
                       ) : null}
                     </div>
                     <button onClick={ev => { ev.stopPropagation(); deleteEntry(e.id) }} disabled={deleting === e.id}
-                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--pios-muted)] hover:text-red-400 flex-shrink-0">
+                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--pios-muted)] hover:text-[var(--dng)] flex-shrink-0">
                       {deleting === e.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                     </button>
                   </div>
@@ -286,7 +286,7 @@ export default function KnowledgePage() {
               {searching ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching…</> : <><Zap className="w-3.5 h-3.5" /> Search Knowledge Base</>}
             </button>
             {total === 0 && (
-              <p className="text-xs text-amber-400 mt-2">Add entries first before searching.</p>
+              <p className="text-xs text-[var(--saas)] mt-2">Add entries first before searching.</p>
             )}
           </div>
 
@@ -306,7 +306,7 @@ export default function KnowledgePage() {
                 </div>
                 <button onClick={() => { navigator.clipboard.writeText(aiAnswer); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
                   className="flex items-center gap-1 text-xs text-[var(--pios-muted)] hover:text-foreground">
-                  {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                  {copied ? <Check className="w-3 h-3 text-[var(--fm)]" /> : <Copy className="w-3 h-3" />}
                   {copied ? 'Copied' : 'Copy'}
                 </button>
               </div>

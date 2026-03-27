@@ -40,9 +40,9 @@ type FeedItem = {
 
 const DOMAINS: Omit<DomainBriefing, 'items'|'ai_synthesis'|'generated_at'|'loading'|'error'|'expanded'>[] = [
   { domain: 'fm_industry',  label: 'FM & Real Estate',    icon: '🏗',  color: 'text-teal-400',    borderColor: 'border-teal-500/20'    },
-  { domain: 'academic',     label: 'Academic & DBA',       icon: '📚',  color: 'text-violet-400',  borderColor: 'border-violet-500/20'  },
-  { domain: 'saas',         label: 'SaaS & PropTech',      icon: '⚡',  color: 'text-blue-400',    borderColor: 'border-blue-500/20'    },
-  { domain: 'regulatory',   label: 'Regulatory & Legal',   icon: '⚖',  color: 'text-amber-400',   borderColor: 'border-amber-500/20'   },
+  { domain: 'academic',     label: 'Academic & DBA',       icon: '📚',  color: 'text-[var(--ai3)]',  borderColor: 'border-[rgba(99,73,255,0.2)]'  },
+  { domain: 'saas',         label: 'SaaS & PropTech',      icon: '⚡',  color: 'text-[var(--academic)]',    borderColor: 'border-blue-500/20'    },
+  { domain: 'regulatory',   label: 'Regulatory & Legal',   icon: '⚖',  color: 'text-[var(--saas)]',   borderColor: 'border-amber-500/20'   },
   { domain: 'gcc_market',   label: 'GCC Market',           icon: '🌍',  color: 'text-emerald-400', borderColor: 'border-emerald-500/20' },
 ]
 
@@ -114,7 +114,7 @@ export default function IntelligencePage() {
       <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Globe className="w-5 h-5 text-violet-400" />
+            <Globe className="w-5 h-5 text-[var(--ai3)]" />
             <h1 className="text-xl font-bold tracking-tight">Intelligence Hub</h1>
           </div>
           <p className="text-sm text-[var(--pios-muted)]">
@@ -133,16 +133,16 @@ export default function IntelligencePage() {
       </div>
 
       {/* SIA Banner */}
-      <div className="flex items-center justify-between mb-5 p-4 rounded-xl bg-violet-500/5 border border-violet-500/20">
+      <div className="flex items-center justify-between mb-5 p-4 rounded-xl bg-[var(--ai)]/5 border border-[rgba(99,73,255,0.2)]">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-            <span className="text-xs font-semibold text-violet-400 uppercase tracking-wide">SIA™ Strategic Intelligence Agent</span>
+            <div className="w-2 h-2 rounded-full bg-[var(--ai)] animate-pulse" />
+            <span className="text-xs font-semibold text-[var(--ai3)] uppercase tracking-wide">SIA™ Strategic Intelligence Agent</span>
           </div>
           <p className="text-xs text-[var(--pios-muted)]">Executive-grade Signal Briefs with SO WHAT analysis across 6 sectors</p>
         </div>
         <Link href="/platform/comms?tab=sia"
-          className="flex-shrink-0 text-xs px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg font-medium hover:bg-violet-500/20 transition-colors">
+          className="flex-shrink-0 text-xs px-4 py-2 bg-[var(--ai)]/10 border border-[rgba(99,73,255,0.2)] text-[var(--ai3)] rounded-lg font-medium hover:bg-[var(--ai)]/20 transition-colors">
           Open SIA™ →
         </Link>
       </div>
@@ -152,7 +152,7 @@ export default function IntelligencePage() {
         {(['briefings', 'feed'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
-              (activeTab === tab ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : 'text-[var(--pios-muted)] hover:text-[var(--pios-text)]')}>
+              (activeTab === tab ? 'bg-[var(--ai)]/10 text-[var(--ai3)] border border-[rgba(99,73,255,0.2)]' : 'text-[var(--pios-muted)] hover:text-[var(--pios-text)]')}>
             {tab === 'briefings' ? '⚡ AI Briefings' : '📡 My Feed'}
           </button>
         ))}
@@ -206,7 +206,7 @@ export default function IntelligencePage() {
 
                   {/* Error */}
                   {!b.loading && b.error && (
-                    <div className="pt-4 text-xs text-red-400 flex items-center gap-2">
+                    <div className="pt-4 text-xs text-[var(--dng)] flex items-center gap-2">
                       <span>⚠</span> {b.error}
                       <button onClick={() => loadBriefing(b.domain)} className="underline hover:no-underline ml-1">Retry</button>
                     </div>
@@ -214,10 +214,10 @@ export default function IntelligencePage() {
 
                   {/* NemoClaw synthesis */}
                   {!b.loading && b.ai_synthesis && (
-                    <div className="mt-4 mb-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/10">
+                    <div className="mt-4 mb-3 p-3 rounded-lg bg-[var(--ai)]/5 border border-violet-500/10">
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-                        <span className="text-[10px] font-bold text-violet-400 uppercase tracking-wider">NemoClaw Synthesis</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--ai)]" />
+                        <span className="text-[10px] font-bold text-[var(--ai3)] uppercase tracking-wider">NemoClaw Synthesis</span>
                       </div>
                       <p className="text-xs text-[var(--pios-sub)] leading-relaxed">{b.ai_synthesis}</p>
                     </div>
@@ -237,7 +237,7 @@ export default function IntelligencePage() {
                                   </span>
                                 )}
                                 {item.relevance && item.relevance >= 4 && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 uppercase">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--saas)]/10 text-[var(--saas)] uppercase">
                                     High relevance
                                   </span>
                                 )}
@@ -252,8 +252,8 @@ export default function IntelligencePage() {
                               <p className="text-xs text-[var(--pios-muted)] leading-relaxed">{item.summary}</p>
                               {item.so_what && (
                                 <div className="mt-2 flex gap-1.5">
-                                  <span className="text-[10px] font-bold text-amber-400 flex-shrink-0 mt-0.5">SO WHAT →</span>
-                                  <p className="text-xs text-amber-200/70 leading-relaxed">{item.so_what}</p>
+                                  <span className="text-[10px] font-bold text-[var(--saas)] flex-shrink-0 mt-0.5">SO WHAT →</span>
+                                  <p className="text-xs text-[rgba(245,158,11,0.7)] leading-relaxed">{item.so_what}</p>
                                 </div>
                               )}
                             </div>
@@ -275,7 +275,7 @@ export default function IntelligencePage() {
                       <Rss className="w-6 h-6 mx-auto mb-2 opacity-20" />
                       <p className="text-sm text-[var(--pios-muted)]">No briefing generated yet.</p>
                       <button onClick={() => loadBriefing(b.domain)}
-                        className="mt-2 text-xs text-violet-400 hover:underline">
+                        className="mt-2 text-xs text-[var(--ai3)] hover:underline">
                         Generate now →
                       </button>
                     </div>
@@ -294,7 +294,7 @@ export default function IntelligencePage() {
             {feedCategories.map(cat => (
               <button key={cat} onClick={() => setFeedCategory(cat)}
                 className={'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ' +
-                  (feedCategory === cat ? 'border-violet-500/60 bg-violet-500/10 text-violet-400' : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-[var(--pios-text)]')}>
+                  (feedCategory === cat ? 'border-violet-500/60 bg-[var(--ai)]/10 text-[var(--ai3)]' : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-[var(--pios-text)]')}>
                 {cat === 'all' ? 'All' : cat.replace(/_/g, ' ')}
               </button>
             ))}
@@ -318,7 +318,7 @@ export default function IntelligencePage() {
           ) : (
             <div className="space-y-3">
               {filteredFeed.map(item => (
-                <div key={item.id} className="p-4 bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl hover:border-violet-500/30 transition-colors">
+                <div key={item.id} className="p-4 bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl hover:border-[rgba(99,73,255,0.3)] transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -326,7 +326,7 @@ export default function IntelligencePage() {
                           {item.category?.replace(/_/g, ' ')}
                         </span>
                         {item.relevance_score && item.relevance_score > 0.7 && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 uppercase">High relevance</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--saas)]/10 text-[var(--saas)] uppercase">High relevance</span>
                         )}
                         <span className="text-xs text-[var(--pios-muted)]">{item.source}</span>
                         {item.published_at && (

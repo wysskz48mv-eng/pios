@@ -17,10 +17,10 @@ type Summary = {
 type Contract = { title: string; contract_type: string; counterparty: string; value?: number; currency?: string; end_date?: string }
 
 const DOMAIN_COLOR: Record<string, string> = {
-  academic:      'bg-violet-500/10 text-violet-400',
+  academic:      'bg-[var(--ai)]/10 text-[var(--ai3)]',
   fm_consulting: 'bg-teal-500/10 text-teal-400',
-  saas:          'bg-blue-500/10 text-blue-400',
-  business:      'bg-amber-500/10 text-amber-400',
+  saas:          'bg-[var(--academic)]/10 text-[var(--academic)]',
+  business:      'bg-[var(--saas)]/10 text-[var(--saas)]',
   personal:      'bg-slate-500/10 text-[var(--pios-muted)]',
 }
 
@@ -96,7 +96,7 @@ export default function FinancialsPage() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <TrendingUp className="w-6 h-6 text-green-400" />
+          <TrendingUp className="w-6 h-6 text-[var(--fm)]" />
           <div>
             <h1 className="text-xl font-semibold">Group Financial Overview</h1>
             <p className="text-sm text-[var(--pios-muted)]">Aggregated view — expenses · payroll · contracts · cash position</p>
@@ -109,7 +109,7 @@ export default function FinancialsPage() {
           <button onClick={() => setShowSnap(s => !s)} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--pios-border)] text-sm text-[var(--pios-muted)] hover:text-[var(--pios-text)]">
             + Add snapshot
           </button>
-          <button onClick={aiCommentary} disabled={generating || !summary} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--pios-border)] bg-green-500/10 text-green-400 text-sm font-medium hover:bg-green-500/15 disabled:opacity-50">
+          <button onClick={aiCommentary} disabled={generating || !summary} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--pios-border)] bg-[rgba(16,185,129,0.1)] text-[var(--fm)] text-sm font-medium hover:bg-green-500/15 disabled:opacity-50">
             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
             CFO Brief
           </button>
@@ -156,7 +156,7 @@ export default function FinancialsPage() {
             <button onClick={() => setShowSnap(false)} className="px-4 py-2 rounded-lg text-sm text-[var(--pios-muted)] border border-[var(--pios-border)] hover:bg-[var(--pios-surface)]">
               Cancel
             </button>
-            <button onClick={saveSnapshot} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/15 disabled:opacity-50">
+            <button onClick={saveSnapshot} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border border-green-500/20 hover:bg-green-500/15 disabled:opacity-50">
               {saving ? 'Saving…' : 'Save snapshot'}
             </button>
           </div>
@@ -170,19 +170,19 @@ export default function FinancialsPage() {
           {/* KPI Cards */}
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2"><DollarSign className="w-4 h-4 text-red-400" /><span className="text-xs text-[var(--pios-muted)] uppercase tracking-wide">Expenses {ytdLabel}</span></div>
+              <div className="flex items-center gap-2 mb-2"><DollarSign className="w-4 h-4 text-[var(--dng)]" /><span className="text-xs text-[var(--pios-muted)] uppercase tracking-wide">Expenses {ytdLabel}</span></div>
               <div className="text-2xl font-semibold">£{(summary?.totalExpensesYTD ?? 0).toLocaleString('en-GB', { maximumFractionDigits: 0 })}</div>
             </div>
             <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2"><PiggyBank className="w-4 h-4 text-violet-400" /><span className="text-xs text-[var(--pios-muted)] uppercase tracking-wide">Payroll {ytdLabel}</span></div>
+              <div className="flex items-center gap-2 mb-2"><PiggyBank className="w-4 h-4 text-[var(--ai3)]" /><span className="text-xs text-[var(--pios-muted)] uppercase tracking-wide">Payroll {ytdLabel}</span></div>
               <div className="text-2xl font-semibold">£{(summary?.payrollYTD ?? 0).toLocaleString('en-GB', { maximumFractionDigits: 0 })}</div>
             </div>
             <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2"><BarChart2 className="w-4 h-4 text-amber-400" /><span className="text-xs text-[var(--pios-muted)] uppercase tracking-wide">Total burn {ytdLabel}</span></div>
+              <div className="flex items-center gap-2 mb-2"><BarChart2 className="w-4 h-4 text-[var(--saas)]" /><span className="text-xs text-[var(--pios-muted)] uppercase tracking-wide">Total burn {ytdLabel}</span></div>
               <div className="text-2xl font-semibold">£{totalBurn.toLocaleString('en-GB', { maximumFractionDigits: 0 })}</div>
             </div>
             <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2"><FileText className="w-4 h-4 text-blue-400" /><span className="text-xs text-[var(--pios-muted)] uppercase tracking-wide">Contract pipeline</span></div>
+              <div className="flex items-center gap-2 mb-2"><FileText className="w-4 h-4 text-[var(--academic)]" /><span className="text-xs text-[var(--pios-muted)] uppercase tracking-wide">Contract pipeline</span></div>
               <div className="text-2xl font-semibold">£{(summary?.activeContractValue ?? 0).toLocaleString('en-GB', { maximumFractionDigits: 0 })}</div>
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function FinancialsPage() {
                           <span className="text-sm font-medium">£{amount.toLocaleString('en-GB', { maximumFractionDigits: 0 })}</span>
                         </div>
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500/50 rounded-full" style={{ width: `${pct}%` }} />
+                          <div className="h-full bg-[rgba(16,185,129,0.5)] rounded-full" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
                     )
@@ -230,15 +230,15 @@ export default function FinancialsPage() {
                           <span className="text-xs font-medium">£{total.toLocaleString('en-GB', { maximumFractionDigits: 0 })}</span>
                         </div>
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden flex">
-                          <div className="h-full bg-red-500/50 rounded-l-full" style={{ width: `${(v.expenses / maxMonthTotal) * 100}%` }} />
-                          <div className="h-full bg-violet-500/50" style={{ width: `${(v.payroll / maxMonthTotal) * 100}%` }} />
+                          <div className="h-full bg-[rgba(244,63,94,0.5)] rounded-l-full" style={{ width: `${(v.expenses / maxMonthTotal) * 100}%` }} />
+                          <div className="h-full bg-[var(--ai)]/50" style={{ width: `${(v.payroll / maxMonthTotal) * 100}%` }} />
                         </div>
                       </div>
                     )
                   })}
                   <div className="flex gap-4 pt-1">
-                    <span className="flex items-center gap-1 text-xs text-[var(--pios-muted)]"><span className="w-2 h-2 rounded-full bg-red-500/50 inline-block" />Expenses</span>
-                    <span className="flex items-center gap-1 text-xs text-[var(--pios-muted)]"><span className="w-2 h-2 rounded-full bg-violet-500/50 inline-block" />Payroll</span>
+                    <span className="flex items-center gap-1 text-xs text-[var(--pios-muted)]"><span className="w-2 h-2 rounded-full bg-[rgba(244,63,94,0.5)] inline-block" />Expenses</span>
+                    <span className="flex items-center gap-1 text-xs text-[var(--pios-muted)]"><span className="w-2 h-2 rounded-full bg-[var(--ai)]/50 inline-block" />Payroll</span>
                   </div>
                 </div>
               )}
@@ -270,9 +270,9 @@ export default function FinancialsPage() {
           {commentary && (
             <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-green-400" /><span className="text-sm font-semibold text-green-400">CFO Commentary — AI Generated</span></div>
+                <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-[var(--fm)]" /><span className="text-sm font-semibold text-[var(--fm)]">CFO Commentary — AI Generated</span></div>
                 <button onClick={() => { navigator.clipboard.writeText(commentary); setCopied(true); setTimeout(() => setCopied(false), 2000) }} className="flex items-center gap-1 text-xs text-[var(--pios-muted)] hover:text-[var(--pios-text)]">
-                  {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />} {copied ? 'Copied' : 'Copy'}
+                  {copied ? <Check className="w-3 h-3 text-[var(--fm)]" /> : <Copy className="w-3 h-3" />} {copied ? 'Copied' : 'Copy'}
                 </button>
               </div>
               <pre className="text-xs text-[var(--pios-text)]/80 leading-relaxed whitespace-pre-wrap font-sans">{commentary}</pre>

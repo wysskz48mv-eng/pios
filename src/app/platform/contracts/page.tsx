@@ -16,10 +16,10 @@ type Contract = {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  client:      'bg-green-500/10 text-green-400 border-green-500/20',
-  supplier:    'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  employment:  'bg-violet-500/10 text-violet-400 border-violet-500/20',
-  nda:         'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  client:      'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
+  supplier:    'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
+  employment:  'bg-[var(--ai)]/10 text-[var(--ai3)] border-[rgba(99,73,255,0.2)]',
+  nda:         'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
   licence:     'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
   partnership: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
   lease:       'bg-orange-500/10 text-orange-400 border-orange-500/20',
@@ -27,12 +27,12 @@ const TYPE_COLOR: Record<string, string> = {
   other:       'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 const STATUS_COLOR: Record<string, string> = {
-  active:     'bg-green-500/10 text-green-400 border-green-500/20',
-  draft:      'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  expired:    'bg-red-500/10 text-red-400 border-red-500/20',
-  terminated: 'bg-red-500/10 text-red-400 border-red-500/20',
+  active:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
+  draft:      'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
+  expired:    'bg-red-500/10 text-[var(--dng)] border-red-500/20',
+  terminated: 'bg-red-500/10 text-[var(--dng)] border-red-500/20',
   renewed:    'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  pending:    'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  pending:    'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
 }
 
 const BLANK = { title:'', contract_type:'client', counterparty:'', status:'active', value:'', currency:'GBP', start_date:'', end_date:'', auto_renewal:false, notice_period_days:'', renewal_date:'', key_terms:'', obligations:'', domain:'business', notes:'' }
@@ -102,28 +102,28 @@ export default function ContractsPage() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <FileText className="w-6 h-6 text-blue-400" />
+          <FileText className="w-6 h-6 text-[var(--academic)]" />
           <div>
             <h1 className="text-xl font-semibold">Contract Register</h1>
             <p className="text-sm text-[var(--pios-muted)]">Client agreements · supplier contracts · NDAs · licences · renewals</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={aiReview} disabled={reviewing || contracts.length === 0} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--pios-border)] bg-blue-500/10 text-blue-400 text-sm font-medium hover:bg-blue-500/15 disabled:opacity-50">
+          <button onClick={aiReview} disabled={reviewing || contracts.length === 0} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--pios-border)] bg-[var(--academic)]/10 text-[var(--academic)] text-sm font-medium hover:bg-[var(--academic)]/15 disabled:opacity-50">
             {reviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
             AI Review
           </button>
-          <button onClick={() => { setEditing(null); setForm({ ...BLANK }); setShowModal(true) }} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600">
+          <button onClick={() => { setEditing(null); setForm({ ...BLANK }); setShowModal(true) }} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--academic)] text-white text-sm font-medium hover:bg-blue-600">
             <Plus className="w-3 h-3" /> Add Contract
           </button>
         </div>
       </div>
 
       {alerts.length > 0 && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4 text-amber-400" /><span className="text-sm font-semibold text-amber-400">{alerts.length} contract{alerts.length > 1 ? 's' : ''} expiring within 60 days</span></div>
+        <div className="bg-[var(--saas)]/10 border border-amber-500/30 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2"><AlertTriangle className="w-4 h-4 text-[var(--saas)]" /><span className="text-sm font-semibold text-[var(--saas)]">{alerts.length} contract{alerts.length > 1 ? 's' : ''} expiring within 60 days</span></div>
           {alerts.map(a => (
-            <div key={a.id} className="text-sm text-amber-300/80 ml-6">· {a.title} ({a.counterparty}) — expires {a.end_date}{a.auto_renewal ? ' [auto-renews]' : ''}</div>
+            <div key={a.id} className="text-sm text-[rgba(245,158,11,0.8)] ml-6">· {a.title} ({a.counterparty}) — expires {a.end_date}{a.auto_renewal ? ' [auto-renews]' : ''}</div>
           ))}
         </div>
       )}
@@ -145,7 +145,7 @@ export default function ContractsPage() {
       <div className="flex gap-2 flex-wrap">
         {statuses.map(s => (
           <button key={s} onClick={() => setStatus(s)}
-            className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all capitalize ${statusFilter === s ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-foreground'}`}>
+            className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all capitalize ${statusFilter === s ? 'bg-[var(--academic)]/15 text-[var(--academic)] border-blue-500/30' : 'border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-foreground'}`}>
             {s} {s !== 'all' && <span className="opacity-60">({contracts.filter(c => c.status === s).length})</span>}
           </button>
         ))}
@@ -173,13 +173,13 @@ export default function ContractsPage() {
                   <div className="flex gap-4 flex-wrap">
                     <span className="text-xs text-[var(--pios-muted)]">With: {c.counterparty}</span>
                     {c.value ? <span className="text-xs text-[var(--pios-muted)]">{c.currency ?? 'GBP'} {Number(c.value).toLocaleString()}</span> : null}
-                    {c.end_date && <span className={`text-xs ${alerts.some(a => a.id === c.id) ? 'text-amber-400' : 'text-[var(--pios-muted)]'}`}>Ends: {c.end_date}</span>}
+                    {c.end_date && <span className={`text-xs ${alerts.some(a => a.id === c.id) ? 'text-[var(--saas)]' : 'text-[var(--pios-muted)]'}`}>Ends: {c.end_date}</span>}
                     {c.notice_period_days ? <span className="text-xs text-[var(--pios-muted)]">{c.notice_period_days}d notice</span> : null}
                   </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <button onClick={e => { e.stopPropagation(); setEditing(c); setForm({ title:c.title, contract_type:c.contract_type, counterparty:c.counterparty, status:c.status, value:String(c.value??''), currency:c.currency??'GBP', start_date:c.start_date??'', end_date:c.end_date??'', auto_renewal:c.auto_renewal??false, notice_period_days:String(c.notice_period_days??''), renewal_date:c.renewal_date??'', key_terms:c.key_terms??'', obligations:c.obligations??'', domain:c.domain??'business', notes:c.notes??'' }); setShowModal(true) }} className="p-1.5 rounded-lg hover:bg-muted text-[var(--pios-muted)] hover:text-foreground"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={e => { e.stopPropagation(); del(c.id) }} disabled={deleting === c.id} className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--pios-muted)] hover:text-red-400">{deleting === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}</button>
+                  <button onClick={e => { e.stopPropagation(); del(c.id) }} disabled={deleting === c.id} className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--pios-muted)] hover:text-[var(--dng)]">{deleting === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}</button>
                 </div>
               </div>
               {expanded === c.id && (c.key_terms || c.obligations || c.notes) && (
@@ -197,9 +197,9 @@ export default function ContractsPage() {
       {review && (
         <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-blue-400" /><span className="text-sm font-semibold text-blue-400">Contract Portfolio Review — AI Generated</span></div>
+            <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-[var(--academic)]" /><span className="text-sm font-semibold text-[var(--academic)]">Contract Portfolio Review — AI Generated</span></div>
             <button onClick={() => { navigator.clipboard.writeText(review); setCopied(true); setTimeout(() => setCopied(false), 2000) }} className="flex items-center gap-1 text-xs text-[var(--pios-muted)] hover:text-foreground">
-              {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />} {copied ? 'Copied' : 'Copy'}
+              {copied ? <Check className="w-3 h-3 text-[var(--fm)]" /> : <Copy className="w-3 h-3" />} {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
           <pre className="text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap font-sans">{review}</pre>
@@ -207,7 +207,7 @@ export default function ContractsPage() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="bg-background border border-[var(--pios-border)] rounded-2xl p-6 w-full max-w-lg space-y-4 my-4">
             <h3 className="text-base font-semibold">{editing ? 'Edit Contract' : 'Add Contract'}</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -226,7 +226,7 @@ export default function ContractsPage() {
             </div>
             <div className="flex gap-2 justify-end pt-2">
               <button onClick={() => { setShowModal(false); setEditing(null) }} className="px-4 py-2 rounded-xl border border-[var(--pios-border)] text-sm hover:bg-muted">Cancel</button>
-              <button onClick={save} disabled={!form.title.trim() || !form.counterparty.trim() || saving} className="px-4 py-2 rounded-xl bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 disabled:opacity-50">
+              <button onClick={save} disabled={!form.title.trim() || !form.counterparty.trim() || saving} className="px-4 py-2 rounded-xl bg-[var(--academic)] text-white text-sm font-medium hover:bg-blue-600 disabled:opacity-50">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editing ? 'Update' : 'Add Contract'}
               </button>
             </div>

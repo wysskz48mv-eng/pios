@@ -14,9 +14,9 @@ type SIABrief  = { id: string; title: string; content: string; sectors: string[]
 type Sector    = { key: string; label: string }
 
 const STATUS_COLOR: Record<string,string> = {
-  draft:    'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  reviewed: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  sent:     'bg-green-500/10 text-green-400 border-green-500/20',
+  draft:    'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
+  reviewed: 'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
+  sent:     'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
   archived: 'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 const TONES = ['formal','confident','balanced','direct']
@@ -153,9 +153,9 @@ export default function CommsPage() {
       <div className="flex items-center gap-3 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <MessageSquare className="w-5 h-5 text-blue-400" />
+            <MessageSquare className="w-5 h-5 text-[var(--academic)]" />
             <h1 className="text-xl font-bold">Intelligence & Comms</h1>
-            <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-medium">BICA™ · SIA™</span>
+            <span className="text-xs bg-[var(--academic)]/10 text-[var(--academic)] border border-blue-500/20 px-2 py-0.5 rounded-full font-medium">BICA™ · SIA™</span>
           </div>
           <p className="text-sm text-[var(--pios-muted)]">Board packs · investor updates · strategic signal briefs</p>
         </div>
@@ -181,7 +181,7 @@ export default function CommsPage() {
               <div className="space-y-2">
                 {templates.map(t => (
                   <button key={t.key} onClick={() => setSelTemplate(t.key)}
-                    className={`w-full text-left p-3 rounded-xl border transition-all ${selTemplate === t.key ? 'bg-blue-500/10 border-blue-500/30' : 'bg-[var(--pios-surface)] border-[var(--pios-border)] hover:bg-[var(--pios-surface2)]'}`}>
+                    className={`w-full text-left p-3 rounded-xl border transition-all ${selTemplate === t.key ? 'bg-[var(--academic)]/10 border-blue-500/30' : 'bg-[var(--pios-surface)] border-[var(--pios-border)] hover:bg-[var(--pios-surface2)]'}`}>
                     <div className={`text-sm font-medium ${selTemplate === t.key ? 'text-[var(--pios-text)]' : 'text-[var(--pios-text)]/80'}`}>{t.label}</div>
                     <div className="text-xs text-[var(--pios-muted)] mt-0.5">{t.desc}</div>
                   </button>
@@ -198,14 +198,14 @@ export default function CommsPage() {
                   <div className="flex gap-2 flex-wrap mb-3">
                     {TONES.map(t => (
                       <button key={t} onClick={() => setTone(t)}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium capitalize transition-colors ${tone === t ? 'bg-violet-500 text-white' : 'bg-[var(--pios-surface2)] text-[var(--pios-muted)] hover:bg-[var(--pios-surface3)]'}`}>
+                        className={`px-3 py-1 rounded-lg text-xs font-medium capitalize transition-colors ${tone === t ? 'bg-[var(--ai)] text-white' : 'bg-[var(--pios-surface2)] text-[var(--pios-muted)] hover:bg-[var(--pios-surface3)]'}`}>
                         {t}
                       </button>
                     ))}
                   </div>
                 </div>
                 <button onClick={generate} disabled={generating}
-                  className="w-full py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold disabled:opacity-40 hover:bg-blue-600 flex items-center justify-center gap-2">
+                  className="w-full py-2.5 rounded-xl bg-[var(--academic)] text-white text-sm font-semibold disabled:opacity-40 hover:bg-blue-600 flex items-center justify-center gap-2">
                   {generating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</> : <><Zap className="w-4 h-4" /> Generate {currentTemplate?.label}</>}
                 </button>
               </div>
@@ -237,13 +237,13 @@ export default function CommsPage() {
               <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-400" />
-                    <span className="text-xs font-semibold text-blue-400 uppercase tracking-wide">BICA™ — {currentTemplate?.label}</span>
+                    <div className="w-2 h-2 rounded-full bg-[var(--academic)]" />
+                    <span className="text-xs font-semibold text-[var(--academic)] uppercase tracking-wide">BICA™ — {currentTemplate?.label}</span>
                     <span className="text-xs text-[var(--pios-muted)]">{generatedComms.word_count} words</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => copyText(generatedComms.content)} className="text-xs text-[var(--pios-muted)] hover:text-[var(--pios-text)] flex items-center gap-1 transition-colors">
-                      {copied ? <><Check className="w-3 h-3 text-green-400" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
+                      {copied ? <><Check className="w-3 h-3 text-[var(--fm)]" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
                     </button>
                     <button onClick={() => setGeneratedComms(null)} className="text-xs text-[var(--pios-muted)] hover:text-[var(--pios-text)]">New draft</button>
                   </div>
@@ -274,8 +274,8 @@ export default function CommsPage() {
               {sectors.map(s => (
                 <button key={s.key}
                   onClick={() => setSelSectors(prev => prev.includes(s.key) ? prev.filter(x=>x!==s.key) : [...prev, s.key])}
-                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center gap-3 ${selSectors.includes(s.key) ? 'bg-violet-500/10 border-violet-500/30' : 'bg-[var(--pios-surface)] border-[var(--pios-border)] hover:bg-[var(--pios-surface2)]'}`}>
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${selSectors.includes(s.key) ? 'bg-violet-400' : 'bg-[var(--pios-border3)]'}`} />
+                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center gap-3 ${selSectors.includes(s.key) ? 'bg-[var(--ai)]/10 border-[rgba(99,73,255,0.3)]' : 'bg-[var(--pios-surface)] border-[var(--pios-border)] hover:bg-[var(--pios-surface2)]'}`}>
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${selSectors.includes(s.key) ? 'bg-[var(--ai)]' : 'bg-[var(--pios-border3)]'}`} />
                   <span className={`text-sm ${selSectors.includes(s.key) ? 'text-[var(--pios-text)] font-medium' : 'text-[var(--pios-text)]/70'}`}>{s.label}</span>
                 </button>
               ))}
@@ -285,14 +285,14 @@ export default function CommsPage() {
               <div className="flex gap-2">
                 {(['weekly','daily'] as const).map(c => (
                   <button key={c} onClick={() => setBriefCadence(c)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${briefCadence === c ? 'bg-violet-500 text-white' : 'bg-[var(--pios-surface2)] text-[var(--pios-muted)] hover:bg-[var(--pios-surface3)]'}`}>
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${briefCadence === c ? 'bg-[var(--ai)] text-white' : 'bg-[var(--pios-surface2)] text-[var(--pios-muted)] hover:bg-[var(--pios-surface3)]'}`}>
                     {c}
                   </button>
                 ))}
               </div>
             </div>
             <button onClick={generateBrief} disabled={briefing || !selSectors.length}
-              className="w-full py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold disabled:opacity-40 hover:bg-violet-600 flex items-center justify-center gap-2">
+              className="w-full py-2.5 rounded-xl bg-[var(--ai)] text-white text-sm font-semibold disabled:opacity-40 hover:bg-[var(--ai)] flex items-center justify-center gap-2">
               {briefing ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</> : <><Radio className="w-4 h-4" /> Generate Signal Brief</>}
             </button>
             <p className="text-xs text-[var(--pios-muted)] text-center mt-2">{selSectors.length} sector{selSectors.length !== 1 ? 's' : ''} selected</p>
@@ -304,11 +304,11 @@ export default function CommsPage() {
               <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-                    <span className="text-xs font-semibold text-violet-400 uppercase tracking-wide">SIA™ Signal Brief</span>
+                    <div className="w-2 h-2 rounded-full bg-[var(--ai)] animate-pulse" />
+                    <span className="text-xs font-semibold text-[var(--ai3)] uppercase tracking-wide">SIA™ Signal Brief</span>
                   </div>
                   <button onClick={() => copyText(latestBrief)} className="text-xs text-[var(--pios-muted)] hover:text-[var(--pios-text)] flex items-center gap-1">
-                    {copied ? <><Check className="w-3 h-3 text-green-400" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
+                    {copied ? <><Check className="w-3 h-3 text-[var(--fm)]" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
                   </button>
                 </div>
                 <div className="text-sm text-[var(--pios-text)]/90 whitespace-pre-wrap leading-relaxed overflow-y-auto max-h-[560px]">{latestBrief}</div>

@@ -134,7 +134,7 @@ export default function OperatorPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Settings className="w-6 h-6 text-violet-400" />
+          <Settings className="w-6 h-6 text-[var(--ai3)]" />
           <div>
             <h1 className="text-xl font-semibold">Operator Configuration</h1>
             <p className="text-sm text-[var(--pios-muted)]">White-label branding, feature flags, custom domain</p>
@@ -147,8 +147,8 @@ export default function OperatorPage() {
             {preview ? 'Edit' : 'Preview'}
           </button>
           <button onClick={save} disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500 text-white text-sm font-medium hover:bg-violet-600 disabled:opacity-50">
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : saved ? <Check className="w-3.5 h-3.5 text-green-300" /> : <Save className="w-3.5 h-3.5" />}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--ai)] text-white text-sm font-medium hover:bg-[var(--ai)] disabled:opacity-50">
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : saved ? <Check className="w-3.5 h-3.5 text-[var(--fm)]" /> : <Save className="w-3.5 h-3.5" />}
             {saved ? 'Saved!' : saving ? 'Saving…' : 'Save Config'}
           </button>
         </div>
@@ -181,7 +181,7 @@ export default function OperatorPage() {
       {/* Branding */}
       <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-1">
-          <Palette className="w-4 h-4 text-violet-400" />
+          <Palette className="w-4 h-4 text-[var(--ai3)]" />
           <span className="text-sm font-semibold">Branding</span>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -229,7 +229,7 @@ export default function OperatorPage() {
       {/* Domain & Persona */}
       <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-1">
-          <Globe className="w-4 h-4 text-blue-400" />
+          <Globe className="w-4 h-4 text-[var(--academic)]" />
           <span className="text-sm font-semibold">Domain & Defaults</span>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -257,7 +257,7 @@ export default function OperatorPage() {
       {/* Feature flags */}
       <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-4 h-4 text-amber-400" />
+          <Zap className="w-4 h-4 text-[var(--saas)]" />
           <span className="text-sm font-semibold">Feature Flags</span>
           <span className="text-xs text-[var(--pios-muted)] ml-auto">{form.features_enabled.length}/{ALL_FEATURES.length} enabled</span>
         </div>

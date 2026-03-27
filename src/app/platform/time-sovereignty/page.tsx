@@ -15,10 +15,10 @@ const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 const BLOCK_TYPES = ['strategic','deep_work','stakeholder','admin','recovery','other']
 const TYPE_COLOR: Record<string,string> = {
   strategic:   'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-  deep_work:   'bg-violet-500/10 text-violet-400 border-violet-500/20',
-  stakeholder: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  admin:       'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  recovery:    'bg-green-500/10 text-green-400 border-green-500/20',
+  deep_work:   'bg-[var(--ai)]/10 text-[var(--ai3)] border-[rgba(99,73,255,0.2)]',
+  stakeholder: 'bg-[var(--academic)]/10 text-[var(--academic)] border-blue-500/20',
+  admin:       'bg-[var(--saas)]/10 text-[var(--saas)] border-amber-500/20',
+  recovery:    'bg-[rgba(16,185,129,0.1)] text-[var(--fm)] border-green-500/20',
   other:       'bg-slate-500/10 text-[var(--pios-muted)] border-[var(--pios-border2)]/20',
 }
 
@@ -198,7 +198,7 @@ export default function TimeSovereigntyPage() {
         <div>
           <div className="flex justify-end mb-4">
             <button onClick={() => setShowBlockModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-lg text-sm font-medium hover:bg-violet-500/20">
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--ai)]/10 border border-[rgba(99,73,255,0.2)] text-[var(--ai3)] rounded-lg text-sm font-medium hover:bg-[var(--ai)]/20">
               <Plus className="w-4 h-4" /> Add Block
             </button>
           </div>
@@ -217,7 +217,7 @@ export default function TimeSovereigntyPage() {
                   </div>
                   {b.notes && <p className="text-xs text-[var(--pios-muted)] mt-1">{b.notes}</p>}
                 </div>
-                <button onClick={() => deleteBlock(b.id)} className="text-[var(--pios-muted)] hover:text-red-400 transition-colors">
+                <button onClick={() => deleteBlock(b.id)} className="text-[var(--pios-muted)] hover:text-[var(--dng)] transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -249,12 +249,12 @@ export default function TimeSovereigntyPage() {
             <HoursInput label="Recovery / personal (hrs)" value={weekLog.recovery_hours} onChange={v => setWeekLog(w=>({...w,recovery_hours:v}))} />
             <div className="flex flex-col justify-end">
               <div className="text-xs text-[var(--pios-muted)] mb-1">Strategic ratio</div>
-              <div className={`text-2xl font-semibold ${strategicPct >= 30 ? 'text-green-400' : strategicPct >= 20 ? 'text-amber-400' : 'text-red-400'}`}>{strategicPct}%</div>
+              <div className={`text-2xl font-semibold ${strategicPct >= 30 ? 'text-[var(--fm)]' : strategicPct >= 20 ? 'text-[var(--saas)]' : 'text-[var(--dng)]'}`}>{strategicPct}%</div>
               <div className="text-xs text-[var(--pios-muted)]">target: 30–40%</div>
             </div>
           </div>
           <button onClick={logWeek} disabled={logging || totalLogHours === 0}
-            className="w-full py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold disabled:opacity-40 hover:bg-violet-600 flex items-center justify-center gap-2">
+            className="w-full py-2.5 rounded-xl bg-[var(--ai)] text-white text-sm font-semibold disabled:opacity-40 hover:bg-[var(--ai)] flex items-center justify-center gap-2">
             {logging ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : logSaved ? '✓ Saved' : 'Log This Week'}
           </button>
         </div>
@@ -269,7 +269,7 @@ export default function TimeSovereigntyPage() {
                 <div key={a.week_start} className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium">w/c {new Date(a.week_start).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}</span>
-                    <span className={`text-sm font-bold ${a.strategic_pct >= 30 ? 'text-green-400' : a.strategic_pct >= 20 ? 'text-amber-400' : 'text-red-400'}`}>{a.strategic_pct}% strategic</span>
+                    <span className={`text-sm font-bold ${a.strategic_pct >= 30 ? 'text-[var(--fm)]' : a.strategic_pct >= 20 ? 'text-[var(--saas)]' : 'text-[var(--dng)]'}`}>{a.strategic_pct}% strategic</span>
                   </div>
                   <div className="grid grid-cols-5 gap-2">
                     {[
@@ -299,7 +299,7 @@ export default function TimeSovereigntyPage() {
 
       {/* ── BLOCK MODAL ──────────────────────────────────────── */}
       {showBlockModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-[var(--pios-border)] rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-base font-semibold mb-4">Add Time Block</h3>
             <input className={inp} placeholder="Block label (e.g. Deep work — strategy)" value={blockForm.label} onChange={e => setBlockForm(f=>({...f,label:e.target.value}))} />
@@ -322,7 +322,7 @@ export default function TimeSovereigntyPage() {
               {DAYS.map((d,i) => (
                 <button key={d} type="button"
                   onClick={() => setBlockForm(f => ({ ...f, day_of_week: f.day_of_week.includes(i) ? f.day_of_week.filter(x=>x!==i) : [...f.day_of_week, i] }))}
-                  className={`px-2 py-1 rounded text-xs font-medium transition-colors ${blockForm.day_of_week.includes(i) ? 'bg-violet-500 text-white' : 'bg-[var(--pios-surface2)] text-[var(--pios-muted)] hover:bg-[var(--pios-surface3)]'}`}>
+                  className={`px-2 py-1 rounded text-xs font-medium transition-colors ${blockForm.day_of_week.includes(i) ? 'bg-[var(--ai)] text-white' : 'bg-[var(--pios-surface2)] text-[var(--pios-muted)] hover:bg-[var(--pios-surface3)]'}`}>
                   {d}
                 </button>
               ))}
@@ -333,7 +333,7 @@ export default function TimeSovereigntyPage() {
             </label>
             <div className="flex gap-2">
               <button onClick={()=>setShowBlockModal(false)} className="flex-1 py-2 rounded-lg border border-[var(--pios-border)] text-sm text-[var(--pios-muted)] hover:bg-[var(--pios-surface2)]">Cancel</button>
-              <button onClick={saveBlock} disabled={!blockForm.label||saving} className="flex-1 py-2 rounded-lg bg-violet-500 text-white text-sm font-medium disabled:opacity-50">
+              <button onClick={saveBlock} disabled={!blockForm.label||saving} className="flex-1 py-2 rounded-lg bg-[var(--ai)] text-white text-sm font-medium disabled:opacity-50">
                 {saving ? 'Saving…' : 'Add Block'}
               </button>
             </div>

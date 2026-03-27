@@ -100,7 +100,7 @@ export default function DocumentsPage() {
                       <p className="text-xs text-[var(--pios-muted)] mt-0.5">{doc.file_type?.toUpperCase()} {doc.size_kb ? `· ${doc.size_kb} KB` : ""}</p>
                       {doc.tags && <div className="flex gap-1 flex-wrap mt-1.5">{doc.tags.slice(0,3).map(t=><span key={t} className="text-[10px] px-1.5 py-0.5 bg-[var(--ai-subtle)] text-[var(--ai3)] rounded">{t}</span>)}</div>}
                     </div>
-                    {doc.summary && <FileCheck className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />}
+                    {doc.summary && <FileCheck className="w-3.5 h-3.5 text-[var(--fm)] flex-shrink-0 mt-0.5" />}
                   </div>
                 </button>
               ))}

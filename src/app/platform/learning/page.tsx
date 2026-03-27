@@ -227,14 +227,14 @@ export default function LearningHubPage() {
                       </span>
                     </div>
                     {Boolean(m.target_date) && (
-                      <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-medium' : 'text-[var(--pios-muted)]'}`}>
+                      <p className={`text-xs mt-0.5 ${isOverdue ? 'text-[var(--dng)] font-medium' : 'text-[var(--pios-muted)]'}`}>
                         {(m.status ?? '')==='passed' ? `Completed ${fmt(m.completed_date ?? null)}` : `Due ${fmt(m.target_date ?? null)}`}
                       </p>
                     )}
                   </div>
                   {m.status !== 'passed' && m.status !== 'waived' && (
                     <button onClick={() => markDone(m.id)} disabled={marking===m.id}
-                      className="flex items-center gap-1 text-xs text-green-600 hover:underline font-medium px-2 py-1 rounded hover:bg-green-50 flex-shrink-0">
+                      className="flex items-center gap-1 text-xs text-[var(--fm)] hover:underline font-medium px-2 py-1 rounded hover:bg-green-50 flex-shrink-0">
                       {marking===m.id ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle2 size={10} />}
                       Mark done
                     </button>
@@ -269,7 +269,7 @@ export default function LearningHubPage() {
           {/* Log activity button */}
           <div className="flex justify-between items-center">
             <p className="text-sm font-medium">CPD activities this year</p>
-            <button onClick={() => setShowCpdForm(f => !f)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-amber-500 text-white font-medium">
+            <button onClick={() => setShowCpdForm(f => !f)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[var(--saas)] text-white font-medium">
               <Plus size={11} /> Log activity
             </button>
           </div>
@@ -316,7 +316,7 @@ export default function LearningHubPage() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={logCpd} disabled={savingCpd || !cpdForm.title} className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-amber-500 text-white text-sm font-medium disabled:opacity-50">
+                <button onClick={logCpd} disabled={savingCpd || !cpdForm.title} className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-[var(--saas)] text-white text-sm font-medium disabled:opacity-50">
                   {savingCpd ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Save
                 </button>
                 <button onClick={() => setShowCpdForm(false)} className="text-sm text-[var(--pios-muted)] hover:text-foreground">Cancel</button>
@@ -335,7 +335,7 @@ export default function LearningHubPage() {
                   <p className="text-xs text-[var(--pios-muted)]">{String(a.activity_type ?? "")} · {a.provider ?? '—'} · {fmt(String(a.completion_date ?? ""))}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  {Number(a.hours_verifiable ?? 0)>0 && <p className="text-xs font-semibold text-green-600">{Number(a.hours_verifiable ?? 0)}h verifiable</p>}
+                  {Number(a.hours_verifiable ?? 0)>0 && <p className="text-xs font-semibold text-[var(--fm)]">{Number(a.hours_verifiable ?? 0)}h verifiable</p>}
                   {Number(a.hours_non_verifiable)>0 && <p className="text-xs text-[var(--pios-muted)]">{a.hours_non_verifiable}h non-ver.</p>}
                 </div>
               </div>

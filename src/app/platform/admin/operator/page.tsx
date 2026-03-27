@@ -74,9 +74,9 @@ export default function OperatorPage() {
   return (
     <div className="p-6 max-w-3xl">
       <div className="flex items-center gap-2 mb-6">
-        <Settings className="w-5 h-5 text-violet-400" />
+        <Settings className="w-5 h-5 text-[var(--ai3)]" />
         <h1 className="text-xl font-bold">Platform Configuration</h1>
-        <span className="text-xs bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full font-medium">Owner</span>
+        <span className="text-xs bg-[var(--ai)]/10 text-[var(--ai3)] border border-violet-500/20 px-2 py-0.5 rounded-full font-medium">Owner</span>
       </div>
 
       {/* Tabs */}
@@ -93,7 +93,7 @@ export default function OperatorPage() {
       {activeTab === 'notifications' && (
         <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-6">
           <div className="flex items-center gap-2 mb-5">
-            <Bell className="w-4 h-4 text-violet-400" />
+            <Bell className="w-4 h-4 text-[var(--ai3)]" />
             <h2 className="text-base font-semibold">OKR Email Notifications (PAA™)</h2>
           </div>
 
@@ -136,7 +136,7 @@ export default function OperatorPage() {
           </div>
 
           <button onClick={saveOKRPrefs} disabled={saving}
-            className="w-full py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 hover:bg-violet-600 flex items-center justify-center gap-2">
+            className="w-full py-2.5 rounded-xl bg-[var(--ai)] text-white text-sm font-semibold disabled:opacity-50 hover:bg-[var(--ai)] flex items-center justify-center gap-2">
             {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Notification Preferences'}
           </button>
         </div>
@@ -171,8 +171,8 @@ export default function OperatorPage() {
                   {ALL_FEATURES.map(f => (
                     <span key={f.key} className={`text-xs px-3 py-1 rounded-full border font-medium ${
                       operator.features_disabled?.includes(f.key)
-                        ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                        : 'bg-green-500/10 text-green-400 border-green-500/20'
+                        ? 'bg-red-500/10 text-[var(--dng)] border-red-500/20'
+                        : 'bg-green-500/10 text-[var(--fm)] border-green-500/20'
                     }`}>
                       {f.label}
                     </span>
@@ -186,7 +186,7 @@ export default function OperatorPage() {
               <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">No operator configured</p>
               <p className="text-xs mt-1">This is a direct PIOS deployment. White-label operator mode is available for enterprise licensing.</p>
-              <a href="mailto:info@veritasiq.io" className="inline-block mt-4 text-xs text-violet-400 hover:underline">Contact us about white-label licensing →</a>
+              <a href="mailto:info@veritasiq.io" className="inline-block mt-4 text-xs text-[var(--ai3)] hover:underline">Contact us about white-label licensing →</a>
             </div>
           )}
         </div>
@@ -196,7 +196,7 @@ export default function OperatorPage() {
       {activeTab === 'migrations' && (
         <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-6">
           <h2 className="text-base font-semibold mb-4">Sprint 22–25 Migrations</h2>
-          <p className="text-sm text-[var(--pios-muted)] mb-5">Run these in order from the main admin migrations runner at <a href="/platform/admin" className="text-violet-400 hover:underline">/platform/admin</a></p>
+          <p className="text-sm text-[var(--pios-muted)] mb-5">Run these in order from the main admin migrations runner at <a href="/platform/admin" className="text-[var(--ai3)] hover:underline">/platform/admin</a></p>
           <div className="space-y-3">
             {[
               { id: 'M015', file: '015_executive_persona.sql', tables: ['exec_principles','exec_decisions','exec_reviews','exec_okrs','exec_key_results','exec_stakeholders','exec_time_blocks'], sprint: 22 },
@@ -205,7 +205,7 @@ export default function OperatorPage() {
               { id: 'M018', file: '018_operator_whitelabel.sql', tables: ['operator_configs','okr_notification_prefs'], sprint: 25 },
             ].map(m => (
               <div key={m.id} className="flex items-start gap-4 p-4 rounded-xl bg-[var(--pios-surface2)] border border-[var(--pios-border2)]">
-                <div className="text-xs font-mono font-bold text-violet-400 min-w-[36px] mt-0.5">{m.id}</div>
+                <div className="text-xs font-mono font-bold text-[var(--ai3)] min-w-[36px] mt-0.5">{m.id}</div>
                 <div className="flex-1">
                   <div className="text-sm font-medium text-[var(--pios-text)] mb-1">{m.file}</div>
                   <div className="flex flex-wrap gap-1">

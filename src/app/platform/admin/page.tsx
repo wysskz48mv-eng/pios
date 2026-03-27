@@ -389,14 +389,14 @@ export default function AdminPage() {
         </p>
         <div className="space-y-2 text-xs font-mono bg-muted/30 rounded-lg p-3 text-[var(--pios-muted)]">
           <div>1. Go to Supabase → Storage → New bucket</div>
-          <div>2. Name: <span className="text-amber-400">pios-files</span> · Public: <span className="text-amber-400">false</span></div>
-          <div>3. File size limit: <span className="text-amber-400">26214400</span> (25 MB)</div>
+          <div>2. Name: <span className="text-[var(--saas)]">pios-files</span> · Public: <span className="text-[var(--saas)]">false</span></div>
+          <div>3. File size limit: <span className="text-[var(--saas)]">26214400</span> (25 MB)</div>
           <div>4. Run in SQL editor:</div>
           <pre className="text-xs text-teal-400 mt-1 whitespace-pre-wrap">{"create policy \"User files\" on storage.objects\nfor all using (\n  bucket_id = 'pios-files' AND\n  auth.uid()::text = (storage.foldername(name))[1]\n);"}</pre>
         </div>
         <a href="https://supabase.com/dashboard/project/vfvfulbcaurqkygjrrhh/storage/buckets"
           target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs text-blue-400 hover:underline mt-3">
+          className="inline-flex items-center gap-1 text-xs text-[var(--academic)] hover:underline mt-3">
           Open Storage Dashboard →
         </a>
       </div>
@@ -424,7 +424,7 @@ export default function AdminPage() {
                 alert(d.error ?? 'Seed failed — ensure M019 is applied')
               }
             }}
-            className="px-4 py-2 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20 text-sm hover:bg-violet-500/15 whitespace-nowrap"
+            className="px-4 py-2 rounded-xl bg-[var(--ai)]/10 text-[var(--ai3)] border border-violet-500/20 text-sm hover:bg-[var(--ai)]/15 whitespace-nowrap"
           >
             ✦ Seed NemoClaw™
           </button>
@@ -451,7 +451,7 @@ export default function AdminPage() {
               const d = await r.json()
               alert(d.message ?? d.error ?? 'Done')
             }}
-            className="px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-sm hover:bg-amber-500/15"
+            className="px-4 py-2 rounded-xl bg-[rgba(245,158,11,0.1)] text-[var(--saas)] border border-amber-500/20 text-sm hover:bg-amber-500/15"
           >
             🌱 Seed Demo Data
           </button>
