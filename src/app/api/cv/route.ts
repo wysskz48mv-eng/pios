@@ -79,15 +79,27 @@ export async function POST(req: NextRequest) {
     const file = formData.get('cv') as File | null
     if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
 
-    // Validate file type
-    const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
-    if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|docx|txt)$/i)) {
-      return NextResponse.json({ error: 'Please upload a PDF, DOCX, or TXT file.' }, { status: 400 })
-    }
+    const fname = file.name.toLowerCase()
 
     // Validate size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json({ error: 'File must be under 5MB.' }, { status: 400 })
+    }
+
+    // Detect type by extension (more reliable than MIME type which browsers get wrong)
+    const isPdf  = fname.endsWith('.pdf')
+    const isDocx = fname.endsWith('.docx')
+    const isDoc  = fname.endsWith('.doc')
+    const isTxt  = fname.endsWith('.txt')
+
+    // Also accept by MIME type as fallback
+    const mimePdf  = file.type === 'application/pdf'
+    const mimeDocx = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    const mimeDoc  = file.type === 'application/msword'
+    const mimeTxt  = file.type === 'text/plain'
+
+    if (!isPdf && !isDocx && !isDoc && !isTxt && !mimePdf && !mimeDocx && !mimeDoc && !mimeTxt) {
+      return NextResponse.json({ error: 'Please upload a PDF, DOCX, DOC, or TXT file.' }, { status: 400 })
     }
 
     // ── Mark as processing ──────────────────────────────────────────────────
@@ -101,6 +113,7 @@ export async function POST(req: NextRequest) {
     // ── Upload to Supabase Storage ──────────────────────────────────────────
     const storagePath = `${user.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const bytes = await file.arrayBuffer()
+    const buf   = Buffer.from(bytes)
 
     const { error: uploadError } = await supabase.storage
       .from('pios-cv')
@@ -110,36 +123,49 @@ export async function POST(req: NextRequest) {
     else await svc.from('user_profiles').update({ cv_storage_path: storagePath }).eq('id', user.id)
 
     // ── Extract text from file ──────────────────────────────────────────────
-    let cvText = ''
+    let cvText  = ''
+    let extractErr = ''
 
-    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+    if (isTxt || mimeTxt) {
       cvText = await file.text()
 
-    } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    } else if (isPdf || mimePdf) {
       try {
         const pdfParse = (await import('pdf-parse')).default
-        const result   = await pdfParse(Buffer.from(bytes))
+        const result   = await pdfParse(buf)
         cvText = result.text ?? ''
-      } catch (e) {
+      } catch (e: any) {
+        extractErr = `pdf-parse: ${e?.message}`
         console.warn('pdf-parse failed:', e)
       }
 
-    } else if (
-      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      file.name.endsWith('.docx')
-    ) {
+    } else if (isDocx || isDoc || mimeDocx || mimeDoc) {
+      // mammoth handles both .docx and attempts .doc (though .doc support is limited)
       try {
         const mammoth = await import('mammoth')
-        const result  = await mammoth.extractRawText({ buffer: Buffer.from(bytes) })
+        const result  = await mammoth.extractRawText({ buffer: buf })
         cvText = result.value ?? ''
-      } catch (e) {
+        if (result.messages?.length) console.warn('mammoth warnings:', result.messages)
+      } catch (e: any) {
+        extractErr = `mammoth: ${e?.message}`
         console.warn('mammoth failed:', e)
       }
     }
 
-    if (!cvText || cvText.length < 50) {
+    // If extraction still empty, try mammoth as last-resort fallback for anything
+    if (!cvText && !isTxt && !mimeTxt) {
+      try {
+        const mammoth = await import('mammoth')
+        const result  = await mammoth.extractRawText({ buffer: buf })
+        if (result.value && result.value.length > 20) cvText = result.value
+      } catch { /* ignore */ }
+    }
+
+    if (!cvText || cvText.trim().length < 50) {
       await svc.from('user_profiles').update({ cv_processing_status: 'failed' }).eq('id', user.id)
-      return NextResponse.json({ error: 'Could not extract text from CV. Please try a plain text or PDF version.' }, { status: 422 })
+      return NextResponse.json({
+        error: `Could not extract text from CV${extractErr ? ` (${extractErr})` : ''}. Please try saving as PDF or plain text.`,
+      }, { status: 422 })
     }
 
     // ── Agent 1: Structured extraction ────────────────────────────────────────

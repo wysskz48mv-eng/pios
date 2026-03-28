@@ -421,7 +421,7 @@ export default function OnboardingPage() {
                   cursor: 'pointer', transition: 'all 0.2s', marginBottom: 16,
                   background: isDragging ? 'var(--ai-subtle)' : 'transparent',
                 }}>
-                <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" style={{ display: 'none' }}
+                <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }}
                   onChange={e => { const f = e.target.files?.[0]; if (f) processCV(f) }} />
 
                 {cvProcessing ? (
@@ -439,7 +439,7 @@ export default function OnboardingPage() {
                       {cvFile ? cvFile.name : 'Drop your CV here'}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
-                      {cvFile ? 'Click to change file' : 'or click to browse — PDF, DOCX, or TXT · Max 5MB'}
+                      {cvFile ? 'Click to change file' : 'or click to browse — PDF, DOCX, DOC, or TXT · Max 5MB'}
                     </div>
                   </div>
                 )}
