@@ -131,33 +131,57 @@ export async function POST(req: NextRequest) {
 
     } else if (isPdf || mimePdf) {
       try {
-        const pdfParse = (await import('pdf-parse')).default
-        const result   = await pdfParse(buf)
-        cvText = result.text ?? ''
+        // pdf-parse: use require() — dynamic import returns undefined default in some bundlers
+        const pdfParseModule = require('pdf-parse')
+        const pdfParseFn = typeof pdfParseModule === 'function' ? pdfParseModule : pdfParseModule?.default
+        if (typeof pdfParseFn === 'function') {
+          const result = await pdfParseFn(buf)
+          cvText = result.text ?? ''
+        } else {
+          throw new Error('pdf-parse module not a function')
+        }
       } catch (e: any) {
         extractErr = `pdf-parse: ${e?.message}`
         console.warn('pdf-parse failed:', e)
       }
 
     } else if (isDocx || isDoc || mimeDocx || mimeDoc) {
-      // mammoth handles both .docx and attempts .doc (though .doc support is limited)
       try {
-        const mammoth = await import('mammoth')
-        const result  = await mammoth.extractRawText({ buffer: buf })
+        const mammothMod = await import('mammoth')
+        const mammothFn  = mammothMod.extractRawText ?? mammothMod.default?.extractRawText
+        const result     = await mammothFn({ buffer: buf })
         cvText = result.value ?? ''
         if (result.messages?.length) console.warn('mammoth warnings:', result.messages)
       } catch (e: any) {
         extractErr = `mammoth: ${e?.message}`
         console.warn('mammoth failed:', e)
       }
+
+      // If mammoth got nothing, try raw XML extraction from the DOCX zip
+      if (!cvText || cvText.trim().length < 20) {
+        try {
+          const text = buf.toString('utf8')
+          // Extract text runs from word/document.xml inside the DOCX zip
+          const xmlMatch = text.match(/<w:t[^>]*>([^<]*)<\/w:t>/g)
+          if (xmlMatch && xmlMatch.length > 5) {
+            cvText = xmlMatch
+              .map(t => t.replace(/<[^>]+>/g, ''))
+              .join(' ')
+              .replace(/\s+/g, ' ')
+              .trim()
+            if (cvText.length > 50) console.log('Raw XML extraction succeeded:', cvText.length, 'chars')
+          }
+        } catch { /* ignore */ }
+      }
     }
 
-    // If extraction still empty, try mammoth as last-resort fallback for anything
-    if (!cvText && !isTxt && !mimeTxt) {
+    // Last-resort: try mammoth on anything
+    if (!cvText || cvText.trim().length < 50) {
       try {
-        const mammoth = await import('mammoth')
-        const result  = await mammoth.extractRawText({ buffer: buf })
-        if (result.value && result.value.length > 20) cvText = result.value
+        const mammothMod = await import('mammoth')
+        const mammothFn  = mammothMod.extractRawText ?? mammothMod.default?.extractRawText
+        const result     = await mammothFn({ buffer: buf })
+        if (result.value && result.value.trim().length > 20) cvText = result.value
       } catch { /* ignore */ }
     }
 

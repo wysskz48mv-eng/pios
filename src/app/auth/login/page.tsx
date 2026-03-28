@@ -24,15 +24,21 @@ export default function LoginPage() {
   }
 
   async function googleSignIn() {
-    setLoading(true)
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/auth/callback',
-        scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
-    })
+    setLoading(true); setError('')
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/auth/callback',
+          scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
+          queryParams: { access_type: 'offline', prompt: 'consent' },
+        },
+      })
+      if (error) setError(error.message)
+    } catch (e: any) {
+      setError(e.message ?? 'Google sign-in failed')
+    }
+    setLoading(false)
   }
 
   return (
@@ -67,6 +73,20 @@ export default function LoginPage() {
             </div>
           ) : (
             <>
+              {error && (
+                <div style={{
+                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                  borderRadius: 8, padding: '10px 14px', marginBottom: 14,
+                  fontSize: 12, color: '#f87171', lineHeight: 1.5,
+                }}>
+                  ⚠ {error}
+                  {error.toLowerCase().includes('provider') || error.toLowerCase().includes('not enabled') ? (
+                    <span style={{ display: 'block', marginTop: 4, color: 'rgba(255,255,255,0.4)' }}>
+                      Use the email magic link below instead.
+                    </span>
+                  ) : null}
+                </div>
+              )}
               <button
                 className="pios-login-google"
                 onClick={googleSignIn}
