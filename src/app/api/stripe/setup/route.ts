@@ -1,130 +1,157 @@
+import { NextResponse } from 'next/server'
+
 /**
  * POST /api/stripe/setup
- * One-time route: creates PIOS products + prices in Stripe and
- * returns the price IDs to add as Vercel env vars.
+ * Creates the 3 PIOS subscription products + prices in Stripe.
+ * Run ONCE after adding STRIPE_SECRET_KEY to Vercel.
+ * Returns the price IDs — paste them into Vercel env vars.
  *
- * Only callable by the owner (info@veritasiq.io).
- * Safe to run multiple times — looks up existing products by metadata
- * before creating, so it won't duplicate.
+ * Products created:
+ *   PIOS Starter   — £29/month
+ *   PIOS Pro       — £79/month
+ *   PIOS Enterprise — £199/month
  *
- * PIOS v3.0 | VeritasIQ Technologies Ltd
+ * VeritasIQ Technologies Ltd
  */
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { stripe } from '@/lib/stripe/client'
 
-export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
-const PRODUCTS = [
+const PLANS = [
   {
-    key:         'student',
-    name:        'PIOS Student',
-    description: 'Academic lifecycle + calendar + personal tasks. 50% off for .edu emails.',
-    amount:      900,   // $9.00 USD
-    envKey:      'STRIPE_PRICE_STUDENT',
-    metadata:    { pios_plan: 'student' },
+    envKey:      'NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID',
+    name:        'PIOS Starter',
+    description: 'Personal Intelligence OS — Starter tier. NemoClaw™ AI, core platform modules, 100 AI credits/month.',
+    amount:      2900,   // £29.00 in pence
+    tier:        'starter',
   },
   {
-    key:         'student',
-    name:        'PIOS Individual',
-    description: 'Full PIOS MVP — all three core modules + Gmail + expenses.',
-    amount:      900,   // $9.00 USD (student)
-    envKey:      'STRIPE_PRICE_INDIVIDUAL',
-    metadata:    { pios_plan: 'student' },
+    envKey:      'NEXT_PUBLIC_STRIPE_PRO_PRICE_ID',
+    name:        'PIOS Pro',
+    description: 'PIOS Pro — full platform access. 500 AI credits/month, all 13 NemoClaw™ frameworks, content pipeline.',
+    amount:      7900,
+    tier:        'pro',
   },
   {
-    key:         'professional',
-    name:        'PIOS Professional',
-    description: 'Full platform + FM consulting engine + priority support.',
-    amount:      2400,  // $24.00 USD (professional)
-    envKey:      'STRIPE_PRICE_PROFESSIONAL',
-    metadata:    { pios_plan: 'professional' },
+    envKey:      'NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID',
+    name:        'PIOS Enterprise',
+    description: 'PIOS Enterprise — unlimited AI credits, white-label options, priority support.',
+    amount:      19900,
+    tier:        'enterprise',
   },
 ]
 
 export async function POST() {
-  // Auth guard — owner only
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (user.email !== 'info@veritasiq.io') {
-    return NextResponse.json({ error: 'Owner only' }, { status: 403 })
+  const secretKey = process.env.STRIPE_SECRET_KEY
+  if (!secretKey) {
+    return NextResponse.json(
+      { error: 'STRIPE_SECRET_KEY not set in Vercel env vars' },
+      { status: 503 }
+    )
   }
 
-  const results: Record<string, { productId: string; priceId: string; status: 'created' | 'existing' }> = {}
+  const results: Array<{
+    plan: string; product_id: string; price_id: string
+    env_key: string; amount: string; status: string
+  }> = []
 
-  for (const plan of PRODUCTS) {
+  for (const plan of PLANS) {
     try {
-      // Check if product already exists
-      const existing = await stripe.products.search({
-        query: `metadata['pios_plan']:'${plan.key}'`,
-        limit: 1,
+      // Create product
+      const productRes = await fetch('https://api.stripe.com/v1/products', {
+        method: 'POST',
+        headers: {
+          Authorization:  `Bearer ${secretKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          name:                    plan.name,
+          description:             plan.description,
+          'metadata[tier]':        plan.tier,
+          'metadata[platform]':    'pios',
+          'metadata[provider]':    'veritasiq',
+        }),
       })
+      const product = await productRes.json()
+      if (!productRes.ok) throw new Error(product.error?.message ?? 'Product creation failed')
 
-      let productId: string
-      let priceId:   string
-      let status: 'created' | 'existing'
+      // Create recurring price
+      const priceRes = await fetch('https://api.stripe.com/v1/prices', {
+        method: 'POST',
+        headers: {
+          Authorization:  `Bearer ${secretKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          product:                    product.id,
+          unit_amount:                String(plan.amount),
+          currency:                   'gbp',
+          'recurring[interval]':      'month',
+          'recurring[interval_count]':'1',
+          'metadata[tier]':           plan.tier,
+        }),
+      })
+      const price = await priceRes.json()
+      if (!priceRes.ok) throw new Error(price.error?.message ?? 'Price creation failed')
 
-      if (existing.data.length > 0) {
-        // Product exists — find its active monthly price
-        productId = existing.data[0].id
-        const prices = await stripe.prices.list({ product: productId, active: true, limit: 5 })
-        const monthly = prices.data.find(p => p.recurring?.interval === 'month')
-        if (monthly) {
-          priceId = monthly.id
-          status  = 'existing'
-        } else {
-          // Product exists but no monthly price — create one
-          const price = await stripe.prices.create({
-            product:    productId,
-            unit_amount: plan.amount,
-            currency:   'usd',
-            recurring:  { interval: 'month' },
-            metadata:   plan.metadata,
-          })
-          priceId = price.id
-          status  = 'created'
-        }
-      } else {
-        // Create product + price together
-        const product = await stripe.products.create({
-          name:        plan.name,
-          description: plan.description,
-          metadata:    plan.metadata,
-        })
-        productId = product.id
-
-        const price = await stripe.prices.create({
-          product:     productId,
-          unit_amount: plan.amount,
-          currency:    'usd',
-          recurring:   { interval: 'month' },
-          metadata:    plan.metadata,
-        })
-        priceId = price.id
-        status  = 'created'
-      }
-
-      results[plan.key] = { productId, priceId, status }
+      results.push({
+        plan:       plan.name,
+        product_id: product.id,
+        price_id:   price.id,
+        env_key:    plan.envKey,
+        amount:     `£${(plan.amount / 100).toFixed(2)}/month`,
+        status:     'created',
+      })
     } catch (err: unknown) {
-      console.error(`[stripe/setup] Failed for ${plan.key}:`, (err as Error).message)
-      return NextResponse.json({ error: `Failed on ${plan.key}: ${(err as Error).message}` }, { status: 500 })
+      results.push({
+        plan:       plan.name,
+        product_id: '',
+        price_id:   '',
+        env_key:    plan.envKey,
+        amount:     `£${(plan.amount / 100).toFixed(2)}/month`,
+        status:     `error: ${err instanceof Error ? err.message : String(err)}`,
+      })
     }
   }
 
-  // Format Vercel env var instructions
-  const envVars = PRODUCTS.map(p => ({
-    key:   p.envKey,
-    value: results[p.key]?.priceId ?? 'ERROR',
-    plan:  p.key,
-    status: results[p.key]?.status,
-  }))
+  const succeeded = results.filter(r => r.status === 'created')
+  const failed    = results.filter(r => r.status !== 'created')
+
+  // Format as clear copy-paste instructions
+  const envInstructions = succeeded.map(r =>
+    `${r.env_key}=${r.price_id}`
+  ).join('\n')
 
   return NextResponse.json({
-    success: true,
-    message: 'Copy these price IDs into Vercel Environment Variables, then redeploy.',
-    env_vars: envVars,
-    vercel_url: 'https://vercel.com/wysskz48mv-eng/pios/settings/environment-variables',
-    products: results,
+    ok:      failed.length === 0,
+    results,
+    summary: `${succeeded.length}/${PLANS.length} products created`,
+    next_step: succeeded.length > 0
+      ? `Add these to Vercel → PIOS → Environment Variables, then redeploy:\n\n${envInstructions}`
+      : 'All failed — check STRIPE_SECRET_KEY is correct and Stripe account is active',
+  })
+}
+
+// GET — check if products already exist
+export async function GET() {
+  const secretKey = process.env.STRIPE_SECRET_KEY
+  if (!secretKey) {
+    return NextResponse.json({ error: 'STRIPE_SECRET_KEY not set' }, { status: 503 })
+  }
+
+  const existing = [
+    process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID,
+    process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
+    process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID,
+  ].filter(Boolean)
+
+  return NextResponse.json({
+    price_ids_configured: existing.length,
+    starter:    process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID    ?? 'NOT SET',
+    pro:        process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID         ?? 'NOT SET',
+    enterprise: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID ?? 'NOT SET',
+    ready:      existing.length === 3,
+    instructions: existing.length < 3
+      ? 'POST to /api/stripe/setup to create products and get price IDs'
+      : 'All price IDs configured',
   })
 }

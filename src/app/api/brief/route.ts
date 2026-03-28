@@ -1,407 +1,200 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { callClaude } from '@/lib/ai/client'
-import { createNotification } from '@/lib/notifications'
-import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
-import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
-import { checkRateLimit, LIMITS } from '@/lib/redis-rate-limit'
-
-export const runtime    = 'nodejs'
-export const maxDuration = 60
 
 /**
- * POST /api/brief[?force=1]
- * Generates (or force-refreshes) the morning brief for the current user.
+ * POST /api/brief         — generate today's brief (or return cached)
+ * POST /api/brief?force=1 — force regenerate even if one exists today
+ * GET  /api/brief         — return today's cached brief if it exists
  *
- * Default: returns cached brief if one already exists for today.
- * ?force=1: regenerates fresh regardless of cache. No email sent on refresh.
+ * Called by:
+ *   - Dashboard "Generate brief" button
+ *   - Morning cron (via /api/cron/morning-brief)
  *
- * Context gathered:
- *   - Overdue tasks (flagged prominently), due-today, upcoming
- *   - Expense claims awaiting reimbursement
- *   - Queued payroll transfers
- *   - Academic modules + thesis chapter word velocity
- *   - Active projects with progress
- *   - Unread notifications
- *   - FM news (last 24h)
- *   - Imminent CFP deadlines
- *   - Live VeritasEdge / InvestiScript metrics
- *
- * PIOS v3.0 | VeritasIQ Technologies Ltd
+ * Increments ai_calls_used on exec_intelligence_config.
+ * VeritasIQ Technologies Ltd · PIOS
  */
+
+export const dynamic     = 'force-dynamic'
+export const maxDuration = 60
+
+export async function GET() {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+    const today = new Date().toISOString().split('T')[0]
+
+    const { data: brief } = await supabase
+      .from('morning_briefs')
+      .select('summary_text,brief_date,created_at,generated_by')
+      .eq('user_id', user.id)
+      .eq('brief_date', today)
+      .single()
+
+    if (!brief) {
+      return NextResponse.json({ exists: false, brief_date: today })
+    }
+
+    return NextResponse.json({
+      exists:     true,
+      content:    brief.summary_text,
+      brief_date: brief.brief_date,
+      cached:     true,
+    })
+  } catch (err) {
+    return NextResponse.json({ exists: false, error: String(err) })
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
-    const rl = await checkRateLimit({ key: `pios:brief:${ip}`, max: 10, windowMs: 60*60*1000 })
-    if (rl) return rl
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-    const force = new URL(req.url).searchParams.get('force') === '1'
+    const url   = new URL(req.url)
+    const force = url.searchParams.get('force') === '1'
+    const today = new Date().toISOString().split('T')[0]
 
-    // Check persona — exec users get EOSA-style brief
-    const { data: bProfile } = await supabase
-      .from('user_profiles').select('persona_type,full_name,job_title,organisation').eq('id', user.id).single()
-    const bPersona = (bProfile as Record<string,unknown> | null)?.persona_type as string ?? 'individual'
-    const isExecPersona = ['executive','founder','professional'].includes(bPersona)
-    const today = new Date().toISOString().slice(0, 10)
-    const now   = new Date()
-
-    // Return cached unless forced
+    // Return cached brief if it exists and force not requested
     if (!force) {
       const { data: cached } = await supabase
-        .from('daily_briefs').select('content').eq('user_id', user.id).eq('brief_date', today).single()
-      if (cached?.content) return NextResponse.json({ content: cached.content, brief_date: today, cached: true })
+        .from('morning_briefs')
+        .select('summary_text,brief_date')
+        .eq('user_id', user.id)
+        .eq('brief_date', today)
+        .single()
+
+      if (cached?.summary_text) {
+        return NextResponse.json({
+          content:    cached.summary_text,
+          brief_date: today,
+          cached:     true,
+        })
+      }
     }
 
-    // Exec persona: fetch OKR/decision/stakeholder + wellness + renewal data in parallel
-    const in90 = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10)
-    const execDataPromise = isExecPersona ? Promise.allSettled([
-      supabase.from('exec_okrs').select('title,health,progress,period').eq('user_id', user.id).eq('status','active').limit(6),
-      supabase.from('exec_decisions').select('title,framework_used,context').eq('user_id', user.id).eq('status','open').limit(5),
-      supabase.from('exec_stakeholders').select('name,importance,next_touchpoint,open_commitments')
-        .eq('user_id', user.id)
-        .lte('next_touchpoint', new Date(Date.now() + 7*86400000).toISOString().split('T')[0])
-        .limit(4),
-      // Wellness — yesterday's session (brief generates before today's check-in)
-      (supabase as any).from('wellness_sessions')
-        .select('mood_score,energy_score,stress_score,focus_score,dominant_domain,ai_insight')
-        .eq('user_id', user.id)
-        .gte('session_date', new Date(Date.now() - 86400000).toISOString().slice(0,10))
-        .order('session_date', { ascending: false })
-        .limit(1),
-      // Wellness streak
-      (supabase as any).from('wellness_streaks')
-        .select('current_streak,streak_type')
-        .eq('user_id', user.id)
-        .eq('streak_type', 'daily_checkin')
-        .single(),
-      // IP renewals due within 90 days
-      (supabase as any).from('ip_assets')
-        .select('name,asset_type,renewal_date')
-        .eq('user_id', user.id).eq('status', 'active')
-        .lte('renewal_date', in90).gte('renewal_date', today)
-        .order('renewal_date').limit(5),
-      // Contract renewals due within 90 days
-      (supabase as any).from('contracts')
-        .select('title,contract_type,counterparty,end_date,value,currency')
-        .eq('user_id', user.id).eq('status', 'active')
-        .lte('end_date', in90).gte('end_date', today)
-        .order('end_date').limit(5),
-    ]) : Promise.resolve(null)
+    // Check AI credit limit
+    const { data: credits } = await supabase
+      .from('exec_intelligence_config')
+      .select('ai_calls_used,ai_calls_limit')
+      .eq('user_id', user.id)
+      .single()
 
-    // Gather all context in parallel
-    const [tasksR, modulesR, projectsR, notifsR, chaptersR, fmNewsR, cfpR, expensesR, payrollR, meetingsR, pendingActionsR, receiptsR,
-        calendarBriefR] = await Promise.all([
-      supabase.from('tasks').select('title,domain,priority,due_date,status')
-        .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
-        .order('due_date', { ascending: true }).limit(15),
-      supabase.from('academic_modules').select('title,status,deadline,module_type')
-        .eq('user_id', user.id).not('status', 'in', '("passed","failed")').limit(6),
-      supabase.from('projects').select('title,domain,status,progress')
-        .eq('user_id', user.id).eq('status', 'active').limit(6),
-      supabase.from('notifications').select('title,type,domain')
-        .eq('user_id', user.id).eq('read', false)
-        .order('created_at', { ascending: false }).limit(5),
-      supabase.from('thesis_chapters').select('title,chapter_num,status,word_count,target_words')
-        .eq('user_id', user.id).order('chapter_num').limit(6),
-      supabase.from('fm_news_items').select('headline,category,relevance,summary')
-        .eq('user_id', user.id)
-        .gte('fetched_at', new Date(Date.now() - 86400000).toISOString())
-        .order('relevance', { ascending: false }).limit(5),
-      supabase.from('paper_calls').select('title,journal_name,deadline,relevance_score')
-        .eq('user_id', user.id).in('status', ['new','considering','planning'])
-        .gte('deadline', today)
-        .lte('deadline', new Date(Date.now() + 30 * 86400000).toISOString().slice(0,10))
-        .order('deadline').limit(3),
-      supabase.from('expenses').select('description,amount,currency,date')
-        .eq('user_id', user.id).eq('billable', true)
-        .is('reimbursed_at', null)
-        .order('date', { ascending: false }).limit(5),
-      supabase.from('transfer_queue').select('description,amount_gbp,status')
-        .eq('user_id', user.id).eq('status', 'queued').limit(3),
-      // Meetings from last 2 days + today
-      supabase.from('meeting_notes').select('title,meeting_date,meeting_type,domain,status,ai_summary,tasks_created')
-        .eq('user_id', user.id)
-        .gte('meeting_date', new Date(Date.now() - 2 * 86400000).toISOString().slice(0,10))
-        .order('meeting_date', { ascending: false }).limit(5),
-      // Processed meetings with action items not yet promoted to tasks
-      supabase.from('meeting_notes').select('title,meeting_date,ai_action_items')
-        .eq('user_id', user.id).eq('status', 'processed').eq('tasks_created', false)
-        .order('meeting_date', { ascending: false }).limit(3),
-      // Auto-captured receipts/invoices from email (last 48h)
-      supabase.from('email_items').select('subject,sender_name,receipt_data,received_at')
-        .eq('user_id', user.id).eq('is_receipt', true)
-        .gte('received_at', new Date(Date.now() - 48 * 3600000).toISOString())
-        .order('received_at', { ascending: false }).limit(5),
-        // Today's calendar events
-        supabase.from('calendar_events').select('title,start_time,end_time,all_day')
-          .eq('user_id', user.id)
-          .gte('start_time', new Date().toISOString().slice(0,10))
-          .lte('start_time', new Date(Date.now() + 86400000).toISOString().slice(0,10))
-          .order('start_time').limit(10),
+    if (credits && (credits.ai_calls_used ?? 0) >= (credits.ai_calls_limit ?? 100)) {
+      return NextResponse.json({
+        error: 'AI credit limit reached for this month',
+        used:  credits.ai_calls_used,
+        limit: credits.ai_calls_limit,
+      }, { status: 429 })
+    }
+
+    // Gather context
+    const now    = new Date()
+    const todayStr = now.toISOString().split('T')[0]
+
+    const [tasksRes, okrsRes, decisionsRes, profileRes, wellnessRes] = await Promise.allSettled([
+      supabase.from('tasks').select('title,priority,due_date,status')
+        .eq('user_id', user.id).neq('status', 'done').order('priority', { ascending: false }).limit(10),
+      supabase.from('okrs').select('title,progress_pct,health')
+        .eq('user_id', user.id).limit(6),
+      supabase.from('decisions').select('title,status')
+        .eq('user_id', user.id).eq('status', 'open').limit(5),
+      supabase.from('user_profiles').select('full_name,persona_type')
+        .eq('id', user.id).single(),
+      supabase.from('wellness_streaks').select('current_streak')
+        .eq('user_id', user.id).single(),
     ])
 
-    const tasks     = tasksR.data ?? []
-    const overdue   = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date && (t as Record<string,unknown>).due_date as string < today)
-    const dueToday  = tasks.filter((t: Record<string,unknown>) => (t as Record<string,unknown>).due_date === today)
-    const upcoming  = tasks.filter(t => !(t as Record<string,unknown>).due_date || String((t as Record<string,unknown>).due_date ?? '') > today)
+    const tasks     = tasksRes.status     === 'fulfilled' ? (tasksRes.value.data     ?? []) : []
+    const okrs      = okrsRes.status      === 'fulfilled' ? (okrsRes.value.data      ?? []) : []
+    const decisions = decisionsRes.status === 'fulfilled' ? (decisionsRes.value.data ?? []) : []
+    const profile   = profileRes.status   === 'fulfilled' ? profileRes.value.data    : null
+    const wellness  = wellnessRes.status  === 'fulfilled' ? wellnessRes.value.data   : null
 
-    // Thesis velocity
-    const chapters    = chaptersR.data ?? []
-    const totalWords  = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
-    const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
-    const nearestDl   = (modulesR.data ?? []).map((m: Record<string,unknown>) => (m as Record<string,unknown>).deadline).filter(Boolean).sort()[0]
-    const daysLeft    = nearestDl ? Math.max(1, Math.round((new Date(String(nearestDl ?? "")).getTime() - now.getTime()) / 86400000)) : null
-    const wordsPerDay = daysLeft ? Math.ceil(Math.max(0, targetWords - totalWords) / daysLeft) : null
+    const userName = profile?.full_name ?? 'there'
+    const dayStr   = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
-    const fmt = (d: string) => new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
-
-    const ctx = [
-      `DATE: ${now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`,
-
-      overdue.length > 0
-        ? `OVERDUE TASKS — REQUIRES IMMEDIATE ATTENTION (${overdue.length}):\n` +
-          overdue.map(t => `- [${(t.priority ?? '').toUpperCase()}] ${t.title} (${t.domain}) — was due ${fmt((t as Record<string,unknown>).due_date as string)}`).join('\n')
-        : 'OVERDUE TASKS: none',
-
-      dueToday.length > 0
-        ? `DUE TODAY (${dueToday.length}):\n` + dueToday.map(t => `- [${t.priority}] ${t.title} (${t.domain})`).join('\n')
-        : 'DUE TODAY: none',
-
-      upcoming.length > 0
-        ? `UPCOMING (${upcoming.length} open):\n` + upcoming.slice(0,6).map(t =>
-            `- [${t.priority}] ${t.title} (${t.domain}) — ${(t as Record<string,unknown>).due_date as string ? fmt((t as Record<string,unknown>).due_date as string) : 'no date'}`).join('\n')
-        : '',
-
-      `ACADEMIC MODULES:\n` + ((modulesR.data ?? []).map(m =>
-        `- ${(m as Record<string,unknown>).title} [${(m as Record<string,unknown>).status}] — ${(m as Record<string,unknown>).deadline ? fmt(String((m as Record<string,unknown>).deadline ?? "")) : 'TBD'}`).join('\n') || 'none'),
-
-      chapters.length > 0
-        ? `THESIS: ${totalWords.toLocaleString()}/${targetWords.toLocaleString()} words (${Math.round(totalWords/Math.max(targetWords,1)*100)}%)` +
-          (wordsPerDay ? ` · needs ${wordsPerDay.toLocaleString()} words/day` : '') + '\n' +
-          chapters.map(c => `- Ch${c.chapter_num} ${(c as any)?.title}: ${c.word_count ?? 0}/${c.target_words ?? 8000} words [${(c as any)?.status}]`).join('\n')
-        : '',
-
-      (projectsR.data ?? []).length > 0
-        ? `ACTIVE PROJECTS:\n` + (projectsR.data ?? []).map(p => `- ${p.title} (${p.domain}) — ${p.progress ?? 0}% done`).join('\n')
-        : '',
-
-      (notifsR.data ?? []).length > 0
-        ? `UNREAD ALERTS (${notifsR.data?.length}):\n` + (notifsR.data ?? []).map(n => `- [${(n as any)?.type.toUpperCase()}] ${(n as any)?.title}`).join('\n')
-        : 'UNREAD ALERTS: none',
-
-      (expensesR.data ?? []).length > 0
-        ? `UNBILLED EXPENSES (${expensesR.data?.length}):\n` + (expensesR.data ?? []).map(e => `- ${e.currency} ${(e as any)?.amount} — ${e.description} (${fmt(e.date)})`).join('\n')
-        : '',
-
-      (payrollR.data ?? []).length > 0
-        ? `QUEUED TRANSFERS (${payrollR.data?.length}):\n` + (payrollR.data ?? []).map(t => `- GBP ${t.amount_gbp} — ${t.description}`).join('\n')
-        : '',
-
-      (fmNewsR.data ?? []).length > 0
-        ? `FM INTELLIGENCE (last 24h):\n` + (fmNewsR.data ?? []).map((n: any) => `- [${String(n.category ?? '').toUpperCase()}] ${String(n.headline ?? "")}`).join('\n')
-        : 'FM INTELLIGENCE: no fresh signals',
-
-      (cfpR.data ?? []).length > 0
-        ? `PUBLICATION DEADLINES:\n` + (cfpR.data ?? []).map((c: any) => `- "${(c as any)?.title}" (${String(c.journal_name ?? 'journal')}) — ${String(c.deadline ?? "")}`).join('\n')
-        : '',
-
-      // Meetings context (Otter.ai integration)
-      (meetingsR.data ?? []).length > 0
-        ? `RECENT MEETINGS (${meetingsR.data?.length}):\n` +
-          (meetingsR.data ?? []).map((m: Record<string, unknown>) =>
-            `- [${String((m as Record<string,unknown>).meeting_type ?? "").toUpperCase()}] ${(m as Record<string,unknown>).title} (${(m as Record<string,unknown>).meeting_date}) — ${(m as Record<string,unknown>).status}${(m as Record<string,unknown>).ai_summary ? ': ' + String((m as Record<string,unknown>).ai_summary).slice(0, 120) + '…' : ''}${(m as Record<string,unknown>).tasks_created ? ' [tasks created]' : ''}`
-          ).join('\n')
-        : '',
-
-      (pendingActionsR.data ?? []).length > 0
-        ? `MEETING ACTION ITEMS AWAITING TASK PROMOTION (${pendingActionsR.data?.length} meetings):\n` +
-          (pendingActionsR.data ?? []).flatMap((m: any) =>
-            (((m as Record<string,unknown>).ai_action_items ?? []) as unknown[]).slice(0,3).map((a: any) =>
-              `- [${String(a.priority ?? 'medium').toUpperCase()}] ${String(a.action ?? "")} — from "${(m as Record<string,unknown>).title}" (${(m as Record<string,unknown>).meeting_date}). Go to /platform/meetings to promote.`
-            )
-          ).join('\n')
-        : '',
-
-      // Auto-captured receipts (WellyBox integration)
-      (receiptsR.data ?? []).length > 0
-        ? `AUTO-CAPTURED RECEIPTS/INVOICES (last 48h — ${receiptsR.data?.length}):\n` +
-          (receiptsR.data ?? []).map((r: Record<string, unknown>) => {
-            const rd = r.receipt_data as any
-            return rd
-              ? `- ${rd.vendor ?? r.sender_name ?? 'Unknown'}: ${rd.currency ?? 'GBP'} ${rd.amount ?? '?'} — ${r.subject} (${rd.date ?? 'today'})`
-              : `- ${r.subject} from ${r.sender_name}`
-          }).join('\n')
-        : '',
-    ].filter(Boolean).join('\n\n')
-
-    // Live platform metrics (non-blocking)
-    let liveCtx = ''
-    try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const [seRes, isRes, ghRes] = await Promise.allSettled([
-        fetch(`${appUrl}/api/live/veritasedge`).then(r => r.json()),
-        fetch(`${appUrl}/api/live/investiscript`).then(r => r.json()),
-        fetch(`${appUrl}/api/live/github`).then(r => r.json()),
-      ])
-      if (seRes.status === 'fulfilled' && seRes.value?.connected) {
-        const s = seRes.value.snapshot
-        liveCtx += `\nVERITASEDGE: ${s?.organisations?.total ?? 0} tenants, ${s?.assets?.total ?? 0} assets`
-      }
-      if (isRes.status === 'fulfilled' && isRes.value?.connected) {
-        const i = isRes.value.snapshot
-        liveCtx += `\nINVESTISCRIPT: ${i?.organisations?.total ?? 0} newsrooms, ${i?.topics?.total ?? 0} investigations`
-      }
-      if (ghRes.status === 'fulfilled' && ghRes.value?.connected && ghRes.value.repos) {
-        const commits = Object.values(ghRes.value.repos as Record<string,any>)
-          .map((r: Record<string,unknown>) => ((r as any)?.commits as any[])?.[0] ? `${String((r as any)?.label ?? "")}: ${String(((r as any)?.commits as any[])?.[0]?.message ?? "").slice(0,60)}` : null)
-          .filter(Boolean).slice(0,3).join(' | ')
-        if (commits) liveCtx += `\nLATEST COMMITS: ${commits}`
-      }
-    } catch { /* never block */ }
-
-
-    // Fetch NemoClaw training config for personalised brief system prompt
-    const { data: briefTcData } = await (supabase as any)
-      .from('exec_intelligence_config')
-      .select('persona_context,company_context,goals_context,custom_instructions,tone_preference')
-      .eq('user_id', user.id)
-      .maybeSingle()
-    const briefTc = briefTcData as any
-
-    const qiddiyaDaysLeft = Math.max(0, Math.ceil((new Date('2026-04-14').getTime() - Date.now()) / 86400000))
-    const qiddiyaUrgency = qiddiyaDaysLeft <= 7 ? 'CRITICAL' : qiddiyaDaysLeft <= 14 ? 'URGENT' : 'ACTIVE'
-
-    // Resolve exec data for executive persona brief
-    const execData = isExecPersona ? await execDataPromise : null
-    let execBriefSection = ''
-    if (isExecPersona && execData) {
-      const results = execData as PromiseSettledResult<any>[]
-      const okrBR    = results[0]?.status === 'fulfilled' ? results[0].value : null
-      const decBR    = results[1]?.status === 'fulfilled' ? results[1].value : null
-      const stakeBR  = results[2]?.status === 'fulfilled' ? results[2].value : null
-      const wellR    = results[3]?.status === 'fulfilled' ? results[3].value : null
-      const streakR  = results[4]?.status === 'fulfilled' ? results[4].value : null
-      const ipRenewR = results[5]?.status === 'fulfilled' ? results[5].value : null
-      const ctRenewR = results[6]?.status === 'fulfilled' ? results[6].value : null
-
-      const okrLines   = (okrBR?.data   ?? []).map((o:Record<string,unknown>) => `- ${o.title}: ${o.progress}% (${o.health})`).join('\n')
-      const decLines   = (decBR?.data   ?? []).map((d:Record<string,unknown>) => `- ${d.title} [${(d.framework_used as string) ?? '?'}™]`).join('\n')
-      const stakeLines = (stakeBR?.data ?? []).map((s:Record<string,unknown>) => `- ${s.name} [${s.importance}]`).join('\n')
-
-      // Wellness section
-      const lastSession = wellR?.data?.[0] ?? null
-      const streak      = streakR?.data?.current_streak ?? 0
-      const wellnessLine = lastSession
-        ? `WELLNESS STATE (last check-in): Mood ${lastSession.mood_score}/10 · Energy ${lastSession.energy_score}/10 · Stress ${lastSession.stress_score}/10 · Focus ${lastSession.focus_score}/10 · Domain: ${lastSession.dominant_domain ?? 'general'}` +
-          (streak > 0 ? ` · 🔥 ${streak}-day streak` : '') +
-          (lastSession.ai_insight ? `\n  NemoClaw insight: "${lastSession.ai_insight}"` : '')
-        : 'WELLNESS STATE: No recent check-in — recommend completing morning check-in at /platform/wellness'
-
-      // IP renewal alerts
-      const ipRenewals = ipRenewR?.data ?? []
-      const ctRenewals = ctRenewR?.data ?? []
-      const renewalLines = [
-        ...(ipRenewals as Record<string,unknown>[]).map(a =>
-          `- [IP/${String(a.asset_type ?? '')}] ${a.name} — renews ${new Date(String(a.renewal_date ?? '')).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`
-        ),
-        ...(ctRenewals as Record<string,unknown>[]).map(c =>
-          `- [Contract/${String(c.contract_type ?? '')}] ${c.title} (${c.counterparty}) — expires ${new Date(String(c.end_date ?? '')).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}` +
-          (c.value ? ` · ${c.currency ?? 'GBP'} ${Number(c.value).toLocaleString()}` : '')
-        ),
-      ].join('\n')
-
-      execBriefSection = [
-        okrLines   ? `\n\nACTIVE OKRs:\n${okrLines}` : '',
-        decLines   ? `\nOPEN DECISIONS:\n${decLines}` : '',
-        stakeLines ? `\nSTAKEHOLDERS DUE THIS WEEK:\n${stakeLines}` : '',
-        `\n\n${wellnessLine}`,
-        renewalLines ? `\n\nRENEWALS DUE WITHIN 90 DAYS:\n${renewalLines}` : '',
-      ].join('')
-    }
-
-
-    const pName  = String((bProfile as any)?.full_name ?? 'there')
-    const pTitle = String((bProfile as any)?.job_title ?? 'Professional')
-    const pOrg   = String((bProfile as any)?.organisation ?? 'your organisation')
-
-    const tcContext = briefTc ? [
-      briefTc.persona_context && `About user: ${briefTc.persona_context}`,
-      briefTc.company_context && `Company: ${briefTc.company_context}`,
-      briefTc.goals_context   && `Goals: ${briefTc.goals_context}`,
-      briefTc.custom_instructions && `Brief style: ${briefTc.custom_instructions}`,
-    ].filter(Boolean).join('\n') : ''
-
-    const toneInstr = briefTc?.tone_preference === 'direct' ? 'Be blunt, skip preamble.'
-      : briefTc?.tone_preference === 'coaching' ? 'Frame as coaching questions.'
-      : 'Be professional and direct.'
-
-    const qiddiyaNote = qiddiyaDaysLeft <= 21
-      ? `\nCOMMERCIAL PRIORITY: Qiddiya RFP — ${qiddiyaDaysLeft} days remaining (${qiddiyaUrgency}). Call this out explicitly.`
-      : ''
-
-    const system = `You are PIOS AI — ${pName}'s personal intelligent operating system.
-User: ${pName} | ${pTitle} | ${pOrg}${tcContext ? '\n\n' + tcContext : ''}${qiddiyaNote}
-
-Generate their morning brief. ${toneInstr} No pleasantries.
-
-Rules:
-- Lead with overdue tasks — they are #1 priority
-- Flag dangerously behind thesis pace or academic deadlines
-- Call out meeting action items awaiting task promotion (→ /platform/meetings)
-- Note auto-captured receipts/invoices pending review
-- Identify cross-domain conflicts
-- Name 2-3 items requiring personal decision or action today
-- If wellness state shows stress ≥ 7, flag capacity risk and suggest protecting recovery time
-- If wellness streak ≥ 7, acknowledge momentum briefly
-- If renewals due within 30 days, flag as URGENT and name the specific asset/contract
-- Use ## Section headers for each section (Overdue Tasks, Today's Priorities, Exec OS, Wellness Signal, Renewal Alerts, etc.)
-- Omit sections with nothing to report (don't write empty sections)
-- Max 350 words per section`
-
-    const content: string = await callClaude(
-      [{ role: 'user', content: `Generate my morning brief.\n\n${ctx}${execBriefSection}${liveCtx ? '\n\nPLATFORM STATUS:' + liveCtx : ''}` }],
-      system, 700
+    const overdue = tasks.filter((t: Record<string, string>) =>
+      t.due_date && new Date(t.due_date) < now
+    )
+    const atRiskOkrs = okrs.filter((o: Record<string, string>) =>
+      ['at_risk', 'off_track'].includes(o.health)
     )
 
-    // Upsert — always overwrites stale brief on refresh
-    await supabase.from('daily_briefs').upsert({
-      user_id:      user.id,
-      brief_date:   today,
-      content,
-      ai_model:     'claude-sonnet-4-20250514',
-      generated_by: force ? 'user_refresh' : 'user',
-    }, { onConflict: 'user_id,brief_date' })
+    const context = [
+      `Date: ${dayStr}`,
+      tasks.length > 0
+        ? `Open tasks (${tasks.length}): ${tasks.slice(0, 5).map((t: Record<string, string>) => `${t.title} [${t.priority}${overdue.some((o: Record<string, string>) => o.title === t.title) ? ', OVERDUE' : ''}]`).join(', ')}`
+        : 'No open tasks',
+      okrs.length > 0
+        ? `OKRs (${okrs.length}): ${okrs.map((o: Record<string, string>) => `${o.title} ${o.progress_pct}% ${o.health}`).join(' | ')}`
+        : 'No active OKRs',
+      decisions.length > 0
+        ? `Open decisions: ${decisions.map((d: Record<string, string>) => d.title).join(', ')}`
+        : 'No open decisions',
+      wellness?.current_streak
+        ? `Wellness streak: ${wellness.current_streak} days`
+        : '',
+      atRiskOkrs.length > 0
+        ? `AT RISK: ${atRiskOkrs.length} OKRs need attention`
+        : '',
+    ].filter(Boolean).join('\n')
 
-    // Email on first generate only (not on refresh)
-    if (!force) {
-      const { data: profile } = await supabase
-        .from('user_profiles').select('billing_email, google_email, full_name').eq('id', user.id).single()
-      const userEmail = String((profile as Record<string,unknown>)?.billing_email ?? (profile as Record<string,unknown>)?.google_email ?? "")
-      const userName  = (profile as Record<string,unknown>)?.full_name ?? 'there'
-      if (userEmail) {
-        sendEmail({
-          to:      userEmail,
-          subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
-          html:    morningBriefHtml(String(content ?? ""), String(today ?? ""), String(userName ?? "")),
-          text:    morningBriefText(String(content ?? ""), String(today ?? ""), String(userName ?? "")),
-        }).catch(() => {})
-      }
-    }
+    const system = `You are NemoClaw™, the personal AI intelligence layer for ${userName}, a founder/CEO/consultant using PIOS.
+Write a concise morning brief: 3 focused paragraphs, max 220 words. No bullet points, plain prose.
+Para 1: single most important priority today.
+Para 2: cross-domain risks or conflicts requiring attention.
+Para 3: 2-3 specific actions to take.
+Direct, no filler. Address ${userName.split(' ')[0]} directly.`
 
-    await createNotification({
-      userId:    user.id,
-      title:     `${force ? '↺ Brief refreshed' : 'Morning brief ready'} — ${now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' })}`,
-      body:      content.slice(0, 120) + (content.length > 120 ? '…' : ''),
-      type:      'ai', domain: 'ai', actionUrl: '/platform/dashboard',
+    // Call Claude
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         process.env.ANTHROPIC_API_KEY ?? '',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 500,
+        system,
+        messages: [{ role: 'user', content: `Generate my morning brief.\n\n${context}` }],
+      }),
     })
 
-    return NextResponse.json({ content, brief_date: today, cached: false, refreshed: force })
+    const aiData  = await aiRes.json()
+    const content = aiData?.content?.[0]?.text ?? 'Brief generation failed — try again.'
 
+    // Upsert brief
+    await supabase.from('morning_briefs').upsert({
+      user_id:      user.id,
+      brief_date:   todayStr,
+      summary_text: content,
+      generated_by: 'user',
+      created_at:   now.toISOString(),
+    }, { onConflict: 'user_id,brief_date' })
+
+    // Increment AI usage counter
+    await supabase.from('exec_intelligence_config').upsert({
+      user_id:       user.id,
+      ai_calls_used: (credits?.ai_calls_used ?? 0) + 1,
+      updated_at:    now.toISOString(),
+    }, { onConflict: 'user_id' })
+
+    return NextResponse.json({
+      content,
+      brief_date: todayStr,
+      cached:     false,
+      refreshed:  force,
+    })
   } catch (err: unknown) {
-    console.error('Brief generation error:', err)
-    return NextResponse.json({ error: (err as Error).message ?? 'Brief generation failed' }, { status: 500 })
+    console.error('[api/brief]', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Brief generation failed' },
+      { status: 500 }
+    )
   }
 }

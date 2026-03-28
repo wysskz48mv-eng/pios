@@ -1,237 +1,235 @@
-/**
- * GET /api/dashboard
- * Uses Promise.allSettled — a missing table never crashes the response.
- * PIOS v3.0 | Sprint 28 | VeritasIQ Technologies Ltd
- */
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-export const runtime = 'nodejs'
+/**
+ * GET /api/dashboard
+ * Aggregates all data for the dashboard KPI strip + cards.
+ * Single call replaces 6+ individual fetches on page load.
+ *
+ * Returns:
+ *   tasks:     { total, overdue, due_today, high_priority }
+ *   okrs:      { total, on_track, at_risk, avg_progress }
+ *   decisions: { total, open, pending_review }
+ *   wellness:  { streak, today_logged, last_score }
+ *   financial: { revenue, burn, runway, period }
+ *   brief:     { content, brief_date, exists } — today's brief if generated
+ *   profile:   { full_name, plan, ai_calls_used, ai_calls_limit, onboarded }
+ *   ip:        { total_assets, expiring_soon }
+ *
+ * All sections degrade gracefully — missing tables return null, not 500.
+ * VeritasIQ Technologies Ltd · PIOS
+ */
 
-function val<T>(r: PromiseSettledResult<any>): T {
-  return (r.status === 'fulfilled' ? (r.value?.data ?? null) : null) as T
-}
-function cnt(r: PromiseSettledResult<any>): number {
-  return r.status === 'fulfilled' ? (r.value?.count ?? 0) : 0
-}
+export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-    const today      = new Date().toISOString().slice(0, 10)
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0]
+    const uid = user.id
 
-    // Fetch persona to decide what extra data to load
-    const { data: profileData } = await supabase
-      .from('user_profiles').select('persona_type,full_name').eq('id', user.id).single()
-    const persona = (profileData as Record<string,unknown> | null)?.persona_type as string ?? 'individual'
-    const isExec  = ['executive','founder','professional'].includes(persona)
-    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
-    const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)
-    const ago48h     = new Date(Date.now() - 48 * 3600000).toISOString()
-    const ago7d      = new Date(Date.now() -  7 * 86400000).toISOString().slice(0, 10)
-
+    // Run all queries in parallel — each wrapped to never throw
     const [
-      tasksR, projectsR, modulesR, briefR, tenantR,
-      calR, invoicesR, emailsR, transfersR,
-      meetingsR, receiptsR, accountsR, chaptersR,
+      tasksResult,
+      okrsResult,
+      decisionsResult,
+      wellnessResult,
+      financialResult,
+      briefResult,
+      profileResult,
+      ipResult,
+      creditsResult,
     ] = await Promise.allSettled([
+
+      // Tasks
       supabase.from('tasks')
-        .select('id,title,domain,priority,due_date,status,source')
-        .eq('user_id', user.id)
-        .not('status', 'in', '("done","cancelled")')
-        .order('due_date', { ascending: true, nullsFirst: false })
-        .limit(20),
+        .select('id,status,priority,due_date')
+        .eq('user_id', uid)
+        .neq('status', 'done'),
 
-      supabase.from('projects')
-        .select('id,title,domain,status,progress,colour,deadline')
-        .eq('user_id', user.id).eq('status', 'active')
-        .order('created_at', { ascending: false }).limit(6),
+      // OKRs
+      supabase.from('okrs')
+        .select('id,progress_pct,health')
+        .eq('user_id', uid),
 
-      supabase.from('academic_modules')
-        .select('id,title,status,deadline,module_type')
-        .eq('user_id', user.id)
-        .not('status', 'in', '("passed","failed")')
-        .order('deadline', { ascending: true, nullsFirst: false }).limit(6),
+      // Decisions
+      supabase.from('decisions')
+        .select('id,status')
+        .eq('user_id', uid),
 
-      supabase.from('daily_briefs')
-        .select('content,generated_by,ai_model')
-        .eq('user_id', user.id).eq('brief_date', today).single(),
+      // Wellness streak
+      supabase.from('wellness_streaks')
+        .select('current_streak,last_activity_date')
+        .eq('user_id', uid)
+        .single(),
 
-      supabase.from('tenants')
-        .select('name,plan,plan_status,subscription_status,ai_credits_used,ai_credits_limit,trial_ends_at')
-        .limit(1).single(),
+      // Latest financial snapshot
+      supabase.from('financial_snapshots')
+        .select('revenue_gbp,burn_gbp,runway_months,period')
+        .eq('user_id', uid)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single(),
 
-      supabase.from('calendar_events')
-        .select('id,title,start_time,end_time,location,domain,all_day,google_meet_url,platform')
-        .eq('user_id', user.id)
-        .gte('start_time', todayStart.toISOString())
-        .lte('start_time', todayEnd.toISOString())
-        .order('start_time'),
+      // Today's brief
+      supabase.from('morning_briefs')
+        .select('summary_text,brief_date,created_at')
+        .eq('user_id', uid)
+        .eq('brief_date', todayStr)
+        .single(),
 
-      supabase.from('invoices')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id).eq('status', 'pending'),
+      // User profile + plan
+      supabase.from('user_profiles')
+        .select('full_name,plan,persona_type,onboarded,cv_processing_status')
+        .eq('id', uid)
+        .single(),
 
-      supabase.from('email_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .not('action_required', 'is', null)
-        .in('status', ['unprocessed', 'triaged']),
+      // IP assets expiring
+      supabase.from('ip_assets')
+        .select('id,expiry_date')
+        .eq('user_id', uid)
+        .eq('status', 'active'),
 
-      supabase.from('transfer_queue')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id).eq('status', 'queued'),
-
-      supabase.from('meeting_notes')
-        .select('id,title,meeting_date,meeting_type,domain,status,tasks_created,ai_summary')
-        .eq('user_id', user.id)
-        .gte('meeting_date', ago7d)
-        .order('meeting_date', { ascending: false }).limit(5),
-
-      supabase.from('email_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id).eq('is_receipt', true)
-        .gte('received_at', ago48h),
-
-      supabase.from('connected_email_accounts')
-        .select('id,email_address,provider,context,label,is_primary,last_synced_at')
-        .eq('user_id', user.id).eq('is_active', true)
-        .order('is_primary', { ascending: false }),
-
-      supabase.from('thesis_chapters')
-        .select('id,chapter_num,title,status,word_count,target_words')
-        .eq('user_id', user.id).order('chapter_num'),
+      // AI credits
+      supabase.from('exec_intelligence_config')
+        .select('ai_calls_used,ai_calls_limit')
+        .eq('user_id', uid)
+        .single(),
     ])
 
-    const tasks    = val<any[]>(tasksR)    ?? []
-    const chapters = val<any[]>(chaptersR) ?? []
-    const meetings = val<any[]>(meetingsR) ?? []
-    const accounts = val<any[]>(accountsR) ?? []
-    const calendar = val<any[]>(calR)      ?? []
+    // ── Process tasks ──────────────────────────────────────────────────────
+    const tasks = tasksResult.status === 'fulfilled'
+      ? tasksResult.value.data ?? []
+      : []
+    const overdue = tasks.filter((t: Record<string, string>) =>
+      t.due_date && new Date(t.due_date) < today
+    ).length
+    const dueToday = tasks.filter((t: Record<string, string>) =>
+      t.due_date?.startsWith(todayStr)
+    ).length
+    const highPriority = tasks.filter((t: Record<string, string>) =>
+      t.priority === 'high'
+    ).length
 
-    const overdueTasks  = tasks.filter((t: Record<string, unknown>) => t.due_date && t.due_date < today)
-    const dueTodayTasks = tasks.filter((t: Record<string, unknown>) => t.due_date === today)
-    const upcomingTasks = tasks.filter((t: Record<string, unknown>) => !t.due_date || t.due_date > today)
-    const totalWords    = chapters.reduce((s: number, c: unknown) => s + (((c as Record<string,unknown>).word_count   as number) ?? 0), 0)
-    const targetWords   = chapters.reduce((s: number, c: unknown) => s + (((c as Record<string,unknown>).target_words as number) ?? 8000), 0)
-    const pendingMeetingActions = meetings.filter((m: Record<string, unknown>) => m.status === 'processed' && !m.tasks_created).length
-    const tenantData = tenantR.status === 'fulfilled' ? (tenantR.value?.data ?? null) : null
-    const briefContent = briefR.status === 'fulfilled' ? ((briefR.value?.data as Record<string,unknown>)?.content ?? null) : null
+    // ── Process OKRs ───────────────────────────────────────────────────────
+    const okrs = okrsResult.status === 'fulfilled'
+      ? okrsResult.value.data ?? []
+      : []
+    const onTrack  = okrs.filter((o: Record<string, string>) => o.health === 'on_track').length
+    const atRisk   = okrs.filter((o: Record<string, string>) =>
+      ['at_risk', 'off_track'].includes(o.health)
+    ).length
+    const avgProgress = okrs.length > 0
+      ? Math.round(okrs.reduce((s: number, o: Record<string, number>) => s + (o.progress_pct ?? 0), 0) / okrs.length)
+      : 0
 
-    // Exec persona — load OKR + decision + stakeholder + wellness + renewal snapshots
-    let execSnapshot: Record<string,unknown> | null = null
-    if (isExec) {
-      const in90 = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10)
-      const [okrsR2, decisionsR2, stakeR2, ipR, contractsR2, wellnessR, wellnessStreakR, ipRenewalR, contractRenewalR] = await Promise.allSettled([
-        supabase.from('exec_okrs')
-          .select('id,title,health,progress,period')
-          .eq('user_id', user.id).eq('status', 'active').limit(5),
-        supabase.from('exec_decisions')
-          .select('id,title,framework_used,status')
-          .eq('user_id', user.id).eq('status', 'open').limit(5),
-        supabase.from('exec_stakeholders')
-          .select('id,name,importance,next_touchpoint')
-          .eq('user_id', user.id)
-          .lte('next_touchpoint', new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0])
-          .order('importance').limit(5),
-        (supabase as any).from('ip_assets').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        (supabase as any).from('contracts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'active'),
-        // Today's wellness check-in
-        (supabase as any).from('wellness_sessions')
-          .select('id,mood_score,energy_score,stress_score,session_type,ai_insight')
-          .eq('user_id', user.id).eq('session_date', today)
-          .order('created_at', { ascending: false }).limit(1),
-        // Daily check-in streak
-        (supabase as any).from('wellness_streaks')
-          .select('current_streak,longest_streak,last_activity_date')
-          .eq('user_id', user.id).eq('streak_type', 'daily_checkin').single(),
-        // IP assets expiring within 90 days
-        (supabase as any).from('ip_assets')
-          .select('id,name,asset_type,renewal_date,status')
-          .eq('user_id', user.id).eq('status', 'active')
-          .lte('renewal_date', in90).gte('renewal_date', today)
-          .order('renewal_date').limit(5),
-        // Contracts expiring within 90 days
-        (supabase as any).from('contracts')
-          .select('id,title,contract_type,counterparty,end_date,value,currency')
-          .eq('user_id', user.id).eq('status', 'active')
-          .lte('end_date', in90).gte('end_date', today)
-          .order('end_date').limit(5),
-      ])
-      const okrs2      = okrsR2.status      === 'fulfilled' ? (okrsR2.value?.data      ?? []) : []
-      const decisions2 = decisionsR2.status === 'fulfilled' ? (decisionsR2.value?.data ?? []) : []
-      const stakes2    = stakeR2.status     === 'fulfilled' ? (stakeR2.value?.data     ?? []) : []
-      const ipCount    = ipR.status         === 'fulfilled' ? ((ipR.value as any)?.count  ?? 0) : 0
-      const contractCount  = contractsR2.status    === 'fulfilled' ? ((contractsR2.value as any)?.count    ?? 0) : 0
-      const todaySession   = wellnessR.status       === 'fulfilled' ? ((wellnessR.value as any)?.data?.[0] ?? null) : null
-      const checkinStreak  = wellnessStreakR.status  === 'fulfilled' ? ((wellnessStreakR.value as any)?.data ?? null) : null
-      const ipRenewals     = ipRenewalR.status       === 'fulfilled' ? ((ipRenewalR.value as any)?.data     ?? []) : []
-      const contractRenewals = contractRenewalR.status === 'fulfilled' ? ((contractRenewalR.value as any)?.data ?? []) : []
-      const atRisk = (okrs2 as Record<string,unknown>[]).filter(o => o.health !== 'on_track').length
-      execSnapshot = {
-        okrs: okrs2,
-        okr_summary: {
-          total:    (okrs2 as unknown[]).length,
-          at_risk:  atRisk,
-          avg_prog: (okrs2 as Record<string,unknown>[]).length
-            ? Math.round((okrs2 as Record<string,unknown>[]).reduce((s, o) => s + ((o.progress as number) ?? 0), 0) / (okrs2 as unknown[]).length)
-            : 0,
-        },
-        open_decisions:          decisions2,
-        open_decisions_count:    (decisions2 as unknown[]).length,
-        stakeholders_due:        stakes2,
-        stakeholders_due_count:  (stakes2 as unknown[]).length,
-        ip_assets_count:         ipCount,
-        active_contracts_count:  contractCount,
-        wellness: {
-          today_done:     !!todaySession,
-          mood_score:     todaySession?.mood_score   ?? null,
-          energy_score:   todaySession?.energy_score ?? null,
-          stress_score:   todaySession?.stress_score ?? null,
-          session_type:   todaySession?.session_type ?? null,
-          ai_insight:     todaySession?.ai_insight   ?? null,
-          streak:         (checkinStreak as any)?.current_streak  ?? 0,
-          longest_streak: (checkinStreak as any)?.longest_streak  ?? 0,
-        },
-        ip_renewals_due:         ipRenewals,
-        ip_renewals_count:       (ipRenewals as unknown[]).length,
-        contract_renewals_due:   contractRenewals,
-        contract_renewals_count: (contractRenewals as unknown[]).length,
-      }
-    }
+    // ── Process decisions ──────────────────────────────────────────────────
+    const decisions = decisionsResult.status === 'fulfilled'
+      ? decisionsResult.value.data ?? []
+      : []
+    const openDecs    = decisions.filter((d: Record<string, string>) => d.status === 'open').length
+    const pendingDecs = decisions.filter((d: Record<string, string>) => d.status === 'pending_review').length
+
+    // ── Process wellness ───────────────────────────────────────────────────
+    const wellnessData = wellnessResult.status === 'fulfilled'
+      ? wellnessResult.value.data
+      : null
+    const todayLogged = wellnessData?.last_activity_date === todayStr
+
+    // ── Process financial ──────────────────────────────────────────────────
+    const financial = financialResult.status === 'fulfilled'
+      ? financialResult.value.data
+      : null
+
+    // ── Process brief ──────────────────────────────────────────────────────
+    const brief = briefResult.status === 'fulfilled'
+      ? briefResult.value.data
+      : null
+
+    // ── Process profile ────────────────────────────────────────────────────
+    const profile = profileResult.status === 'fulfilled'
+      ? profileResult.value.data
+      : null
+
+    // ── Process IP ────────────────────────────────────────────────────────
+    const ipAssets = ipResult.status === 'fulfilled'
+      ? ipResult.value.data ?? []
+      : []
+    const expiringSoon = ipAssets.filter((a: Record<string, string>) => {
+      if (!a.expiry_date) return false
+      const daysToExpiry = (new Date(a.expiry_date).getTime() - today.getTime()) / 86400000
+      return daysToExpiry >= 0 && daysToExpiry <= 90
+    }).length
+
+    // ── Process credits ────────────────────────────────────────────────────
+    const credits = creditsResult.status === 'fulfilled'
+      ? creditsResult.value.data
+      : null
 
     return NextResponse.json({
-      tasks: { overdue: overdueTasks, due_today: dueTodayTasks, upcoming: upcomingTasks.slice(0, 8), total_open: tasks.length },
-      projects:       val<any[]>(projectsR) ?? [],
-      modules:        val<any[]>(modulesR)  ?? [],
-      brief:          briefContent,
-      tenant:         tenantData,
-      calendar:       { today: calendar, count: calendar.length },
-      counts: {
-        pending_invoices:        cnt(invoicesR),
-        action_emails:           cnt(emailsR),
-        queued_transfers:        cnt(transfersR),
-        receipts_48h:            cnt(receiptsR),
-        email_accounts:          accounts.length,
-        pending_meeting_actions: pendingMeetingActions,
+      tasks: {
+        total:         tasks.length,
+        overdue,
+        due_today:     dueToday,
+        high_priority: highPriority,
       },
-      meetings:       { recent: meetings, pending_actions: pendingMeetingActions },
-      email_accounts: accounts,
-      persona,
-      exec:  execSnapshot,
-      thesis: {
-        chapters,
-        total_words:   totalWords,
-        target_words:  targetWords,
-        pct_complete:  targetWords > 0 ? Math.round(totalWords / targetWords * 100) : 0,
-        chapters_done: chapters.filter((c: Record<string, unknown>) => ['submitted','passed','draft_complete'].includes(c.status as string)).length,
+      okrs: {
+        total:        okrs.length,
+        on_track:     onTrack,
+        at_risk:      atRisk,
+        avg_progress: avgProgress,
       },
+      decisions: {
+        total:          decisions.length,
+        open:           openDecs,
+        pending_review: pendingDecs,
+      },
+      wellness: wellnessData ? {
+        streak:       wellnessData.current_streak ?? 0,
+        today_logged: todayLogged,
+        last_date:    wellnessData.last_activity_date,
+      } : null,
+      financial: financial ? {
+        revenue:    financial.revenue_gbp,
+        burn:       financial.burn_gbp,
+        runway:     financial.runway_months,
+        period:     financial.period,
+      } : null,
+      brief: brief ? {
+        content:    brief.summary_text,
+        brief_date: brief.brief_date,
+        exists:     true,
+      } : {
+        exists: false,
+        brief_date: todayStr,
+      },
+      profile: profile ? {
+        full_name:  profile.full_name,
+        plan:       profile.plan ?? 'free',
+        persona:    profile.persona_type,
+        onboarded:  profile.onboarded,
+        cv_status:  profile.cv_processing_status,
+      } : null,
+      ip: {
+        total:          ipAssets.length,
+        expiring_soon:  expiringSoon,
+      },
+      credits: credits ? {
+        used:  credits.ai_calls_used  ?? 0,
+        limit: credits.ai_calls_limit ?? 100,
+        pct:   Math.round(((credits.ai_calls_used ?? 0) / (credits.ai_calls_limit ?? 100)) * 100),
+      } : { used: 0, limit: 100, pct: 0 },
+      generated_at: new Date().toISOString(),
     })
-
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
+    console.error('[api/dashboard]', err)
+    return NextResponse.json(
+      { error: 'Dashboard data failed', detail: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    )
   }
 }

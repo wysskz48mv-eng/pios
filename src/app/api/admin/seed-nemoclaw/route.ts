@@ -1,168 +1,178 @@
-export const dynamic    = 'force-dynamic'
-export const maxDuration = 30
-export const runtime    = 'nodejs'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 
 /**
  * POST /api/admin/seed-nemoclaw
- * Explicit NemoClaw™ first-run seed for the authenticated user.
- *
- * Idempotent — safe to call multiple times. Skips steps already done.
- *
- * Steps:
- *   1. Seed exec_intelligence_config default (if not present)
- *   2. Seed 15 proprietary IP frameworks via ip-vault/seed_frameworks
- *   3. Bootstrap nemoclaw_calibration placeholder row (if not present)
- *
- * Used by: setup guide, smoke test verification, manual re-seed.
- *
- * PIOS v3.0.3 Sprint 85 | VeritasIQ Technologies Ltd
+ * Seeds NemoClaw™ calibration + exec intelligence config for current user.
+ * Called from /platform/admin after migrations run.
+ * Safe to re-run — upserts, not inserts.
+ * VeritasIQ Technologies Ltd
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient }              from '@/lib/supabase/server'
+export const dynamic = 'force-dynamic'
+
+// 13 proprietary NemoClaw™ frameworks
+const NEMOCLAW_FRAMEWORKS = [
+  { code: 'SDL',  name: 'Strategic Decision Layer',          tier: 'professional', domain: 'strategy' },
+  { code: 'POM',  name: 'Priority & Obligation Matrix',      tier: 'professional', domain: 'operations' },
+  { code: 'OAE',  name: 'Opportunity & Adversity Engine',    tier: 'professional', domain: 'strategy' },
+  { code: 'CVDM', name: 'Cognitive & Value-Driven Method',   tier: 'professional', domain: 'decision' },
+  { code: 'CPA',  name: 'Critical Path Architecture',        tier: 'professional', domain: 'planning' },
+  { code: 'UMS',  name: 'Unified Management System',         tier: 'professional', domain: 'operations' },
+  { code: 'VFO',  name: 'Value & Focus Optimiser',           tier: 'professional', domain: 'productivity' },
+  { code: 'CFE',  name: 'Conflict & Friction Eliminator',    tier: 'professional', domain: 'leadership' },
+  { code: 'ADF',  name: 'Adaptive Decision Framework',       tier: 'professional', domain: 'decision' },
+  { code: 'GSM',  name: 'Growth & Sustainability Model',     tier: 'professional', domain: 'growth' },
+  { code: 'SPA',  name: 'Stakeholder Power Analysis',        tier: 'professional', domain: 'stakeholders' },
+  { code: 'RTE',  name: 'Risk & Threat Evaluator',           tier: 'professional', domain: 'risk' },
+  { code: 'IML',  name: 'Impact & Motivation Ledger',        tier: 'professional', domain: 'performance' },
+]
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-    const { data: prof } = await (supabase as any)
+    const adminSb = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const results: string[] = []
+
+    // 1. Upsert nemoclaw_calibration — default profile for Dimitry
+    const { error: calErr } = await adminSb
+      .from('nemoclaw_calibration')
+      .upsert({
+        user_id:                 user.id,
+        full_name:               'Dimitry Masuku',
+        job_title:               'Group CEO & Founder',
+        organisation:            'VeritasIQ Technologies Ltd',
+        seniority_level:         'C-Suite / Founder',
+        primary_industry:        'PropTech / FM Technology',
+        industries:              ['Facilities Management', 'PropTech', 'SaaS', 'Investigative Journalism', 'FM Consultancy'],
+        skills:                  ['Strategic leadership', 'FM contract management', 'GCC service charge governance', 'SaaS product development', 'AI product strategy', 'Academic research'],
+        qualifications:          ['DBA candidate (University of Portsmouth)', 'FM Consultancy (AECOM)', 'Facilities Management professional'],
+        employers:               ['VeritasIQ Technologies Ltd', 'AECOM'],
+        communication_register:  'direct',
+        coaching_intensity:      'concise',
+        recommended_frameworks:  ['SDL', 'POM', 'SPA', 'RTE', 'CPA'],
+        strengths:               ['Multi-domain execution', 'Technical product leadership', 'GCC market expertise', 'Research and analysis'],
+        growth_areas:            ['Delegation', 'Sales pipeline focus', 'External funding narrative'],
+        decision_style:          'analytical_intuitive',
+        calibration_summary:     'Founder/CEO of three interconnected SaaS platforms (VeritasEdge™, InvestiScript™, PIOS) with deep FM consultancy background and active DBA research. Operates across multiple simultaneous high-stakes workstreams. Communication style: direct, terse, sprint-oriented.',
+        calibration_version:     1,
+        updated_at:              new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+
+    if (calErr) results.push(`⚠ nemoclaw_calibration: ${calErr.message}`)
+    else results.push('✓ nemoclaw_calibration seeded')
+
+    // 2. Upsert exec_intelligence_config
+    const { error: eicErr } = await adminSb
+      .from('exec_intelligence_config')
+      .upsert({
+        user_id:       user.id,
+        ai_calls_used: 0,
+        ai_calls_limit: 500,  // pro tier
+        reset_date:    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        brief_enabled: true,
+        brief_time:    '07:00',
+        timezone:      'Europe/London',
+        persona:       'executive',
+        updated_at:    new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+
+    if (eicErr) results.push(`⚠ exec_intelligence_config: ${eicErr.message}`)
+    else results.push('✓ exec_intelligence_config seeded (500 AI credits)')
+
+    // 3. Upsert user_profiles with plan + persona
+    const { error: profErr } = await adminSb
       .from('user_profiles')
-      .select('tenant_id, full_name, job_title, persona_type, organisation')
+      .update({
+        plan:          'professional',
+        billing_status:'active',
+        persona_type:  'executive',
+        onboarded:     true,
+        full_name:     'Dimitry Masuku',
+        updated_at:    new Date().toISOString(),
+      })
       .eq('id', user.id)
+
+    if (profErr) results.push(`⚠ user_profiles: ${profErr.message}`)
+    else results.push('✓ user_profiles: plan=professional, persona=executive, onboarded=true')
+
+    // 4. Seed wellness streak (so dashboard streak shows)
+    const { error: streakErr } = await adminSb
+      .from('wellness_streaks')
+      .upsert({
+        user_id:           user.id,
+        current_streak:    1,
+        longest_streak:    1,
+        last_activity_date: new Date().toISOString().split('T')[0],
+        updated_at:        new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+
+    if (streakErr) results.push(`⚠ wellness_streaks: ${streakErr.message}`)
+    else results.push('✓ wellness_streaks seeded (1-day streak)')
+
+    // 5. Seed intelligence_prefs
+    const { error: intelErr } = await adminSb
+      .from('intelligence_prefs')
+      .upsert({
+        user_id:       user.id,
+        topics:        ['fm', 'gcc', 'saas', 'ai'],
+        refresh_freq:  'daily',
+        updated_at:    new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+
+    if (intelErr) results.push(`⚠ intelligence_prefs: ${intelErr.message}`)
+    else results.push('✓ intelligence_prefs seeded')
+
+    // 6. Seed Blood Oath Chronicles series (if content_series exists)
+    const { data: existingSeries } = await adminSb
+      .from('content_series')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('slug', 'blood-oath-chronicles')
       .single()
 
-    const p = prof as any
-    if (!p?.tenant_id) {
-      return NextResponse.json({ error: 'No tenant found — complete onboarding first' }, { status: 400 })
+    if (!existingSeries) {
+      const { error: seriesErr } = await adminSb
+        .from('content_series')
+        .insert({
+          user_id:           user.id,
+          title:             'Blood Oath Chronicles',
+          slug:              'blood-oath-chronicles',
+          platform:          'pocket_fm',
+          studio_url:        'https://studio.pocketfm.com',
+          genre:             'African supernatural thriller',
+          status:            'active',
+          total_episodes:    174,
+          published_episodes: 71,
+          current_episode:   72,
+          word_target:       1375,
+          bible:             'Protagonist: Kaelo Mthembu. Setting: South Africa. Layer 1 (1-300): Regional revenge. Layer 2 (301-800): Pan-African conspiracy. Layer 3 (801-2000): Supernatural/cosmic Blood Oath. Format: 1300-1450 words per episode, one scene, cliffhanger every episode.',
+          created_at:        new Date().toISOString(),
+          updated_at:        new Date().toISOString(),
+        })
+      if (seriesErr) results.push(`⚠ content_series: ${seriesErr.message}`)
+      else results.push('✓ Blood Oath Chronicles series seeded (ep 72 active)')
+    } else {
+      results.push('✓ Blood Oath Chronicles already exists — skipped')
     }
-
-    const steps: Record<string, { ok: boolean; detail: string; skipped?: boolean }> = {}
-
-    // ── Step 1: exec_intelligence_config default ─────────────────────────────
-    try {
-      const { data: existing } = await (supabase as any)
-        .from('exec_intelligence_config')
-        .select('id')
-        .eq('user_id', user.id)
-        .single()
-
-      if (existing) {
-        steps.exec_intel_config = { ok: true, detail: 'Already configured', skipped: true }
-      } else {
-        const { error } = await (supabase as any)
-          .from('exec_intelligence_config')
-          .insert({
-            user_id:             user.id,
-            focus_areas:         ['strategy', 'product', 'commercial', 'operations'],
-            risk_tolerance:      'moderate',
-            decision_horizon:    'medium_term',
-            briefing_frequency:  'daily',
-            ai_persona_mode:     'advisor',
-            custom_instructions: `You are NemoClaw™, the proprietary AI executive intelligence engine built by VeritasIQ Technologies Ltd for ${p.full_name ?? 'the user'}. You operate as a trusted strategic advisor. You understand the 13 proprietary VeritasIQ frameworks (SDL, POM, OAE, CVDM, CPA, UMS, VFO, CFE, ADF, GSM, SPA, RTE, IML). Always reference the most relevant framework when structuring analysis. Be direct, precise, and action-oriented.`,
-            active:              true,
-          })
-        if (error) throw error
-        steps.exec_intel_config = { ok: true, detail: 'exec_intelligence_config default seeded' }
-      }
-    } catch (e: any) {
-      steps.exec_intel_config = { ok: false, detail: e.message ?? 'exec_intelligence_config seed failed' }
-    }
-
-    // ── Step 2: IP framework seed (15 proprietary frameworks) ────────────────
-    try {
-      const origin = req.headers.get('origin')
-        ?? req.headers.get('x-forwarded-host')?.replace(/^/, 'https://')
-        ?? process.env.NEXTAUTH_URL
-        ?? 'https://pios-wysskz48mv-engs-projects.vercel.app'
-
-      const seedRes = await fetch(`${origin}/api/ip-vault`, {
-        method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie':        req.headers.get('cookie') ?? '',
-        },
-        body: JSON.stringify({ action: 'seed_frameworks' }),
-      })
-
-      if (seedRes.ok) {
-        const d = await seedRes.json() as { seeded?: number; skipped?: number }
-        steps.ip_frameworks = {
-          ok:      true,
-          detail:  d.seeded === 0
-            ? `All ${d.skipped ?? 15} frameworks already seeded`
-            : `Seeded ${d.seeded} frameworks (${d.skipped ?? 0} already present)`,
-          skipped: d.seeded === 0,
-        }
-      } else {
-        const err = await seedRes.text().catch(() => 'unknown')
-        steps.ip_frameworks = { ok: false, detail: `ip-vault seed_frameworks failed: ${err.slice(0, 200)}` }
-      }
-    } catch (e: any) {
-      steps.ip_frameworks = { ok: false, detail: e.message ?? 'Framework seed failed' }
-    }
-
-    // ── Step 3: nemoclaw_calibration placeholder ─────────────────────────────
-    try {
-      const { data: existing } = await (supabase as any)
-        .from('nemoclaw_calibration')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('is_current', true)
-        .single()
-
-      if (existing) {
-        steps.nemoclaw_calibration = { ok: true, detail: 'Calibration record already exists', skipped: true }
-      } else {
-        const { error } = await (supabase as any)
-          .from('nemoclaw_calibration')
-          .insert({
-            user_id:             user.id,
-            calibration_version: 1,
-            cv_summary:          `${p.full_name ?? 'User'} — ${p.job_title ?? 'Professional'} at ${p.organisation ?? 'VeritasIQ Technologies Ltd'}. Calibration pending — upload CV at /platform/ai to activate full NemoClaw™ intelligence.`,
-            key_skills:          ['strategy', 'commercial', 'leadership', 'consulting'],
-            seniority_level:     'senior',
-            domain_focus:        ['saas', 'fm_consulting', 'investment'],
-            calibration_data:    {
-              persona:      p.persona_type ?? 'professional',
-              bootstrapped: true,
-              note:         'Placeholder calibration — full calibration requires CV upload',
-            },
-            calibration_score: 0.40,
-            is_current:       true,
-          })
-        if (error) throw error
-        steps.nemoclaw_calibration = {
-          ok:     true,
-          detail: 'NemoClaw calibration placeholder created — upload CV at /platform/ai to complete full calibration',
-        }
-      }
-    } catch (e: any) {
-      steps.nemoclaw_calibration = { ok: false, detail: e.message ?? 'Calibration seed failed' }
-    }
-
-    const allOk  = Object.values(steps).every(s => s.ok)
-    const failed = Object.entries(steps).filter(([, s]) => !s.ok).map(([k]) => k)
 
     return NextResponse.json({
-      ok: allOk,
-      steps,
-      failed,
-      message: allOk
-        ? 'NemoClaw™ seed complete. Visit /platform/ai to upload your CV for full calibration.'
-        : `NemoClaw seed partially failed: ${failed.join(', ')}`,
+      ok:      true,
+      results,
+      summary: `${results.filter(r => r.startsWith('✓')).length} succeeded, ${results.filter(r => r.startsWith('⚠')).length} warnings`,
     })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? 'Internal server error' }, { status: 500 })
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    )
   }
-}
-
-export async function GET() {
-  return NextResponse.json({
-    endpoint:    'POST /api/admin/seed-nemoclaw',
-    description: 'NemoClaw™ first-run seed — exec_intelligence_config + IP frameworks + calibration placeholder',
-    idempotent:  true,
-    auth:        'Requires logged-in session',
-  })
 }

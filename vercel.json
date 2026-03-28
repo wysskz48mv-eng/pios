@@ -1,114 +1,41 @@
 {
   "crons": [
     {
-      "path": "/api/cron/feeds",
-      "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/cron/brief",
+      "path": "/api/cron/morning-brief",
       "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/cron/weekly",
-      "schedule": "0 8 * * 0"
-    },
-    {
-      "path": "/api/cron/milestone-alerts",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/supervisor-digest",
-      "schedule": "0 8 * * 1"
-    },
-    {
-      "path": "/api/cron/okr-digest",
-      "schedule": "0 7 * * 1"
+      "path": "/api/cron/trial-reminder",
+      "schedule": "0 9 * * *"
     }
   ],
   "functions": {
-    "src/app/api/cron/brief/route.ts": {
+    "src/app/api/cron/morning-brief/route.ts": {
       "maxDuration": 300
     },
-    "src/app/api/brief/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/ai/sessions/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/research/search/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/cron/feeds/route.ts": {
-      "maxDuration": 300
-    },
-    "src/app/api/cron/okr-digest/route.ts": {
-      "maxDuration": 300
-    },
-    "src/app/api/exec/agent/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/consulting/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/bica/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/sia/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/cron/weekly/route.ts": {
-      "maxDuration": 300
-    },
-    "src/app/api/cron/milestone-alerts/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/cron/supervisor-digest/route.ts": {
-      "maxDuration": 300
-    },
-    "src/app/api/admin/run-migration/route.ts": {
+    "src/app/api/cron/trial-reminder/route.ts": {
       "maxDuration": 60
     },
     "src/app/api/ai/chat/route.ts": {
       "maxDuration": 60
     },
-    "src/app/api/files/scan/route.ts": {
+    "src/app/api/brief/route.ts": {
       "maxDuration": 60
     },
-    "src/app/api/meetings/route.ts": {
+    "src/app/api/content/review-agent/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/admin/migrate-pending/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/admin/seed-nemoclaw/route.ts": {
       "maxDuration": 60
     },
-    "src/app/api/payroll/detect/route.ts": {
+    "src/app/api/nemoclaw/calibrate/route.ts": {
       "maxDuration": 60
     },
-    "src/app/api/wellness/route.ts": {
-      "maxDuration": 60
+    "src/app/api/trial/start/route.ts": {
+      "maxDuration": 30
     }
-  },
-  "regions": [
-    "lhr1",
-    "iad1"
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow, noarchive, nosnippet"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Content-Owner",
-          "value": "VeritasIQ Technologies Ltd"
-        }
-      ]
-    }
-  ]
+  }
 }

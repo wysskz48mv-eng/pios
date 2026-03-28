@@ -1,76 +1,159 @@
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
-import { sendEmail, welcomeHtml } from '@/lib/email/resend'
 
-export async function GET(request: Request) {
+/**
+ * GET /auth/callback
+ * Handles Supabase auth redirect after OAuth or magic link.
+ *
+ * Flow:
+ *   1. Exchange code for session
+ *   2. Upsert user_profiles row (create on first visit)
+ *   3. New users → /onboarding
+ *   4. Returning users → /platform/dashboard (or ?next= param)
+ *   5. Send welcome email to new users (fire-and-forget)
+ *
+ * VeritasIQ Technologies Ltd · PIOS
+ */
+
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  if (code) {
-    const supabase = createClient()
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error && data.user) {
-      // Capture Google OAuth tokens from the session
-      const providerToken = data.session?.provider_token ?? null
-      const providerRefreshToken = data.session?.provider_refresh_token ?? null
-      const tokenExpiry = providerToken
-        ? new Date(Date.now() + 3600 * 1000).toISOString() // 1 hour from now
-        : null
+  const code     = searchParams.get('code')
+  const next     = searchParams.get('next') ?? '/platform/dashboard'
+  const errorMsg = searchParams.get('error_description')
 
-      // Check if profile already exists
-      const { data: profile } = await supabase
-        .from('user_profiles').select('id').eq('id', data.user.id).single()
-
-      if (!profile) {
-        // New user — create tenant + profile
-        const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-        const { data: tenant } = await supabase.from('tenants').insert({
-          name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'My PIOS',
-          slug: data.user.id.substring(0, 8),
-          plan: 'individual',  // default — user selects tier during/after trial
-          plan_status: 'trialing',
-          subscription_status: 'trialing',
-          trial_ends_at: trialEndsAt,
-          ai_credits_limit: 5000,
-        }).select().single()
-
-        if (tenant) {
-          await supabase.from('user_profiles').insert({
-            id: data.user.id,
-            tenant_id: tenant.id,
-            full_name: data.user.user_metadata?.full_name,
-            avatar_url: data.user.user_metadata?.avatar_url,
-            google_email: data.user.email,
-            google_access_token: providerToken,
-            google_refresh_token: providerRefreshToken,
-            google_token_expiry: tokenExpiry,
-            role: 'owner',
-          })
-        }
-      } else if (providerToken) {
-        // Returning user via Google — refresh stored tokens
-        await supabase.from('user_profiles').update({
-          google_access_token: providerToken,
-          google_refresh_token: providerRefreshToken,
-          google_token_expiry: tokenExpiry,
-          avatar_url: data.user.user_metadata?.avatar_url,
-        }).eq('id', data.user.id)
-      }
-
-      // New user — send welcome email (fire-and-forget, never block redirect)
-      const isNewUser = !profile
-      if (isNewUser && data.user.email) {
-        const name = data.user.user_metadata?.full_name ?? data.user.email.split('@')[0]
-        sendEmail({
-          to:      data.user.email,
-          subject: 'Welcome to PIOS — your intelligent operating system',
-          html:    welcomeHtml(name, 'Student'),
-        }).catch(() => {/* silent — email is non-critical */})
-      }
-
-      // New users land on onboarding; returning users go straight to dashboard
-      const dest = isNewUser ? `${origin}/onboarding` : `${origin}/platform/dashboard`
-      return NextResponse.redirect(dest)
-    }
+  // Surface any upstream OAuth errors
+  if (errorMsg) {
+    return NextResponse.redirect(
+      `${origin}/auth/signin?error=${encodeURIComponent(errorMsg)}`
+    )
   }
-  return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`)
+
+  if (!code) {
+    return NextResponse.redirect(`${origin}/auth/signin?error=missing_code`)
+  }
+
+  const supabase = await createClient()
+
+  // Exchange code for session
+  const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code)
+  if (exchangeErr) {
+    console.error('[auth/callback] exchange error:', exchangeErr.message)
+    return NextResponse.redirect(
+      `${origin}/auth/signin?error=${encodeURIComponent(exchangeErr.message)}`
+    )
+  }
+
+  // Get user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.redirect(`${origin}/auth/signin?error=no_user`)
+  }
+
+  // Check / create user profile
+  const { data: existingProfile } = await supabase
+    .from('user_profiles')
+    .select('id, onboarded, full_name, plan')
+    .eq('id', user.id)
+    .single()
+
+  const isNewUser = !existingProfile
+
+  if (isNewUser) {
+    // Create profile for new user
+    const fullName = user.user_metadata?.full_name
+      ?? user.user_metadata?.name
+      ?? user.email?.split('@')[0]
+      ?? 'there'
+
+    await supabase.from('user_profiles').insert({
+      id:           user.id,
+      full_name:    fullName,
+      email:        user.email,
+      plan:         'free',
+      persona_type: 'executive',   // default — wizard will update
+      onboarded:    false,
+      created_at:   new Date().toISOString(),
+      updated_at:   new Date().toISOString(),
+    }).onConflict('id').ignore()
+
+    // Seed exec_intelligence_config for new user
+    await supabase.from('exec_intelligence_config').upsert({
+      user_id:        user.id,
+      ai_calls_used:  0,
+      ai_calls_limit: 50,   // free tier — upgrade unlocks more
+      brief_enabled:  true,
+      persona:        'executive',
+      updated_at:     new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+
+    // Send welcome email — fire and forget, never block redirect
+    sendWelcomeEmail(user.email ?? '', fullName).catch(() => {})
+
+    // New users → onboarding wizard
+    return NextResponse.redirect(`${origin}/onboarding`)
+  }
+
+  // Returning user — go to requested destination or dashboard
+  const destination = existingProfile?.onboarded
+    ? next
+    : '/onboarding'   // Profile exists but onboarding not complete
+
+  return NextResponse.redirect(`${origin}${destination}`)
+}
+
+// ── Fire-and-forget welcome email ─────────────────────────────────────────
+async function sendWelcomeEmail(to: string, name: string): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY
+  const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <onboarding@resend.dev>'
+  if (!apiKey || !to) return
+
+  const first = name.split(' ')[0]
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:'DM Sans',system-ui,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;">
+<tr><td align="center" style="padding:40px 16px;">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#0b0d18;border:1px solid #1a1f34;border-radius:16px;overflow:hidden;">
+  <tr><td style="padding:32px 32px 28px;background:linear-gradient(135deg,#0f0a2e,#0b0d18);">
+    <div style="width:40px;height:40px;background:linear-gradient(135deg,#8b7cf8,#4f8ef7);border-radius:10px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;">
+      <span style="font-size:18px;font-weight:800;color:#fff;">P</span>
+    </div>
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#eceef8;letter-spacing:-0.02em;">
+      Welcome to PIOS, ${first}.
+    </h1>
+    <p style="margin:0;font-size:14px;color:#636880;">Your Personal Intelligence Operating System is ready.</p>
+  </td></tr>
+  <tr><td style="padding:28px 32px;">
+    <p style="margin:0 0 20px;font-size:14px;color:#a8adc8;line-height:1.7;">
+      PIOS is your executive command centre — built for founders, CEOs, and senior consultants who run multiple platforms simultaneously.
+    </p>
+    <p style="margin:0 0 20px;font-size:14px;color:#a8adc8;line-height:1.7;">
+      Start by completing your profile so NemoClaw™ can calibrate to your context. Your 7am morning brief starts tomorrow.
+    </p>
+    <table cellpadding="0" cellspacing="0" style="margin-top:24px;">
+      <tr><td>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-wysskz48mv-engs-projects.vercel.app'}/onboarding"
+           style="display:inline-block;background:#8b7cf8;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:8px;">
+          Complete your setup →
+        </a>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding:18px 32px;background:#0f1120;border-top:1px solid #1a1f34;">
+    <p style="margin:0;font-size:11px;color:#636880;">
+      PIOS by VeritasIQ Technologies Ltd ·
+      <a href="mailto:info@veritasiq.io" style="color:#8b7cf8;text-decoration:none;">info@veritasiq.io</a>
+    </p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to, subject: 'Welcome to PIOS — your command centre is ready', html }),
+  })
 }
