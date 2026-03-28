@@ -118,11 +118,16 @@ export default function DemoPage() {
     finally { setNemoLoading(false) }
   }
 
-  const tasks        = (dash?.tasks        ?? []) as Record<string,any>[]
+  const allTasks     = [
+    ...((dash?.tasks as any)?.overdue    ?? []),
+    ...((dash?.tasks as any)?.due_today  ?? []),
+    ...((dash?.tasks as any)?.upcoming   ?? []),
+  ] as Record<string,any>[]
+  const tasks        = allTasks
   const projects     = (dash?.projects     ?? []) as Record<string,any>[]
-  const execSnap     = (dash?.execSnapshot ?? {}) as Record<string,any>
-  const okrs         = (execSnap?.okrs     ?? []) as Record<string,any>[]
-  const decisions    = (execSnap?.decisions ?? []) as Record<string,any>[]
+  const execSnap     = (dash?.exec         ?? {}) as Record<string,any>
+  const okrs         = (execSnap?.okrs          ?? []) as Record<string,any>[]
+  const decisions    = (execSnap?.open_decisions ?? []) as Record<string,any>[]
 
   return (
     <div style={{ padding:'24px 28px', maxWidth:1280, margin:'0 auto' }}>
