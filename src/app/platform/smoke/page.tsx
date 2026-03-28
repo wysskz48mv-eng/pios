@@ -70,7 +70,7 @@ export default function SmokePage() {
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px' }}>Platform Smoke Test</h1>
             <p style={{ fontSize: 13, color: 'var(--pios-muted)', margin: 0 }}>
-              12 checks · DB · AI · email · cron · billing · PIOS v3.0
+              {checks.length > 0 ? `${checks.length} checks` : '26 checks'} · DB · AI · email · billing · NemoClaw™ · PIOS v3.0.3
             </p>
           </div>
           <button
@@ -129,7 +129,7 @@ export default function SmokePage() {
       {running && (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--pios-muted)', fontSize: 13 }}>
           <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
-          Running 12 checks across database, AI engine, email, and billing…
+          Running checks across database, AI engine, NemoClaw™, email, and billing…
         </div>
       )}
 
@@ -197,12 +197,23 @@ export default function SmokePage() {
             <Link href="/platform/admin" style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, background: 'rgba(107,114,128,0.1)', color: 'var(--pios-muted)', textDecoration: 'none' }}>
               → Admin Panel
             </Link>
+            {result.checks.some(c => (c.id === 'nemoclaw_seed' || c.id === 'nemoclaw_config') && c.status !== 'pass') && (
+              <button
+                onClick={async () => {
+                  await fetch('/api/admin/seed-nemoclaw', { method: 'POST' })
+                  run()
+                }}
+                style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, background: 'rgba(139,124,248,0.15)', color: 'var(--ai)', border: '1px solid rgba(139,124,248,0.3)', cursor: 'pointer', fontWeight: 600 }}
+              >
+                ⚡ Seed NemoClaw™
+              </button>
+            )}
           </div>
         </div>
       )}
 
       <p style={{ fontSize: 11, color: 'var(--pios-dim)', textAlign: 'center', marginTop: 24 }}>
-        PIOS v3.0 · Sprint 58 · VeritasIQ Technologies Ltd
+        PIOS v3.0.3 · Sprint 85 · VeritasIQ Technologies Ltd
       </p>
     </div>
   )

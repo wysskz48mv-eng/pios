@@ -172,11 +172,7 @@ export async function GET() {
   }))
 
   // ── Summary ────────────────────────────────────────────────────────────────
-  const criticalFails = checks.filter(c => c.critical && c.status === 'fail')
-  const passes        = checks.filter(c => c.status === 'pass').length
-  const warns         = checks.filter(c => c.status === 'warn').length
-  const fails         = checks.filter(c => c.status === 'fail').length
-  const overallOk     = criticalFails.length === 0
+  // Summary computed after all checks pushed below
 
   checks.push(await runCheck('db_ip_vault', 'IP Vault table (M019)', false, async () => {
     const { error } = await (supabase as any).from('ip_assets').select('id').limit(1)
@@ -196,33 +192,100 @@ export async function GET() {
                  : { ok: true, detail: 'knowledge_entries accessible' }
   }))
 
+  checks.push(await runCheck('db_wellness', 'Wellness tables (M021)', false, async () => {
+    const { error } = await (supabase as any).from('wellness_sessions').select('id').limit(1)
+    return error
+      ? { ok: false, detail: 'Run M021 via /api/admin/migrate-pending: ' + error.message, warn: true }
+      : { ok: true, detail: 'wellness_sessions table accessible' }
+  }))
+
+  checks.push(await runCheck('db_nemoclaw_cal', 'NemoClaw calibration table (M022)', false, async () => {
+    const { error } = await (supabase as any).from('nemoclaw_calibration').select('id').limit(1)
+    return error
+      ? { ok: false, detail: 'Run M022 via /api/admin/migrate-pending: ' + error.message, warn: true }
+      : { ok: true, detail: 'nemoclaw_calibration table accessible' }
+  }))
+
+  checks.push(await runCheck('db_exec_intel', 'Executive Intelligence Config (M023)', false, async () => {
+    const { error } = await (supabase as any).from('exec_intelligence_config').select('id').limit(1)
+    return error
+      ? { ok: false, detail: 'Run M023 via /api/admin/migrate-pending: ' + error.message, warn: true }
+      : { ok: true, detail: 'exec_intelligence_config table accessible' }
+  }))
+
   checks.push(await runCheck('storage_bucket', 'pios-files storage bucket', false, async () => {
     const { data, error } = await (supabase as any).storage.getBucket('pios-files')
-    if (error || !data) return { ok: false, detail: 'Create pios-files bucket in Storage dashboard', warn: true }
+    if (error || !data) return { ok: false, detail: 'Create pios-files bucket in Supabase Storage dashboard', warn: true }
     return { ok: true, detail: 'pios-files bucket exists — file uploads enabled' }
   }))
 
+  checks.push(await runCheck('storage_cv_bucket', 'pios-cv storage bucket (M022)', false, async () => {
+    const { data, error } = await (supabase as any).storage.getBucket('pios-cv')
+    if (error || !data) return { ok: false, detail: 'Run M022 via /api/admin/migrate-pending to create pios-cv bucket', warn: true }
+    return { ok: true, detail: 'pios-cv bucket exists — CV uploads enabled' }
+  }))
+
+  checks.push(await runCheck('nemoclaw_seed', 'NemoClaw™ seed (IP frameworks)', false, async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, detail: 'Not authenticated', warn: true }
+    const { data, error } = await (supabase as any)
+      .from('ip_assets')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('asset_type', 'framework')
+      .limit(1)
+    if (error) return { ok: false, detail: 'ip_assets query failed: ' + error.message, warn: true }
+    if (!data || data.length === 0) return {
+      ok: false,
+      detail: 'No IP frameworks seeded — run POST /api/admin/seed-nemoclaw or visit /platform/ip-vault → Seed Frameworks',
+      warn: true,
+    }
+    return { ok: true, detail: 'NemoClaw™ IP frameworks seeded — proprietary methodology library active' }
+  }))
+
+  checks.push(await runCheck('nemoclaw_config', 'NemoClaw™ exec intelligence config', false, async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, detail: 'Not authenticated', warn: true }
+    const { data, error } = await (supabase as any)
+      .from('exec_intelligence_config')
+      .select('id, active')
+      .eq('user_id', user.id)
+      .single()
+    if (error || !data) return {
+      ok: false,
+      detail: 'No NemoClaw config — run POST /api/admin/seed-nemoclaw',
+      warn: true,
+    }
+    return { ok: true, detail: 'NemoClaw™ executive intelligence config active' }
+  }))
 
   checks.push(await runCheck('db_direct_url', 'Direct DB URL (for admin migrations)', false, async () => {
     const url = process.env.DIRECT_URL ?? process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL
     if (!url) return {
       ok: false,
-      detail: 'Set DIRECT_URL in Vercel env vars (Supabase Dashboard → Settings → Database → Connection String). Required for running migrations from /platform/admin.',
+      detail: 'Set DIRECT_URL in Vercel env vars (Supabase → Settings → Database → Connection String)',
       warn: true,
     }
     return { ok: true, detail: 'Direct DB connection configured — admin migrations enabled' }
   }))
 
+  // Recalculate summary after all checks are pushed
+  const criticalFailsFinal = checks.filter(c => c.critical && c.status === 'fail')
+  const passesFinal        = checks.filter(c => c.status === 'pass').length
+  const warnsFinal         = checks.filter(c => c.status === 'warn').length
+  const failsFinal         = checks.filter(c => c.status === 'fail').length
+  const overallOkFinal     = criticalFailsFinal.length === 0
 
   return NextResponse.json({
-    ok:            overallOk,
-    status:        overallOk ? (warns > 0 ? 'degraded' : 'healthy') : 'critical',
-    summary:       `${passes} passed · ${warns} warnings · ${fails} failed`,
-    critical_fails: criticalFails.map(c => c.name),
+    ok:             overallOkFinal,
+    status:         overallOkFinal ? (warnsFinal > 0 ? 'degraded' : 'healthy') : 'critical',
+    summary:        `${passesFinal} passed · ${warnsFinal} warnings · ${failsFinal} failed`,
+    total_checks:   checks.length,
+    critical_fails: criticalFailsFinal.map(c => c.name),
     checks,
-    platform:      'PIOS',
-    version:       process.env.npm_package_version ?? '3.0.0',
-    timestamp:     new Date().toISOString(),
-    owner:         'VeritasIQ Technologies Ltd',
-  }, { status: overallOk ? 200 : 503 })
+    platform:       'PIOS',
+    version:        process.env.npm_package_version ?? '3.0.3',
+    timestamp:      new Date().toISOString(),
+    owner:          'VeritasIQ Technologies Ltd',
+  }, { status: overallOkFinal ? 200 : 503 })
 }
