@@ -123,6 +123,93 @@ export async function POST(req: NextRequest) {
       seeded.push(`${contracts.length} contracts`)
     } catch { seeded.push('Contracts: table not yet migrated (run M019)') }
 
+    // ── 8. OKR Key Results (sprint 86) ───────────────────────────────────────
+    try {
+      const { data: existingOkrs } = await (supabase as any)
+        .from('exec_okrs').select('id,title').eq('user_id', uid).limit(3)
+      if (existingOkrs?.length > 0) {
+        const okrKRs = [
+          { objective_title: 'Launch PIOS commercially', krs: [
+            { title: 'Paying users', metric_type: 'number', target: 10, current: 3, unit: 'users', status: 'on_track' },
+            { title: 'MRR achieved', metric_type: 'currency', target: 240, current: 72, unit: '£', status: 'on_track' },
+            { title: 'Trial-to-paid conversion', metric_type: 'percentage', target: 40, current: 25, unit: '%', status: 'at_risk' },
+          ]},
+          { objective_title: 'Close first VeritasEdge enterprise', krs: [
+            { title: 'Enterprise demos delivered', metric_type: 'number', target: 5, current: 1, unit: 'demos', status: 'at_risk' },
+            { title: 'Contract value pipeline', metric_type: 'currency', target: 150000, current: 45000, unit: '£', status: 'at_risk' },
+          ]},
+          { objective_title: 'Complete all 4 trademark filings', krs: [
+            { title: 'Filings submitted', metric_type: 'number', target: 4, current: 2, unit: 'filings', status: 'on_track' },
+          ]},
+        ]
+        for (const okrGroup of okrKRs) {
+          const matchingOkr = existingOkrs.find((o: any) =>
+            String(o.title ?? '').toLowerCase().includes(okrGroup.objective_title.toLowerCase().slice(0, 12))
+          )
+          if (matchingOkr) {
+            for (const kr of okrGroup.krs) {
+              await (supabase as any).from('exec_key_results').insert({
+                ...kr, objective_id: matchingOkr.id, user_id: uid, tenant_id: tid,
+              })
+            }
+          }
+        }
+        seeded.push(`${okrKRs.flatMap(o => o.krs).length} OKR key results`)
+      }
+    } catch { seeded.push('OKR key results: skipped (exec_key_results table may need M015)') }
+
+    // ── 9. Wellness session (sprint 86) ──────────────────────────────────────
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const { data: existing } = await (supabase as any)
+        .from('wellness_sessions').select('id').eq('user_id', uid).eq('session_date', today).limit(1)
+      if (!existing?.length) {
+        await (supabase as any).from('wellness_sessions').insert({
+          user_id: uid, tenant_id: tid,
+          session_date: today, session_type: 'morning_checkin',
+          mood_score: 7, energy_score: 8, stress_score: 5, focus_score: 8,
+          dominant_domain: 'saas', gdpr_consent: true, data_minimised: true,
+          ai_insight: 'High energy day — ideal for strategic work and investor conversations. Stress is moderate; block time for deep focus on the Qiddiya proposal before 2pm.',
+          ai_recommended_actions: [
+            { action: 'Schedule 90-minute deep work block for Qiddiya RFP', priority: 'high', timeframe: 'today' },
+            { action: 'Review PIOS pricing page before investor call', priority: 'high', timeframe: 'today' },
+            { action: 'Short walk at noon to maintain energy', priority: 'medium', timeframe: 'today' },
+          ],
+          source: 'demo_seed',
+        })
+        // Seed a streak too
+        await (supabase as any).from('wellness_streaks').upsert({
+          user_id: uid, streak_type: 'daily_checkin',
+          current_streak: 7, longest_streak: 14,
+          last_activity_date: today,
+        }, { onConflict: 'user_id,streak_type' })
+        seeded.push('1 wellness session (today) + 7-day streak')
+      } else {
+        seeded.push('Wellness session: already exists for today')
+      }
+    } catch { seeded.push('Wellness: table not yet migrated (run M021)') }
+
+    // ── 10. Financial snapshot (sprint 86) ───────────────────────────────────
+    try {
+      const month = new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+      const { data: existingSnap } = await (supabase as any)
+        .from('financial_snapshots').select('id').eq('user_id', uid).eq('period', month).limit(1)
+      if (!existingSnap?.length) {
+        await (supabase as any).from('financial_snapshots').insert({
+          user_id: uid, tenant_id: tid,
+          period: month, period_type: 'month', entity: 'group',
+          revenue: 4800, expenses: 2100, payroll_cost: 0,
+          cash_position: 18400, receivables: 12000, payables: 1800,
+          currency: 'GBP',
+          notes: 'Demo snapshot — VeritasIQ Technologies Ltd group P&L',
+          ai_commentary: 'Revenue tracking ahead of Q2 target. Cash position healthy at £18.4k. Receivables of £12k pending from FM consultancy engagements.',
+        })
+        seeded.push(`1 financial snapshot (${month})`)
+      } else {
+        seeded.push('Financial snapshot: already exists for this month')
+      }
+    } catch { seeded.push('Financial snapshot: table not yet migrated (run M019)') }
+
     return NextResponse.json({ ok: true, seeded, message: `Demo data seeded: ${seeded.join(', ')}` })
   } catch (e: unknown) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
