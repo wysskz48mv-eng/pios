@@ -205,11 +205,9 @@ export default function DashboardPage() {
   useEffect(() => { load() }, [load])
 
   useEffect(() => {
-    fetch('/api/live/veritasedge').then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.connected && d?.snapshot) setSeSnap(d.snapshot as SnapRecord) })
+
       .catch(() => {})
-    fetch('/api/live/investiscript').then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.connected && d?.snapshot) setIsSnap(d.snapshot as SnapRecord) })
+
       .catch(() => {})
   }, [])
 
@@ -406,59 +404,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Platform live tiles ── */}
-      {(seSnap || isSnap) && (
-        <div style={{ display: 'grid', gridTemplateColumns: seSnap && isSnap ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 16 }}>
-          {seSnap && (
-            <CardSm style={{ borderLeft: '2px solid var(--fm)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <div>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, fontWeight: 400, color: 'var(--fm)' }}>VeritasEdge™</span>
-                  <span style={{ marginLeft: 8, fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--pios-dim)' }}>sustainedge.vercel.app</span>
-                </div>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(16,217,160,0.1)', color: 'var(--fm)' }}>LIVE</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-                {[
-                  { l: 'Tenants', v: seSnap.tenants?.total ?? seSnap.organisations?.total ?? 0 },
-                  { l: 'Projects', v: seSnap.projects?.total ?? 0 },
-                  { l: 'Assets', v: (typeof seSnap.assets === 'object' ? (seSnap.assets as {total?:number})?.total ?? 0 : Number(seSnap.assets ?? 0)) },
-                ].map(m => (
-                  <div key={m.l}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>{m.v}</div>
-                    <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{m.l}</div>
-                  </div>
-                ))}
-              </div>
-            </CardSm>
-          )}
-          {isSnap && (
-            <CardSm style={{ borderLeft: '2px solid var(--academic)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <div>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, fontWeight: 400, color: 'var(--academic)' }}>InvestiScript</span>
-                  <span style={{ marginLeft: 8, fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--pios-dim)' }}>investiscript.vercel.app</span>
-                </div>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(79,142,247,0.1)', color: 'var(--academic)' }}>LIVE</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-                {[
-                  { l: 'Newsrooms', v: isSnap.organisations?.total ?? 0 },
-                  { l: 'Investigations', v: isSnap.investigations?.total ?? 0 },
-                  { l: 'Scripts', v: isSnap.scripts?.total ?? 0 },
-                ].map(m => (
-                  <div key={m.l}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 400, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>{m.v}</div>
-                    <div style={{ fontSize: 10, color: 'var(--pios-dim)' }}>{m.l}</div>
-                  </div>
-                ))}
-              </div>
-            </CardSm>
-          )}
-        </div>
-      )}
-
-      {/* ── Executive OS strip ── */}
+            {/* ── Executive OS strip ── */}
       {isExecPersona && execSnap && (() => {
         const wellness = (execSnap as any).wellness ?? {}
         const ipRenewals = (execSnap as any).ip_renewals_due ?? []

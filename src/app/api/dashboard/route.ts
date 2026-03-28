@@ -52,12 +52,12 @@ export async function GET(req: NextRequest) {
         .neq('status', 'done'),
 
       // OKRs
-      supabase.from('okrs')
+      supabase.from('executive_okrs')
         .select('id,progress_pct,health')
         .eq('user_id', uid),
 
       // Decisions
-      supabase.from('decisions')
+      supabase.from('executive_decisions')
         .select('id,status')
         .eq('user_id', uid),
 
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
 
       // Latest financial snapshot
       supabase.from('financial_snapshots')
-        .select('revenue_gbp,burn_gbp,runway_months,period')
+        .select('revenue,expenses,period')
         .eq('user_id', uid)
         .order('created_at', { ascending: false })
         .limit(1)
