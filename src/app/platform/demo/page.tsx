@@ -541,33 +541,26 @@ export default function DemoPage() {
       {active === 'commercial' && (
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24 }}>
           <div>
-            <div style={{ fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--pios-dim)', marginBottom:14 }}>Pricing Model</div>
+            <div style={{ fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--pios-dim)', marginBottom:14 }}>Pricing</div>
             {[
-              { name:'Student', price:'£9/mo', desc:'Academic lifecycle, CPD, research tools', color:'#26aee8' },
-              { name:'Professional', price:'£24/mo', desc:'Full CEO/Founder OS — all 41 modules', color:'#9b87f5', popular:true },
-              { name:'Team', price:'Custom', desc:'Shared workspaces, cohort dashboard, SSO', color:'var(--fm)' },
+              { name:'Researcher', price:'£9/mo', desc:'Thesis tracker, CPD deadlines, supervisor logs, AI literature search', color:'#26aee8' },
+              { name:'Founder',    price:'£24/mo', desc:'Full back-office OS — payroll, contracts, strategy, knowledge, P&L', color:'#9b87f5', popular:true },
+              { name:'Team',       price:'Custom', desc:'Shared intelligence layer across your leadership team', color:'var(--fm)' },
             ].map(p => (
               <div key={p.name} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:10, background:'var(--pios-surface)', border:`1px solid ${p.color}30`, marginBottom:8, borderLeft:`3px solid ${p.color}` }}>
                 <div style={{ flex:1 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                     <span style={{ fontSize:13, fontWeight:700, color:p.color }}>{p.name}</span>
-                    {(p as any).popular && <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:10, background:`${p.color}18`, color:p.color }}>★ Most popular</span>}
+                    {(p as any).popular && <span style={{ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:10, background:`${p.color}18`, color:p.color }}>Most popular</span>}
                   </div>
                   <div style={{ fontSize:11, color:'var(--pios-muted)', marginTop:2 }}>{p.desc}</div>
                 </div>
                 <div style={{ fontSize:16, fontWeight:800, color:p.color, flexShrink:0 }}>{p.price}</div>
               </div>
             ))}
-
             <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:10, padding:'14px', marginTop:16 }}>
-              <div style={{ fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--pios-dim)', marginBottom:10 }}>Revenue Mechanics</div>
-              {[
-                '14-day free trial — no credit card required',
-                'Monthly recurring revenue (Stripe)',
-                'Annual billing option with 20% discount',
-                'Team plan scales per seat',
-                'White-label licensing for enterprise (Team)',
-              ].map(r => (
+              <div style={{ fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--pios-dim)', marginBottom:10 }}>Revenue mechanics</div>
+              {['14-day free trial — no credit card required','Monthly recurring (Stripe) or annual with 20% discount','Team plan scales per seat','White-label licensing for enterprise'].map(r => (
                 <div key={r} style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'4px 0', fontSize:12, color:'var(--pios-text)' }}>
                   <span style={{ color:'var(--fm)', marginTop:1, flexShrink:0 }}>✓</span> {r}
                 </div>
@@ -576,27 +569,33 @@ export default function DemoPage() {
           </div>
 
           <div>
-            <div style={{ fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--pios-dim)', marginBottom:14 }}>Market & Opportunity</div>
-            {[
-              { icon:'🎯', title:'ICP', body:'Non-technical founders, senior executives, and DBA/PhD candidates who need structured intelligence — not another productivity app.' },
-              { icon:'🌍', title:'Geographic focus', body:'UK and GCC (UAE, KSA, Qatar) — both markets have high concentrations of the target persona with strong appetite for premium B2B SaaS.' },
-              { icon:'💡', title:'Differentiation', body:'The only platform that combines Executive OS + Academic Hub + proprietary consulting frameworks + AI calibrated to your CV. No direct competitor.' },
-              { icon:'📈', title:'Network effect', body:'Each PIOS user creates knowledge entries, IP assets, and consulting engagements that compound over time — driving long-term retention and CLTV.' },
-              { icon:'🔄', title:'Portfolio synergy', body:'PIOS, VeritasEdge™, and InvestiScript™ share the same Supabase + Claude + Vercel stack and target the same GCC professional market from different angles.' },
-            ].map(item => (
-              <div key={item.title} style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid var(--pios-border)' }}>
-                <span style={{ fontSize:20, flexShrink:0 }}>{item.icon}</span>
-                <div>
-                  <div style={{ fontSize:12, fontWeight:700, color:'var(--pios-text)', marginBottom:3 }}>{item.title}</div>
-                  <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5 }}>{item.body}</div>
-                </div>
+            <div style={{ fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--pios-dim)', marginBottom:14 }}>Who it's for</div>
+            <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:12, padding:'18px', marginBottom:14 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:'var(--pios-text)', marginBottom:12 }}>
+                Solo founders and CEOs of companies with 1–50 people who are still the default operator for too many things.
               </div>
-            ))}
+              {[
+                { icon:'⏰', text:"You're the only one who knows how payroll works" },
+                { icon:'📄', text:'Contract renewals catch you the day they bill' },
+                { icon:'🧠', text:'Key context walks out the door when someone leaves' },
+                { icon:'📊', text:'Financials live across spreadsheets and a shared drive' },
+                { icon:'📅', text:"You're running the business instead of building it" },
+              ].map(p => (
+                <div key={p.text} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'7px 0', borderTop:'1px solid var(--pios-border)' }}>
+                  <span style={{ fontSize:16, flexShrink:0 }}>{p.icon}</span>
+                  <span style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.5 }}>{p.text}</span>
+                </div>
+              ))}
+            </div>
 
-            <div style={{ background:'rgba(155,135,245,0.07)', border:'1px solid rgba(155,135,245,0.2)', borderRadius:10, padding:'14px 16px', marginTop:16 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'var(--ai)', marginBottom:8 }}>Current status</div>
-              <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.7 }}>
-                Three production SaaS platforms deployed and running live. VeritasEdge™ in active RFP process for Qiddiya City (QPMO-410-CT-07922, contract value TBC). All four trademarks filed with UKIPO. VeritasIQ Technologies Ltd incorporation underway. Seeking seed funding for GTM, team build-out, and GCC office establishment.
+            <div style={{ background:'rgba(155,135,245,0.07)', border:'1px solid rgba(155,135,245,0.2)', borderRadius:10, padding:'14px 16px', marginBottom:14 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--ai)', marginBottom:8 }}>The bottom line</div>
+              <div style={{ fontSize:13, color:'var(--pios-muted)', lineHeight:1.7, marginBottom:12 }}>
+                £24/month is less than you'd spend on the coffee it takes to manually reconcile your payroll. We don't give you 15 frameworks with trademarked names just to sound smart — we give you the output: fewer surprises, cleaner books, more focused time.
+              </div>
+              <div style={{ fontSize:11, fontWeight:600, color:'var(--pios-text)' }}>Current status</div>
+              <div style={{ fontSize:12, color:'var(--pios-muted)', lineHeight:1.7, marginTop:4 }}>
+                Three production platforms live. VeritasEdge™ in active RFP process for Qiddiya City (April 2026). All four trademarks filed with UKIPO. Seeking seed funding for GTM, team build-out, and GCC office.
               </div>
             </div>
           </div>
