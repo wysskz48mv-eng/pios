@@ -254,27 +254,6 @@ em { background: transparent !important; }
   nav, aside { display: none; }
 }
 
-/* ── Auth login page — responsive two-panel ── */
-.pios-login-left {
-  display: none !important;
-}
-.pios-login-mobile-head {
-  display: block;
-}
-.pios-login-desk-head {
-  display: none;
-}
-@media (min-width: 900px) {
-  .pios-login-left {
-    display: flex !important;
-  }
-  .pios-login-mobile-head {
-    display: none !important;
-  }
-  .pios-login-desk-head {
-    display: block !important;
-  }
-}
 
 /* ── Login page ─────────────────────────────────────────────── */
 .pios-login-wrap {
