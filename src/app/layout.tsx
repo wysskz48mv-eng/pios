@@ -17,8 +17,8 @@ export const metadata: Metadata = {
     googleBot: { index: false, follow: false },
   },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
   },
   openGraph: {
     title: 'PIOS — Personal Intelligent Operating System',

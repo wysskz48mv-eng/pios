@@ -6,13 +6,32 @@
 export default function ChangelogPage() {
   const entries = [
     {
-      version: 'v3.0.3',
+      version: 'v3.0.4',
       date: 'March 2026',
       badge: 'Latest',
       badgeColor: 'var(--ai)',
       changes: [
-        { type: 'new', text: 'Sprint 85: POST /api/admin/migrate-pending — applies M019–M023 + pios-cv bucket in one authenticated call. Direct pg first, falls back to exec_sql RPC. Idempotent, per-step results.' },
-        { type: 'new', text: 'Sprint 85: POST /api/admin/seed-nemoclaw — NemoClaw™ first-run seed: exec_intelligence_config default (advisor persona + 13 framework refs), 15 IP frameworks, nemoclaw_calibration placeholder. All idempotent.' },
+        { type: 'fix', text: 'Sprint 87: CSP middleware — style-src nonce was stripping unsafe-inline, blocking all Next.js inline styles. Every page rendered unstyled. Fixed: nonce applies to script-src only.' },
+        { type: 'fix', text: 'Sprint 87: Onboarding TypeScript error — useState declarations after useEffect references caused build bundle failure (grey favicon icon on all pages). Fixed: state hoisted above effects.' },
+        { type: 'fix', text: 'Sprint 87: PlatformShell scroll — main had overflowY:auto but content div did not, causing double-scroll. Fixed: main overflow:hidden, content div overflowY:auto.' },
+        { type: 'fix', text: 'Sprint 87: Tailwind config — pios-* color tokens had hardcoded hex values differing from CSS variables. All tokens now map to var(--pios-*) for consistency.' },
+        { type: 'new', text: 'Sprint 86: Investor Demo page (/platform/demo) — 6-section live showcase: Platform Overview, NemoClaw™ AI (live chat), Executive OS, Academic Module, Live Platforms, Commercial.' },
+        { type: 'new', text: 'Sprint 86: Seed-demo extended — OKR key results, today\'s wellness session (mood 7/10, 🔥 7-day streak), March financial snapshot.' },
+        { type: 'fix', text: 'Sprint 86: Dashboard API — tasks returned as { overdue, due_today, upcoming } object not array. Demo page crash fixed.' },
+        { type: 'fix', text: 'Sprint 86: Profile save (onboarding step 2) — RLS missing UPDATE policy blocked all profile writes. Fixed: service client for DB writes.' },
+        { type: 'fix', text: 'Sprint 86: CV upload — pdf-parse/mammoth replaced Claude document API (DOCX unsupported). Extension-based detection. XML w:t fallback for DOCX.' },
+        { type: 'fix', text: 'Sprint 86: Login page — magic link only (Google OAuth disabled until configured). All CSS classes moved to globals.css.' },
+        { type: 'new', text: 'Sprint 85: POST /api/admin/migrate-pending — applies M019–M023 + pios-cv bucket in one authenticated call.' },
+        { type: 'new', text: 'Sprint 85: POST /api/admin/seed-nemoclaw — NemoClaw™ first-run seed: exec_intelligence_config, 15 IP frameworks, calibration placeholder.' },
+      ],
+    },
+    {
+      version: 'v3.0.3',
+      date: 'March 2026',
+      badge: null,
+      badgeColor: 'var(--ai)',
+      changes: [
+        { type: 'new', text: 'Sprint 85: Smoke test extended 20 → 26 checks — db_wellness (M021), db_nemoclaw_cal (M022), db_exec_intel (M023), storage_cv_bucket, nemoclaw_seed, nemoclaw_config.' },
         { type: 'new', text: 'Sprint 85: Smoke test extended 20 → 26 checks — db_wellness (M021), db_nemoclaw_cal (M022), db_exec_intel (M023), storage_cv_bucket, nemoclaw_seed, nemoclaw_config.' },
         { type: 'new', text: 'Sprint 85: Smoke UI — ⚡ Seed NemoClaw™ quick-action button appears when nemoclaw checks fail. One click seeds and re-runs.' },
         { type: 'fix', text: 'Sprint 85: Smoke test summary computed after all checks — previously mid-loop, so 6 new checks were excluded from pass/warn/fail totals. total_checks added to response.' },
