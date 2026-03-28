@@ -75,8 +75,7 @@ export async function middleware(request: NextRequest) {
   const noncedCSP = SEC_HEADERS['Content-Security-Policy']
     .replace("script-src 'self' 'unsafe-eval' 'unsafe-inline'",
              `script-src 'self' 'unsafe-eval' 'nonce-${nonce}'`)
-    .replace("style-src 'self' 'unsafe-inline'",
-             `style-src 'self' 'nonce-${nonce}'`)
+  // Note: style-src keeps 'unsafe-inline' — Next.js inline styles need it
 
   let response = NextResponse.next({ request })
   for (const [k, v] of Object.entries(SEC_HEADERS)) response.headers.set(k, v)
