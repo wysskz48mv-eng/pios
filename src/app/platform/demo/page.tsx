@@ -109,11 +109,11 @@ export default function DemoPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [{ role: 'user', content: nemoQ }],
-          domain: 'general',
+          domainContext: 'You are being demoed to a potential investor. Be sharp, strategic, and demonstrate the depth of NemoClaw™ intelligence.',
         }),
       })
       const d = await r.json()
-      setNemoA(d.content ?? d.message ?? d.error ?? 'No response')
+      setNemoA(d.reply ?? d.content ?? d.message ?? d.error ?? 'No response')
     } catch { setNemoA('Connection error — check Anthropic API key') }
     finally { setNemoLoading(false) }
   }
