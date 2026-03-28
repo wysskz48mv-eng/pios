@@ -462,6 +462,46 @@ export default function AdminPage() {
         </p>
       </div>
 
+      {/* ── Sprint 85: migrate-pending + seed-nemoclaw ─────────────── */}
+      <div style={{ background:'var(--pios-surface)', border:'1px solid var(--pios-border)', borderRadius:12, padding:'18px 20px' }}>
+        <h3 className="text-sm font-semibold mb-3">Sprint 85 — One-Click Setup</h3>
+        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          <button
+            onClick={async () => {
+              const secret = prompt('Enter admin secret (ADMIN_SECRET or SEED_SECRET):')
+              if (!secret) return
+              const r = await fetch('/api/admin/migrate-pending', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+              })
+              const d = await r.json()
+              alert(d.success
+                ? `✓ Migrations complete: ${d.passed} passed, ${d.failed} failed`
+                : `⚠ ${d.failed} migrations failed — check results:\n${JSON.stringify(d.results, null, 2).slice(0, 800)}`)
+            }}
+            style={{ padding:'8px 16px', borderRadius:9, fontSize:12, fontWeight:600, cursor:'pointer',
+              background:'rgba(79,142,247,0.1)', border:'1px solid rgba(79,142,247,0.25)', color:'var(--academic)' }}
+          >
+            ⚡ Run M019–M023 Migrations
+          </button>
+          <button
+            onClick={async () => {
+              const r = await fetch('/api/admin/seed-nemoclaw', { method: 'POST' })
+              const d = await r.json()
+              const steps = Object.entries(d.steps ?? {}).map(([k, s]: [string, any]) =>
+                `${s.ok ? '✓' : '✗'} ${k}${s.skipped ? ' (skipped)' : ''}: ${s.detail}`).join('\n')
+              alert(d.ok ? `✓ NemoClaw™ seeded\n\n${steps}` : `⚠ Partial:\n${steps}`)
+            }}
+            style={{ padding:'8px 16px', borderRadius:9, fontSize:12, fontWeight:600, cursor:'pointer',
+              background:'rgba(139,124,248,0.1)', border:'1px solid rgba(139,124,248,0.25)', color:'var(--ai)' }}
+          >
+            ◉ Seed NemoClaw™ (Sprint 85)
+          </button>
+        </div>
+        <p className="text-xs text-[var(--pios-muted)] mt-2">
+          Migrate-pending applies M019–M023 + pios-cv bucket in order. Seed NemoClaw™ sets exec_intelligence_config default, 15 IP frameworks, and calibration placeholder. Both idempotent.
+        </p>
+      </div>
+
     </div>
   )
 }

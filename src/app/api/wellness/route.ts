@@ -156,11 +156,29 @@ Respond with JSON only:
         p_activity_date: today,
       })
       if (rpcErr) {
-        // RPC may not exist yet — upsert manually
-        await supabase.from('wellness_streaks')
+        // RPC not yet created — compute streak manually
+        const { data: existing } = await (supabase as any)
+          .from('wellness_streaks')
+          .select('current_streak, longest_streak, last_activity_date')
+          .eq('user_id', user.id)
+          .eq('streak_type', 'daily_checkin')
+          .single()
+
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+        const lastDate  = (existing as any)?.last_activity_date
+        const prev      = (existing as any)?.current_streak ?? 0
+        const longest   = (existing as any)?.longest_streak  ?? 0
+
+        // Increment if last activity was yesterday, reset to 1 if gap, keep if same day
+        const newCurrent = lastDate === yesterday ? prev + 1 : lastDate === today ? prev : 1
+        const newLongest = Math.max(newCurrent, longest)
+
+        await (supabase as any).from('wellness_streaks')
           .upsert({
-            user_id: user.id,
-            streak_type: 'daily_checkin',
+            user_id:            user.id,
+            streak_type:        'daily_checkin',
+            current_streak:     newCurrent,
+            longest_streak:     newLongest,
             last_activity_date: today,
           }, { onConflict: 'user_id,streak_type' })
       }

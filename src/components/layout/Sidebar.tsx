@@ -135,6 +135,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/platform/notifications', icon: 'notif',     label: 'Notifications',  accent: C.amber, notifKey: 'notif' },
       { href: '/platform/billing',       icon: 'billing',   label: 'Billing',        accent: C.fm },
+      { href: '/platform/demo',          icon: 'admin',     label: 'Investor Demo',  accent: C.violet },
       { href: '/platform/operator',      icon: 'operator',  label: 'Operator',       accent: C.violet },
       { href: '/platform/admin',         icon: 'admin',     label: 'Admin',          accent: C.rose },
       { href: '/platform/setup',         icon: 'setup',     label: 'Setup Guide',    accent: C.amber },

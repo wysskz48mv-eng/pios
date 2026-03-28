@@ -1,76 +1,51 @@
 /**
  * /platform/changelog — PIOS Platform Changelog
  * Sprint history and feature releases
- * PIOS Sprint 51 | VeritasIQ Technologies Ltd
+ * PIOS Sprint 85 | VeritasIQ Technologies Ltd
  */
 export default function ChangelogPage() {
   const entries = [
-    {
-      version: 'v3.0.2',
-      date: 'March 2026',
-      badge: null,
-      badgeColor: 'var(--ai)',
-      changes: [
-        { type: 'new', text: 'DBA Chapter AI Writer (/platform/academic/writer) — section-by-section drafting with NemoClaw™, section picker mapped per chapter type, word target selector, editable output with append-to-chapter' },
-        { type: 'new', text: 'DBA Writer: academic system prompt grounded in STT + sensemaking theory, GCC FM context, KSP-001 + Qiddiya case sites' },
-        { type: 'new', text: 'Stakeholder CRM (/platform/stakeholders) — investor/client/partner/academic tracker with NemoClaw™ pre-meeting briefing (opening, objectives, talking points, risk, the ask)' },
-        { type: 'new', text: 'Stakeholder CRM: overdue follow-up alerts, relationship health scoring, log contact, importance dots, category colour coding' },
-        { type: 'new', text: 'TSA™ Time Sovereignty dashboard v2 — visual time map grid (7am–8pm × Mon–Fri), sovereignty score (Sovereign/Contested/Fragmented), protection zones with lock toggle' },
-        { type: 'new', text: 'TSA™ weekly log with stacked bar history — strategic/operational/stakeholder/admin/recovery breakdown, admin drag warning at >30%' },
-        { type: 'new', text: 'TSA™ NemoClaw™ audit button — AI analysis of time allocation and recommendations' },
-        { type: 'new', text: 'Board Pack generator — auto-compiles board-ready report from financials, OKRs, IP vault, contracts, tasks and projects with NemoClaw™ AI narrative' },
-        { type: 'new', text: 'Board Pack: risk register auto-populated from IP expiries, contract renewals, critical and overdue tasks' },
-        { type: 'new', text: 'Board Pack: collapsible sections — financial snapshot, OKR progress bars, key decisions log, IP portfolio, operations' },
-        { type: 'new', text: 'Obsidian Command design system — Option A: true black #080808 palette replaces navy #0e0f1a across all surfaces' },
-        { type: 'new', text: 'Unified font system: Instrument Serif + DM Sans + DM Mono replaces Fraunces + Plus Jakarta Sans + JetBrains Mono' },
-        { type: 'new', text: 'Sidebar rebuilt: 36 unique SVG icons replace unicode glyph set (◎ ⊛ ◈ etc.) — OS/browser consistent' },
-        { type: 'new', text: 'Sidebar wordmark: PIOS in Instrument Serif italic with hex logomark SVG — matches login page exactly' },
-        { type: 'new', text: 'Topbar: page title changed from Fraunces 800 to Instrument Serif italic 400 — editorial, not domineering' },
-        { type: 'new', text: 'Login page: brand voice — "The operating system for the relentless" · manifesto 01/02/03 · serif stats' },
-        { type: 'new', text: 'Login page: JS-driven responsive layout (no CSS class injection) — brand panel shows/hides reliably' },
-        { type: 'fix', text: 'Button text: color var(--pios-bg) was invisible on true black — changed to #fff across 6 pages' },
-        { type: 'fix', text: 'Tasks API: duplicate status filter removed; VALID_SOURCES aligned with DB constraint' },
-        { type: 'fix', text: 'Design system: 341 token replacements — 100% pios-* token coverage across all 18 platform pages' },
-        { type: 'fix', text: 'em tag highlight: browser selection background on italic headline words — fixed with background:transparent' },
-      ],
-    },
     {
       version: 'v3.0.3',
       date: 'March 2026',
       badge: 'Latest',
       badgeColor: 'var(--ai)',
       changes: [
-        { type: 'new', text: 'NemoClaw™ Training page (/platform/ai/train) — configure AI persona context, company context, goals, custom instructions, tone preference, and response style' },
-        { type: 'new', text: 'NemoClaw™ Training: auto-generate context from 3-field description, test persona with live response, CV calibration panel with in-place re-upload' },
-        { type: 'new', text: 'Migration M022 — nemoclaw_calibration table (CV intelligence profile per user), user_profiles CV columns (cv_processing_status, cv_filename, cv_uploaded_at, cv_storage_path, job_title, organisation), pios-cv storage bucket created automatically with owner RLS' },
-        { type: 'new', text: 'Migration M023 — exec_intelligence_config table (NemoClaw training config: persona/company/goals/instructions/tone/style), ai_credits_resets audit table' },
-        { type: 'fix', text: 'M017 sentinel corrected: was pointing to exec_intelligence_config (not in M017) → now sia_signal_briefs — platform health check no longer falsely marks M017 as unapplied' },
-        { type: 'new', text: "Sprint 84: NemoClaw™ calibration status card in AI sidebar — shows calibration summary, seniority, industry, recommended frameworks; prompts CV upload if uncalibrated" },
-        { type: 'new', text: "Sprint 84: AI welcome message is calibration-aware — hints CV upload when NemoClaw is not yet calibrated" },
-        { type: 'new', text: "Sprint 84: Migration M023 — nemoclaw_calibration index + ai_sessions index + ai_credits_resets audit table" },
-        { type: 'fix', text: "Sprint 84: Migration runner updated with M023 entry" },
-        { type: 'new', text: "Sprint 83: Financials — Add Snapshot form (period, revenue, expenses, payroll, cash, receivables, payables) wired to /api/financials save_snapshot" },
-        { type: 'new', text: 'Sprint 82: Smart notification engine — IP/contract renewals, wellness streak break, overdue tasks, trial expiry — all deduplicated by day' },
-        { type: 'new', text: 'Sprint 82: Notifications page v2 — Scan for alerts button, category/domain filters, per-item delete, body text, action links' },
-        { type: 'new', text: 'Sprint 82: Notifications PATCH handler — mark individual notifications read without full POST' },
-        { type: 'new', text: 'Sprint 81: Billing page v3 — trial countdown, AI credits bar, Stripe portal, plan cards (Student/Professional/Team), fixed double PlatformShell' },
-        { type: 'new', text: 'Sprint 80: GDPR M019/M020/M021 coverage — IP vault, contracts, wellness, knowledge all covered under Art.15/17/20' },
-        { type: 'new', text: "Sprint 80: Settings Privacy section — Export JSON, Delete Wellness Data, Erase All Data (each with confirm dialogs)" },
-        { type: 'new', text: 'Sprint 80: Weekly digest wellness — avg mood/energy/stress for the week + 30-day renewal alerts in AI insight' },
-        { type: 'new', text: 'Sprint 79: Cron brief wellness state + renewal alerts injected into every exec morning brief email' },
-        { type: 'new', text: 'Sprint 79: Command Centre wellness tile + renewal alerts tile below OKR pulse' },
-        { type: 'new', text: 'Sprint 78: Morning brief /api/brief — wellness state + IP/contract renewals in exec brief section' },
-        { type: 'new', text: 'Sprint 77: NemoClaw AI enriched with wellness, IP vault, contracts and knowledge context — AI companion now sees your full operational state' },
-        { type: 'new', text: 'Sprint 77: 4 new AI shortcuts — Wellness + performance link, IP portfolio review, Contract risk scan, Knowledge base insight' },
-        { type: 'new', text: "Sprint 76: Dashboard wellness tile — today's mood/energy/stress scores, check-in CTA, 🔥 streak badge" },
-        { type: 'new', text: 'Sprint 76: Dashboard renewal alerts tile — IP assets + contracts expiring in 90 days, colour-coded with expiry dates' },
-        { type: 'new', text: 'Sprint 76: Dashboard exec strip expanded to 5+2 tile layout (row 1: OKRs/Decisions/Stakeholders/IP/Contracts; row 2: Wellness + Renewals)' },
-        { type: 'new', text: 'Sprint 75: M021 (wellness tables) registered in migration runner — runnable via /platform/admin' },
-        { type: 'new', text: 'Sprint 75: NemoClaw™ seed button in /platform/admin — one-click seeds all 15 frameworks into IP Vault' },
-        { type: 'new', text: 'Sprint 75: Intelligence Hub rebuilt — 5 AI domain briefings (FM, Academic, SaaS, Regulatory, GCC), NemoClaw synthesis, SO WHAT callouts' },
-        { type: 'new', text: 'Sprint 75: /api/intelligence/briefing — domain-tuned AI briefing engine for UK/GCC FM + SaaS context' },
-        { type: 'fix',  text: 'Admin page: inline all migration SQL — fixes Vercel filesystem read failure on /api/admin/migrate' },
-        { type: 'fix',  text: 'TypeScript: 0 errors across all source files (was 2 in admin page)' },
+        { type: 'new', text: 'Sprint 85: POST /api/admin/migrate-pending — applies M019–M023 + pios-cv bucket in one authenticated call. Direct pg first, falls back to exec_sql RPC. Idempotent, per-step results.' },
+        { type: 'new', text: 'Sprint 85: POST /api/admin/seed-nemoclaw — NemoClaw™ first-run seed: exec_intelligence_config default (advisor persona + 13 framework refs), 15 IP frameworks, nemoclaw_calibration placeholder. All idempotent.' },
+        { type: 'new', text: 'Sprint 85: Smoke test extended 20 → 26 checks — db_wellness (M021), db_nemoclaw_cal (M022), db_exec_intel (M023), storage_cv_bucket, nemoclaw_seed, nemoclaw_config.' },
+        { type: 'new', text: 'Sprint 85: Smoke UI — ⚡ Seed NemoClaw™ quick-action button appears when nemoclaw checks fail. One click seeds and re-runs.' },
+        { type: 'fix', text: 'Sprint 85: Smoke test summary computed after all checks — previously mid-loop, so 6 new checks were excluded from pass/warn/fail totals. total_checks added to response.' },
+        { type: 'new', text: 'Sprint 84: NemoClaw™ Training page (/platform/ai/train) — AI persona context, company context, goals, custom instructions, tone, response style. Auto-generate + live test.' },
+        { type: 'new', text: 'Sprint 84: NemoClaw™ calibration status card in AI sidebar — summary, seniority, industry, recommended frameworks; prompts CV upload if uncalibrated.' },
+        { type: 'new', text: 'Sprint 84: Migration M022 — nemoclaw_calibration table + pios-cv bucket with owner RLS.' },
+        { type: 'new', text: 'Sprint 84: Migration M023 — exec_intelligence_config (NemoClaw training config), ai_credits_resets audit table.' },
+        { type: 'fix', text: 'Sprint 84: M017 sentinel corrected to sia_signal_briefs — health check no longer falsely marks M017 unapplied.' },
+        { type: 'new', text: 'Sprint 83: Financials — Add Snapshot form wired to /api/financials save_snapshot.' },
+        { type: 'new', text: 'Sprint 82: Smart notification engine — IP/contract renewals, wellness streak break, overdue tasks, trial expiry — deduplicated by day.' },
+        { type: 'new', text: 'Sprint 82: Notifications page v2 — Scan for alerts, category/domain filters, per-item delete, action links.' },
+        { type: 'new', text: 'Sprint 81: Billing page v3 — trial countdown, AI credits bar, Stripe portal, plan cards.' },
+        { type: 'new', text: 'Sprint 80: GDPR Art.15/17/20 coverage — IP vault, contracts, wellness, knowledge. Settings Privacy: Export JSON, Delete Wellness Data, Erase All Data.' },
+        { type: 'new', text: 'Sprint 79: Cron brief wellness state + renewal alerts in every exec morning brief email. Command Centre wellness + renewals tiles.' },
+        { type: 'new', text: 'Sprint 78: Morning brief — wellness state + IP/contract renewals in exec brief section.' },
+        { type: 'new', text: 'Sprint 77: NemoClaw AI enriched with wellness, IP vault, contracts, knowledge context. 4 new AI shortcuts.' },
+        { type: 'new', text: "Sprint 76: Dashboard wellness tile (mood/energy/stress, streak badge) + renewal alerts tile. Exec strip 5+2 layout." },
+        { type: 'new', text: 'Sprint 75: M021 registered in migration runner. NemoClaw™ seed button in admin. Intelligence Hub rebuilt — 5 domain briefings + NemoClaw synthesis.' },
+        { type: 'fix', text: 'Sprint 75: Admin page inlines all migration SQL — fixes Vercel filesystem read failure. TypeScript 0 errors.' },
+      ],
+    },
+    {
+      version: 'v3.0.2',
+      date: 'March 2026',
+      badge: null,
+      badgeColor: 'var(--ai)',
+      changes: [
+        { type: 'new', text: 'DBA Chapter AI Writer (/platform/academic/writer) — NemoClaw™ section-by-section drafting, chapter section picker, word target selector.' },
+        { type: 'new', text: 'Stakeholder CRM (/platform/stakeholders) — NemoClaw™ pre-meeting briefing, overdue follow-up alerts, relationship health scoring.' },
+        { type: 'new', text: 'TSA™ Time Sovereignty v2 — visual time map grid, sovereignty score, protection zones.' },
+        { type: 'new', text: 'Board Pack generator — financials, OKRs, IP vault, contracts, tasks with NemoClaw™ narrative + risk register.' },
+        { type: 'new', text: 'Obsidian Command design system — true black #080808, Instrument Serif + DM Sans + DM Mono, 36 SVG sidebar icons.' },
+        { type: 'fix', text: 'Design system: 341 token replacements — 100% pios-* coverage. Tasks API dedup fix.' },
       ],
     },
     {
@@ -79,33 +54,12 @@ export default function ChangelogPage() {
       badge: null,
       badgeColor: 'var(--fm)',
       changes: [
-        { type: 'new', text: 'Billing page — plan cards (Student/Individual/Team), Stripe checkout, usage limits display' },
-        { type: 'new', text: 'Executive OS: Contracts tab (live data, status badges) + Financial tab (Group P&L summary)' },
-        { type: 'new', text: 'Payroll: Edit and remove staff members inline (✎ / ✕ per card)' },
-        { type: 'improve', text: 'Onboarding wizard — CEO/Founder PRIMARY persona with NemoClaw™ seed on completion' },
-        { type: 'fix', text: 'Middleware Edge Runtime crash — platform now fully accessible (MIDDLEWARE_INVOCATION_FAILED)' },
-        { type: 'fix', text: 'Pricing and onboarding pages unblocked for unauthenticated visitors' },
-        { type: 'fix', text: '14-day trial (was 3 days) — new signups get individual plan with full access' },
-        { type: 'fix', text: 'Tasks sort controls — sortBy state was undeclared, buttons now work' },
-        { type: 'fix', text: 'Email page — showed "Gmail connected" even with 0 accounts wired up' },
-        { type: 'new', text: 'M019/M020 fully runnable from Admin panel — IP Vault, Contracts, P&L, SE-MIL' },
-        { type: 'new', text: 'ErrorBoundary — any page crash shows retry UI instead of blank screen' },
-        { type: 'new', text: 'Mobile navigation — bottom nav bar on phones, hamburger full-menu overlay' },
-        { type: 'new', text: 'File upload API — PDF, Word, Excel, images up to 25 MB with signed URLs' },
-        { type: 'new', text: 'Help page — 22-module reference, keyboard shortcuts, 5-item FAQ' },
-        { type: 'new', text: 'Changelog page — full sprint history with New/Fix/Improved labels' },
-        { type: 'new', text: 'Gmail OAuth connect route — one-click Gmail connection from email page' },
-        { type: 'new', text: 'First-time welcome banner on dashboard with 5 quick-start actions' },
-        { type: 'improve', text: 'Daily Brief: OKRs + open decisions included, ## section card renderer' },
-        { type: 'improve', text: 'NemoClaw AI: training config context injected into every chat response' },
-        { type: 'improve', text: 'Sidebar: EOSA™/CSA™/BICA™/TSA™ badge labels now visible, notification count pill' },
-        { type: 'improve', text: 'Weekly digest email includes OKR health summary and at-risk flag' },
-        { type: 'improve', text: 'Command Centre: OKR progress bar cards with health status' },
-        { type: 'improve', text: 'Smoke test extended to 19 checks (M019/M020/storage/DIRECT_URL)' },
-        { type: 'new', text: 'Global search ⌘K — real-time cross-domain search across 8 data types' },
-        { type: 'improve', text: 'AI chat and morning brief now include today\'s calendar schedule' },
-        { type: 'improve', text: 'Vercel timeouts configured for 18 routes (AI operations no longer cut off)' },
-        { type: 'improve', text: 'Build: 0 TypeScript errors, 0 ESLint warnings, 110 static pages' },
+        { type: 'new', text: 'Billing page — Stripe checkout, usage limits display, plan cards.' },
+        { type: 'new', text: 'Executive OS: Contracts + Financial tabs live.' },
+        { type: 'improve', text: 'Onboarding wizard — CEO/Founder PRIMARY persona with NemoClaw™ seed.' },
+        { type: 'fix', text: 'Middleware Edge Runtime crash resolved. 14-day trial (was 3 days). Tasks sort controls fixed.' },
+        { type: 'new', text: 'Global search ⌘K — cross-domain search across 8 data types. Mobile nav. Help page.' },
+        { type: 'improve', text: 'Build: 0 TypeScript errors, 110 static pages.' },
       ],
     },
     {
@@ -114,20 +68,11 @@ export default function ChangelogPage() {
       badge: null,
       badgeColor: '',
       changes: [
-        { type: 'new', text: 'IP Vault — register frameworks, trademarks, patents. 90-day renewal alerts' },
-        { type: 'new', text: 'Contract Register — full CRUD, expiry alerts, AI portfolio review' },
-        { type: 'new', text: 'Group P&L — aggregated expenses, payroll, and contract pipeline' },
-        { type: 'new', text: 'SE-MIL Knowledge Base — semantic search, AI summarisation, add entries' },
-        { type: 'new', text: 'Executive Report Pack — one-click board brief from OKRs and decisions' },
-        { type: 'new', text: 'IP Vault Seed — one-click seeds all 15 NemoClaw™ frameworks' },
-        { type: 'new', text: 'Consulting Frameworks expanded to 15 (UMS™, VFO™, CFE™, ADF™, GSM™, SPA™, RTE™, IML™)' },
-        { type: 'new', text: 'Operator Config UI — white-label branding, feature flags, custom domain' },
-        { type: 'new', text: 'NemoClaw Training Agent — configure AI context, tone, response style' },
-        { type: 'new', text: 'Demo data seeder — realistic CEO data for demos and onboarding' },
-        { type: 'new', text: 'Public pricing page — Student $9 / Professional $24 / Team custom' },
-        { type: 'new', text: 'Dashboard CEO grid — all 32 modules accessible from dashboard' },
-        { type: 'fix', text: '1,569 TypeScript errors cleared (1569 → 0)' },
-        { type: 'fix', text: 'Next.js build clean — 0 errors, 0 warnings, 107 pages' },
+        { type: 'new', text: 'IP Vault — frameworks, trademarks, patents, 90-day renewal alerts.' },
+        { type: 'new', text: 'Contract Register — full CRUD, expiry alerts, AI portfolio review.' },
+        { type: 'new', text: 'Group P&L, SE-MIL Knowledge Base, Operator Config UI, Demo data seeder.' },
+        { type: 'new', text: 'Consulting Frameworks expanded to 15 (UMS™, VFO™, CFE™, ADF™, GSM™, SPA™, RTE™, IML™).' },
+        { type: 'fix', text: '1,569 TypeScript errors cleared. Next.js build clean.' },
       ],
     },
     {
@@ -136,29 +81,24 @@ export default function ChangelogPage() {
       badge: null,
       badgeColor: '',
       changes: [
-        { type: 'new', text: 'Professional persona wizard — Founder/CEO/Consultant paths added' },
-        { type: 'new', text: 'Onboarding wizard Business step for company name, sector, currency' },
-        { type: 'new', text: 'Onboarding redirects Professional users to dashboard (not Learning)' },
-        { type: 'new', text: 'Payroll Engine — detect, approve, remit, chase contractor payments' },
-        { type: 'new', text: 'Executive OS — OKRs, open decisions, stakeholder CRM, EOSA™ brief' },
-        { type: 'new', text: 'Time Sovereignty — TSA™ time audit engine' },
-        { type: 'new', text: 'Comms Hub — BICA™ board and stakeholder communications' },
-        { type: 'improve', text: 'NemoClaw AI injects live platform context (tasks, OKRs, decisions, thesis)' },
+        { type: 'new', text: 'Professional persona wizard — Founder/CEO/Consultant paths.' },
+        { type: 'new', text: 'Payroll Engine, Executive OS (OKRs, decisions, stakeholder CRM, EOSA™ brief), Time Sovereignty TSA™, Comms Hub BICA™.' },
+        { type: 'improve', text: 'NemoClaw AI injects live platform context (tasks, OKRs, decisions, thesis).' },
       ],
     },
   ]
 
   const typeStyle: Record<string, { bg: string; color: string; label: string }> = {
-    new:     { bg: 'rgba(34,197,94,0.1)',   color: 'var(--fm)', label: 'New' },
-    fix:     { bg: 'rgba(239,68,68,0.1)',   color: 'var(--dng)', label: 'Fix' },
-    improve: { bg: 'var(--ai-subtle)', color: 'var(--ai)', label: 'Improved' },
+    new:     { bg: 'rgba(34,197,94,0.1)',  color: 'var(--fm)',  label: 'New' },
+    fix:     { bg: 'rgba(239,68,68,0.1)',  color: 'var(--dng)', label: 'Fix' },
+    improve: { bg: 'var(--ai-subtle)',     color: 'var(--ai)',  label: 'Improved' },
   }
 
   return (
     <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>Platform Changelog</h1>
-        <p style={{ fontSize: 13, color: 'var(--pios-muted)' }}>PIOS — what&apos;s new in each release</p>
+        <p style={{ fontSize: 13, color: 'var(--pios-muted)' }}>PIOS v3.0.3 · Sprint 85 · VeritasIQ Technologies Ltd</p>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 24 }}>
@@ -174,10 +114,10 @@ export default function ChangelogPage() {
               <span style={{ fontSize: 12, color: 'var(--pios-dim)', marginLeft: 'auto' }}>{entry.date}</span>
             </div>
             <div style={{ padding: '12px 20px' }}>
-              {(entry.changes ?? []).map((change, i) => {
-                const ts = typeStyle[change.type]
+              {entry.changes.map((change, i) => {
+                const ts = typeStyle[change.type] ?? typeStyle.new
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '5px 0', borderBottom: i < (entry.changes ?? []).length - 1 ? '1px solid var(--pios-border)' : 'none' }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '5px 0', borderBottom: i < entry.changes.length - 1 ? '1px solid var(--pios-border)' : 'none' }}>
                     <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: ts.bg, color: ts.color, flexShrink: 0, marginTop: 2, letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
                       {ts.label}
                     </span>
