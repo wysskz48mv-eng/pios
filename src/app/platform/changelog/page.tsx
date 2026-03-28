@@ -20,7 +20,7 @@ export default function ChangelogPage() {
         { type: 'fix', text: 'Sprint 86: Dashboard API — tasks returned as { overdue, due_today, upcoming } object not array. Demo page crash fixed.' },
         { type: 'fix', text: 'Sprint 86: Profile save (onboarding step 2) — RLS missing UPDATE policy blocked all profile writes. Fixed: service client for DB writes.' },
         { type: 'fix', text: 'Sprint 86: CV upload — pdf-parse/mammoth replaced Claude document API (DOCX unsupported). Extension-based detection. XML w:t fallback for DOCX.' },
-        { type: 'fix', text: 'Sprint 86: Login page — magic link only (Google OAuth disabled until configured). All CSS classes moved to globals.css.' },
+        { type: 'fix', text: 'Sprint 87: Login page — Google OAuth + magic link. Google OAuth now live (smpt-sustain project, Client ID configured in Supabase). Gmail/Calendar/Drive scopes enabled.' },
         { type: 'new', text: 'Sprint 85: POST /api/admin/migrate-pending — applies M019–M023 + pios-cv bucket in one authenticated call.' },
         { type: 'new', text: 'Sprint 85: POST /api/admin/seed-nemoclaw — NemoClaw™ first-run seed: exec_intelligence_config, 15 IP frameworks, calibration placeholder.' },
       ],
