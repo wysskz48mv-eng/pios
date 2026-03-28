@@ -154,9 +154,9 @@ export default function EmailPage() {
         </div>
         <div style={{ display:'flex',gap:8 }}>
           {accounts.length === 0 ? (
-            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-primary" style={{ fontSize:12, textDecoration:'none' }}>
-              Connect Gmail →
-            </a>
+            <div style={{ fontSize:11, color:'var(--pios-muted)', padding:'8px 14px', borderRadius:9, background:'var(--pios-surface2)', border:'1px solid var(--pios-border)' }}>
+              ✉ Gmail connect — configure Google OAuth in Supabase to enable
+            </div>
           ) : (
             <>
               <button className="pios-btn pios-btn-ghost" onClick={()=>setShowCompose(!showCompose)} style={{ fontSize:12 }}>✉ Compose</button>
