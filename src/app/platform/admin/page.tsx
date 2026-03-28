@@ -472,9 +472,15 @@ export default function AdminPage() {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
               })
               const d = await r.json()
+              if (d.error === 'exec_sql RPC not found') {
+                const sql = `CREATE OR REPLACE FUNCTION public.exec_sql(sql_query text)\nRETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN EXECUTE sql_query; END; $$;\nGRANT EXECUTE ON FUNCTION public.exec_sql(text) TO service_role;`
+                await navigator.clipboard.writeText(sql).catch(()=>{})
+                alert('exec_sql function not found in your Supabase database.\n\nThe SQL has been copied to your clipboard.\n\nPaste it in:\nSupabase Dashboard → SQL Editor → New query → Paste → Run\n\nThen click Run Migrations again.')
+                return
+              }
               alert(d.success
-                ? `✓ Done: ${d.passed} passed, ${d.failed} failed`
-                : `⚠ ${d.error ?? JSON.stringify(d.results).slice(0,500)}`)
+                ? `✓ Done: ${d.passed} passed, ${d.failed} failed\n${d.next}`
+                : `⚠ ${d.passed} passed, ${d.failed} failed\n${d.error ?? ''}\n\nIf exec_sql is missing, go to Supabase SQL Editor and run:\nCREATE OR REPLACE FUNCTION public.exec_sql(sql_query text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN EXECUTE sql_query; END; $$;\nGRANT EXECUTE ON FUNCTION public.exec_sql(text) TO service_role;`)
             }}
             style={{ padding:'8px 16px', borderRadius:9, fontSize:12, fontWeight:600, cursor:'pointer',
               background:'rgba(79,142,247,0.1)', border:'1px solid rgba(79,142,247,0.25)', color:'var(--academic)' }}

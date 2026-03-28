@@ -1,20 +1,10 @@
-export const dynamic    = 'force-dynamic'
+export const dynamic     = 'force-dynamic'
 export const maxDuration = 60
 
 /**
  * POST /api/admin/migrate-pending
- * Applies pending PIOS migrations M019–M023 plus pios-cv storage bucket.
- *
- * Auth: x-admin-secret header matching ADMIN_SECRET env var.
- *       Falls back to SEED_SECRET for compatibility.
- *
- * Tries two execution paths in order:
- *   1. Direct pg connection via DIRECT_URL / SUPABASE_DB_URL
- *   2. Supabase exec_sql RPC via service role key
- *
- * All migrations are idempotent — safe to re-run.
- *
- * PIOS v3.0.3 | VeritasIQ Technologies Ltd
+ * Applies M019–M023 via exec_sql RPC or direct pg connection.
+ * PIOS v3.0.4 | VeritasIQ Technologies Ltd
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -22,53 +12,36 @@ import { NextRequest, NextResponse } from 'next/server'
 const SUPABASE_URL     = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// ── Execution: try direct pg first, fall back to exec_sql RPC ──────────────
 async function runSQL(sql: string): Promise<{ ok: boolean; method?: string; error?: string }> {
-  // Path 1: direct pg connection (fastest, most reliable)
+  // Path 1: direct pg
   const dbUrl = process.env.DIRECT_URL ?? process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL
   if (dbUrl) {
     try {
       const { Client } = await import('pg')
       const client = new Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } })
       await client.connect()
-      try {
-        await client.query(sql)
-        return { ok: true, method: 'pg_direct' }
-      } finally {
-        await client.end().catch(() => {})
-      }
-    } catch (e: any) {
-      // fall through to RPC
-    }
+      try { await client.query(sql); return { ok: true, method: 'pg_direct' } }
+      finally { await client.end().catch(() => {}) }
+    } catch { /* fall through */ }
   }
 
-  // Path 2: exec_sql RPC via service role
-  if (SUPABASE_URL && SERVICE_ROLE_KEY) {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-          'apikey':         SERVICE_ROLE_KEY,
-          'Prefer':         'return=minimal',
-        },
-        body: JSON.stringify({ sql_query: sql }),
-      })
-      if (res.ok) return { ok: true, method: 'exec_sql_rpc' }
-      const text = await res.text().catch(() => '')
-      return { ok: false, method: 'exec_sql_rpc', error: text.slice(0, 400) }
-    } catch (e: any) {
-      return { ok: false, error: e.message }
-    }
-  }
-
-  return { ok: false, error: 'No execution path available — set DIRECT_URL or SUPABASE_DB_URL in Vercel' }
+  // Path 2: exec_sql RPC
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+      'apikey':         SERVICE_ROLE_KEY,
+      'Prefer':         'return=minimal',
+    },
+    body: JSON.stringify({ sql_query: sql }),
+  })
+  if (res.ok) return { ok: true, method: 'exec_sql_rpc' }
+  const err = await res.text().catch(() => '')
+  return { ok: false, method: 'exec_sql_rpc', error: err.slice(0, 300) }
 }
 
 export async function POST(req: NextRequest) {
-  // Protected by middleware — authenticated users only. No secret needed.
-
   const results: Record<string, any> = {}
 
   async function run(label: string, sql: string) {
@@ -77,30 +50,42 @@ export async function POST(req: NextRequest) {
     return r.ok
   }
 
-  // ══ M019 — IP Vault · Contract Register · Group Financials ═════════════
+  // ── Check exec_sql exists first ──────────────────────────────────────────
+  const check = await runSQL('SELECT 1')
+  if (!check.ok) {
+    return NextResponse.json({
+      success: false,
+      error:   'exec_sql RPC not found',
+      fix:     'Run this SQL once in Supabase Dashboard → SQL Editor:\n\nCREATE OR REPLACE FUNCTION public.exec_sql(sql_query text)\nRETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN EXECUTE sql_query; END; $$;\nGRANT EXECUTE ON FUNCTION public.exec_sql(text) TO service_role;',
+      results,
+    })
+  }
+
+  // ══ M019 ═══════════════════════════════════════════════════════════════════
   await run('M019_ip_assets', `
     create table if not exists public.ip_assets (
       id              uuid primary key default uuid_generate_v4(),
       tenant_id       uuid references public.tenants(id) on delete cascade,
       user_id         uuid references auth.users(id) on delete cascade,
-      framework_code  text not null,
-      framework_name  text not null,
+      name            text not null,
+      asset_type      text not null default 'trademark'
+        check (asset_type in ('trademark','patent','copyright','design','trade_secret','domain','software','framework','other')),
       description     text,
-      ip_type         text default 'methodology',
-      status          text default 'active' check (status in ('active','pending','retired','licensed')),
-      ip_clearance    text default 'pending' check (ip_clearance in ('cleared','pending','legal_review_required')),
-      jurisdiction    text default 'UK',
-      filing_ref      text,
-      filed_at        date,
-      granted_at      date,
-      expiry_at       date,
-      tags            text[],
+      status          text not null default 'active'
+        check (status in ('active','pending','expired','abandoned','licensed')),
+      jurisdiction    text[] default '{}',
+      filing_date     date,
+      registration_no text,
+      renewal_date    date,
+      owner_entity    text,
       notes           text,
+      tags            text[] default '{}',
       created_at      timestamptz default now(),
       updated_at      timestamptz default now()
     );
-    create index if not exists idx_ip_assets_tenant on public.ip_assets(tenant_id);
-    create index if not exists idx_ip_assets_user   on public.ip_assets(user_id);
+    alter table public.ip_assets enable row level security;
+    drop policy if exists "ip_assets_owner" on public.ip_assets;
+    create policy "ip_assets_owner" on public.ip_assets using (user_id = auth.uid());
   `)
 
   await run('M019_contracts', `
@@ -108,286 +93,224 @@ export async function POST(req: NextRequest) {
       id              uuid primary key default uuid_generate_v4(),
       tenant_id       uuid references public.tenants(id) on delete cascade,
       user_id         uuid references auth.users(id) on delete cascade,
-      contract_ref    text,
       title           text not null,
-      counterparty    text,
       contract_type   text default 'service',
-      status          text default 'draft' check (status in ('draft','active','expired','terminated','suspended')),
-      value           numeric(14,2),
-      currency        text default 'GBP',
+      counterparty    text,
+      status          text not null default 'active'
+        check (status in ('draft','active','expired','terminated','renewed')),
       start_date      date,
       end_date        date,
-      notice_period   integer,
-      auto_renew      boolean default false,
-      signed_at       date,
-      file_url        text,
-      notes           text,
-      tags            text[],
+      renewal_date    date,
+      value           numeric,
+      currency        text default 'GBP',
+      description     text,
+      tags            text[] default '{}',
       created_at      timestamptz default now(),
       updated_at      timestamptz default now()
     );
-    create index if not exists idx_contracts_tenant on public.contracts(tenant_id);
-    create index if not exists idx_contracts_user   on public.contracts(user_id);
+    alter table public.contracts enable row level security;
+    drop policy if exists "contracts_owner" on public.contracts;
+    create policy "contracts_owner" on public.contracts using (user_id = auth.uid());
   `)
 
-  await run('M019_financials', `
+  await run('M019_financial_snapshots', `
     create table if not exists public.financial_snapshots (
-      id              uuid primary key default uuid_generate_v4(),
-      tenant_id       uuid references public.tenants(id) on delete cascade,
-      user_id         uuid references auth.users(id) on delete cascade,
-      period_label    text not null,
-      period_start    date not null,
-      period_end      date not null,
-      entity_name     text,
-      revenue         numeric(14,2) default 0,
-      expenses        numeric(14,2) default 0,
-      gross_profit    numeric(14,2) default 0,
-      net_profit      numeric(14,2) default 0,
-      currency        text default 'GBP',
-      notes           text,
-      source          text default 'manual',
-      created_at      timestamptz default now()
+      id           uuid primary key default uuid_generate_v4(),
+      tenant_id    uuid references public.tenants(id) on delete cascade,
+      user_id      uuid references auth.users(id) on delete cascade,
+      period       text not null,
+      period_type  text not null default 'month' check (period_type in ('month','quarter','year')),
+      entity       text not null default 'group',
+      revenue      numeric default 0,
+      expenses     numeric default 0,
+      payroll_cost numeric default 0,
+      gross_profit numeric generated always as (revenue - expenses - payroll_cost) stored,
+      currency     text default 'GBP',
+      cash_position numeric default 0,
+      receivables  numeric default 0,
+      payables     numeric default 0,
+      notes        text,
+      ai_commentary text,
+      created_at   timestamptz default now()
     );
-    create index if not exists idx_fin_snap_tenant on public.financial_snapshots(tenant_id);
+    alter table public.financial_snapshots enable row level security;
+    drop policy if exists "financials_owner" on public.financial_snapshots;
+    create policy "financials_owner" on public.financial_snapshots using (user_id = auth.uid());
   `)
 
-  // ══ M020 — IP Vault seed (VeritasIQ frameworks) ══════════════════════════
-  await run('M020_ip_seed', `
-    do $$ begin
-      if exists (select 1 from information_schema.tables where table_name = 'ip_assets') then
-        insert into public.ip_assets (framework_code, framework_name, ip_type, status, ip_clearance, jurisdiction, description)
-        values
-          ('SDL',  'Sustainable Development Lens™',          'methodology', 'active', 'cleared', 'UK', 'ESG / sustainability assessment framework'),
-          ('POM',  'Performance Operating Model™',           'methodology', 'active', 'cleared', 'UK', 'Organisational performance framework'),
-          ('OAE',  'Organisational Agility Engine™',         'methodology', 'active', 'cleared', 'UK', 'Agile transformation methodology'),
-          ('CVDM', 'Commercial Value Driver Model™',         'methodology', 'active', 'cleared', 'UK', 'Commercial value analysis framework'),
-          ('CPA',  'Competitive Positioning Architecture™',  'methodology', 'active', 'cleared', 'UK', 'Strategic positioning tool'),
-          ('UMS',  'Unified Management System™',             'methodology', 'active', 'cleared', 'UK', 'Integrated management system design'),
-          ('VFO',  'Value For Outcomes™',                    'methodology', 'active', 'cleared', 'UK', 'Outcome-based value framework'),
-          ('CFE',  'Commercial Framework Engine™',           'methodology', 'active', 'cleared', 'UK', 'Commercial structuring methodology'),
-          ('ADF',  'Asset Deployment Framework™',            'methodology', 'active', 'cleared', 'UK', 'Asset optimisation and deployment tool'),
-          ('GSM',  'Governance Stack Model™',                'methodology', 'active', 'cleared', 'UK', 'Governance architecture framework'),
-          ('SPA',  'Strategic Partnership Architecture™',    'methodology', 'active', 'cleared', 'UK', 'Partnership design and governance'),
-          ('RTE',  'Revenue Transformation Engine™',        'methodology', 'active', 'cleared', 'UK', 'Revenue strategy and transformation'),
-          ('IML',  'Intellectual Methods Library™',          'database',    'active', 'cleared', 'UK', 'Proprietary method repository — PIOS core IP')
-        on conflict do nothing;
-      end if;
-    end $$;
+  // ══ M020 ═══════════════════════════════════════════════════════════════════
+  await run('M020_knowledge_entries', `
+    create table if not exists public.knowledge_entries (
+      id          uuid primary key default uuid_generate_v4(),
+      tenant_id   uuid references public.tenants(id) on delete cascade,
+      user_id     uuid references auth.users(id) on delete cascade,
+      title       text not null,
+      summary     text,
+      full_text   text,
+      entry_type  text not null default 'note',
+      domain      text not null default 'business',
+      source      text,
+      url         text,
+      tags        text[] default '{}',
+      created_at  timestamptz default now(),
+      updated_at  timestamptz default now()
+    );
+    alter table public.knowledge_entries enable row level security;
+    drop policy if exists "knowledge_owner" on public.knowledge_entries;
+    create policy "knowledge_owner" on public.knowledge_entries using (user_id = auth.uid());
   `)
 
-  // ══ M021 — Wellness Phase 1 ══════════════════════════════════════════════
+  // ══ M021 ═══════════════════════════════════════════════════════════════════
   await run('M021_wellness_sessions', `
     create table if not exists public.wellness_sessions (
-      id              uuid primary key default uuid_generate_v4(),
+      id              uuid primary key default gen_random_uuid(),
       user_id         uuid not null references auth.users(id) on delete cascade,
       tenant_id       uuid references public.tenants(id) on delete cascade,
       session_date    date not null default current_date,
-      session_type    text not null check (session_type in ('mindfulness','exercise','sleep','nutrition','recovery','reflection','social')),
-      duration_min    integer,
-      intensity       text check (intensity in ('low','moderate','high')),
-      mood_before     integer check (mood_before between 1 and 10),
-      mood_after      integer check (mood_after between 1 and 10),
-      energy_level    integer check (energy_level between 1 and 10),
+      session_type    text not null default 'morning_checkin',
+      mood_score      smallint check (mood_score between 1 and 10),
+      energy_score    smallint check (energy_score between 1 and 10),
+      stress_score    smallint check (stress_score between 1 and 10),
+      focus_score     smallint check (focus_score between 1 and 10),
+      dominant_domain text,
       notes           text,
-      tags            text[],
-      created_at      timestamptz default now()
+      tags            text[] default '{}',
+      ai_insight      text,
+      ai_recommended_actions jsonb default '[]',
+      gdpr_consent    boolean not null default false,
+      data_minimised  boolean not null default false,
+      source          text default 'web',
+      created_at      timestamptz default now(),
+      updated_at      timestamptz default now()
     );
-    create index if not exists idx_wellness_sessions_user_date on public.wellness_sessions(user_id, session_date desc);
-    create index if not exists idx_wellness_sessions_type      on public.wellness_sessions(user_id, session_type);
+    alter table public.wellness_sessions enable row level security;
+    drop policy if exists "wellness_sessions_owner" on public.wellness_sessions;
+    create policy "wellness_sessions_owner" on public.wellness_sessions using (user_id = auth.uid());
   `)
 
   await run('M021_wellness_streaks', `
     create table if not exists public.wellness_streaks (
-      id              uuid primary key default uuid_generate_v4(),
-      user_id         uuid not null references auth.users(id) on delete cascade,
-      streak_type     text not null,
-      current_streak  integer default 0,
-      longest_streak  integer default 0,
-      last_activity   date,
-      updated_at      timestamptz default now(),
+      id                  uuid primary key default gen_random_uuid(),
+      user_id             uuid not null references auth.users(id) on delete cascade,
+      streak_type         text not null default 'daily_checkin',
+      current_streak      integer not null default 0,
+      longest_streak      integer not null default 0,
+      last_activity_date  date,
+      streak_started_date date,
+      created_at          timestamptz default now(),
+      updated_at          timestamptz default now(),
       unique(user_id, streak_type)
     );
-    create index if not exists idx_wellness_streaks_user on public.wellness_streaks(user_id);
-  `)
-
-  await run('M021_wellness_patterns', `
-    create table if not exists public.wellness_patterns (
-      id              uuid primary key default uuid_generate_v4(),
-      user_id         uuid not null references auth.users(id) on delete cascade,
-      pattern_type    text not null,
-      pattern_data    jsonb default '{}',
-      insight         text,
-      confidence      numeric(4,2) default 0.70,
-      period_start    date,
-      period_end      date,
-      generated_at    timestamptz default now()
-    );
+    alter table public.wellness_streaks enable row level security;
+    drop policy if exists "wellness_streaks_owner" on public.wellness_streaks;
+    create policy "wellness_streaks_owner" on public.wellness_streaks using (user_id = auth.uid());
   `)
 
   await run('M021_purpose_anchors', `
     create table if not exists public.purpose_anchors (
-      id              uuid primary key default uuid_generate_v4(),
-      user_id         uuid not null references auth.users(id) on delete cascade,
-      anchor_type     text not null check (anchor_type in ('value','goal','relationship','achievement','commitment')),
-      title           text not null,
-      description     text,
-      priority        integer default 5,
-      active          boolean default true,
-      created_at      timestamptz default now(),
-      updated_at      timestamptz default now()
+      id           uuid primary key default gen_random_uuid(),
+      user_id      uuid not null references auth.users(id) on delete cascade,
+      anchor_text  text not null,
+      anchor_type  text not null default 'why',
+      domain       text,
+      is_primary   boolean default false,
+      display_order smallint default 0,
+      active       boolean default true,
+      created_at   timestamptz default now()
     );
-    create index if not exists idx_purpose_anchors_user on public.purpose_anchors(user_id, active);
+    alter table public.purpose_anchors enable row level security;
+    drop policy if exists "purpose_anchors_owner" on public.purpose_anchors;
+    create policy "purpose_anchors_owner" on public.purpose_anchors using (user_id = auth.uid());
   `)
 
-  // ══ M022 — NemoClaw™ CV calibration ══════════════════════════════════════
+  // ══ M022 ═══════════════════════════════════════════════════════════════════
   await run('M022_nemoclaw_calibration', `
     create table if not exists public.nemoclaw_calibration (
-      id                  uuid primary key default uuid_generate_v4(),
-      user_id             uuid not null references auth.users(id) on delete cascade,
-      calibration_version integer default 1,
-      cv_text             text,
-      cv_summary          text,
-      key_skills          text[],
-      experience_years    integer,
-      seniority_level     text,
-      domain_focus        text[],
-      calibration_data    jsonb default '{}',
-      calibration_score   numeric(4,2),
-      model_used          text default 'claude-sonnet-4-20250514',
-      calibrated_at       timestamptz default now(),
-      is_current          boolean default true
-    );
-    create index if not exists idx_nemoclaw_cal_user on public.nemoclaw_calibration(user_id, is_current);
-  `)
-
-  await run('M022_pios_cv_bucket', `
-    insert into storage.buckets (id, name, public, file_size_limit)
-    values ('pios-cv', 'pios-cv', false, 10485760)
-    on conflict (id) do nothing;
-  `)
-
-  await run('M022_cv_bucket_policies', `
-    drop policy if exists "pios_cv_owner_upload" on storage.objects;
-    drop policy if exists "pios_cv_owner_read"   on storage.objects;
-    drop policy if exists "pios_cv_owner_delete" on storage.objects;
-
-    create policy "pios_cv_owner_upload" on storage.objects
-      for insert with check (
-        bucket_id = 'pios-cv'
-        and auth.uid()::text = (storage.foldername(name))[1]
-      );
-
-    create policy "pios_cv_owner_read" on storage.objects
-      for select using (
-        bucket_id = 'pios-cv'
-        and auth.uid()::text = (storage.foldername(name))[1]
-      );
-
-    create policy "pios_cv_owner_delete" on storage.objects
-      for delete using (
-        bucket_id = 'pios-cv'
-        and auth.uid()::text = (storage.foldername(name))[1]
-      );
-  `)
-
-  // ══ M023 — Executive Intelligence Config + AI Credits Reset ══════════════
-  await run('M023_exec_intel_config', `
-    create table if not exists public.exec_intelligence_config (
-      id                  uuid primary key default uuid_generate_v4(),
-      user_id             uuid not null references auth.users(id) on delete cascade,
-      config_version      integer default 1,
-      focus_areas         text[] default '{}',
-      risk_tolerance      text default 'moderate' check (risk_tolerance in ('conservative','moderate','aggressive')),
-      decision_horizon    text default 'medium_term',
-      briefing_frequency  text default 'daily',
-      ai_persona_mode     text default 'advisor',
-      custom_instructions text,
-      active              boolean default true,
-      created_at          timestamptz default now(),
-      updated_at          timestamptz default now(),
+      id                     uuid primary key default gen_random_uuid(),
+      user_id                uuid not null references auth.users(id) on delete cascade,
+      education_level        text,
+      education_detail       text,
+      career_years           integer default 0,
+      seniority_level        text,
+      primary_industry       text,
+      industries             text[] default '{}',
+      skills                 text[] default '{}',
+      qualifications         text[] default '{}',
+      employers              text[] default '{}',
+      key_achievements       text[] default '{}',
+      communication_register text,
+      coaching_intensity     text,
+      recommended_frameworks text[] default '{}',
+      growth_areas           text[] default '{}',
+      strengths              text[] default '{}',
+      work_life_signals      text,
+      decision_style         text,
+      calibration_summary    text,
+      created_at             timestamptz default now(),
+      updated_at             timestamptz default now(),
       unique(user_id)
     );
-
-    alter table public.exec_intelligence_config enable row level security;
-
-    drop policy if exists "exec_intel_config_own" on public.exec_intelligence_config;
-    create policy "exec_intel_config_own" on public.exec_intelligence_config
-      for all using (user_id = auth.uid());
-
-    create index if not exists idx_exec_intel_config_user
-      on public.exec_intelligence_config(user_id);
+    alter table public.nemoclaw_calibration enable row level security;
+    drop policy if exists "nemoclaw_cal_owner" on public.nemoclaw_calibration;
+    create policy "nemoclaw_cal_owner" on public.nemoclaw_calibration using (user_id = auth.uid());
   `)
 
-  await run('M023_ai_credits_resets', `
-    create table if not exists public.ai_credits_resets (
-      id              uuid primary key default uuid_generate_v4(),
-      tenant_id       uuid references public.tenants(id) on delete cascade,
-      user_id         uuid references auth.users(id) on delete cascade,
-      reset_reason    text not null check (reset_reason in ('monthly_cycle','plan_upgrade','admin_grant','promotional')),
-      credits_granted integer not null default 0,
-      credits_before  integer not null default 0,
-      credits_after   integer not null default 0,
-      triggered_by    text,
-      notes           text,
-      created_at      timestamptz default now()
+  // ══ M023 ═══════════════════════════════════════════════════════════════════
+  await run('M023_exec_intelligence_config', `
+    create table if not exists public.exec_intelligence_config (
+      id          uuid primary key default gen_random_uuid(),
+      user_id     uuid not null references auth.users(id) on delete cascade,
+      persona     text default 'advisor',
+      company_ctx text,
+      goals       text[] default '{}',
+      custom_inst text,
+      tone        text default 'professional',
+      response_style text default 'concise',
+      created_at  timestamptz default now(),
+      updated_at  timestamptz default now(),
+      unique(user_id)
     );
-
-    alter table public.ai_credits_resets enable row level security;
-
-    drop policy if exists "ai_credits_resets_own" on public.ai_credits_resets;
-    create policy "ai_credits_resets_own" on public.ai_credits_resets
-      for all using (user_id = auth.uid());
-
-    create index if not exists idx_ai_credits_resets_tenant
-      on public.ai_credits_resets(tenant_id, created_at desc);
-    create index if not exists idx_ai_credits_resets_user
-      on public.ai_credits_resets(user_id, created_at desc);
+    alter table public.exec_intelligence_config enable row level security;
+    drop policy if exists "exec_intel_owner" on public.exec_intelligence_config;
+    create policy "exec_intel_owner" on public.exec_intelligence_config using (user_id = auth.uid());
   `)
 
-  // ── M000 — Fix user_profiles RLS (missing UPDATE policy) ────────────────
-  // Migration 001 only creates a USING policy (SELECT/DELETE).
-  // UPDATE and INSERT are blocked unless WITH CHECK is added.
-  await run('M000_user_profiles_rls_update', `
-    DROP POLICY IF EXISTS "user_profiles_update" ON public.user_profiles;
-    CREATE POLICY "user_profiles_update"
-      ON public.user_profiles
-      FOR UPDATE
-      USING (id = auth.uid())
-      WITH CHECK (id = auth.uid());
-
-    DROP POLICY IF EXISTS "user_profiles_insert" ON public.user_profiles;
-    CREATE POLICY "user_profiles_insert"
-      ON public.user_profiles
-      FOR INSERT
-      WITH CHECK (id = auth.uid());
+  // ══ User profiles RLS fix ══════════════════════════════════════════════════
+  await run('M000_user_profiles_rls', `
+    drop policy if exists "user_profiles_update" on public.user_profiles;
+    create policy "user_profiles_update" on public.user_profiles
+      for update using (id = auth.uid()) with check (id = auth.uid());
+    drop policy if exists "user_profiles_insert" on public.user_profiles;
+    create policy "user_profiles_insert" on public.user_profiles
+      for insert with check (id = auth.uid());
   `)
 
-  // ── Summary ────────────────────────────────────────────────────────────
+  // ══ pios-cv storage bucket ═════════════════════════════════════════════════
+  try {
+    const bucketRes = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+        'apikey':         SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({ id: 'pios-cv', name: 'pios-cv', public: false }),
+    })
+    results['pios_cv_bucket'] = { ok: bucketRes.ok || bucketRes.status === 409, method: 'storage_api' }
+  } catch (e: any) {
+    results['pios_cv_bucket'] = { ok: false, error: e.message }
+  }
+
   const passed = Object.values(results).filter((r: any) => r.ok).length
-  const failed = Object.values(results).filter((r: any) => !r.ok)
+  const failed = Object.values(results).filter((r: any) => !r.ok).length
 
   return NextResponse.json({
-    success:  failed.length === 0,
+    success: failed === 0,
     passed,
-    failed:   failed.length,
+    failed,
     results,
-    order: [
-      'M019 ip_assets table',
-      'M019 contracts table',
-      'M019 financial_snapshots table',
-      'M020 IP asset seed (13 VeritasIQ frameworks)',
-      'M021 wellness_sessions',
-      'M021 wellness_streaks',
-      'M021 wellness_patterns',
-      'M021 purpose_anchors',
-      'M022 nemoclaw_calibration table',
-      'M022 pios-cv storage bucket',
-      'M022 pios-cv bucket RLS policies',
-      'M023 exec_intelligence_config',
-      'M023 ai_credits_resets',
-    ],
-    next: failed.length > 0
-      ? 'Set DIRECT_URL (Supabase direct connection string) in Vercel env vars, then re-run. Or create exec_sql function in Supabase SQL Editor first.'
-      : 'Migrations complete. Run /api/health to verify. Then seed NemoClaw via /api/admin/seed-demo if needed.',
+    next: failed === 0
+      ? 'All done. Now click Seed NemoClaw™ then Seed Demo Data.'
+      : 'Some migrations failed — exec_sql RPC may need to be created manually in Supabase SQL Editor.',
   })
 }
