@@ -186,7 +186,7 @@ export default function LoginPage() {
                   padding:'11.5px 16px',borderRadius:9,cursor:loading?'not-allowed':'pointer',
                   background:'rgba(255,255,255,.04)',border:`1px solid ${C.border}`,
                   color:'rgba(255,255,255,.6)',fontSize:13,fontFamily:'inherit',
-                  marginBottom:18,opacity:loading?.5:1,
+                  marginBottom:18,opacity:loading ? 0.5 : 1,
                 }}>
                   <svg width="16" height="16" viewBox="0 0 18 18">
                     <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
