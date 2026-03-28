@@ -67,16 +67,7 @@ async function runSQL(sql: string): Promise<{ ok: boolean; method?: string; erro
 }
 
 export async function POST(req: NextRequest) {
-  // Route is protected by middleware — only authenticated users reach here.
-  // Additional secret check only if ADMIN_SECRET is explicitly set.
-  const expected = process.env.ADMIN_SECRET ?? process.env.SEED_SECRET
-  if (expected) {
-    const secret = req.headers.get('x-admin-secret') ?? req.headers.get('x-seed-secret')
-    if (secret !== expected) {
-      return NextResponse.json({ error: 'Wrong admin secret' }, { status: 401 })
-    }
-  }
-  // No env var = open to any authenticated user (middleware ensures auth)
+  // Protected by middleware — authenticated users only. No secret needed.
 
   const results: Record<string, any> = {}
 
