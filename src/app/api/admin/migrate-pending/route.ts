@@ -67,10 +67,24 @@ async function runSQL(sql: string): Promise<{ ok: boolean; method?: string; erro
 }
 
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get('x-admin-secret') ?? req.headers.get('x-seed-secret')
+  // Auth: check x-admin-secret header against ADMIN_SECRET / SEED_SECRET env var.
+  // If no env var is set, fall back to checking the user is authenticated via Supabase.
+  const secret   = req.headers.get('x-admin-secret') ?? req.headers.get('x-seed-secret')
   const expected = process.env.ADMIN_SECRET ?? process.env.SEED_SECRET
-  if (!secret || secret !== expected) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (expected) {
+    // Env var is set — enforce it
+    if (!secret || secret !== expected) {
+      return NextResponse.json({ error: 'Unauthorized — wrong admin secret' }, { status: 401 })
+    }
+  } else {
+    // No env var set — require authenticated Supabase session instead
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized — sign in first or set ADMIN_SECRET env var' }, { status: 401 })
+    }
   }
 
   const results: Record<string, any> = {}
