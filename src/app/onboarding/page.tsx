@@ -131,15 +131,7 @@ export default function OnboardingPage() {
   const supabase = createClient()
   const fileRef  = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) { router.push('/auth/login'); return }
-      supabase.from('user_profiles').select('persona_type, onboarded').eq('id', user.id).single()
-        .then(({ data }) => { if (data?.onboarded && data?.persona_type) router.push('/platform/dashboard') })
-    })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── State ──────────────────────────────────────────────────────────────────
+  // ── State — must be declared before any useEffect that references them ──────
   const [step,         setStep]         = useState(1)
   const [persona,      setPersona]      = useState('')
   const [fullName,     setFullName]     = useState('')
@@ -151,8 +143,6 @@ export default function OnboardingPage() {
   const [plan,         setPlan]         = useState('professional')
   const [saving,       setSaving]       = useState(false)
   const [error,        setError]        = useState('')
-
-  // CV step state
   const [cvFile,        setCvFile]       = useState<File | null>(null)
   const [cvProcessing,  setCvProcessing] = useState(false)
   const [cvDone,        setCvDone]       = useState(false)
@@ -162,6 +152,35 @@ export default function OnboardingPage() {
 
   const isExec = persona === 'executive' || persona === 'consultant'
   const isAcad = persona === 'academic'
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push('/auth/login'); return }
+      supabase.from('user_profiles')
+        .select('persona_type, onboarded, full_name, job_title, organisation, programme_name, university, timezone')
+        .eq('id', user.id).single()
+        .then(({ data }) => {
+          if (data?.onboarded) { router.push('/platform/dashboard'); return }
+          if (data?.full_name)       setFullName(data.full_name)
+          if (data?.job_title)       setJobTitle(data.job_title)
+          if (data?.organisation)    setOrg(data.organisation)
+          if (data?.programme_name)  setProgramme(data.programme_name)
+          if (data?.university)      setUniversity(data.university)
+          if (data?.timezone)        setTimezone(data.timezone)
+          if (data?.persona_type)    setPersona(data.persona_type)
+        })
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const savedStep    = sessionStorage.getItem('pios_ob_step')
+    const savedPersona = sessionStorage.getItem('pios_ob_persona')
+    if (savedStep)    setStep(Number(savedStep))
+    if (savedPersona) setPersona(savedPersona)
+  }, [])
+
+  useEffect(() => { sessionStorage.setItem('pios_ob_step',    String(step))    }, [step])
+  useEffect(() => { if (persona) sessionStorage.setItem('pios_ob_persona', persona) }, [persona])
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -248,6 +267,9 @@ export default function OnboardingPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ onboarded: true }),
     })
+    // Clear wizard state from sessionStorage
+    sessionStorage.removeItem('pios_ob_step')
+    sessionStorage.removeItem('pios_ob_persona')
     router.push('/platform/dashboard')
     setSaving(false)
   }

@@ -106,8 +106,9 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
 
       {/* Main area */}
       <main style={{
-        flex: 1, overflowY: 'auto', background: '#080808',
+        flex: 1, background: '#080808',
         display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
         paddingBottom: isMobile ? 64 : 0,
       }}>
 
@@ -261,6 +262,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
         <div style={{
           padding: isMobile ? '20px 16px 32px' : '28px 32px 72px',
           flex: 1, maxWidth: '100%',
+          overflowY: 'auto', overflowX: 'hidden',
         }}>
           {children}
         </div>
