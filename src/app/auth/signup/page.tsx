@@ -19,7 +19,7 @@ const PERSONA_OPTIONS = [
 ]
 
 export default function SignupPage() {
-  const [mode,    setMode]    = useState<'google' | 'email'>('email')
+  const [mode,    setMode]    = useState<'google' | 'email'>('google')
   const [step,    setStep]    = useState<1 | 2>(1)
   const [persona, setPersona] = useState('')
   const [loading, setLoading] = useState(false)
