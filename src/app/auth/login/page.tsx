@@ -36,86 +36,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--pios-bg)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px',
-      fontFamily: 'var(--font-sans)',
-    }}>
-      <div style={{ width: '100%', maxWidth: 400 }}>
+    <main className="pios-login-wrap">
+      <div className="pios-login-box">
 
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 14, margin: '0 auto 16px',
-            background: 'rgba(99,73,255,0.12)', border: '1px solid rgba(99,73,255,0.25)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'rgba(130,108,255,0.9)' }}>P</span>
-          </div>
-          <h1 style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 26, fontWeight: 400, letterSpacing: '-0.025em',
-            color: 'var(--pios-text)', marginBottom: 6,
-          }}>Welcome back.</h1>
-          <p style={{ fontSize: 13, color: 'var(--pios-muted)' }}>
-            Sign in to your PIOS command centre
-          </p>
+        {/* Logo mark */}
+        <div className="pios-login-logo">
+          <span className="pios-login-p">P</span>
         </div>
+        <h1 className="pios-login-h1">Welcome back.</h1>
+        <p className="pios-login-sub">Sign in to your PIOS command centre</p>
 
         {/* Card */}
-        <div style={{
-          background: 'var(--pios-surface)',
-          border: '1px solid var(--pios-border2)',
-          borderRadius: 16,
-          padding: '28px 24px',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-          {/* accent line */}
-          <div style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: 1.5,
-            background: 'linear-gradient(90deg, #6349FF, rgba(79,142,247,0.7) 60%, transparent)',
-          }} />
+        <div className="pios-login-card">
+          <div className="pios-login-accent" />
 
           {sent ? (
-            <div style={{ textAlign: 'center', padding: '8px 0' }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: '50%', margin: '0 auto 16px',
-                background: 'rgba(99,73,255,0.1)', border: '1px solid rgba(99,73,255,0.25)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22,
-              }}>✉</div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400, color: 'var(--pios-text)', marginBottom: 8 }}>
-                Check your inbox.
-              </h2>
-              <p style={{ fontSize: 13, color: 'var(--pios-muted)', lineHeight: 1.7 }}>
+            <div className="pios-login-sent">
+              <div className="pios-login-sent-icon">✉</div>
+              <h2 className="pios-login-sent-h">Check your inbox.</h2>
+              <p className="pios-login-sent-p">
                 Magic link sent to<br />
-                <strong style={{ color: 'var(--pios-text)' }}>{email}</strong>
+                <strong>{email}</strong>
               </p>
               <button
+                className="pios-login-back"
                 onClick={() => { setSent(false); setEmail('') }}
-                style={{ marginTop: 20, background: 'none', border: 'none', color: 'rgba(99,73,255,0.8)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 ← Different email
               </button>
             </div>
           ) : (
             <>
-              {/* Google */}
               <button
+                className="pios-login-google"
                 onClick={googleSignIn}
                 disabled={loading}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  padding: '11px 16px', borderRadius: 10, cursor: loading ? 'not-allowed' : 'pointer',
-                  background: 'var(--pios-surface2)', border: '1px solid var(--pios-border2)',
-                  color: 'var(--pios-text)', fontSize: 14, fontFamily: 'inherit',
-                  marginBottom: 16, opacity: loading ? 0.5 : 1,
-                }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18">
                   <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
@@ -126,66 +81,44 @@ export default function LoginPage() {
                 Continue with Google
               </button>
 
-              {/* Divider */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--pios-border)' }} />
-                <span style={{ fontSize: 11, color: 'var(--pios-dim)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>OR</span>
-                <div style={{ flex: 1, height: 1, background: 'var(--pios-border)' }} />
+              <div className="pios-login-or">
+                <span className="pios-login-or-line" />
+                <span className="pios-login-or-txt">OR</span>
+                <span className="pios-login-or-line" />
               </div>
 
-              {/* Magic link */}
               <form onSubmit={sendMagicLink}>
-                <label style={{
-                  display: 'block', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em',
-                  textTransform: 'uppercase', color: 'var(--pios-dim)', marginBottom: 8,
-                  fontFamily: 'var(--font-mono)',
-                }}>
-                  Email address
-                </label>
-                <div style={{
-                  display: 'flex', borderRadius: 10, overflow: 'hidden',
-                  border: `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'var(--pios-border2)'}`,
-                  background: 'var(--pios-surface2)',
-                }}>
+                <label className="pios-login-label">Email address</label>
+                <div className={`pios-login-field${error ? ' pios-login-field-err' : ''}`}>
                   <input
-                    type="email" value={email} onChange={e => setEmail(e.target.value)}
-                    placeholder="you@domain.com" required
-                    style={{
-                      flex: 1, padding: '11px 14px',
-                      background: 'transparent', border: 'none', outline: 'none',
-                      color: 'var(--pios-text)', fontSize: 14, fontFamily: 'inherit',
-                    }}
+                    className="pios-login-input"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="you@domain.com"
+                    required
                   />
                   <button
-                    type="submit" disabled={loading || !email}
-                    style={{
-                      padding: '10px 18px',
-                      background: loading || !email ? 'rgba(99,73,255,0.3)' : '#6349FF',
-                      border: 'none', color: '#fff', fontSize: 13, fontWeight: 600,
-                      fontFamily: 'inherit', cursor: loading || !email ? 'not-allowed' : 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
+                    type="submit"
+                    className="pios-login-send"
+                    disabled={loading || !email}
                   >
                     {loading ? '…' : 'Send link →'}
                   </button>
                 </div>
-                {error && (
-                  <p style={{ color: '#f87171', fontSize: 12, marginTop: 8 }}>⚠ {error}</p>
-                )}
+                {error && <p className="pios-login-err">{error}</p>}
               </form>
             </>
           )}
         </div>
 
-        {/* Footer */}
-        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'var(--pios-muted)' }}>
+        <p className="pios-login-foot">
           No account?{' '}
-          <Link href="/auth/signup" style={{ color: '#6349FF', textDecoration: 'none', fontWeight: 500 }}>
+          <Link href="/auth/signup" className="pios-login-link">
             Start free trial →
           </Link>
         </p>
-
       </div>
-    </div>
+    </main>
   )
 }

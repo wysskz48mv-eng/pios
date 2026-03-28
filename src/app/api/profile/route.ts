@@ -10,7 +10,7 @@
  *  PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient }              from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 
@@ -50,7 +50,9 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const supabase = createClient()
+    // Auth check via user client (respects session cookies)
+    const supabase    = createClient()
+    const serviceDb   = createServiceClient()   // bypasses RLS for writes
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -75,26 +77,46 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // Read current onboarded state before applying the update
-    const { data: existing } = await supabase
+    // Read current state (service client to avoid RLS blocking the read too)
+    const { data: existing } = await serviceDb
       .from('user_profiles')
-      .select('onboarded, persona_type')
+      .select('onboarded, persona_type, tenant_id')
       .eq('id', user.id)
       .single()
 
     const wasOnboarded   = existing?.onboarded === true
     const newOnboarded   = safe.onboarded === true
     const persona        = (safe.persona_type as string | undefined) ?? existing?.persona_type ?? 'executive'
-    const isProfessional = ['executive', 'professional'].includes(persona)
+    const isProfessional = ['executive', 'professional', 'founder', 'consultant'].includes(persona)
 
-    const { data, error } = await supabase
+    // If no profile row yet, create tenant + profile first
+    if (!existing) {
+      const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: tenant } = await serviceDb.from('tenants').insert({
+        name:                user.email?.split('@')[0] ?? 'My PIOS',
+        slug:                user.id.substring(0, 8),
+        plan:                'individual',
+        plan_status:         'trialing',
+        subscription_status: 'trialing',
+        trial_ends_at:       trialEndsAt,
+        ai_credits_limit:    5000,
+      }).select().single()
+
+      if (tenant) {
+        safe.tenant_id = tenant.id
+        safe.role      = 'owner'
+      }
+    }
+
+    // Upsert using service client — bypasses RLS
+    const { data, error } = await serviceDb
       .from('user_profiles')
-      .update(safe)
+      .upsert({ id: user.id, ...safe })
       .eq('id', user.id)
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
     // ── NemoClaw™ first-run seed ─────────────────────────────────────────────
     // Fires exactly once: when onboarded transitions false → true for
