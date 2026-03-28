@@ -309,12 +309,11 @@ export default function DashboardPage() {
           icon="⚑"
         />
         <StatCard
-          label="VE Budget (Annual)"
-          value={seSnap?.obe?.totalBudgetSAR ? `SAR ${(seSnap.obe.totalBudgetSAR / 1e6).toFixed(0)}M` : 'SAR 229M'}
-          delta="KSP baseline"
-          deltaUp
-          accent="var(--fm)"
-          icon="↗"
+          label="AI Credits"
+          value={loading ? '—' : `${credits?.used ?? 0} / ${credits?.limit ?? 500}`}
+          delta={credits && credits.used < credits.limit ? 'Available' : 'Limit reached'}
+          accent="var(--ai)"
+          icon="✦"
         />
         <StatCard
           label="Academic Modules"
