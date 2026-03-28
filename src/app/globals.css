@@ -275,3 +275,169 @@ em { background: transparent !important; }
     display: block !important;
   }
 }
+
+/* ── Login page ─────────────────────────────────────────────── */
+.pios-login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--pios-bg);
+}
+.pios-login-box {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+.pios-login-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  margin: 0 auto 16px;
+  background: rgba(99,73,255,0.12);
+  border: 1px solid rgba(99,73,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pios-login-p {
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: rgba(130,108,255,0.9);
+  line-height: 1;
+}
+.pios-login-h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  color: var(--pios-text);
+  margin-bottom: 6px;
+}
+.pios-login-sub {
+  font-size: 13px;
+  color: var(--pios-muted);
+  margin-bottom: 24px;
+}
+.pios-login-card {
+  background: var(--pios-surface);
+  border: 1px solid var(--pios-border2);
+  border-radius: 16px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  margin-bottom: 20px;
+}
+.pios-login-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6349FF, rgba(79,142,247,0.7) 60%, transparent);
+}
+.pios-login-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pios-dim);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+.pios-login-field {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--pios-border2);
+  background: var(--pios-surface2);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.pios-login-field:focus-within {
+  border-color: rgba(99,73,255,0.5);
+  box-shadow: 0 0 0 3px rgba(99,73,255,0.08);
+}
+.pios-login-field-err {
+  border-color: rgba(239,68,68,0.5) !important;
+}
+.pios-login-input {
+  flex: 1;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--pios-text);
+  font-size: 14px;
+  font-family: var(--font-sans);
+}
+.pios-login-send {
+  padding: 10px 20px;
+  background: #6349FF;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.pios-login-send:hover:not(:disabled) { opacity: 0.88; }
+.pios-login-send:disabled {
+  background: rgba(99,73,255,0.35);
+  cursor: not-allowed;
+}
+.pios-login-sent {
+  text-align: center;
+  padding: 8px 0;
+}
+.pios-login-sent-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  background: rgba(99,73,255,0.1);
+  border: 1px solid rgba(99,73,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+.pios-login-sent-h {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--pios-text);
+  margin-bottom: 8px;
+}
+.pios-login-sent-p {
+  font-size: 13px;
+  color: var(--pios-muted);
+  line-height: 1.7;
+  margin-bottom: 4px;
+}
+.pios-login-sent-p strong {
+  color: var(--pios-text);
+}
+.pios-login-back {
+  margin-top: 20px;
+  background: none;
+  border: none;
+  color: rgba(99,73,255,0.8);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.pios-login-back:hover { color: #6349FF; }
+.pios-login-foot {
+  font-size: 13px;
+  color: var(--pios-muted);
+  text-align: center;
+}
+.pios-login-link {
+  color: #6349FF;
+  text-decoration: none;
+  font-weight: 500;
+}
+.pios-login-link:hover { opacity: 0.8; }
