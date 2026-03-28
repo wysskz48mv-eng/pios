@@ -204,12 +204,6 @@ export default function DashboardPage() {
 
   useEffect(() => { load() }, [load])
 
-  useEffect(() => {
-
-      .catch(() => {})
-
-      .catch(() => {})
-  }, [])
 
   async function generateBrief(force = false) {
     setBriefLoading(true)
