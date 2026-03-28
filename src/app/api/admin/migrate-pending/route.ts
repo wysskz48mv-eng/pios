@@ -348,6 +348,24 @@ export async function POST(req: NextRequest) {
       on public.ai_credits_resets(user_id, created_at desc);
   `)
 
+  // ── M000 — Fix user_profiles RLS (missing UPDATE policy) ────────────────
+  // Migration 001 only creates a USING policy (SELECT/DELETE).
+  // UPDATE and INSERT are blocked unless WITH CHECK is added.
+  await run('M000_user_profiles_rls_update', `
+    DROP POLICY IF EXISTS "user_profiles_update" ON public.user_profiles;
+    CREATE POLICY "user_profiles_update"
+      ON public.user_profiles
+      FOR UPDATE
+      USING (id = auth.uid())
+      WITH CHECK (id = auth.uid());
+
+    DROP POLICY IF EXISTS "user_profiles_insert" ON public.user_profiles;
+    CREATE POLICY "user_profiles_insert"
+      ON public.user_profiles
+      FOR INSERT
+      WITH CHECK (id = auth.uid());
+  `)
+
   // ── Summary ────────────────────────────────────────────────────────────
   const passed = Object.values(results).filter((r: any) => r.ok).length
   const failed = Object.values(results).filter((r: any) => !r.ok)

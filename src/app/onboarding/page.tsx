@@ -169,22 +169,48 @@ export default function OnboardingPage() {
     if (!fullName.trim()) { setError('Please enter your full name.'); return }
     setSaving(true); setError('')
     try {
-      const res = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name:      fullName,
-          job_title:      jobTitle      || undefined,
-          organisation:   organisation  || undefined,
-          programme_name: programme     || undefined,
-          university:     university    || undefined,
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in — please refresh and try again.')
+
+      // Upsert directly via client — works regardless of RLS if profile already exists
+      // For new users the auth callback already created the profile row
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          full_name:      fullName.trim(),
+          job_title:      jobTitle.trim()      || null,
+          organisation:   organisation.trim()  || null,
+          programme_name: programme.trim()     || null,
+          university:     university.trim()    || null,
           timezone,
-          persona_type:   persona       || 'executive',
-        }),
-      })
-      if (!res.ok) throw new Error('Profile save failed')
+          persona_type:   persona              || 'executive',
+          updated_at:     new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+      if (error) {
+        // If update failed (no row yet), try API which uses service role
+        const res = await fetch('/api/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name:      fullName,
+            job_title:      jobTitle      || undefined,
+            organisation:   organisation  || undefined,
+            programme_name: programme     || undefined,
+            university:     university    || undefined,
+            timezone,
+            persona_type:   persona       || 'executive',
+          }),
+        })
+        const d = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(d.error ?? `Save failed (${res.status})`)
+      }
+
       setStep(3)
-    } catch { setError('Could not save profile. Please try again.') }
+    } catch (e: any) {
+      setError(e.message ?? 'Could not save profile. Please try again.')
+    }
     setSaving(false)
   }
 
