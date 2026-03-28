@@ -16,7 +16,7 @@
  * PIOS v3.0 · VeritasIQ Technologies Ltd
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient }              from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -91,7 +91,8 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Mark as processing ──────────────────────────────────────────────────
-    await supabase.from('user_profiles').update({
+    const svc = createServiceClient()
+    await svc.from('user_profiles').update({
       cv_filename: file.name,
       cv_processing_status: 'processing',
       cv_uploaded_at: new Date().toISOString(),
@@ -105,55 +106,39 @@ export async function POST(req: NextRequest) {
       .from('pios-cv')
       .upload(storagePath, bytes, { contentType: file.type, upsert: true })
 
-    // Storage upload failure is non-fatal — we still do the extraction
     if (uploadError) console.warn('CV storage upload failed:', uploadError.message)
-    else {
-      await supabase.from('user_profiles').update({ cv_storage_path: storagePath }).eq('id', user.id)
-    }
+    else await svc.from('user_profiles').update({ cv_storage_path: storagePath }).eq('id', user.id)
 
     // ── Extract text from file ──────────────────────────────────────────────
     let cvText = ''
+
     if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
       cvText = await file.text()
-    } else {
-      // For PDF/DOCX: send as base64 to Claude with document vision
-      const base64 = Buffer.from(bytes).toString('base64')
-      const mediaType = file.type === 'application/pdf' ? 'application/pdf'
-        : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
-      // Use Claude's document understanding to extract CV text
-      const extractRes = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type':      'application/json',
-          'x-api-key':         process.env.ANTHROPIC_API_KEY ?? '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta':    'pdfs-2024-09-25',
-        },
-        body: JSON.stringify({
-          model:      'claude-sonnet-4-20250514',
-          max_tokens: 3000,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type:   'document',
-                source: { type: 'base64', media_type: mediaType, data: base64 },
-              },
-              {
-                type: 'text',
-                text: 'Extract the complete text content of this CV/resume. Output only the raw text, preserving section structure. Do not add commentary.',
-              },
-            ],
-          }],
-        }),
-      })
-      const extractData = await extractRes.json()
-      cvText = extractData?.content?.[0]?.text ?? ''
+    } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      try {
+        const pdfParse = (await import('pdf-parse')).default
+        const result   = await pdfParse(Buffer.from(bytes))
+        cvText = result.text ?? ''
+      } catch (e) {
+        console.warn('pdf-parse failed:', e)
+      }
+
+    } else if (
+      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      file.name.endsWith('.docx')
+    ) {
+      try {
+        const mammoth = await import('mammoth')
+        const result  = await mammoth.extractRawText({ buffer: Buffer.from(bytes) })
+        cvText = result.value ?? ''
+      } catch (e) {
+        console.warn('mammoth failed:', e)
+      }
     }
 
     if (!cvText || cvText.length < 50) {
-      await supabase.from('user_profiles').update({ cv_processing_status: 'failed' }).eq('id', user.id)
+      await svc.from('user_profiles').update({ cv_processing_status: 'failed' }).eq('id', user.id)
       return NextResponse.json({ error: 'Could not extract text from CV. Please try a plain text or PDF version.' }, { status: 422 })
     }
 
@@ -252,7 +237,7 @@ Return ONLY a JSON object with these fields. No markdown:
     }
 
     // ── Persist calibration ───────────────────────────────────────────────────
-    await supabase.from('nemoclaw_calibration').upsert({
+    await svc.from('nemoclaw_calibration').upsert({
       user_id:                user.id,
       education_level:        extracted.education_level as string,
       education_detail:       extracted.education_detail as string,
@@ -283,7 +268,7 @@ Return ONLY a JSON object with these fields. No markdown:
     if (extracted.job_title)                                     profileUpdates.job_title    = extracted.job_title
     if (extracted.organisation)                                  profileUpdates.organisation = extracted.organisation
 
-    await supabase.from('user_profiles').update(profileUpdates).eq('id', user.id)
+    await svc.from('user_profiles').update(profileUpdates).eq('id', user.id)
 
     // ── Return to client ──────────────────────────────────────────────────────
     return NextResponse.json({
