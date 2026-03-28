@@ -80,29 +80,22 @@ export async function POST(req: NextRequest) {
     if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
 
     const fname = file.name.toLowerCase()
+    console.log('[CV] file:', fname, 'type:', file.type, 'size:', file.size)
 
-    // Validate size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json({ error: 'File must be under 5MB.' }, { status: 400 })
     }
 
-    // Detect type by extension (more reliable than MIME type which browsers get wrong)
-    const isPdf  = fname.endsWith('.pdf')
-    const isDocx = fname.endsWith('.docx')
-    const isDoc  = fname.endsWith('.doc')
-    const isTxt  = fname.endsWith('.txt')
+    const isPdf  = fname.endsWith('.pdf')  || file.type === 'application/pdf'
+    const isDocx = fname.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    const isDoc  = fname.endsWith('.doc')  || file.type === 'application/msword'
+    const isTxt  = fname.endsWith('.txt')  || file.type === 'text/plain'
 
-    // Also accept by MIME type as fallback
-    const mimePdf  = file.type === 'application/pdf'
-    const mimeDocx = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    const mimeDoc  = file.type === 'application/msword'
-    const mimeTxt  = file.type === 'text/plain'
-
-    if (!isPdf && !isDocx && !isDoc && !isTxt && !mimePdf && !mimeDocx && !mimeDoc && !mimeTxt) {
-      return NextResponse.json({ error: 'Please upload a PDF, DOCX, DOC, or TXT file.' }, { status: 400 })
+    if (!isPdf && !isDocx && !isDoc && !isTxt) {
+      return NextResponse.json({ error: `Unsupported file type: ${file.type || fname}. Please upload PDF, DOCX, DOC, or TXT.` }, { status: 400 })
     }
 
-    // ── Mark as processing ──────────────────────────────────────────────────
+    // Mark processing
     const svc = createServiceClient()
     await svc.from('user_profiles').update({
       cv_filename: file.name,
@@ -110,85 +103,107 @@ export async function POST(req: NextRequest) {
       cv_uploaded_at: new Date().toISOString(),
     }).eq('id', user.id)
 
-    // ── Upload to Supabase Storage ──────────────────────────────────────────
-    const storagePath = `${user.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const bytes = await file.arrayBuffer()
     const buf   = Buffer.from(bytes)
 
-    const { error: uploadError } = await supabase.storage
-      .from('pios-cv')
-      .upload(storagePath, bytes, { contentType: file.type, upsert: true })
+    // ── Extract text ──────────────────────────────────────────────────────────
+    let cvText = ''
+    const errors: string[] = []
 
-    if (uploadError) console.warn('CV storage upload failed:', uploadError.message)
-    else await svc.from('user_profiles').update({ cv_storage_path: storagePath }).eq('id', user.id)
-
-    // ── Extract text from file ──────────────────────────────────────────────
-    let cvText  = ''
-    let extractErr = ''
-
-    if (isTxt || mimeTxt) {
+    if (isTxt) {
       cvText = await file.text()
+      console.log('[CV] TXT extraction:', cvText.length, 'chars')
 
-    } else if (isPdf || mimePdf) {
+    } else if (isPdf) {
+      // Try pdf-parse
       try {
-        // pdf-parse: use require() — dynamic import returns undefined default in some bundlers
-        const pdfParseModule = require('pdf-parse')
-        const pdfParseFn = typeof pdfParseModule === 'function' ? pdfParseModule : pdfParseModule?.default
+        let pdfParseFn: ((buf: Buffer) => Promise<{text: string}>) | null = null
+        try { pdfParseFn = require('pdf-parse') } catch { /* */ }
+        if (typeof pdfParseFn !== 'function') {
+          try { const m = require('pdf-parse'); pdfParseFn = m.default ?? m } catch { /* */ }
+        }
         if (typeof pdfParseFn === 'function') {
-          const result = await pdfParseFn(buf)
-          cvText = result.text ?? ''
+          const r = await pdfParseFn(buf)
+          cvText = r.text ?? ''
+          console.log('[CV] pdf-parse result:', cvText.length, 'chars')
         } else {
-          throw new Error('pdf-parse module not a function')
+          errors.push('pdf-parse not available')
         }
       } catch (e: any) {
-        extractErr = `pdf-parse: ${e?.message}`
-        console.warn('pdf-parse failed:', e)
+        errors.push('pdf-parse: ' + e.message)
+        console.error('[CV] pdf-parse error:', e.message)
       }
 
-    } else if (isDocx || isDoc || mimeDocx || mimeDoc) {
-      try {
-        const mammothMod = await import('mammoth')
-        const mammothFn  = mammothMod.extractRawText ?? mammothMod.default?.extractRawText
-        const result     = await mammothFn({ buffer: buf })
-        cvText = result.value ?? ''
-        if (result.messages?.length) console.warn('mammoth warnings:', result.messages)
-      } catch (e: any) {
-        extractErr = `mammoth: ${e?.message}`
-        console.warn('mammoth failed:', e)
-      }
-
-      // If mammoth got nothing, try raw XML extraction from the DOCX zip
-      if (!cvText || cvText.trim().length < 20) {
+      // Fallback: send PDF to Claude as base64 document
+      if (!cvText || cvText.trim().length < 50) {
         try {
-          const text = buf.toString('utf8')
-          // Extract text runs from word/document.xml inside the DOCX zip
-          const xmlMatch = text.match(/<w:t[^>]*>([^<]*)<\/w:t>/g)
-          if (xmlMatch && xmlMatch.length > 5) {
-            cvText = xmlMatch
-              .map(t => t.replace(/<[^>]+>/g, ''))
-              .join(' ')
-              .replace(/\s+/g, ' ')
-              .trim()
-            if (cvText.length > 50) console.log('Raw XML extraction succeeded:', cvText.length, 'chars')
+          const base64 = buf.toString('base64')
+          const r = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+              'anthropic-version': '2023-06-01',
+              'anthropic-beta': 'pdfs-2024-09-25',
+            },
+            body: JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 4000,
+              messages: [{ role: 'user', content: [
+                { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+                { type: 'text', text: 'Extract all text from this CV. Output raw text only, no commentary.' },
+              ]}],
+            }),
+          })
+          const d = await r.json()
+          const t = d?.content?.[0]?.text ?? ''
+          if (t.length > 50) { cvText = t; console.log('[CV] Claude PDF extraction:', t.length, 'chars') }
+          else errors.push('Claude PDF: ' + (d?.error?.message ?? 'empty'))
+        } catch (e: any) {
+          errors.push('Claude PDF: ' + e.message)
+        }
+      }
+
+    } else if (isDocx || isDoc) {
+      // Try mammoth
+      try {
+        const mammothMod = require('mammoth')
+        const fn = typeof mammothMod === 'object' ? (mammothMod.extractRawText ?? mammothMod.default?.extractRawText) : null
+        if (typeof fn === 'function') {
+          const r = await fn({ buffer: buf })
+          cvText = r.value ?? ''
+          console.log('[CV] mammoth result:', cvText.length, 'chars', 'msgs:', r.messages?.length)
+        } else {
+          errors.push('mammoth.extractRawText not found')
+        }
+      } catch (e: any) {
+        errors.push('mammoth: ' + e.message)
+        console.error('[CV] mammoth error:', e.message)
+      }
+
+      // Fallback: raw XML text from DOCX zip structure
+      if (!cvText || cvText.trim().length < 50) {
+        try {
+          const str = buf.toString('latin1') // latin1 preserves bytes
+          const matches = str.match(/<w:t(?:\s[^>]*)?>([^<]+)<\/w:t>/g) ?? []
+          if (matches.length > 3) {
+            cvText = matches.map(m => m.replace(/<[^>]+>/g, '')).join(' ').replace(/\s+/g, ' ').trim()
+            console.log('[CV] XML fallback:', cvText.length, 'chars from', matches.length, 'runs')
+          } else {
+            errors.push('XML fallback: only ' + matches.length + ' text runs found')
           }
-        } catch { /* ignore */ }
+        } catch (e: any) {
+          errors.push('XML: ' + e.message)
+        }
       }
     }
 
-    // Last-resort: try mammoth on anything
-    if (!cvText || cvText.trim().length < 50) {
-      try {
-        const mammothMod = await import('mammoth')
-        const mammothFn  = mammothMod.extractRawText ?? mammothMod.default?.extractRawText
-        const result     = await mammothFn({ buffer: buf })
-        if (result.value && result.value.trim().length > 20) cvText = result.value
-      } catch { /* ignore */ }
-    }
+    console.log('[CV] final cvText length:', cvText.trim().length, 'errors:', errors)
 
     if (!cvText || cvText.trim().length < 50) {
       await svc.from('user_profiles').update({ cv_processing_status: 'failed' }).eq('id', user.id)
       return NextResponse.json({
-        error: `Could not extract text from CV${extractErr ? ` (${extractErr})` : ''}. Please try saving as PDF or plain text.`,
+        error: `Could not extract text from your CV. Errors: ${errors.join('; ') || 'unknown'}. Try saving as PDF or plain text (.txt).`,
       }, { status: 422 })
     }
 
