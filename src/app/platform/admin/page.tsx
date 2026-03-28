@@ -468,22 +468,13 @@ export default function AdminPage() {
         <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
           <button
             onClick={async () => {
-              // Try without secret first (works if ADMIN_SECRET not set in Vercel)
               const r = await fetch('/api/admin/migrate-pending', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
               })
               const d = await r.json()
-              if (d.error?.includes('Unauthorized')) {
-                const secret = prompt('Enter ADMIN_SECRET from Vercel env vars:')
-                if (!secret) return
-                const r2 = await fetch('/api/admin/migrate-pending', {
-                  method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
-                })
-                const d2 = await r2.json()
-                alert(d2.success ? `✓ Done: ${d2.passed} passed, ${d2.failed} failed` : `⚠ ${d2.error ?? JSON.stringify(d2.results).slice(0,400)}`)
-                return
-              }
-              alert(d.success ? `✓ Done: ${d.passed} passed, ${d.failed} failed` : `⚠ ${d.error ?? JSON.stringify(d.results).slice(0,400)}`)
+              alert(d.success
+                ? `✓ Done: ${d.passed} passed, ${d.failed} failed`
+                : `⚠ ${d.error ?? JSON.stringify(d.results).slice(0,500)}`)
             }}
             style={{ padding:'8px 16px', borderRadius:9, fontSize:12, fontWeight:600, cursor:'pointer',
               background:'rgba(79,142,247,0.1)', border:'1px solid rgba(79,142,247,0.25)', color:'var(--academic)' }}

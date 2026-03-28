@@ -97,6 +97,7 @@ export async function middleware(request: NextRequest) {
   const method = request.method.toUpperCase()
   if (['POST','PUT','PATCH','DELETE'].includes(method) &&
       !pathname.startsWith('/api/stripe/webhook') &&
+      !pathname.startsWith('/api/admin/') &&
       !pathname.startsWith('/auth/')) {
     const origin  = request.headers.get('origin')  ?? ''
     const referer = request.headers.get('referer') ?? ''
