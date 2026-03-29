@@ -96,6 +96,7 @@ const NAV_GROUPS = [
       { href: '/platform/payroll',          icon: 'payroll',      label: 'Payroll',                           accent: C.violet },
       { href: '/platform/ip-vault',         icon: 'ipvault',      label: 'IP Vault',                          accent: C.violet },
       { href: '/platform/supervisor-prep', icon: 'knowledge', label: 'Supervisor Prep',  accent: C.academic },
+      { href: '/platform/deadline-tracker', icon: 'knowledge', label: 'Deadlines',       badge:'🔴', accent: C.professional },
       { href: '/platform/daily-brief',     icon: 'knowledge', label: 'Morning Brief',    accent: C.professional },
       { href: '/platform/onboarding',      icon: 'knowledge', label: 'Platform Readiness', badge:'NEW', accent: C.professional },
       { href: '/platform/agents',           icon: 'knowledge', label: 'Background Agents', badge:'NEW', accent: C.professional },
