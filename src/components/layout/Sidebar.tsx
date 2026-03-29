@@ -119,6 +119,7 @@ const NAV_GROUPS = [
       { href: '/platform/comms',     icon: 'comms',     label: 'Comms Hub',  badge: 'BICA™', accent: C.pro },
       { href: '/platform/email',     icon: 'email',     label: 'Inbox',                      accent: C.fm, notifKey: 'email' },
       { href: '/platform/calendar',  icon: 'calendar',  label: 'Calendar',                   accent: C.pro },
+      { href: '/platform/meetings-live', icon: 'meetings', label: 'Agentic Meetings', badge: 'NEW', accent: C.professional },
       { href: '/platform/meetings',  icon: 'meetings',  label: 'Meetings',                   accent: C.violet },
       { href: '/platform/documents', icon: 'documents', label: 'Documents',                  accent: C.violet },
       { href: '/platform/files',     icon: 'files',     label: 'File Intel',                 accent: C.amber },
