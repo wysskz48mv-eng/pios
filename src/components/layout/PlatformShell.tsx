@@ -7,6 +7,7 @@ import { TrialExpiredGate } from '@/components/TrialExpiredGate'
 import { GlobalSearch } from '@/components/GlobalSearch'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { NemoClawPA } from '@/components/NemoClawPA'
 
 interface PlatformShellProps {
   children: React.ReactNode
@@ -310,5 +311,6 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
       <GlobalSearch />
       {chatOpen && <AiChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />}
     </div>
+    <NemoClawPA />
   )
 }
