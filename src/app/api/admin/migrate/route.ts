@@ -1322,7 +1322,7 @@ set
   primary_project    = 'King Salman Park (SAR 229.6M)',
   consulting_context = 'GCC FM consultancy — King Salman Park (KSP-001), Qiddiya (QPMO-410-CT-07922). VeritasEdge platform.',
   updated_at         = now()
-where id = '56cd891c-17dc-4e66-89aa-d089ee35f3ad';
+where id = '47621611-96bc-465c-913e-0d23a89465f5';
 `,
   },
 }
