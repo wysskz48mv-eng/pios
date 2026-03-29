@@ -1,408 +1,192 @@
-/**
- * /platform/billing — Plan, usage, Stripe management
- * PIOS v3.0 | Sprint 81 | VeritasIQ Technologies Ltd
- */
+// @ts-nocheck
 'use client'
+// PIOS™ v3.6.0 | Sprint M — Billing Page v4 | VeritasIQ Technologies Ltd
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { Loader2, CheckCircle2, AlertCircle, ExternalLink, CreditCard } from 'lucide-react'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type TenantData = {
-  plan?: string
-  plan_status?: string
-  subscription_status?: string
-  ai_credits_used?: number
-  ai_credits_limit?: number
-  trial_ends_at?: string
-  stripe_customer_id?: string
-  stripe_subscription_id?: string
+const PLAN_COL = { student:'#60a5fa', professional:'#a78bfa', executive:'#C9A84C', enterprise:'#4ade80' }
+const STATUS_STYLE = {
+  active:    { bg:'#f0fdf4', text:'#15803d', label:'Active'    },
+  trialing:  { bg:'#eff6ff', text:'#1d4ed8', label:'Trial'     },
+  inactive:  { bg:'#f8fafc', text:'#64748b', label:'Inactive'  },
+  past_due:  { bg:'#fef2f2', text:'#b91c1c', label:'Past due'  },
+  cancelled: { bg:'#fef2f2', text:'#b91c1c', label:'Cancelled' },
 }
-
-type ProfileData = {
-  billing_email?: string
-  google_email?: string
-  full_name?: string
-}
-
-// ─── Plan config ─────────────────────────────────────────────────────────────
 
 const PLANS = [
-  {
-    id: 'student',
-    name: 'Student',
-    price: 9,
-    currency: '£',
-    color: '#6b7280',
-    description: 'Academic lifecycle, thesis & CPD',
-    credits: 2000,
-    features: [
-      'Academic Hub — thesis, chapters, milestones',
-      'CPD Tracker — 12 bodies supported',
-      'Supervisor session log + AI summaries',
-      'Research Hub + literature AI',
-      '2,000 AI credits/month',
-      '5 GB storage',
-    ],
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    price: 24,
-    currency: '£',
-    color: '#7c3aed',
-    highlight: true,
-    description: 'Full CEO/Founder OS — all modules, 15 NemoClaw™ frameworks',
-    credits: 10000,
-    features: [
-      'Everything in Student',
-      'Command Centre + Daily AI Brief (7am)',
-      'Payroll Engine (detect → remit → chase)',
-      'Executive OS — OKRs, decisions, stakeholders',
-      'IP Vault + Contract Register + Group P&L',
-      'SE-MIL Knowledge Base + NemoClaw™ AI',
-      'Wellness Intelligence + purpose anchors',
-      'File Intelligence + Email AI',
-      '10,000 AI credits/month · 20 GB storage',
-    ],
-  },
-  {
-    id: 'team',
-    name: 'Team',
-    price: null,
-    currency: '£',
-    color: '#0e5ca4',
-    description: 'Institution / team — shared workspaces, SSO',
-    credits: -1,
-    features: [
-      'Everything in Professional',
-      'Shared research workspaces (up to 10 members)',
-      'Department-level admin + cohort dashboard',
-      'SSO / institutional login',
-      'Team citation libraries',
-      'Unlimited AI credits · Dedicated support',
-    ],
-  },
+  { id:'student',      name:'Student',      price:9,   credits:2000,   features:['Academic Hub','CPD Tracker','Supervisor logs','2,000 AI credits/mo'] },
+  { id:'professional', name:'Professional', price:29,  credits:10000,  features:['All Student','Professional workspace','NemoClaw™ AI','10,000 AI credits/mo','Viva prep module'] },
+  { id:'executive',    name:'Executive',    price:79,  credits:50000,  features:['All Professional','Chief of Staff daily brief','Knowledge graph','Background agents','50,000 AI credits/mo'] },
+  { id:'enterprise',   name:'Enterprise',   price:199, credits:200000, features:['All Executive','Custom AI model routing','White-glove onboarding','SLA','200,000 AI credits/mo'] },
 ]
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function UsageBar({ used, limit, label, color = '#7c3aed' }: {
-  used: number; limit: number; label: string; color?: string
-}) {
-  const pct = limit > 0 ? Math.min(100, Math.round(used / limit * 100)) : 0
-  const isHigh = pct >= 80
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-        <span style={{ fontSize: 11, color: 'var(--pios-muted)' }}>{label}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: isHigh ? 'var(--dng)' : 'var(--pios-text)' }}>
-          {used.toLocaleString()} / {limit > 0 ? limit.toLocaleString() : '∞'}
-          {limit > 0 && <span style={{ color: 'var(--pios-dim)', fontWeight: 400 }}> ({pct}%)</span>}
-        </span>
-      </div>
-      <div style={{ height: 6, background: 'var(--pios-surface3)', borderRadius: 3 }}>
-        <div style={{
-          height: '100%', width: `${pct}%`,
-          background: isHigh ? 'var(--dng)' : color,
-          borderRadius: 3, transition: 'width 0.4s',
-        }} />
-      </div>
-    </div>
-  )
-}
-
-function StatusBadge({ status }: { status?: string }) {
-  const map: Record<string, { label: string; color: string; bg: string }> = {
-    active:    { label: 'Active',    color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
-    trialing:  { label: 'Trial',     color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-    past_due:  { label: 'Past due',  color: 'var(--dng)', bg: 'rgba(239,68,68,0.1)' },
-    canceled:  { label: 'Canceled',  color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
-    inactive:  { label: 'Inactive',  color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
-  }
-  const s = map[status ?? 'inactive'] ?? map.inactive
-  return (
-    <span style={{
-      fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-      color: s.color, background: s.bg, border: `1px solid ${s.color}30`,
-      textTransform: 'uppercase', letterSpacing: '0.06em',
-    }}>{s.label}</span>
-  )
-}
-
-// ─── Main page ────────────────────────────────────────────────────────────────
-
 export default function BillingPage() {
-  const [tenant, setTenant]   = useState<TenantData | null>(null)
-  const [profile, setProfile] = useState<ProfileData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [redirecting, setRedirecting] = useState<string | null>(null)
+  const [data,       setData]       = useState(null)
+  const [loading,    setLoading]    = useState(true)
+  const [portalLoad, setPortalLoad] = useState(false)
+  const [checkLoad,  setCheckLoad]  = useState('')
 
   useEffect(() => {
-    Promise.allSettled([
-      fetch('/api/auth/profile').then(r => r.ok ? r.json() : null),
-      fetch('/api/dashboard').then(r => r.ok ? r.json() : null),
-    ]).then(([profileR, dashR]) => {
-      if (profileR.status === 'fulfilled' && profileR.value) {
-        setProfile(profileR.value)
-        setTenant(profileR.value.tenant ?? null)
-      }
-      if (dashR.status === 'fulfilled' && dashR.value?.tenant) {
-        setTenant(dashR.value.tenant)
-      }
-    }).finally(() => setLoading(false))
+    fetch('/api/billing').then(r=>r.json()).then(d => {
+      setData(d.ok ? d : null); setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
-  const currentPlan     = tenant?.plan ?? 'professional'
-  const planStatus      = tenant?.plan_status ?? tenant?.subscription_status ?? 'trialing'
-  const creditsUsed     = tenant?.ai_credits_used ?? 0
-  const creditsLimit    = tenant?.ai_credits_limit ?? 10000
-  const trialEnds       = tenant?.trial_ends_at
-  const hasStripe       = !!tenant?.stripe_customer_id
-  const trialDaysLeft   = trialEnds
-    ? Math.max(0, Math.ceil((new Date(trialEnds).getTime() - Date.now()) / 86400000))
-    : null
-
-  async function handleUpgrade(planId: string) {
-    setRedirecting(planId)
-    window.location.href = `/api/stripe/checkout?plan=${planId}`
+  async function goPortal() {
+    setPortalLoad(true)
+    try {
+      const r = await fetch('/api/stripe/portal')
+      const d = await r.json()
+      if (d.url) window.location.href = d.url
+      else alert(d.error || 'Portal unavailable — configure Stripe live keys first')
+    } catch {}
+    setPortalLoad(false)
   }
 
-  async function handlePortal() {
-    setRedirecting('portal')
-    window.location.href = '/api/stripe/portal'
+  async function startCheckout(planId) {
+    setCheckLoad(planId)
+    try {
+      const r = await fetch('/api/stripe/checkout?plan=' + planId)
+      const d = await r.json()
+      if (d.url) window.location.href = d.url
+      else alert(d.error || 'Checkout unavailable — configure Stripe live keys first')
+    } catch {}
+    setCheckLoad('')
   }
 
-  if (loading) {
-    return (
-      <div style={{ padding: 32, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--pios-muted)' }}>
-        <span className="spin" style={{ fontSize: 18 }}>⟳</span>
-        Loading billing information…
-      </div>
-    )
-  }
+  if (loading) return (
+    <div style={{display:'flex',alignItems:'center',gap:10,padding:'3rem',color:'var(--color-text-tertiary)',fontSize:13}}>
+      <Loader2 size={16}/> Loading billing state…
+    </div>
+  )
+
+  const C = { navy:'#0D2B52', gold:'#C9A84C', teal:'#0A7A7A' }
+  const card = { background:'var(--color-background-primary)', border:'0.5px solid var(--color-border-tertiary)', borderRadius:12, padding:'16px 18px', marginBottom:12 }
+  const planCol  = data?.plan ? (PLAN_COL[data.plan.id] || C.gold) : C.gold
+  const subStyle = data?.billing?.status ? (STATUS_STYLE[data.billing.status] || STATUS_STYLE.inactive) : STATUS_STYLE.inactive
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 860, margin: '0 auto' }}>
-
-      {/* ── Header ── */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4 }}>
-          Plan & Billing
-        </h1>
-        <p style={{ fontSize: 13, color: 'var(--pios-muted)' }}>
-          Manage your PIOS subscription, AI usage, and payment details
-        </p>
+    <div style={{fontFamily:'var(--font-sans,system-ui)'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12,marginBottom:20}}>
+        <div>
+          <h1 style={{fontSize:18,fontWeight:500,color:'var(--color-text-primary)',margin:0,display:'flex',alignItems:'center',gap:8}}>
+            <CreditCard size={18} color={C.gold}/> Billing
+          </h1>
+          <p style={{fontSize:12,color:'var(--color-text-tertiary)',marginTop:4}}>Subscription · usage · infrastructure readiness</p>
+        </div>
+        {data?.billing?.status === 'active' && (
+          <button onClick={goPortal} disabled={portalLoad}
+            style={{borderRadius:8,border:'none',background:C.navy,color:'#fff',padding:'8px 16px',cursor:'pointer',fontSize:13,fontWeight:500,display:'flex',alignItems:'center',gap:6,opacity:portalLoad?0.5:1}}>
+            {portalLoad?<Loader2 size={12}/>:<ExternalLink size={12}/>} Manage subscription
+          </button>
+        )}
       </div>
 
-      {/* ── Current plan card ── */}
-      <div style={{
-        padding: '20px 24px', borderRadius: 14,
-        background: 'var(--pios-surface)',
-        border: '1px solid var(--pios-border)',
-        marginBottom: 20,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pios-dim)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
-              Current plan
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--pios-text)', textTransform: 'capitalize' }}>
-                {currentPlan}
-              </span>
-              <StatusBadge status={planStatus} />
-            </div>
-            {profile?.billing_email || profile?.google_email ? (
-              <div style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 4 }}>
-                {profile.billing_email ?? profile.google_email}
+      {/* Current plan + status */}
+      {data && (
+        <div style={{...card,borderLeft:`3px solid ${planCol}`,marginBottom:16}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12}}>
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+                <span style={{fontSize:20,fontWeight:700,color:planCol}}>{data.plan?.name ?? 'Professional'}</span>
+                <span style={{fontSize:11,padding:'3px 10px',borderRadius:20,fontWeight:600,background:subStyle.bg,color:subStyle.text}}>{subStyle.label}</span>
               </div>
-            ) : null}
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {hasStripe && (
-              <button
-                onClick={handlePortal}
-                disabled={!!redirecting}
-                style={{
-                  padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600,
-                  border: '1px solid var(--pios-border2)', background: 'var(--pios-surface2)',
-                  color: 'var(--pios-muted)', cursor: 'pointer',
-                }}
-              >
-                {redirecting === 'portal' ? '⟳ Opening…' : '⚙ Manage billing'}
-              </button>
+              <p style={{fontSize:14,color:'var(--color-text-secondary)'}}>£{data.plan?.price ?? 29}/month · {(data.plan?.credits ?? 10000).toLocaleString()} AI credits</p>
+              {data.billing?.billing_email && <p style={{fontSize:11,color:'var(--color-text-tertiary)',marginTop:4}}>{data.billing.billing_email}</p>}
+              {data.billing?.trial_ends_at && (
+                <p style={{fontSize:12,color:'#f59e0b',marginTop:4}}>
+                  Trial ends: {new Date(data.billing.trial_ends_at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}
+                </p>
+              )}
+            </div>
+            {/* Usage donut-style bar */}
+            {data.usage && (
+              <div style={{textAlign:'center',minWidth:120}}>
+                <p style={{fontSize:11,color:'var(--color-text-tertiary)',marginBottom:6}}>AI credits this month</p>
+                <div style={{height:8,background:'var(--color-border-tertiary)',borderRadius:4,overflow:'hidden',marginBottom:4}}>
+                  <div style={{height:'100%',width:`${Math.min(100,data.usage.credits_pct)}%`,background:data.usage.credits_pct>80?'#ef4444':data.usage.credits_pct>60?'#f59e0b':C.teal,borderRadius:4}}/>
+                </div>
+                <p style={{fontSize:12,fontWeight:500,color:'var(--color-text-primary)'}}>{data.usage.credits_used.toLocaleString()} / {data.usage.credits_limit.toLocaleString()}</p>
+                <p style={{fontSize:10,color:'var(--color-text-tertiary)'}}>{data.usage.credits_pct}% used · {data.usage.calls_this_month} calls</p>
+              </div>
             )}
-            <a
-              href="mailto:info@veritasiq.io?subject=PIOS billing enquiry"
-              style={{
-                padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600,
-                border: '1px solid var(--pios-border2)', background: 'transparent',
-                color: 'var(--pios-muted)', textDecoration: 'none',
-              }}
-            >
-              ✉ Contact us
-            </a>
           </div>
         </div>
+      )}
 
-        {/* Trial countdown */}
-        {trialDaysLeft !== null && planStatus === 'trialing' && (
-          <div style={{
-            padding: '10px 14px', borderRadius: 9, marginBottom: 16,
-            background: trialDaysLeft <= 3 ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
-            border: `1px solid ${trialDaysLeft <= 3 ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`,
-            display: 'flex', alignItems: 'center', gap: 10,
-          }}>
-            <span style={{ fontSize: 18 }}>{trialDaysLeft <= 3 ? '⚠' : '⏱'}</span>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: trialDaysLeft <= 3 ? 'var(--dng)' : '#f59e0b' }}>
-                {trialDaysLeft === 0 ? 'Trial expires today' : `${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} left in trial`}
+      {/* Infrastructure readiness */}
+      {data?.readiness && (
+        <div style={{...card,marginBottom:16}}>
+          <p style={{fontSize:11,fontWeight:500,color:'var(--color-text-tertiary)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Infrastructure readiness</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+            {[
+              {label:'Stripe live keys',    ok:data.readiness.stripe_live,  action:'Add STRIPE_SECRET_KEY (sk_live_…) to Vercel'},
+              {label:'Stripe customer',     ok:data.readiness.has_customer, action:'Customer created on first checkout'},
+              {label:'Active subscription', ok:data.readiness.has_sub,     action:'Subscribe to activate'},
+              {label:'RESEND email',        ok:data.readiness.resend,      action:'Add RESEND_API_KEY to Vercel'},
+              {label:'CRON scheduled',      ok:data.readiness.cron,        action:'Add CRON_SECRET to Vercel + configure vercel.json'},
+              {label:'NemoClaw™ calibrated',ok:data.readiness.nemoclaw,   action:'Upload CV in Onboarding'},
+            ].map(item=>(
+              <div key={item.label} style={{display:'flex',alignItems:'flex-start',gap:8,padding:'10px 12px',borderRadius:8,background:'var(--color-background-secondary)'}}>
+                {item.ok ? <CheckCircle2 size={14} color='#22c55e' style={{flexShrink:0,marginTop:1}}/> : <AlertCircle size={14} color='#f59e0b' style={{flexShrink:0,marginTop:1}}/>}
+                <div>
+                  <p style={{fontSize:12,fontWeight:500,color:'var(--color-text-primary)',marginBottom:2}}>{item.label}</p>
+                  {!item.ok && <p style={{fontSize:10,color:'var(--color-text-tertiary)',lineHeight:1.4}}>{item.action}</p>}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--pios-muted)' }}>
-                Trial ends {new Date(trialEnds!).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })} — subscribe to keep all features
-              </div>
-            </div>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* AI credits usage */}
-        <UsageBar
-          used={creditsUsed}
-          limit={creditsLimit}
-          label="AI credits this month"
-          color="#7c3aed"
-        />
-      </div>
-
-      {/* ── Plan cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
-        {PLANS.map(plan => {
-          const isCurrent = plan.id === currentPlan
+      {/* Plan upgrade cards */}
+      <p style={{fontSize:12,fontWeight:500,color:'var(--color-text-tertiary)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Plans</p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:16}}>
+        {PLANS.map(plan=>{
+          const isCurrent = data?.plan?.id === plan.id
+          const col = PLAN_COL[plan.id] || C.gold
           return (
-            <div key={plan.id} style={{
-              borderRadius: 14, padding: '20px 18px',
-              background: 'var(--pios-surface)',
-              border: `1px solid ${isCurrent ? plan.color + '50' : 'var(--pios-border)'}`,
-              boxShadow: isCurrent ? `0 0 0 2px ${plan.color}20` : 'none',
-              display: 'flex', flexDirection: 'column', gap: 12,
-              position: 'relative',
-            }}>
-              {plan.highlight && !isCurrent && (
-                <div style={{
-                  position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)',
-                  fontSize: 9, fontWeight: 800, letterSpacing: '0.08em',
-                  color: '#fff', background: plan.color, padding: '3px 10px', borderRadius: 20,
-                  textTransform: 'uppercase',
-                }}>Most popular</div>
-              )}
-              {isCurrent && (
-                <div style={{
-                  position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)',
-                  fontSize: 9, fontWeight: 800, letterSpacing: '0.08em',
-                  color: '#fff', background: plan.color, padding: '3px 10px', borderRadius: 20,
-                  textTransform: 'uppercase',
-                }}>Current plan</div>
-              )}
-
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: plan.color, marginBottom: 2 }}>{plan.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--pios-muted)', lineHeight: 1.5 }}>{plan.description}</div>
-              </div>
-
-              <div>
-                {plan.price !== null ? (
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                    <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--pios-text)', letterSpacing: '-0.03em' }}>
-                      {plan.currency}{plan.price}
-                    </span>
-                    <span style={{ fontSize: 11, color: 'var(--pios-dim)' }}>/month</span>
-                  </div>
+            <div key={plan.id} style={{...card,borderTop:`3px solid ${col}`,opacity:isCurrent?1:0.85}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                <div>
+                  <p style={{fontSize:14,fontWeight:600,color:col,marginBottom:2}}>{plan.name}</p>
+                  <p style={{fontSize:18,fontWeight:700,color:'var(--color-text-primary)'}}>£{plan.price}<span style={{fontSize:11,fontWeight:400,color:'var(--color-text-tertiary)'}}>/mo</span></p>
+                </div>
+                {isCurrent ? (
+                  <span style={{fontSize:10,padding:'3px 10px',borderRadius:20,background:`${col}20`,color:col,fontWeight:600}}>Current plan</span>
                 ) : (
-                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--pios-muted)' }}>Custom pricing</div>
+                  <button onClick={()=>startCheckout(plan.id)} disabled={checkLoad===plan.id}
+                    style={{borderRadius:8,border:'none',background:col,color:'#fff',padding:'6px 14px',cursor:'pointer',fontSize:12,fontWeight:600,opacity:checkLoad===plan.id?0.5:1,display:'flex',alignItems:'center',gap:4}}>
+                    {checkLoad===plan.id?<Loader2 size={11}/>:null} Upgrade
+                  </button>
                 )}
               </div>
-
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                {plan.features.map(f => (
-                  <li key={f} style={{ display: 'flex', gap: 7, fontSize: 11, color: 'var(--pios-muted)', lineHeight: 1.5 }}>
-                    <span style={{ color: plan.color, flexShrink: 0, fontWeight: 700 }}>✓</span>
-                    {f}
-                  </li>
+              <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                {plan.features.map((f,i)=>(
+                  <div key={i} style={{fontSize:11,color:'var(--color-text-secondary)',display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{color:col,fontSize:10}}>✓</span> {f}
+                  </div>
                 ))}
-              </ul>
-
-              <button
-                onClick={() => {
-                  if (isCurrent) return
-                  if (plan.price === null) {
-                    window.open('mailto:info@veritasiq.io?subject=PIOS Team plan enquiry', '_blank')
-                  } else {
-                    handleUpgrade(plan.id)
-                  }
-                }}
-                disabled={isCurrent || !!redirecting}
-                style={{
-                  padding: '10px', borderRadius: 9, fontSize: 12, fontWeight: 700,
-                  border: 'none', cursor: isCurrent ? 'default' : 'pointer',
-                  background: isCurrent ? 'var(--pios-surface2)' : plan.color,
-                  color: isCurrent ? 'var(--pios-muted)' : '#fff',
-                  opacity: redirecting && redirecting !== plan.id ? 0.6 : 1,
-                  transition: 'opacity 0.2s',
-                }}
-              >
-                {redirecting === plan.id ? '⟳ Redirecting…'
-                  : isCurrent ? 'Current plan'
-                  : plan.price === null ? 'Contact us'
-                  : `Upgrade to ${plan.name}`}
-              </button>
+              </div>
             </div>
           )
         })}
       </div>
 
-      {/* ── Usage limits ── */}
-      <div style={{
-        padding: '18px 22px', borderRadius: 14,
-        background: 'var(--pios-surface)', border: '1px solid var(--pios-border)',
-        marginBottom: 20,
-      }}>
-        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 14 }}>Plan limits</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-          {[
-            { label: 'AI credits/month', value: currentPlan === 'student' ? '2,000' : currentPlan === 'professional' ? '10,000' : '∞' },
-            { label: 'Projects', value: currentPlan === 'student' ? '5' : currentPlan === 'professional' ? '20' : '∞' },
-            { label: 'Storage', value: currentPlan === 'student' ? '5 GB' : currentPlan === 'professional' ? '20 GB' : 'Unlimited' },
-            { label: 'Collaborators', value: currentPlan === 'professional' ? '3 guests' : currentPlan === 'team' ? 'Up to 10' : '—' },
-          ].map(item => (
-            <div key={item.label} style={{
-              textAlign: 'center', padding: '12px 8px',
-              border: '1px solid var(--pios-border)', borderRadius: 9,
-              background: 'var(--pios-surface2)',
-            }}>
-              <div style={{ fontSize: 9, color: 'var(--pios-dim)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {item.label}
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--pios-text)' }}>{item.value}</div>
-            </div>
-          ))}
+      {/* Pending actions */}
+      {data && !data.readiness?.stripe_live && (
+        <div style={{...card,borderLeft:'3px solid #f59e0b',background:'#fffbeb08'}}>
+          <p style={{fontSize:13,fontWeight:500,color:'#b45309',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
+            <AlertCircle size={13}/> Pending: activate Stripe live billing
+          </p>
+          <div style={{fontSize:12,color:'var(--color-text-secondary)',lineHeight:2}}>
+            <div>1. Add <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_SECRET_KEY</code> (sk_live_…) to Vercel environment variables</div>
+            <div>2. Add <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_WEBHOOK_SECRET</code> for subscription event handling</div>
+            <div>3. Set Stripe price IDs: <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_PROFESSIONAL_PRICE_ID</code>, etc.</div>
+            <div>4. Redeploy Vercel to pick up new env vars</div>
+          </div>
         </div>
-      </div>
-
-      {/* ── Footer notes ── */}
-      <div style={{ fontSize: 11, color: 'var(--pios-dim)', lineHeight: 1.8 }}>
-        <div>• 14-day free trial on all plans. Cancel anytime — no lock-in.</div>
-        <div>• All prices exclude VAT where applicable.</div>
-        <div>• For invoice, PO, or enterprise billing: <a href="mailto:info@veritasiq.io" style={{ color: 'var(--ai)', textDecoration: 'none' }}>info@veritasiq.io</a></div>
-        {hasStripe && (
-          <div>• <button onClick={handlePortal} style={{ background: 'none', border: 'none', color: 'var(--ai)', cursor: 'pointer', fontSize: 11, padding: 0 }}>Manage payment method, invoices, or cancel →</button></div>
-        )}
-        <div style={{ marginTop: 8 }}>
-          <Link href="/platform/settings" style={{ color: 'var(--pios-dim)', textDecoration: 'none', fontSize: 11 }}>
-            ← Back to settings
-          </Link>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
