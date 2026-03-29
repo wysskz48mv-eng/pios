@@ -6,6 +6,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+// ── Typed Supabase response helpers ──────────────────────────────────────────
+type SBResult<T> = { data: T | null; error: { message: string } | null }
+type SBRow = Record<string, unknown>
+
+
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
@@ -42,7 +47,7 @@ export async function GET(req: NextRequest) {
 
     // Tasks
     types.includes('tasks')
-      ? (supabase as any).from('tasks')
+      ? supabase.from('tasks')
           .select('id,title,domain,status,due_date')
           .eq('user_id', uid)
           .or(`title.ilike.${ilike},description.ilike.${ilike}`)
@@ -51,7 +56,7 @@ export async function GET(req: NextRequest) {
 
     // Projects
     types.includes('projects')
-      ? (supabase as any).from('projects')
+      ? supabase.from('projects')
           .select('id,title,domain,status,progress')
           .eq('user_id', uid)
           .or(`title.ilike.${ilike},description.ilike.${ilike}`)
@@ -60,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     // Meeting notes
     types.includes('meetings')
-      ? (supabase as any).from('meeting_notes')
+      ? supabase.from('meeting_notes')
           .select('id,title,meeting_date,meeting_type,ai_summary')
           .eq('user_id', uid)
           .or(`title.ilike.${ilike},content.ilike.${ilike},ai_summary.ilike.${ilike}`)
@@ -69,7 +74,7 @@ export async function GET(req: NextRequest) {
 
     // Files
     types.includes('files')
-      ? (supabase as any).from('file_items')
+      ? supabase.from('file_items')
           .select('id,name,file_type,ai_category,summary')
           .eq('user_id', uid)
           .or(`name.ilike.${ilike},summary.ilike.${ilike}`)
@@ -78,7 +83,7 @@ export async function GET(req: NextRequest) {
 
     // Knowledge entries
     types.includes('knowledge')
-      ? (supabase as any).from('knowledge_entries')
+      ? supabase.from('knowledge_entries')
           .select('id,title,summary,domain,entry_type')
           .eq('user_id', uid)
           .or(`title.ilike.${ilike},summary.ilike.${ilike},full_text.ilike.${ilike}`)
@@ -87,7 +92,7 @@ export async function GET(req: NextRequest) {
 
     // Expenses
     types.includes('expenses')
-      ? (supabase as any).from('expense_claims')
+      ? supabase.from('expense_claims')
           .select('id,description,amount,currency,category,date')
           .eq('user_id', uid)
           .ilike('description', ilike)
@@ -96,7 +101,7 @@ export async function GET(req: NextRequest) {
 
     // Contracts (if M019 run)
     types.includes('contracts')
-      ? (supabase as any).from('contracts')
+      ? supabase.from('contracts')
           .select('id,title,counterparty,contract_type,status')
           .eq('user_id', uid)
           .or(`title.ilike.${ilike},counterparty.ilike.${ilike},key_terms.ilike.${ilike}`)
@@ -105,7 +110,7 @@ export async function GET(req: NextRequest) {
 
     // IP Assets (if M019 run)
     types.includes('ip_assets')
-      ? (supabase as any).from('ip_assets')
+      ? supabase.from('ip_assets')
           .select('id,name,asset_type,status,description')
           .eq('user_id', uid)
           .or(`name.ilike.${ilike},description.ilike.${ilike}`)

@@ -4,6 +4,11 @@ import { createNotification } from '@/lib/notifications'
 import { callClaude } from '@/lib/ai/client'
 import { auditLog } from '@/lib/security-middleware'
 
+// ── Typed Supabase response helpers ──────────────────────────────────────────
+type SBResult<T> = { data: T | null; error: { message: string } | null }
+type SBRow = Record<string, unknown>
+
+
 export const runtime = 'nodejs'
 
 const VALID_STATUSES   = ['todo','in_progress','blocked','done','cancelled']
@@ -105,25 +110,25 @@ export async function PATCH(request: Request) {
     const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
     for (const k of (ALLOWED as any[])) { if (k in body) safe[k] = body[k] }
 
-    if ((safe as any).status   && !VALID_STATUSES.includes((safe as any).status))
+    if (safe.status   && !VALID_STATUSES.includes(safe.status))
       return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-    if ((safe as any).priority && !VALID_PRIORITIES.includes((safe as any).priority))
+    if (safe.priority && !VALID_PRIORITIES.includes(safe.priority))
       return NextResponse.json({ error: 'invalid priority' }, { status: 400 })
-    if ((safe as any).domain   && !VALID_DOMAINS.includes((safe as any).domain))
+    if (safe.domain   && !VALID_DOMAINS.includes(safe.domain))
       return NextResponse.json({ error: 'invalid domain' }, { status: 400 })
-    if ((safe as any).source   && !VALID_SOURCES.includes((safe as any).source))
+    if (safe.source   && !VALID_SOURCES.includes(safe.source))
       return NextResponse.json({ error: 'invalid source' }, { status: 400 })
 
     // Auto-set completed_at
-    if ((safe as any).status === 'done' && !(safe as any).completed_at) {
-      (safe as any).completed_at = new Date().toISOString()
+    if (safe.status === 'done' && !safe.completed_at) {
+      safe.completed_at = new Date().toISOString()
       const { data: t } = await supabase.from('tasks').select('title,domain').eq('id', id).maybeSingle()
       if (t) await createNotification({ userId: user.id, title: `✓ Task done: ${t.title}`, type: 'success', domain: t.domain, actionUrl: '/platform/tasks' })
     }
-    if ((safe as any).status && (safe as any).status !== 'done') (safe as any).completed_at = null
+    if (safe.status && safe.status !== 'done') safe.completed_at = null
 
     // Clamp duration
-    if ((safe as any).duration_mins !== undefined) (safe as any).duration_mins = Math.max(5, Math.min(480, parseInt((safe as any).duration_mins) || 30))
+    if (safe.duration_mins !== undefined) safe.duration_mins = Math.max(5, Math.min(480, parseInt(safe.duration_mins) || 30))
 
     const { data, error } = await supabase.from('tasks')
       .update(safe).eq('id', id).eq('user_id', user.id).select().single()

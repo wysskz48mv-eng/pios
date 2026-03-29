@@ -4,6 +4,11 @@ import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety, auditLog, IP_HEADERS } from '@/lib/security-middleware'
 import { checkRateLimit, LIMITS } from '@/lib/redis-rate-limit'
 
+// ── Typed Supabase response helpers ──────────────────────────────────────────
+type SBResult<T> = { data: T | null; error: { message: string } | null }
+type SBRow = Record<string, unknown>
+
+
 export const runtime    = 'nodejs'
 export const maxDuration = 60
 
@@ -72,7 +77,7 @@ export async function POST(request: Request) {
         .order('created_at', { ascending: false })
         .limit(1),
     ])
-    const tc   = trainCfgR.status === 'fulfilled' ? (trainCfgR.value as any).data as any : null
+    const tc   = trainCfgR.status === 'fulfilled' ? (trainCfgR.value as any).data : null
     const nemo = nemoCfgR.status  === 'fulfilled' ? ((nemoCfgR.value as any).data?.[0] ?? null) as any : null
 
     const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR, calendarR] = await Promise.all([
@@ -111,21 +116,21 @@ export async function POST(request: Request) {
           .lte('next_touchpoint', new Date(Date.now() + 7*86400000).toISOString().split('T')[0])
           .limit(3),
         // Today's wellness state
-        (supabase as any).from('wellness_sessions')
+        supabase.from('wellness_sessions')
           .select('mood_score,energy_score,stress_score,focus_score,dominant_domain,ai_insight')
           .eq('user_id', user.id).eq('session_date', today)
           .order('created_at', { ascending: false }).limit(1),
         // IP vault — frameworks + active assets
-        (supabase as any).from('ip_assets')
+        supabase.from('ip_assets')
           .select('name,asset_type,status,renewal_date')
           .eq('user_id', user.id).eq('status', 'active').limit(20),
         // Contracts — active + expiring
-        (supabase as any).from('contracts')
+        supabase.from('contracts')
           .select('title,contract_type,counterparty,status,end_date,value,currency')
           .eq('user_id', user.id).eq('status', 'active')
           .order('end_date', { ascending: true }).limit(8),
         // Recent knowledge entries
-        (supabase as any).from('knowledge_entries')
+        supabase.from('knowledge_entries')
           .select('title,entry_type,domain,summary')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }).limit(5),
@@ -230,7 +235,7 @@ export async function POST(request: Request) {
         : null,
       (calendarR as any)?.data?.length > 0
         ? "TODAY'S SCHEDULE (" + String((calendarR as any)?.data?.length ?? 0) + " events): " +
-          ((calendarR as any)?.data as any[] ?? []).map((e: any) =>
+          ((calendarR as any)?.data[] ?? []).map((e: any) =>
             String(e.title ?? e.summary ?? '') + " @ " + (e.all_day ? 'all-day' : new Date(e.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}))
           ).join('; ')
         : null,

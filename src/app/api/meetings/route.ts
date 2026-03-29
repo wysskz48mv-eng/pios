@@ -22,6 +22,11 @@ import { createClient }              from '@/lib/supabase/server'
 import { callClaude, PIOS_SYSTEM }   from '@/lib/ai/client'
 import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
+// ── Typed Supabase response helpers ──────────────────────────────────────────
+type SBResult<T> = { data: T | null; error: { message: string } | null }
+type SBRow = Record<string, unknown>
+
+
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
@@ -142,7 +147,7 @@ export async function POST(req: NextRequest) {
       .select('*').eq('id', id).eq('user_id', user.id).single()
     if (!meeting) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const actionItems: unknown[] = (meeting as any).ai_action_items ?? []
+    const actionItems: unknown[] = meeting.ai_action_items ?? []
     const toPromote = selected_items
       ? actionItems.filter((_: unknown, i: number) => selected_items.includes(i))
       : actionItems
@@ -156,20 +161,20 @@ export async function POST(req: NextRequest) {
     const taskIds: string[] = []
 
     for (const item of (toPromote as any[])) {
-      const priority = (item as any).priority === 'critical' ? 'critical'
-                     : (item as any).priority === 'high'     ? 'high'
-                     : (item as any).priority === 'low'      ? 'low'
+      const priority = item.priority === 'critical' ? 'critical'
+                     : item.priority === 'high'     ? 'high'
+                     : item.priority === 'low'      ? 'low'
                      : 'medium'
 
       const { data: task, error: taskErr } = await supabase.from('tasks').insert({
         user_id:     user.id,
         tenant_id:   profile?.tenant_id,
-        title:       (item as any).action ?? (item as any).description ?? 'Action from meeting',
-        description: `From meeting: ${(meeting as any).title} (${(meeting as any).meeting_date}). Attendees: ${((meeting as any).attendees ?? []).join(', ') || '—'}`,
-        domain:      (item as any).domain ?? (meeting as any).domain,
+        title:       item.action ?? item.description ?? 'Action from meeting',
+        description: `From meeting: ${meeting.title} (${meeting.meeting_date}). Attendees: ${(meeting.attendees ?? []).join(', ') || '—'}`,
+        domain:      item.domain ?? meeting.domain,
         priority,
         status:      'todo',
-        due_date:    (item as any).due_date ?? null,
+        due_date:    item.due_date ?? null,
         source:      'meeting_notes',
         updated_at:  new Date().toISOString(),
       }).select('id').single()
@@ -236,22 +241,22 @@ export async function DELETE(req: NextRequest) {
 
 // ── AI Processing ──────────────────────────────────────────────────────────────
 async function processMeetingNotes(supabase: any, meeting: unknown, userId: string) {
-  const content = (meeting as any).raw_transcript || (meeting as any).raw_notes || ''
+  const content = meeting.raw_transcript || meeting.raw_notes || ''
   if (!content.trim()) return meeting
 
-  const contextHint = (meeting as any).meeting_type === 'supervision'
+  const contextHint = meeting.meeting_type === 'supervision'
     ? 'This is a DBA supervision session at University of Portsmouth.'
-    : (meeting as any).meeting_type === 'client'
+    : meeting.meeting_type === 'client'
     ? 'This is a client meeting in an FM consulting or SaaS context.'
-    : (meeting as any).meeting_type === 'board'
+    : meeting.meeting_type === 'board'
     ? 'This is a board or senior leadership meeting.'
-    : `This is a ${(meeting as any).meeting_type} meeting.`
+    : `This is a ${meeting.meeting_type} meeting.`
 
   const system = `${PIOS_SYSTEM}
 
 You are extracting structured intelligence from meeting notes or transcripts.
-${contextHint} Domain: ${(meeting as any).domain}. Date: ${(meeting as any).meeting_date}.
-Attendees: ${((meeting as any).attendees ?? []).join(', ') || 'not specified'}.
+${contextHint} Domain: ${meeting.domain}. Date: ${meeting.meeting_date}.
+Attendees: ${(meeting.attendees ?? []).join(', ') || 'not specified'}.
 
 Return ONLY valid JSON — no preamble, no markdown:
 {
@@ -272,7 +277,7 @@ Return ONLY valid JSON — no preamble, no markdown:
 
   try {
     const raw = await callClaude(
-      [{ role: 'user', content: `Meeting: ${(meeting as any).title}\n\n${content.slice(0, 8000)}` }],
+      [{ role: 'user', content: `Meeting: ${meeting.title}\n\n${content.slice(0, 8000)}` }],
       system,
       2000,
     )
@@ -291,7 +296,7 @@ Return ONLY valid JSON — no preamble, no markdown:
     }
 
     const { data: updated } = await supabase.from('meeting_notes')
-      .update(updates).eq('id', (meeting as any).id).select().single()
+      .update(updates).eq('id', meeting.id).select().single()
 
     return updated ?? { ...(meeting as Record<string,unknown>), ...(updates as Record<string,unknown>) }
 
@@ -300,7 +305,7 @@ Return ONLY valid JSON — no preamble, no markdown:
       status: 'processed',
       ai_summary: 'AI processing failed — review transcript manually.',
       updated_at: new Date().toISOString(),
-    }).eq('id', (meeting as any).id)
+    }).eq('id', meeting.id)
     return meeting
   }
 }

@@ -23,6 +23,11 @@ import { callClaude } from '@/lib/ai/client'
 import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
 import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
+// ── Typed Supabase response helpers ──────────────────────────────────────────
+type SBResult<T> = { data: T | null; error: { message: string } | null }
+type SBRow = Record<string, unknown>
+
+
 export const runtime     = 'nodejs'
 export const dynamic     = 'force-dynamic'
 export const maxDuration = 300
@@ -118,19 +123,19 @@ export async function GET(req: NextRequest) {
           .lte('start_time', new Date(Date.now() + 86400000).toISOString().slice(0,10))
           .order('start_time').limit(8),
         // Yesterday's wellness session (brief runs at 06:00 before today's check-in)
-        (admin as any).from('wellness_sessions')
+        admin.from('wellness_sessions')
           .select('mood_score,energy_score,stress_score,focus_score,dominant_domain,ai_insight')
           .eq('user_id', uid)
           .gte('session_date', new Date(Date.now() - 86400000).toISOString().slice(0,10))
           .order('session_date', { ascending: false }).limit(1),
         // IP renewals due within 90 days
-        (admin as any).from('ip_assets')
+        admin.from('ip_assets')
           .select('name,asset_type,renewal_date')
           .eq('user_id', uid).eq('status', 'active')
           .lte('renewal_date', in90cron).gte('renewal_date', today)
           .order('renewal_date').limit(5),
         // Contract renewals due within 90 days
-        (admin as any).from('contracts')
+        admin.from('contracts')
           .select('title,contract_type,counterparty,end_date,value,currency')
           .eq('user_id', uid).eq('status', 'active')
           .lte('end_date', in90cron).gte('end_date', today)
@@ -237,8 +242,8 @@ export async function GET(req: NextRequest) {
 
 
         (calCronR as any)?.data?.length > 0
-          ? "TODAY'S CALENDAR (" + String((calCronR as any).data.length) + " events): " +
-            ((calCronR as any).data as any[]).map((e: any) =>
+          ? "TODAY'S CALENDAR (" + String(calCronR.data.length) + " events): " +
+            (calCronR.data[]).map((e: any) =>
               String(e.title ?? '') + (e.all_day ? " (all-day)" : " @ " + new Date(e.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}))
             ).join('; ')
           : null,
@@ -279,7 +284,7 @@ export async function GET(req: NextRequest) {
       )
 
       // Generate smart notifications for this user (idempotent — deduped by title+day)
-      const notifUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000') + '/api/notifications/generate'
+      const notifUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://pios-wysskz48mv-engs-projects.vercel.app') + '/api/notifications/generate'
       fetch(notifUrl, { method: 'POST' }) // best-effort, non-blocking
 
       // Always upsert — refreshes any existing brief for today

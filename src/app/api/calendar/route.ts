@@ -3,6 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
+// ── Typed Supabase response helpers ──────────────────────────────────────────
+type SBResult<T> = { data: T | null; error: { message: string } | null }
+type SBRow = Record<string, unknown>
+
+
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
@@ -23,7 +28,7 @@ async function getGoogleToken(supabase: any, userId: string): Promise<string | n
   if (profile.google_token_expiry) {
     const expiry = new Date(profile.google_token_expiry)
     if (expiry <= new Date(Date.now() + 5 * 60 * 1000) && profile.google_refresh_token) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pios-wysskz48mv-engs-projects.vercel.app'
       await fetch(`${appUrl}/api/auth/refresh-google`, { method: 'POST' })
       const { data: fresh } = await supabase.from('user_profiles')
         .select('google_access_token').eq('id', userId).single()
@@ -127,25 +132,25 @@ export async function POST(request: Request) {
       let synced = 0
 
       for (const item of (items as any[])) {
-        if (!(item as any).summary) continue
-        const startTime = (item as any).start?.dateTime ?? (item as any).start?.date + 'T00:00:00Z'
-        const endTime   = (item as any).end?.dateTime   ?? (item as any).end?.date   + 'T23:59:59Z'
-        const allDay    = !!(item as any).start?.date && !(item as any).start?.dateTime
+        if (!item.summary) continue
+        const startTime = item.start?.dateTime ?? item.start?.date + 'T00:00:00Z'
+        const endTime   = item.end?.dateTime   ?? item.end?.date   + 'T23:59:59Z'
+        const allDay    = !!item.start?.date && !item.start?.dateTime
 
-        const domain = classifyDomain((item as any).summary, (item as any).description ?? '')
+        const domain = classifyDomain(item.summary, item.description ?? '')
 
         await supabase.from('calendar_events').upsert({
           user_id: user.id,
           google_event_id: (item as any)?.id,
-          title: (item as any).summary,
-          description: (item as any).description ?? null,
+          title: item.summary,
+          description: item.description ?? null,
           domain,
           start_time: startTime,
           end_time: endTime,
           all_day: allDay,
-          location: (item as any).location ?? null,
-          attendees: (item as any).attendees?.map((a: Record<string, unknown>) => ({ email: a.email, name: a.displayName })) ?? [],
-          google_meet_url: (item as any).hangoutLink ?? null,
+          location: item.location ?? null,
+          attendees: item.attendees?.map((a: Record<string, unknown>) => ({ email: a.email, name: a.displayName })) ?? [],
+          google_meet_url: item.hangoutLink ?? null,
           source: 'google',
           updated_at: new Date().toISOString(),
         }, { onConflict: 'google_event_id', ignoreDuplicates: false })
@@ -180,7 +185,7 @@ export async function POST(request: Request) {
           $top:          '100',
           $select:       'id,subject,bodyPreview,start,end,location,attendees,isOnlineMeeting,onlineMeetingUrl',
         }),
-        { headers: { Authorization: `Bearer ${(account as any).ms_access_token}` } }
+        { headers: { Authorization: `Bearer ${account.ms_access_token}` } }
       )
 
       if (!msRes.ok) {
@@ -192,28 +197,28 @@ export async function POST(request: Request) {
       let synced   = 0
 
       for (const item of (items as any[])) {
-        if (!(item as any).subject) continue
-        const startTime = (item as any).start?.dateTime ? new Date((item as any).start.dateTime).toISOString() : null
-        const endTime   = (item as any).end?.dateTime   ? new Date((item as any).end.dateTime).toISOString()   : null
+        if (!item.subject) continue
+        const startTime = item.start?.dateTime ? new Date(item.start.dateTime).toISOString() : null
+        const endTime   = item.end?.dateTime   ? new Date(item.end.dateTime).toISOString()   : null
         if (!startTime) continue
 
-        const domain = classifyDomain((item as any).subject, (item as any).bodyPreview ?? '')
+        const domain = classifyDomain(item.subject, item.bodyPreview ?? '')
 
         await supabase.from('calendar_events').upsert({
           user_id:         user.id,
           google_event_id: `ms_${(item as any)?.id}`,  // prefix to avoid collision with Google IDs
-          title:           (item as any).subject,
-          description:     (item as any).bodyPreview ?? null,
+          title:           item.subject,
+          description:     item.bodyPreview ?? null,
           domain,
           start_time:      startTime,
           end_time:        endTime,
           all_day:         false,
-          location:        (item as any).location?.displayName ?? null,
-          attendees:       ((item as any).attendees ?? []).map((a: any) => ({
+          location:        item.location?.displayName ?? null,
+          attendees:       (item.attendees ?? []).map((a: any) => ({
             email: (a.emailAddress as Record<string,string>)?.address,
             name:  (a.emailAddress as Record<string,string>)?.name,
           })),
-          google_meet_url: (item as any).onlineMeetingUrl ?? null,
+          google_meet_url: item.onlineMeetingUrl ?? null,
           source:          'microsoft',
           updated_at:      new Date().toISOString(),
         }, { onConflict: 'google_event_id', ignoreDuplicates: false })

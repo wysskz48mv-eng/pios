@@ -31,7 +31,7 @@ async function getGoogleToken(supabase: any, userId: string): Promise<string | n
     const expiry = new Date(profile.google_token_expiry)
     if (expiry <= new Date(Date.now() + 5 * 60 * 1000) && profile.google_refresh_token) {
       try {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pios-wysskz48mv-engs-projects.vercel.app'
         await fetch(`${appUrl}/api/auth/refresh-google`, { method: 'POST' })
         const { data: fresh } = await supabase
           .from('user_profiles')

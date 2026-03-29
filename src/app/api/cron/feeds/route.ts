@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
         .order('sort_order').limit(10)
 
       if (topics?.length) {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pios-wysskz48mv-engs-projects.vercel.app'
         // Call the feeds API as service (uses session from cookie — skip for cron)
         // Instead: directly update cached_items via AI call per topic
         for (const topic of topics.slice(0, 3)) { // Max 3 topics per user in cron
