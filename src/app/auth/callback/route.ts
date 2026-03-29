@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
 // ── Fire-and-forget welcome email ──────────────────────────────────────────
 async function sendWelcomeEmail(to: string, name: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY
-  const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <onboarding@resend.dev>'
+  const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <info@veritasiq.io>'
   if (!apiKey || !to) return
   const first = name.split(' ')[0]
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-wysskz48mv-engs-projects.vercel.app'

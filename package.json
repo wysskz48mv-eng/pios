@@ -1,6 +1,6 @@
 {
   "name": "pios",
-  "version": "3.0.0",
+  "version": "3.2.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -50,5 +50,5 @@
     "typescript": "^5"
   },
   "author": "VeritasIQ Technologies Ltd",
-  "description": "PIOS — Personal Intelligence OS | VeritasIQ Technologies Ltd"
+  "description": "PIOS \u2014 Personal Intelligence OS | VeritasIQ Technologies Ltd"
 }

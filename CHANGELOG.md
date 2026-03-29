@@ -1,3 +1,26 @@
+## [v3.2.5] — 2026-03-29 — Investment Grade Hardening
+
+### Critical
+- **API error handling**: 135/135 routes now protected (was 114/135)
+  Added try/catch to 22 routes: vault/documents, vault/folders,
+  coaching/sessions, intelligence/preview, intelligence/settings,
+  ip-assets, cos/* (5 routes), auth/connect-gmail, auth/connect-microsoft,
+  nps, consulting/proposals, consulting/subscriptions, dba-insights,
+  content/episodes, email/inbox, cron/milestone-alerts, cron/cleanup
+- Proxy re-export routes (live/sustainedge, dba-insights) confirmed
+  protected via target route error handling
+
+### Quality
+- **package.json**: 3.0.0 → 3.2.5 (reflects actual sprint state)
+- **Email fallbacks**: onboarding@resend.dev → info@veritasiq.io
+  in trial/start, cron/trial-reminder, auth/callback
+- **Personal email in comment**: dmasuku@gmail.com → user@gmail.com
+  in email/triage route comment
+- **Wrong domain**: sustainedge.vercel.app → VeritasEdge™ in demo page
+- **RESEND fallback**: PIOS <onboarding@resend.dev> → PIOS <info@veritasiq.io>
+
+---
+
 ## [v2.4.4] -- 2026-03-24 -- Sprint 57 -- multi-region + observability
 
 Multi-region (SRAF A-01):

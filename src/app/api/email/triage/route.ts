@@ -11,7 +11,7 @@ import { checkPromptSafety } from '@/lib/security-middleware'
  * CRITICAL DESIGN RULE:
  *   Draft is ALWAYS created from the SAME inbox the email arrived in.
  *   email@veritasiq.io receives → draft created from email@veritasiq.io
- *   dmasuku@gmail.com receives → draft created from dmasuku@gmail.com
+ *   user@gmail.com receives → draft created from user@gmail.com
  *
  * HUMAN-IN-THE-LOOP GUARANTEE:
  *   Agent NEVER sends. Draft saved to Gmail draft folder + PIOS email_drafts.

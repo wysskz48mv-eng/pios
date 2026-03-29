@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   }
 
   const apiKey = process.env.RESEND_API_KEY
-  const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <onboarding@resend.dev>'
+  const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <info@veritasiq.io>'
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-wysskz48mv-engs-projects.vercel.app'
 
   let sent = 0

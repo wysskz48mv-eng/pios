@@ -446,7 +446,7 @@ export default function DemoPage() {
               <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
                 <span style={{ width:8, height:8, borderRadius:'50%', background: veLive?.connected ? 'var(--fm)' : 'var(--dng)', boxShadow: veLive?.connected ? '0 0 6px var(--fm)' : 'none' }} />
                 <span style={{ fontSize:13, fontWeight:700, color:'var(--fm)' }}>VeritasEdge™</span>
-                <span style={{ fontSize:10, color:'var(--pios-dim)' }}>sustainedge.vercel.app</span>
+                <span style={{ fontSize:10, color:'var(--pios-dim)' }}>VeritasEdge™</span>
               </div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:14 }}>GCC FM service charge intelligence platform. AI-powered OBE/LIE engines, HDCA™ allocation, REGA/MOMRA compliance.</div>
               {veLive?.connected === false ? (

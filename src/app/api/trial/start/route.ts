@@ -172,7 +172,7 @@ async function sendTrialEmail(
   trialEnd: Date
 ): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY
-  const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <onboarding@resend.dev>'
+  const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <info@veritasiq.io>'
   if (!apiKey) return
 
   const first   = name.split(' ')[0]
