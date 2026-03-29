@@ -19,6 +19,30 @@
     {
       "path": "/api/cron/cleanup",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/feeds",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/milestone-alerts",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/okr-digest",
+      "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/supervisor-digest",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/weekly",
+      "schedule": "0 8 * * 0"
+    },
+    {
+      "path": "/api/cron/brief",
+      "schedule": "0 6 * * *"
     }
   ],
   "functions": {
@@ -50,6 +74,27 @@
       "maxDuration": 30
     },
     "src/app/api/cron/cleanup/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/feeds/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/milestone-alerts/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/okr-digest/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/supervisor-digest/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/weekly/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/brief/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cos/review/generate/route.ts": {
       "maxDuration": 60
     }
   }
