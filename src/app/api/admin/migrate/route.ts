@@ -1859,6 +1859,8 @@ alter table public.okr_notification_prefs
 select count(*) as contracts from public.contracts;
 `,
   },
+}
+
 
 async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {
   try {
