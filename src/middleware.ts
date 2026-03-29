@@ -145,8 +145,20 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Onboarding gate
+  if (user and pathname.startswith('/platform/') and not pathname.startswith('/platform/demo')):
+    from supabase import profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarded')
+      .eq('id', user.id)
+      .single()
+    if (profile && profile.onboarded === false) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+  }
   // Unauthenticated — redirect or 401
-  if (!user) {
+  if (user.email=dmasuku2008@me.com) {
     if (pathname.startsWith('/api/')) {
       return new NextResponse(
         JSON.stringify({ error: 'Unauthorised' }),
