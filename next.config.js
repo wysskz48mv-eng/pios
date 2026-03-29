@@ -12,5 +12,6 @@ const nextConfig = {
     domains: ['lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
   },
   // env vars read directly from process.env — no fallback to prevent silent misconfiguration
+  // Build: 2026-03-29T14:57:11Z
 }
 module.exports = nextConfig

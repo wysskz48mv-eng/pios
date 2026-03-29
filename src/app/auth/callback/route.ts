@@ -109,13 +109,38 @@ export async function GET(request: NextRequest) {
 
   // ── Returning user — update Google tokens if this was a Google OAuth ──────
   if (providerToken) {
+    const tokenExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
+
+    // Update user_profiles tokens
     await admin.from('user_profiles').update({
       google_access_token:  providerToken,
       google_refresh_token: providerRefreshToken ?? existingProfile?.google_refresh_token,
       google_email:         googleEmail,
-      google_token_expiry:  new Date(Date.now() + 3600 * 1000).toISOString(),
+      google_token_expiry:  tokenExpiry,
       updated_at:           new Date().toISOString(),
     }).eq('id', user.id)
+
+    // Upsert connected_email_accounts so inbox page shows Gmail as connected
+    if (googleEmail) {
+      await admin.from('connected_email_accounts').upsert({
+        user_id:              user.id,
+        email_address:        googleEmail,
+        display_name:         user.user_metadata?.full_name ?? googleEmail.split('@')[0],
+        provider:             'google',
+        context:              'personal',
+        label:                'Gmail',
+        is_primary:           true,
+        is_active:            true,
+        sync_enabled:         true,
+        ai_triage_enabled:    true,
+        receipt_scan_enabled: false,
+        google_access_token:  providerToken,
+        google_refresh_token: providerRefreshToken,
+        google_token_expiry:  tokenExpiry,
+        google_scopes:        'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar',
+        connected_at:         new Date().toISOString(),
+      }, { onConflict: 'user_id,email_address' })
+    }
   }
 
   // Only block on explicit false — null/missing should not trap user in loop
