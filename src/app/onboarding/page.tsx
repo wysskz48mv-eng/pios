@@ -98,7 +98,7 @@ export default function OnboardingPage() {
   const [step, setStep]               = useState(0)
   const [persona, setPersona]         = useState<Persona | null>(null)
   const [deployMode, setDeployMode]   = useState<DeployMode>('full')
-  const [modules, setModules]         = useState<Set<ModuleKey>>(new Set(['command_centre','morning_brief','tasks','wellness']))
+  const [modules, setModules]         = useState<Set<ModuleKey>>(new Set<ModuleKey>(['command_centre','morning_brief','tasks','wellness'] as ModuleKey[]))
   const [calib, setCalib]             = useState<CalibResult | null>(null)
   const [uploading, setUploading]     = useState(false)
   const [uploadErr, setUploadErr]     = useState('')

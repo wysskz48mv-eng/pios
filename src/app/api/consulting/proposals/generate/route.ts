@@ -22,6 +22,14 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
+    // Spend gate — prevent credit drain (max_tokens:2000, expensive route)
+    const { data: credits } = await supabase
+      .from('exec_intelligence_config').select('ai_calls_used,ai_calls_limit')
+      .eq('user_id', user.id).single()
+    if (credits && (credits.ai_calls_used ?? 0) >= (credits.ai_calls_limit ?? 200)) {
+      return NextResponse.json({ error: 'AI credit limit reached — upgrade to generate more proposals.' }, { status: 429 })
+    }
+
     const body = await req.json()
     const { template, client_name, title, scope, day_rate, estimated_days, expenses, fee_total } = body
 

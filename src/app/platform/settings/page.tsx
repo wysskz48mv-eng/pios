@@ -312,7 +312,7 @@ function PersonaSection() {
   useEffect(() => {
     fetch('/api/profile').then(r => r.json()).then(d => {
       setCurrentPersona((d.profile as Record<string,unknown>)?.persona_type as string ?? 'individual')
-    }).catch(() => {})
+    })
   }, [])
 
   async function updatePersona(key: string) {
@@ -420,7 +420,7 @@ export default function SettingsPage() {
     async function load() {
       const [pR, fR] = await Promise.all([
         fetch('/api/profile').then(r => r.ok ? r.json() : {}) as Promise<unknown>,
-        fetch('/api/feeds').then(r => r.json()).catch(() => ({ settings: null })),
+        fetch('/api/feeds').then(r => r.json()),
       ])
       setUser(((pR as Record<string,unknown>).user ?? null) as any)
       setProfile(((pR as Record<string,unknown>).profile ?? null) as any | null)

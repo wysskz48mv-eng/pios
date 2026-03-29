@@ -13,7 +13,7 @@ async function getSentry() {
   if (!process.env.SENTRY_DSN) return null
   try {
     // @ts-ignore
-    Sentry = await import('@sentry/nextjs').catch(() => null)
+    Sentry = await import('@sentry/nextjs')
     if (Sentry && !(Sentry as any).isInitialized?.()) {
       (Sentry as any).init({
         dsn: process.env.SENTRY_DSN,

@@ -66,7 +66,7 @@ export default function EmailPage() {
 
   useEffect(() => { load() }, [load])
   useEffect(() => {
-    fetch('/api/email/accounts').then(r=>r.ok?r.json():null).then(d=>{ if(d) setAccounts(d.accounts??[]) }).catch(()=>{})
+    fetch('/api/email/accounts').then(r=>r.ok?r.json():null).then(d=>{ if(d) setAccounts(d.accounts??[]) })
   }, [])
 
   async function syncGmail() {

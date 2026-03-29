@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   const workEnd   = (prefs as {work_end_hour?:number}).work_end_hour   ?? 18
   const totalHours = workEnd - workStart
 
-  const body = await req.json().catch(() => ({}))
+  const body = await req.json()
   const calendarEvents: {title:string;start:string;end:string}[] = body.calendar_events ?? []
 
   // Build the planning prompt

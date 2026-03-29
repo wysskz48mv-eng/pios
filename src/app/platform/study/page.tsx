@@ -68,7 +68,7 @@ export default function StudyTimerPage() {
             category: 'study',
             reflection: `Completed ${dur}-minute focus session on ${subject.trim()}`,
           }),
-        }).catch(() => {})
+        })
       }
     }
   }, [subject])

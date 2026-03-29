@@ -302,7 +302,7 @@ async function updateCoachingProfile(
     if (!sessions?.length) return
 
     const allInsights = sessions.flatMap((s: any) => (s as any).insights ?? []).join('\n')
-    const allThemes   = sessions.flatMap(s => (s as any).themes   ?? [])
+    const allThemes   = sessions.flatMap((s: Record<string,unknown>) => (s as any).themes   ?? [])
     const themeCounts: Record<string, number> = {}
     for (const t of allThemes) themeCounts[t] = (themeCounts[t] ?? 0) + 1
 

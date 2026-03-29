@@ -23,6 +23,7 @@ interface TimesheetEntry {
 interface CPDEntry {
   id: string; title: string; provider?: string; hours: number
   date?: string; professional_body?: string; renewal_date?: string
+  certificate_url?: string
 }
 interface Subscription {
   id: string; name: string; category?: string; amount?: number

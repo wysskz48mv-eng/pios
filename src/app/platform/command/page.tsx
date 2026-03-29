@@ -320,10 +320,10 @@ export default function CommandPage() {
   const loadPlatforms = useCallback(async () => {
     setLoading(true)
     const [seR, isR, ghR, execR] = await Promise.all([
-      fetch('/api/live/veritasedge').then(r=>r.json()).catch(()=>({ connected:false })),
-      fetch('/api/live/investiscript').then(r=>r.json()).catch(()=>({ connected:false })),
-      fetch('/api/live/github').then(r=>r.json()).catch(()=>({ connected:false })),
-      fetch('/api/dashboard').then(r=>r.json()).catch(()=>null),
+      fetch('/api/live/veritasedge').then(r=>r.json()),
+      fetch('/api/live/investiscript').then(r=>r.json()),
+      fetch('/api/live/github').then(r=>r.json()),
+      fetch('/api/dashboard').then(r=>r.json()),
     ])
     setSe(seR); setIs(isR); setGh(ghR)
     if (execR?.exec?.okrs) setOkrs(execR.exec.okrs ?? [])
@@ -336,7 +336,7 @@ export default function CommandPage() {
 
   const loadFeeds = useCallback(async () => {
     setFeedsLoading(true)
-    const res = await fetch('/api/feeds').catch(() => null)
+    const res = await fetch('/api/feeds')
     if (res?.ok) {
       const data = await res.json()
       setFeeds(data.topics ?? [])

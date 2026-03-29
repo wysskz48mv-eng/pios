@@ -258,5 +258,5 @@ async function sendTrialEmail(
       subject: `Your PIOS trial is live — ${TRIAL_DAYS} days, full access`,
       html,
     }),
-  }).catch(() => {})
+  })
 }

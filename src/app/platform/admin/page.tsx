@@ -474,7 +474,7 @@ export default function AdminPage() {
               const d = await r.json()
               if (d.error === 'exec_sql RPC not found') {
                 const sql = `CREATE OR REPLACE FUNCTION public.exec_sql(sql_query text)\nRETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN EXECUTE sql_query; END; $$;\nGRANT EXECUTE ON FUNCTION public.exec_sql(text) TO service_role;`
-                await navigator.clipboard.writeText(sql).catch(()=>{})
+                await navigator.clipboard.writeText(sql)
                 alert('exec_sql function not found in your Supabase database.\n\nThe SQL has been copied to your clipboard.\n\nPaste it in:\nSupabase Dashboard → SQL Editor → New query → Paste → Run\n\nThen click Run Migrations again.')
                 return
               }

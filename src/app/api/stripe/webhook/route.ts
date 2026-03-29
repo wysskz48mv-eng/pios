@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 <p>Hi ${profile.full_name ?? 'there'},</p>
 <p>Your PIOS ${plan} plan is now active. You have ${limits.credits.toLocaleString()} AI credits/month.</p>
 <p><a href="${APP_URL}/platform/dashboard">Go to your dashboard →</a></p>`,
-        }).catch(() => null)
+        })
       }
     }
   }
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
         html: `<h2>Payment failed</h2>
 <p>We couldn't process your PIOS subscription payment. Please update your payment method to avoid service interruption.</p>
 <p><a href="${APP_URL}/platform/billing">Update payment method →</a></p>`,
-      }).catch(() => null)
+      })
     }
   }
 
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
 <p>Hi ${profile?.full_name ?? 'there'},</p>
 <p>Your free PIOS trial ends in 3 days. Upgrade now to keep your data and AI credits.</p>
 <p><a href="${APP_URL}/platform/billing">View plans →</a></p>`,
-        }).catch(() => null)
+        })
       }
     }
   }

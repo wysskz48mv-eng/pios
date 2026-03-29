@@ -158,11 +158,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Authenticated user on login/signup — route based on onboarding status
+  // Onboarding gate — redirect incomplete users to wizard
+  if (user && pathname.startsWith('/platform/') && !pathname.startsWith('/platform/demo')) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarded')
+      .eq('id', user.id)
+      .single()
+    if (profile && profile.onboarded === false) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+  }
+
+  // Authenticated user on login/signup — redirect to dashboard
   if (pathname === '/auth/login' || pathname === '/auth/signup') {
-    // We can't do a DB call in Edge middleware efficiently, so redirect to /
-    // which does the full onboarded check server-side
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/platform/dashboard', request.url))
   }
 
   return response

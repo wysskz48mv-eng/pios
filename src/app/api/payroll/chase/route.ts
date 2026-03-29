@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { expected_date, accountant_email, accountant_name = 'Accountant' } = await request.json().catch(() => ({}))
+    const { expected_date, accountant_email, accountant_name = 'Accountant' } = await request.json()
     const payrollDueDate = expected_date ?? getLastWorkingDayOfMonth()
     const today = new Date()
     const dueDate = new Date(payrollDueDate)

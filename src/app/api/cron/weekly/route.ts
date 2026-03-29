@@ -200,7 +200,7 @@ export async function GET(req: NextRequest) {
         chapter_count: (thesisNow.data ?? []).length,
         captured_at:   new Date().toISOString(),
       // @ts-ignore — supabase v2: .catch() absent from type defs
-      }, { onConflict: 'user_id,week_start' }).catch(() => {}) // non-fatal
+      }, { onConflict: 'user_id,week_start' }) // non-fatal
 
       const expList      = expenses.data ?? []
       const expTotal     = expList.reduce((s: number, e: unknown) => s + Number((e as any)?.amount ?? 0), 0)

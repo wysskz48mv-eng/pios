@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     await resend.emails.send({
       from: `PIOS <${FROM}>`, to: profile.google_email,
       subject: subjectLine, html: bodyHtml,
-    }).catch(() => null)
+    })
 
     emailsSent++
 
@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
         from: `PIOS <${FROM}>`, to: profile.supervisor_email,
         subject: `[Supervision] ${studentName}: "${m.title}" due ${fmtDate(m.target_date)}`,
         html: bodyHtml.replace(`Dear ${studentName}`, `Dear ${profile.supervisor_name ?? 'Supervisor'}`),
-      }).catch(() => null)
+      })
       emailsSent++
     }
 

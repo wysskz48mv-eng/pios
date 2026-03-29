@@ -89,8 +89,8 @@ export default function DemoPage() {
     setLoading(true)
     const [dashR, veR, isR] = await Promise.allSettled([
       fetch('/api/dashboard').then(r => r.json()),
-      fetch('/api/live/veritasedge').then(r => r.json()).catch(() => ({ connected: false })),
-      fetch('/api/live/investiscript').then(r => r.json()).catch(() => ({ connected: false })),
+      fetch('/api/live/veritasedge').then(r => r.json()),
+      fetch('/api/live/investiscript').then(r => r.json()),
     ])
     if (dashR.status === 'fulfilled') setDash(dashR.value)
     if (veR.status   === 'fulfilled') setVeLive(veR.value)

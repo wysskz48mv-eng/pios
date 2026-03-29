@@ -280,7 +280,7 @@ export async function GET(req: NextRequest) {
 
       // Generate smart notifications for this user (idempotent — deduped by title+day)
       const notifUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000') + '/api/notifications/generate'
-      fetch(notifUrl, { method: 'POST' }).catch(() => {}) // best-effort, non-blocking
+      fetch(notifUrl, { method: 'POST' }) // best-effort, non-blocking
 
       // Always upsert — refreshes any existing brief for today
       await admin.from('daily_briefs').upsert({
@@ -300,7 +300,7 @@ export async function GET(req: NextRequest) {
           subject: `Your PIOS Brief — ${new Date(today).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}`,
           html:    morningBriefHtml(String(content ?? ""), String(today ?? ""), String(userName ?? "")),
           text:    morningBriefText(String(content ?? ""), String(today ?? ""), String(userName ?? "")),
-        }).catch(() => {})
+        })
 
         // Task urgency alert — separate email if overdue or due tomorrow
         const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
@@ -325,7 +325,7 @@ export async function GET(req: NextRequest) {
               <p style="color:#6b7280;font-size:12px;margin-top:16px">Sent by PIOS · <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'}/platform/tasks">View all tasks →</a></p>
             </div>`,
             text: `OVERDUE TASKS (${overdue.length}):\n${overdueLines}\n${dueTodayLines ? '\nDUE TODAY:\n' + dueTodayLines : ''}`,
-          }).catch(() => {})
+          })
         }
       }
 

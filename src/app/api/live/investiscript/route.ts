@@ -85,7 +85,7 @@ async function queryViaPg(dbUrl: string, now: Date, thirtyDaysAgo: string, seven
       { input: Number(usageR.rows[0].input_tokens), output: Number(usageR.rows[0].output_tokens), cost: Number(usageR.rows[0].cost_usd) }
     )
   } finally {
-    await client.end().catch(() => {})
+    await client.end()
   }
 }
 

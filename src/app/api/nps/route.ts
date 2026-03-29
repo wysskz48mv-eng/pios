@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const body = await req.json().catch(() => null).catch(() => ({})) as Record<string, unknown>
+  const body = await req.json() as Record<string, unknown>
   if (!body) return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   const { stability, performance, security, featureFit, nps, openFeedback } = body
 

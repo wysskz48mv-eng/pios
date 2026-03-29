@@ -70,7 +70,7 @@ export default function NotificationsPage() {
     await fetch('/api/notifications', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'mark_read' }),
-    }).catch(() => {})
+    })
     setNotifs(p => p.map(n => ({ ...n, read: true })))
     setMarking(false)
   }
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
     await fetch('/api/notifications', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
-    }).catch(() => {})
+    })
     setNotifs(p => p.map(n => n.id === id ? { ...n, read: true } : n))
   }
 
@@ -88,7 +88,7 @@ export default function NotificationsPage() {
     await fetch('/api/notifications', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', id }),
-    }).catch(() => {})
+    })
     setNotifs(p => p.filter(n => n.id !== id))
     setDeleting(null)
   }

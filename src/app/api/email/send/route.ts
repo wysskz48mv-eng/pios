@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     )
 
     if (!gmailRes.ok) {
-      const errData = await gmailRes.json().catch(() => ({}))
+      const errData = await gmailRes.json()
       const errMsg = errData?.error?.message ?? `Gmail API error ${gmailRes.status}`
 
       // Handle insufficient scope error

@@ -139,10 +139,10 @@ Communication register: ${(calib as any)?.communication_register ?? 'professiona
 
 LIVE PIOS CONTEXT:
 ${tasks.length > 0 ? `Open tasks (${tasks.length}):\n${(tasks as {title:string;priority:string;due_date?:string}[]).map(fmtTask).join('\n')}` : 'No open tasks.'}
-${overdue.length > 0 ? `\nOVERDUE (${overdue.length}): ${(overdue as {title:string}[]).map(t=>t.title).join(', ')}` : ''}
+${overdue.length > 0 ? `\nOVERDUE (${overdue.length}): ${(overdue as unknown as {title:string}[]).map(t=>t.title).join(', ')}` : ''}
 ${okrs.length > 0 ? `\nActive OKRs:\n${(okrs as {objective:string;progress:number}[]).map(fmtOKR).join('\n')}` : ''}
 ${decisions.length > 0 ? `\nOpen decisions (${decisions.length}):\n${(decisions as {title:string;created_at:string}[]).map(fmtDec).join('\n')}` : ''}
-${staleDecisions.length > 0 ? `\nSTALE DECISIONS (>14 days): ${(staleDecisions as {title:string}[]).map(d=>d.title).join(', ')}` : ''}
+${staleDecisions.length > 0 ? `\nSTALE DECISIONS (>14 days): ${(staleDecisions as unknown as {title:string}[]).map(d=>d.title).join(', ')}` : ''}
 ${emails.length > 0 ? `\nUntriaged emails: ${emails.length}` : ''}
 ${expiring.length > 0 ? `\nDocuments expiring this week: ${(expiring as {title?:string;doc_type:string}[]).map(d=>d.title??d.doc_type).join(', ')}` : ''}
 ${overdueContact.length > 0 ? `\nOverdue stakeholder contact: ${(overdueContact as {name:string}[]).map(s=>s.name).join(', ')}` : ''}

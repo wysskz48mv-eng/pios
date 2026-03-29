@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-  const body   = await req.json().catch(() => ({}))
+  const body   = await req.json()
   const domain = (body.domain as string) ?? 'fm_industry'
 
   const config = DOMAIN_CONFIG[domain]

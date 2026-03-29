@@ -95,7 +95,7 @@ async function runViaPooler(sql: string): Promise<{ ok: boolean; error?: string 
       await client.end()
       return { ok: true }
     } catch (qErr: unknown) {
-      await client.end().catch(() => {})
+      await client.end()
       return { ok: false, error: qErr instanceof Error ? qErr.message : String(qErr) }
     }
   } catch (e: unknown) {
@@ -471,7 +471,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorised — set x-admin-secret header' }, { status: 401 })
   }
 
-  const body = await req.json().catch(() => ({}))
+  const body = await req.json()
   const targetId = body.migration_id  // optional — run single migration
 
   const toRun = targetId
@@ -488,7 +488,7 @@ export async function POST(req: NextRequest) {
 
   for (const migration of toRun) {
     const result = await runSQL(migration.sql, migration.label)
-    results.push({ id: migration.id, label: migration.label, ...result })
+    results.push({ id: migration.id, label: migration.label, ok: result.ok, error: result.error, method: (result as any).method })
 
     // Stop on critical failure (but continue on column-already-exists errors)
     if (!result.ok) {
@@ -511,6 +511,77 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+
+  // ══ M024 — NemoClaw™ Progressive Profiling Signal Log ═══════════════════
+  { const r024 = await runSQL(`
+    CREATE TABLE IF NOT EXISTS public.profiling_signals (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      signal_layer    SMALLINT NOT NULL DEFAULT 1 CHECK (signal_layer BETWEEN 1 AND 4),
+      signal_source   TEXT NOT NULL,
+      signal_type     TEXT NOT NULL,
+      raw_value       JSONB,
+      inferred_domain TEXT,
+      inferred_seniority TEXT,
+      confidence      NUMERIC(3,2) NOT NULL DEFAULT 0.20 CHECK (confidence BETWEEN 0 AND 1),
+      reviewed        BOOLEAN DEFAULT FALSE,
+      created_at      TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_profiling_signals_user
+      ON public.profiling_signals(user_id, signal_layer, created_at DESC);
+    ALTER TABLE public.profiling_signals ENABLE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS "signals_owner" ON public.profiling_signals;
+    CREATE POLICY "signals_owner" ON public.profiling_signals USING (user_id = auth.uid());
+  `, 'M024'); results.push({ id: 'M024', label: 'Profiling signals', ok: r024.ok, error: r024.error }) }
+
+  // ══ M026 — Universal Insight Capture ════════════════════════════════════════
+  { const r026 = await runSQL(`
+    CREATE TABLE IF NOT EXISTS public.insights (
+      id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id          UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      title            TEXT NOT NULL,
+      body             TEXT NOT NULL,
+      insight_type     TEXT NOT NULL DEFAULT 'general'
+        CHECK (insight_type IN (
+          'dba_thesis',           -- DBA research → Academic Hub + supervisor queue
+          'business_opportunity', -- Commercial → Executive OS + OKR pipeline
+          'cpd_learning',         -- CPD/Skills → Learning Hub + CPD tracker
+          'ip_consideration',     -- IP/Patent → IP Vault + legal review
+          'client_intelligence',  -- Client → Consulting Hub + Stakeholder CRM
+          'product_insight',      -- Product → backlog + sprint planning
+          'general'               -- Unclassified → morning brief only
+        )),
+      source_context   TEXT,
+      source_type      TEXT NOT NULL DEFAULT 'manual'
+        CHECK (source_type IN ('manual','sprint','literature','platform_test','client_work','nemoclaw','ai_research')),
+      status           TEXT NOT NULL DEFAULT 'captured'
+        CHECK (status IN ('captured','reviewed','actioned','parked','rejected')),
+      priority         TEXT NOT NULL DEFAULT 'medium'
+        CHECK (priority IN ('high','medium','low')),
+      -- Type-specific routing fields
+      thesis_section   TEXT,   -- dba_thesis: introduction|literature_review|methodology|findings|discussion|conclusion
+      chapter_tag      TEXT,   -- dba_thesis: free-text chapter label
+      supervisor_share BOOLEAN DEFAULT FALSE, -- dba_thesis: queue for Ozlem Bak / Raja Sreedharan
+      cpd_body         TEXT,   -- cpd_learning: RICS|BIFM|CIBSE|CIPD|other
+      cpd_credits      NUMERIC, -- cpd_learning: estimated hours
+      market_segment   TEXT,   -- business_opportunity: GCC FM|UK FM|PropTech|other
+      ip_type          TEXT,   -- ip_consideration: patent|trade_secret|trademark|copyright
+      client_org       TEXT,   -- client_intelligence: organisation name
+      platform         TEXT,   -- product_insight: PIOS|VeritasEdge|InvestiScript
+      -- Common fields
+      review_by        DATE,
+      tags             TEXT[] DEFAULT '{}',
+      ai_summary       TEXT,   -- auto-generated 30-word summary for morning brief
+      created_at       TIMESTAMPTZ DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_insights_user_type_status
+      ON public.insights(user_id, insight_type, status, priority, created_at DESC);
+    ALTER TABLE public.insights ENABLE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS "insights_owner" ON public.insights;
+    CREATE POLICY "insights_owner" ON public.insights
+      USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+  `, 'M026'); results.push({ id: 'M026', label: 'Universal insights', ok: r026.ok, error: r026.error }) }
 
   const passed = results.filter(r => r.ok).length
   const failed = results.filter(r => !r.ok).length

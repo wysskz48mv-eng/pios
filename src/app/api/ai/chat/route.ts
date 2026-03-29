@@ -311,7 +311,16 @@ BEHAVIOUR RULES:
 LIVE DATA (current as of this message):
 ${liveCtx}${briefSection}${domainSection}`
 
-    const reply = await callClaude(messages, system, 1200)
+    const rawReply = await callClaude(messages, system, 1200)
+    // Output sanitisation — prevent system prompt echo or cross-user data leakage
+    const REDACT_SIGNALS = [
+      'You are PIOS AI', 'ISO 27001', 'OPERATING PRINCIPLES', 
+      'system_prompt', 'NemoClaw calibration block', '[SYSTEM]'
+    ]
+    const reply = REDACT_SIGNALS.some(s => rawReply.includes(s))
+      ? rawReply.replace(/You are PIOS AI[^.]*\./g, '[redacted]')
+               .replace(/ISO 27001[^.]*\./g, '[redacted]')
+      : rawReply
     return NextResponse.json({ reply })
 
   } catch (err: unknown) {

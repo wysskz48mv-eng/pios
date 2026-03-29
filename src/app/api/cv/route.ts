@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
+import { checkPromptSafety } from '@/lib/security-middleware'
+
 export const runtime     = 'nodejs'
 export const maxDuration = 60
 
@@ -117,7 +119,6 @@ export async function POST(req: NextRequest) {
 
     if (!cvText && isWord) {
       try {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const { extractRawText } = await import('mammoth')
         const r = await extractRawText({ buffer: buf })
@@ -134,12 +135,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Could not read CV text. ${tip}` }, { status: 422 })
     }
 
+    // PII strip before inference — GDPR Art.25
+    const cvTextSafe = cvText
+      .replace(/\b[\w.+-]+@[\w-]+\.\w+\b/g, '[EMAIL]')
+      .replace(/\b(?:\+\d[\d\s\-()\.]{6,14}|\b0\d{9,10})\b/g, '[PHONE]')
+      .replace(/\b[A-Z]{1,2}\d{1,2}\s*\d[A-Z]{2}\b/g, '[POSTCODE]')
+
     const extractionRaw = await callClaude(
       `Analyse this CV and return ONLY valid JSON (no markdown) with these fields:
 {"full_name":"","job_title":"","organisation":"","email":"","education_level":"doctoral|masters|bachelors|professional|other","education_detail":"","qualifications":[],"career_years":0,"seniority_level":"c_suite|senior|mid|junior|student","primary_industry":"","industries":[],"employers":[],"skills":[],"key_achievements":[]}
 
 CV TEXT:
-${cvText.slice(0, 8000)}`,
+${cvTextSafe.slice(0, 8000)}`,
       'You are a precise CV parser. Return only valid JSON, no markdown.', 2000)
 
     let extracted: Record<string, unknown> = {}

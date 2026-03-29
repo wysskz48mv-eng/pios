@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-  const body = await req.json().catch(() => ({}))
+  const body = await req.json()
   const queueIds: string[] = body.queue_ids ?? []
 
   const admin = createAdmin(
