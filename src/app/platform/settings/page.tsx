@@ -459,8 +459,13 @@ export default function SettingsPage() {
       body: JSON.stringify(form),
     })
     if (res.ok) {
-      const { profile } = await res.json()
-      setProfile(profile)
+      // Re-fetch full profile via GET so all columns (incl. primary_project) display immediately
+      const fresh = await fetch('/api/profile').then(r => r.ok ? r.json() : null)
+      if (fresh?.profile) setProfile(fresh.profile)
+      else {
+        const { profile: patched } = await res.json()
+        if (patched) setProfile(patched)
+      }
     }
     setSaving(false); setEditing(false); setSaved(true)
     setTimeout(() => setSaved(false), 3000)

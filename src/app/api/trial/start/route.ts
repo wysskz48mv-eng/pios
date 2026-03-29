@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     })
 
     const loginUrl = linkData?.properties?.action_link
-      ?? `${process.env.NEXT_PUBLIC_APP_URL}/auth/signin`
+      ?? `${process.env.NEXT_PUBLIC_APP_URL}/auth/login`
 
     // Send trial welcome email
     await sendTrialEmail(email, full_name, loginUrl, trialEnd)

@@ -157,7 +157,7 @@ export default function TrialExpiredPage() {
           </a>
         </p>
         <button
-          onClick={() => router.push('/auth/signin')}
+          onClick={() => router.push('/auth/login')}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             fontSize: 12, color: 'var(--pios-dim)', textDecoration: 'underline',

@@ -1325,6 +1325,26 @@ set
 where id = '47621611-96bc-465c-913e-0d23a89465f5';
 `,
   },
+
+  '009': {
+    name: 'M009: user_profiles — deployment_mode, active_modules, it_policy_acknowledged',
+    sentinel_table: 'user_profiles',
+    sql: \`-- ============================================================
+-- PIOS Migration 009 — Onboarding completion columns
+-- deployment_mode, active_modules, it_policy_acknowledged
+-- Written by /api/onboarding/complete but missing from schema
+-- ============================================================
+alter table public.user_profiles
+  add column if not exists deployment_mode          text default 'full',
+  add column if not exists active_modules           text[] default '{}',
+  add column if not exists it_policy_acknowledged   boolean default false,
+  add column if not exists persona_display          text;
+
+select column_name FROM information_schema.columns
+where table_name = 'user_profiles'
+  and column_name in ('deployment_mode','active_modules','it_policy_acknowledged');
+\`,
+  },
 }
 
 async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {
