@@ -32,17 +32,27 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const [profileR, tenantR] = await Promise.all([
-      supabase.from('user_profiles').select('*').eq('id', user.id).single(),
-      supabase.from('tenants').select(
-        'id,name,plan,plan_status,ai_credits_used,ai_credits_limit,trial_ends_at,subscription_id'
-      ).limit(1).single(),
-    ])
+    // Use service client — bypasses RLS, guarantees all columns including new ones
+    const admin = createServiceClient()
+
+    const { data: profileData } = await admin
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    // Tenant lookup via profile's tenant_id
+    const tenantId = profileData?.tenant_id
+    const { data: tenantData } = tenantId
+      ? await admin.from('tenants').select(
+          'id,name,plan,plan_status,ai_credits_used,ai_credits_limit,trial_ends_at,subscription_id,stripe_customer_id,stripe_subscription_id'
+        ).eq('id', tenantId).single()
+      : { data: null }
 
     return NextResponse.json({
       user:    { id: user.id, email: user.email },
-      profile: profileR.data ?? null,
-      tenant:  tenantR.data  ?? null,
+      profile: profileData ?? null,
+      tenant:  tenantData  ?? null,
     })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
