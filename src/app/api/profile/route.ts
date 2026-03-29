@@ -119,13 +119,20 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // Upsert using service client — bypasses RLS
-    const { data, error } = await serviceDb
-      .from('user_profiles')
-      .upsert({ id: user.id, ...safe })
-      .eq('id', user.id)
-      .select()
-      .single()
+    // Update existing profile using service client — bypasses RLS
+    // Note: upsert().eq() is invalid in Supabase JS — use update() for existing rows
+    const { data, error } = existing
+      ? await serviceDb
+          .from('user_profiles')
+          .update({ ...safe })
+          .eq('id', user.id)
+          .select()
+          .single()
+      : await serviceDb
+          .from('user_profiles')
+          .insert({ id: user.id, ...safe })
+          .select()
+          .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
