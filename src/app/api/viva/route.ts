@@ -100,6 +100,16 @@ const QUESTION_BANK = {
     "How did you validate your AI-enabled cost forecasting model against real FM data?",
     "Walk me through the technical architecture of your research instrument.",
   ],
+  sa_specific: [
+    "How does your research address South Africa's transformation imperative under B-BBEE?",
+    "Did you comply with POPIA (Protection of Personal Information Act) in your data collection — walk me through your consent and storage protocols.",
+    "To what extent are your findings Eurocentric? How would your conclusions differ if you applied an Afrocentric epistemological framework?",
+    "How does your research contribute to the NQF Level 10 requirement for original knowledge at the frontier of your discipline?",
+    "What are the implications of your research for South Africa's development goals — specifically inequality, unemployment, and poverty?",
+    "How have you positioned your research within the African context, not just the South African one? Can your findings travel to Nairobi, Lagos, or Accra?",
+    "Given SA's colonial history, how do you account for the epistemological assumptions embedded in your chosen theoretical framework?",
+    "How does your research engage with Ubuntu philosophy or community-centred research ethics?",
+  ],
 }
 
 // ── Examiner profiles ─────────────────────────────────────────────────────────
@@ -125,6 +135,91 @@ function pickQuestion(category?: string): { question: string; category: string }
   return { question: questions[Math.floor(Math.random() * questions.length)], category: cat }
 }
 
+
+// ── South African doctoral examination context ─────────────────────────────
+const SA_DOCTORAL_CONTEXT = `
+South African Doctoral Examination Landscape (2025-2026):
+
+KEY POLICY SHIFT: South Africa is actively standardising viva voce adoption.
+- Council on Higher Education (CHE) is driving standardisation across all 26 public universities
+- Universities South Africa (USAf) CoP on Postgraduate Education endorses viva model
+- NQF Level 10 doctoral criteria: originality, contribution to knowledge, independent research
+
+INSTITUTION-SPECIFIC RULES:
+- UCT (University of Cape Town): Oral exam compulsory from 2026 applicants. 3 international-standard examiners. Confidential process. 5 months typical duration.
+- UNISA: Oral defence compulsory from 2022 cohort. Panel of examiners. Also requires 2 peer-reviewed manuscript submissions. Non-Examining Chairperson (NEC) manages process.
+- GIBS/UP (Gordon Institute of Business Science, University of Pretoria): DBA requires thesis + oral defence. Practitioner-research focus. Triple Crown accredited (AACSB, EQUIS, AMBA).
+- Milpark Education: DBA requires thesis examined by 3 examiners + oral defence (viva voce). Proposal defence phase also required. Practitioner-oriented research.
+- Wits (University of the Witwatersrand): PhD by thesis. Oral examination varies by faculty. Business school increasingly using viva for DBA.
+- Stellenbosch University: Traditionally written examination. Moving toward viva for doctoral degrees.
+- University of Pretoria: Faculty-specific viva requirements. Graduate School of Business and GIBS require viva for DBA.
+- MANCOSA/Regent Business School: Online DBA with viva voce component. Part-time professionals.
+
+SA-SPECIFIC EXAMINATION EMPHASES:
+- POPIA compliance (Protection of Personal Information Act) — equivalent of GDPR, must be addressed in methodology
+- B-BBEE/transformation research context — examiners often ask about transformation implications
+- Africa-specific research context: findings must speak to African business/social context
+- CHE quality assurance: research must demonstrate doctoral standard per National Qualifications Framework (NQF)
+- Decolonisation of knowledge: increasingly, examiners probe epistemological assumptions — whose knowledge? Eurocentric vs Afrocentric frameworks?
+- Ubuntu philosophy: community-centred research ethics expected in social science research
+- Social transformation: research should demonstrate relevance to SA development challenges
+
+TYPICAL SA DBA VIVA PANEL:
+- Internal supervisor (observes, cannot examine)
+- 2-3 external examiners (at least one international)
+- Independent chairperson (procedural oversight)
+- Duration: 1-2 hours typically
+- Outcome categories: Pass / Minor corrections (3 months) / Major corrections (6 months) / Resubmission / MPhil downgrade
+`
+
+// ── SA University examiner profiles ─────────────────────────────────────────
+const SA_EXAMINER_PROFILES: Record<string, string> = {
+  'gibs_up': \`Gordon Institute of Business Science (GIBS) / University of Pretoria — DBA Examiner Profile.
+Programme: DBA (Doctor of Business Administration) — Triple Crown accredited (AACSB, EQUIS, AMBA).
+Research culture: Strongly practitioner-research integrated. Examiners expect clear managerial/organisational implications alongside academic rigour.
+Typical examiner angle: Will probe the "so what for practice" question heavily. GIBS is known for demanding that research outputs are publishable AND implementable. Expect questions on knowledge transfer to industry.
+Likely question areas: How does your research advance African management theory? What is the managerial implication for C-suite decision-makers? How does your methodology meet CHE NQF Level 10 standards?
+Key challenge: GIBS examiners frequently push on whether the candidate can articulate a theoretical contribution beyond descriptive practitioner findings.\`,
+
+  'uct': \`University of Cape Town (UCT) — Doctoral Examiner Profile.
+UCT ranks #1 in Africa and operates to international doctoral standards. From 2026, oral exam is compulsory for all PhD candidates.
+Examination panel: 3 examiners of "high international standing with relevant and significant academic experience." Candidate identity of examiners is confidential until after examination.
+Research culture: UCT examiners are internationally oriented. Strong emphasis on publishability and contribution to global scholarly conversation. Interdisciplinary research is valued.
+Likely examiner angle: Will assess whether the thesis holds up to international peer review standards. Expect probing on epistemological rigour, methodological transparency, and literature positioning within global debates.
+Key challenge: UCT examiners are particularly sharp on: "How does this speak to a global audience, not just a South African or African one?" Must demonstrate international relevance.\`,
+
+  'unisa': \`University of South Africa (UNISA) — Doctoral Examiner Profile.
+Africa's largest open distance learning institution. Oral defence compulsory from 2022 cohort; also requires 2 peer-reviewed manuscript submissions.
+Examination process: Examiners submit reports first; if satisfactory, Non-Examining Chairperson (NEC) arranges viva. Can be conducted online. Results official within one month.
+Research culture: UNISA has a strong transformation and social development ethos. Distance-learning student population means research often addresses equity, access, and community-based issues.
+Likely examiner angle: Will probe the social relevance and transformation implications of findings. Strong interest in POPIA compliance and research ethics. Ubuntu-oriented research ethics expected.
+Key challenge: UNISA examiners also assess whether research contributes to South Africa's development challenges. "What does your research mean for communities who cannot afford the solution you propose?" is a typical probing question.\`,
+
+  'stellenbosch': \`Stellenbosch University (SU) — Doctoral Examiner Profile.
+One of SA's top-ranked universities. Historically Afrikaans-medium but now fully bilingual/multilingual. Strong research output; internationally networked faculty.
+Research culture: Rigorous, traditionally conservative academic standards. Strong in quantitative methods, economics, engineering. Business School (USB) increasingly values mixed-methods and African management research.
+Likely examiner angle: Will push on methodological rigour and replicability. Stellenbosch examiners are known for detailed thesis engagement — expect page-by-page probing of methodology chapters. Strong on validity and reliability assessment.
+Key challenge: "How would your findings change under a different epistemological assumption?" Stellenbosch examiners are particularly sharp on research design robustness.\`,
+
+  'wits': \`University of the Witwatersrand (Wits) — Doctoral Examiner Profile.
+Wits Business School (WBS) and the Graduate School of Governance host DBA/PhD programmes. Wits ranks in top 250 globally.
+Research culture: Socially engaged research tradition. Wits has a strong legacy of critical theory, social justice research, and transformative scholarship. Business research must navigate between rigour and social relevance.
+Likely examiner angle: Critical theory lens — will probe whether the candidate's theoretical framework adequately accounts for power dynamics, race, and inequality in the South African context. Transformation implications are not optional.
+Key challenge: "Whose interests does this research serve?" is a Wits examiner signature question. Candidates must demonstrate reflexivity about their positionality as researchers.\`,
+
+  'milpark': \`Milpark Education — DBA Examiner Profile.
+South Africa's private business school with HEQC-accredited DBA. Thesis assessed by 3 examiners + oral defence before final endorsement.
+Research culture: Pragmatic, practitioner-focused. Milpark targets working professionals and senior executives. Research is expected to solve real organisational problems. Ethical and sustainable business focus.
+Likely examiner angle: Will probe the practical implementability of findings. "If I'm a CEO, what do I do Monday morning with your findings?" is the spirit of Milpark examination. Strong emphasis on ethical business practices alignment.
+Key challenge: Milpark examiners expect candidates to have synthesised scholarly literature AND organisational reality. Pure academic abstraction without organisational grounding will be challenged.\`,
+
+  'regent_mancosa': \`Regent Business School / MANCOSA — DBA Examiner Profile.
+Private business schools offering accredited DBA with distance/online delivery. Target market: working professionals across Africa and diaspora.
+Research culture: Access-oriented, practitioner-research focused. Programmes attract students from across Sub-Saharan Africa. African business context is central to curriculum. Online viva capability well established.
+Likely examiner angle: Strong on African management theory and continental business context. Will probe whether findings are relevant beyond SA borders to broader African markets. Entrepreneurship, SME development, and development economics often relevant lenses.
+Key challenge: "How does your research speak to the African entrepreneur, not just the multinational?" Expect probing on Africa-specific applicability of Western management frameworks.\`,
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
@@ -137,8 +232,14 @@ export async function POST(req: NextRequest) {
 
     // ── Mode: profile — generate examiner profile ─────────────────────────
     if (mode === 'profile') {
-      const examinerName = body.examinerName ?? ''
-      const institution  = body.institution  ?? ''
+      const examinerName   = body.examinerName   ?? ''
+      const institution    = body.institution    ?? ''
+      const institutionKey = body.institutionKey ?? examiner
+      // Check SA profiles first
+      const saProfile = SA_EXAMINER_PROFILES[institutionKey as string]
+      if (saProfile) {
+        return NextResponse.json({ ok: true, profile: saProfile, source: 'sa_built_in', context: SA_DOCTORAL_CONTEXT })
+      }
       const builtIn = EXAMINER_PROFILES[examiner as string]
       if (builtIn) {
         return NextResponse.json({ ok: true, profile: builtIn, source: 'built_in' })
@@ -202,13 +303,20 @@ export async function POST(req: NextRequest) {
     const currentQuestion = question ?? pickedQ
     const examinerProfile = examiner ? (EXAMINER_PROFILES[examiner as string] ?? '') : ''
 
+    // Select context based on institution type
+    const institutionCtx = body.institutionKey
+      ? (SA_EXAMINER_PROFILES[body.institutionKey] ? SA_DOCTORAL_CONTEXT : PORTSMOUTH_DBA_CONTEXT)
+      : PORTSMOUTH_DBA_CONTEXT
+    const saExaminerProfile = body.institutionKey ? (SA_EXAMINER_PROFILES[body.institutionKey] ?? '') : ''
+    const activeExaminerProfile = examinerProfile || saExaminerProfile
+
     const modeInstructions: Record<string, string> = {
-      standard: `You are a fair but rigorous DBA examiner at the University of Portsmouth. Ask the viva question below in a professional, non-confrontational tone. After the candidate answers, you will probe with one follow-up.`,
-      examiner: `${examinerProfile}\n\nYou are role-playing as this specific examiner. Ask the viva question below in their characteristic style. Stay in character throughout.`,
+      standard: `You are a fair but rigorous doctoral examiner. Ask the viva question below in a professional, non-confrontational tone. After the candidate answers, you will probe with one follow-up.`,
+      examiner: `${activeExaminerProfile || 'You are a doctoral examiner.'}\n\nYou are role-playing as this specific examiner. Ask the viva question below in their characteristic style. Stay in character throughout.`,
       stress: `You are a demanding external examiner who is sceptical of practitioner-research. You will ask the question below and regardless of the answer, probe for weaknesses, demand specific evidence, and challenge generalisability. Do not accept vague answers. Push hard but remain professional.`,
     }
 
-    const systemPrompt = `${PORTSMOUTH_DBA_CONTEXT}\n\n${modeInstructions[mode] ?? modeInstructions.standard}\n\nThesis context: ${thesisContext ?? 'DBA on AI-enabled FM cost forecasting in GCC master communities (VeritasEdge™ as practitioner case)'}`
+    const systemPrompt = `${institutionCtx}\n\n${modeInstructions[mode] ?? modeInstructions.standard}\n\nThesis context: ${thesisContext ?? 'DBA on AI-enabled FM cost forecasting in GCC master communities (VeritasEdge™ as practitioner case)'}`
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514', max_tokens: 400,
@@ -255,6 +363,8 @@ export async function GET() {
       total_questions: totalQuestions,
       categories,
       examiners_available: Object.keys(EXAMINER_PROFILES),
+      sa_institutions_available: Object.keys(SA_EXAMINER_PROFILES),
+      sa_context_available: true,
       modes: ['standard', 'examiner', 'stress', 'feedback', 'profile', 'summary'],
     })
   } catch (err: any) {

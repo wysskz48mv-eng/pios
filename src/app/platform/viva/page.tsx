@@ -31,6 +31,16 @@ const EXAMINERS: { key: ExaminerKey; label: string; institution: string }[] = [
   { key: 'external',        label: 'External examiner',   institution: 'TBC' },
 ]
 
+const SA_INSTITUTIONS: { key: string; label: string; degree: string; hasViva: boolean }[] = [
+  { key: 'uct',          label: 'UCT',          degree: 'PhD',      hasViva: true  },
+  { key: 'gibs_up',      label: 'GIBS / UP',    degree: 'DBA/PhD',  hasViva: true  },
+  { key: 'unisa',        label: 'UNISA',        degree: 'PhD',      hasViva: true  },
+  { key: 'wits',         label: 'Wits',         degree: 'PhD/DBA',  hasViva: true  },
+  { key: 'stellenbosch', label: 'Stellenbosch', degree: 'PhD',      hasViva: true  },
+  { key: 'milpark',      label: 'Milpark',      degree: 'DBA',      hasViva: true  },
+  { key: 'regent_mancosa',label: 'Regent/MANCOSA',degree: 'DBA',    hasViva: true  },
+]
+
 const CATEGORIES: { key: Category; label: string; icon: string }[] = [
   { key: 'all',                  label: 'All topics',       icon: '⬛' },
   { key: 'originality',          label: 'Originality',      icon: '◆' },
@@ -71,6 +81,9 @@ export default function VivaPage() {
   const [session,     setSession]     = useState<SessionEntry[]>([])
   const [tipIdx,      setTipIdx]      = useState(0)
   const [examinerProfile, setExaminerProfile] = useState<string|null>(null)
+  const [saInstitution,   setSaInstitution]   = useState<string>('uct')
+  const [saProfile,       setSaProfile]       = useState<string|null>(null)
+  const [saLoading,       setSaLoading]       = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [activeTab,   setActiveTab]   = useState<'session'|'profile'|'tips'>('session')
 
@@ -96,6 +109,20 @@ export default function VivaPage() {
     } catch { /* silent */ }
     setLoading(false)
   }, [examiner])
+
+  const loadSAProfile = async (institutionKey: string) => {
+    setSaLoading(true); setSaProfile(null)
+    try {
+      const r = await fetch('/api/viva', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'profile', institutionKey }),
+      })
+      const d = await r.json()
+      setSaProfile(d.profile ?? null)
+    } catch { /* silent */ }
+    setSaLoading(false)
+  }
 
   useEffect(() => {
     if (mode === 'examiner') loadProfile()
@@ -436,9 +463,46 @@ export default function VivaPage() {
                   <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>Select an examiner to view their profile.</p>
                 )}
               </div>
-              <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 8 }}>
+              <p style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 8, marginBottom: 24 }}>
                 Profiles are generated from known publication records. Review and refine based on any direct knowledge of your examiners.
               </p>
+
+              {/* South African Universities */}
+              <div style={{ borderTop: '0.5px solid var(--color-border-tertiary)', paddingTop: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>South African institutions</span>
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'var(--color-background-success)', color: 'var(--color-text-success)', fontWeight: 500 }}>VIVA REQUIRED</span>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginBottom: 14, lineHeight: 1.6 }}>
+                  South Africa is standardising viva voce adoption across all doctoral programmes. UCT made it compulsory from 2026; UNISA from 2022. DBA programmes (GIBS, Milpark, Regent) have required viva for years. Select an institution to see the examination culture, typical examiner angles, and challenge questions.
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                  {SA_INSTITUTIONS.map(inst => (
+                    <button key={inst.key}
+                      onClick={() => { setSaInstitution(inst.key); loadSAProfile(inst.key) }}
+                      style={{ ...S.btn, padding: '7px 14px',
+                        background: saInstitution === inst.key ? '#22c55e18' : 'transparent',
+                        border: saInstitution === inst.key ? '1px solid #22c55e55' : '0.5px solid var(--color-border-tertiary)',
+                        color: saInstitution === inst.key ? '#15803d' : 'var(--color-text-secondary)' }}>
+                      <span style={{ fontSize: 13 }}>{inst.label}</span>
+                      <span style={{ fontSize: 10, marginLeft: 6, opacity: 0.7 }}>{inst.degree}</span>
+                    </button>
+                  ))}
+                </div>
+                <div style={S.card}>
+                  {saLoading ? (
+                    <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>Loading institution profile…</p>
+                  ) : saProfile ? (
+                    <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.75, fontFamily: 'inherit', margin: 0, color: 'var(--color-text-primary)' }}>
+                      {saProfile}
+                    </pre>
+                  ) : (
+                    <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>
+                      Select a South African institution to view its doctoral examination culture, viva format, and typical examiner challenge angles.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
