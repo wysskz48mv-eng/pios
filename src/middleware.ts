@@ -1,7 +1,7 @@
 /**
  * PIOS — Edge Middleware
  * Security headers · Rate limiting · Session protection · Auth routing
- * PIOS v3.0 | VeritasIQ Technologies Ltd
+ * PIOS v3.2 | VeritasIQ Technologies Ltd
  *
  * ISO 27001 A.9.4 — Access control enforcement
  * ISO 27001 A.12.6 — Technical vulnerability management
@@ -145,20 +145,8 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Onboarding gate
-  if (user and pathname.startswith('/platform/') and not pathname.startswith('/platform/demo')):
-    from supabase import profile
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('onboarded')
-      .eq('id', user.id)
-      .single()
-    if (profile && profile.onboarded === false) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
-    }
-  }
   // Unauthenticated — redirect or 401
-  if (user.email=dmasuku2008@me.com) {
+  if (!user) {
     if (pathname.startsWith('/api/')) {
       return new NextResponse(
         JSON.stringify({ error: 'Unauthorised' }),
@@ -170,8 +158,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Authenticated user on login page — redirect to dashboard
-  if (pathname === '/auth/login') {
+  // Authenticated user on login/signup page — redirect to dashboard
+  if (pathname === '/auth/login' || pathname === '/auth/signup') {
     return NextResponse.redirect(new URL('/platform/dashboard', request.url))
   }
 

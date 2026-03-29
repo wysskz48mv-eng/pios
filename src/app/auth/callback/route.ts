@@ -24,12 +24,12 @@ export async function GET(request: NextRequest) {
   // Surface any upstream OAuth errors
   if (errorMsg) {
     return NextResponse.redirect(
-      `${origin}/auth/signin?error=${encodeURIComponent(errorMsg)}`
+      `${origin}/auth/login?error=${encodeURIComponent(errorMsg)}`
     )
   }
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/auth/signin?error=missing_code`)
+    return NextResponse.redirect(`${origin}/auth/login?error=missing_code`)
   }
 
   const supabase = await createClient()
@@ -39,14 +39,14 @@ export async function GET(request: NextRequest) {
   if (exchangeErr) {
     console.error('[auth/callback] exchange error:', exchangeErr.message)
     return NextResponse.redirect(
-      `${origin}/auth/signin?error=${encodeURIComponent(exchangeErr.message)}`
+      `${origin}/auth/login?error=${encodeURIComponent(exchangeErr.message)}`
     )
   }
 
   // Get user
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.redirect(`${origin}/auth/signin?error=no_user`)
+    return NextResponse.redirect(`${origin}/auth/login?error=no_user`)
   }
 
   // Check / create user profile

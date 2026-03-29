@@ -103,6 +103,7 @@ export default function OnboardingPage() {
   const [uploading, setUploading]     = useState(false)
   const [uploadErr, setUploadErr]     = useState('')
   const [saving, setSaving]           = useState(false)
+  const [completeErr, setCompleteErr] = useState('')
   const [integrations, setIntegrations] = useState<Record<string, boolean>>({})
   const fileRef = useRef<HTMLInputElement>(null)
   const TOTAL_STEPS = persona === 'executive' ? 7 : 6
@@ -153,8 +154,9 @@ export default function OnboardingPage() {
   /* ── Save + complete ─────── */
   const complete = async () => {
     setSaving(true)
+    setCompleteErr('')
     try {
-      await fetch('/api/onboarding/complete', {
+      const res = await fetch('/api/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -164,8 +166,15 @@ export default function OnboardingPage() {
           integrations,
         }),
       })
+      const data = await res.json()
+      if (!res.ok) {
+        setCompleteErr(data.error ?? 'Setup failed — please try again.')
+        setSaving(false)
+        return
+      }
       router.push('/platform/dashboard')
     } catch {
+      setCompleteErr('Network error — please check your connection and try again.')
       setSaving(false)
     }
   }
@@ -451,6 +460,12 @@ export default function OnboardingPage() {
         <div style={{ fontSize: 13, color: 'var(--pios-muted)', marginBottom: 24, lineHeight: 1.6 }}>
           Your first NemoClaw™ Morning Brief will arrive tomorrow at 07:00. You can also generate one now from the Command Centre.
         </div>
+
+        {completeErr && (
+          <div style={{ background: 'rgba(255,80,80,0.08)', border: '1px solid rgba(255,80,80,0.25)', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 13, color: 'var(--dng)' }}>
+            {completeErr}
+          </div>
+        )}
 
         <button
           style={{ ...S.btn, opacity: saving ? 0.7 : 1 }}
