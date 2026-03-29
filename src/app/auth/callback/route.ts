@@ -118,7 +118,8 @@ export async function GET(request: NextRequest) {
     }).eq('id', user.id)
   }
 
-  const destination = existingProfile?.onboarded ? next : '/onboarding'
+  // Only block on explicit false — null/missing should not trap user in loop
+  const destination = (existingProfile?.onboarded === false) ? '/onboarding' : next
   return NextResponse.redirect(`${origin}${destination}`)
 }
 

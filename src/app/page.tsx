@@ -18,7 +18,7 @@ export default async function Home() {
       .eq('id', user.id)
       .single()
 
-    if (!profile || profile.onboarded === false) {
+    if (profile?.onboarded === false) {
       redirect('/onboarding')
     }
     redirect('/platform/dashboard')

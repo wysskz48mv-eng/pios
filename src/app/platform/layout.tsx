@@ -21,7 +21,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
     .single()
 
   // Onboarding gate — redirect unboarded users
-  if (!profile || profile.onboarded === false) {
+  if (profile?.onboarded === false) {
     redirect('/onboarding')
   }
 
