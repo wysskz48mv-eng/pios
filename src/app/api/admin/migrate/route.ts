@@ -1859,8 +1859,104 @@ alter table public.okr_notification_prefs
 select count(*) as contracts from public.contracts;
 `,
   },
-}
 
+  '012': {
+    name: 'M012: okrs, decisions, exec_key_results + financial_snapshots columns',
+    sentinel_table: 'okrs',
+    sql: `-- M012: Core tables for briefs, dashboard, and seed data
+create table if not exists public.okrs (
+  id           uuid primary key default uuid_generate_v4(),
+  user_id      uuid references auth.users(id) on delete cascade not null,
+  tenant_id    uuid references public.tenants(id) on delete cascade,
+  title        text not null,
+  description  text,
+  period       text,
+  status       text default 'active',
+  health       text default 'on_track',
+  progress_pct integer default 0,
+  owner        text,
+  due_date     date,
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
+);
+alter table public.okrs enable row level security;
+do $$ begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='okrs' and policyname='okrs_own') then
+    create policy okrs_own on public.okrs for all using (user_id = auth.uid());
+  end if;
+end $$;
+create index if not exists idx_okrs_user on public.okrs(user_id, status);
+
+create table if not exists public.key_results (
+  id           uuid primary key default uuid_generate_v4(),
+  okr_id       uuid references public.okrs(id) on delete cascade not null,
+  user_id      uuid references auth.users(id) on delete cascade not null,
+  title        text not null,
+  current_val  numeric default 0,
+  target_val   numeric default 100,
+  unit         text,
+  progress_pct integer default 0,
+  created_at   timestamptz default now()
+);
+alter table public.key_results enable row level security;
+do $$ begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='key_results' and policyname='key_results_own') then
+    create policy key_results_own on public.key_results for all using (user_id = auth.uid());
+  end if;
+end $$;
+
+create table if not exists public.exec_key_results (
+  id           uuid primary key default uuid_generate_v4(),
+  okr_id       uuid references public.exec_okrs(id) on delete cascade,
+  user_id      uuid references auth.users(id) on delete cascade not null,
+  title        text not null,
+  current_val  numeric default 0,
+  target_val   numeric default 100,
+  unit         text,
+  progress_pct integer default 0,
+  created_at   timestamptz default now()
+);
+alter table public.exec_key_results enable row level security;
+do $$ begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='exec_key_results' and policyname='exec_key_results_own') then
+    create policy exec_key_results_own on public.exec_key_results for all using (user_id = auth.uid());
+  end if;
+end $$;
+
+create table if not exists public.decisions (
+  id           uuid primary key default uuid_generate_v4(),
+  user_id      uuid references auth.users(id) on delete cascade not null,
+  tenant_id    uuid references public.tenants(id) on delete cascade,
+  title        text not null,
+  context      text,
+  options      text,
+  rationale    text,
+  status       text default 'open',
+  domain       text,
+  decided_at   timestamptz,
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
+);
+alter table public.decisions enable row level security;
+do $$ begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='decisions' and policyname='decisions_own') then
+    create policy decisions_own on public.decisions for all using (user_id = auth.uid());
+  end if;
+end $$;
+create index if not exists idx_decisions_user on public.decisions(user_id, status);
+
+alter table public.financial_snapshots
+  add column if not exists revenue_gbp   numeric(14,2) default 0,
+  add column if not exists burn_gbp      numeric(14,2) default 0,
+  add column if not exists runway_months numeric(6,1),
+  add column if not exists entity        text default 'group',
+  add column if not exists expenses      numeric(14,2) default 0;
+
+select (select count(*) from public.okrs) as okrs,
+       (select count(*) from public.decisions) as decisions;
+`,
+  },
+}
 
 async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {
   try {
