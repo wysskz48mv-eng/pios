@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       ?? user.email?.split('@')[0]
       ?? 'there'
 
-    await supabase.from('user_profiles').insert({
+    await supabase.from('user_profiles').upsert({
       id:           user.id,
       full_name:    fullName,
       email:        user.email,
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       onboarded:    false,
       created_at:   new Date().toISOString(),
       updated_at:   new Date().toISOString(),
-    }).onConflict('id').ignore()
+    }, { onConflict: 'id' })
 
     // Seed exec_intelligence_config for new user
     await supabase.from('exec_intelligence_config').upsert({
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
       brief_enabled:  true,
       persona:        'executive',
       updated_at:     new Date().toISOString(),
-    }, { onConflict: 'user_id' })
+    }, { onConflict: 'id' })
 
     // Send welcome email — fire and forget, never block redirect
     sendWelcomeEmail(user.email ?? '', fullName).catch(() => {})

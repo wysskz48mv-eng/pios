@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
 
     // Update series published count
     if (series_id) {
-      await supabase.rpc('increment_published_episodes', { series_id_param: series_id }).catch(() => {})
+      await supabase.rpc('increment_published_episodes', { series_id_param: series_id })
     }
   }
 

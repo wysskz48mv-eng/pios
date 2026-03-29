@@ -1,3 +1,4 @@
+// @ts-ignore
 /**
  * POST /api/cv — CV Upload + NemoClaw™ Intelligence Calibration
  * GET  /api/cv — return existing calibration for current user
@@ -116,6 +117,8 @@ export async function POST(req: NextRequest) {
 
     if (!cvText && isWord) {
       try {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         const { extractRawText } = await import('mammoth')
         const r = await extractRawText({ buffer: buf })
         cvText  = r.value ?? ''

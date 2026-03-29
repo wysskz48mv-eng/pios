@@ -194,9 +194,9 @@ export async function GET(req: NextRequest) {
         last_date:    wellnessData.last_activity_date,
       } : null,
       financial: financial ? {
-        revenue:    financial.revenue_gbp,
-        burn:       financial.burn_gbp,
-        runway:     financial.runway_months,
+        revenue:    financial.revenue,
+        burn:       financial.expenses,
+        runway:     null,
         period:     financial.period,
       } : null,
       brief: brief ? {

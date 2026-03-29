@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     const { data: linkData } = await adminSb.auth.admin.generateLink({
       type:  'magiclink',
       email,
-      options: { redirect_to: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding` },
+      options: { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding` },
     })
 
     const loginUrl = linkData?.properties?.action_link

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { AiChat } from './AiChat'
-import { TrialBanner } from '@/components/TrialBanner'
+import TrialBanner from '@/components/TrialBanner'
 import { TrialExpiredGate } from '@/components/TrialExpiredGate'
 import { GlobalSearch } from '@/components/GlobalSearch'
 import { usePathname } from 'next/navigation'
@@ -113,7 +113,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
       }}>
 
         {isTrialing && (
-          <TrialBanner trialEndsAt={trialEndsAt} planStatus={String(planStatus ?? 'active')} />
+          <TrialBanner />
         )}
 
         {/* ── Top bar ── */}

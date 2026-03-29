@@ -78,9 +78,9 @@ async function gatherContext(supabase: ReturnType<typeof adminDb>, userId: strin
   const calib     = calibRes.status     === 'fulfilled' ? calibRes.value.data      : null
 
   // Mark overdue tasks
-  const enrichedTasks = tasks.map((t: Record<string, string>) => ({
+  const enrichedTasks = tasks.map((t: Record<string, unknown>) => ({
     ...t,
-    overdue: t.due_date ? new Date(t.due_date) < today : false,
+    overdue: t.due_date ? new Date(String(t.due_date ?? '')) < today : false,
   }))
 
   return { tasks: enrichedTasks, okrs, decisions, wellness, financial, calib, todayStr }
@@ -91,22 +91,22 @@ function buildPrompt(ctx: Awaited<ReturnType<typeof gatherContext>>, userName: s
 
   const highTasks   = tasks.filter((t: Record<string, unknown>) => t.priority === 'high' || t.overdue)
   const overdueList = tasks.filter((t: Record<string, unknown>) => t.overdue)
-  const atRiskOkrs  = okrs.filter((o: Record<string, string>) => ['at_risk', 'off_track'].includes(o.health))
+  const atRiskOkrs  = okrs.filter((o: Record<string, unknown>) => ['at_risk', 'off_track'].includes(String(o.health ?? '')))
 
   return `Morning brief for ${userName}. Today: ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}.
 
 ${calib?.calibration_summary ? `USER PROFILE: ${calib.calibration_summary.slice(0, 200)}` : ''}
 
 TASKS (${tasks.length} open):
-${highTasks.slice(0, 6).map((t: Record<string, string>) => `- [${t.priority?.toUpperCase()}${(t as Record<string, unknown>).overdue ? ' OVERDUE' : ''}] ${t.title}${t.due_date ? ` (due ${new Date(t.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})` : ''}`).join('\n') || 'None'}
+${highTasks.slice(0, 6).map((t: Record<string, unknown>) => `- [${String(t.priority ?? '').toUpperCase()}${t.overdue ? ' OVERDUE' : ''}] ${String(t.title ?? '')}${t.due_date ? ` (due ${new Date(String(t.due_date ?? '')).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})` : ''}`).join('\n') || 'None'}
 ${overdueList.length > 0 ? `OVERDUE COUNT: ${overdueList.length}` : ''}
 
 OKRs (${okrs.length}):
-${okrs.slice(0, 4).map((o: Record<string, string>) => `- ${o.title} [${o.progress_pct}% — ${o.health}]`).join('\n') || 'None'}
+${okrs.slice(0, 4).map((o: Record<string, unknown>) => `- ${String(o.title ?? '')} [${String(o.progress_pct ?? 0)}% — ${String(o.health ?? '')}]`).join('\n') || 'None'}
 ${atRiskOkrs.length > 0 ? `AT RISK: ${atRiskOkrs.length} OKRs need attention` : ''}
 
 OPEN DECISIONS: ${decisions.length}
-${decisions.slice(0, 3).map((d: Record<string, string>) => `- ${d.title}`).join('\n') || 'None'}
+${decisions.slice(0, 3).map((d: Record<string, unknown>) => `- ${String(d.title ?? '')}`).join('\n') || 'None'}
 
 ${financial ? `FINANCIAL: Revenue ${financial.revenue_gbp ? `£${(financial.revenue_gbp / 1000).toFixed(0)}k` : 'unknown'} · Burn ${financial.burn_gbp ? `£${(financial.burn_gbp / 1000).toFixed(0)}k/mo` : 'unknown'} · Runway ${financial.runway_months ?? '?'} months` : ''}
 ${wellness ? `WELLNESS: ${wellness.current_streak ?? 0}-day streak` : ''}

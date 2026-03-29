@@ -157,6 +157,7 @@ export default function DashboardPage() {
   const [tenant,       setTenant]       = useState<TenantRecord | null>(null)
   const [todayEvents,  setTodayEvents]  = useState<Record<string,unknown>[]>([])
   const [seSnap,       setSeSnap]       = useState<SnapRecord | null>(null)
+  const [credits,      setCredits]      = useState<{used:number;limit:number}|null>(null)
   const [isSnap,       setIsSnap]       = useState<SnapRecord | null>(null)
   const [persona,      setPersona]      = useState<string>('')
   const [execSnap,     setExecSnap]     = useState<Record<string,unknown> | null>(null)
@@ -199,6 +200,7 @@ export default function DashboardPage() {
     setNotifs((nR.notifications ?? []).filter((n: Record<string,unknown>) => !n.read))
     setPersona(d.persona ?? '')
     if (d.exec) setExecSnap(d.exec)
+    if (d.credits) setCredits(d.credits)
     setLoading(false)
   }, [])
 

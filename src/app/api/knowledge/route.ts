@@ -102,10 +102,10 @@ export async function DELETE(req: NextRequest) {
 // Simple keyword extractor — pulls capitalised and domain-specific words
 function extractKeywords(text: string): string[] {
   const stops = new Set(['the','and','for','with','this','that','from','have','been','will','into','they','their','about','which','when','your','more','also','than','then','some','what','time'])
-  return [...new Set(
+  return Array.from(new Set(
     text.split(/\W+/)
       .filter(w => w.length > 4 && !stops.has(w.toLowerCase()))
       .map(w => w.toLowerCase())
       .slice(0, 8)
-  )]
+  ))
 }

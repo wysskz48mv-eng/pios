@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       ...task,
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
-    }, { onConflict: 'user_id,title' }).catch(() => ({ error: null }))
+    }, { onConflict: 'user_id,title' })
     if (!error) taskCount++
   }
   results.push(`✓ Tasks: ${taskCount}/${tasks.length} seeded`)
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
       ...okr,
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
-    }, { onConflict: 'user_id,title' }).catch(() => ({ error: null }))
+    }, { onConflict: 'user_id,title' })
     if (!error) okrCount++
   }
   results.push(`✓ OKRs: ${okrCount}/${okrs.length} seeded`)
@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
       ...dec,
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
-    }, { onConflict: 'user_id,title' }).catch(() => ({ error: null }))
+    }, { onConflict: 'user_id,title' })
     if (!error) decCount++
   }
   results.push(`✓ Decisions: ${decCount}/${decisions.length} seeded`)
@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
       ...ip,
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
-    }, { onConflict: 'user_id,name' }).catch(() => ({ error: null }))
+    }, { onConflict: 'user_id,name' })
     if (!error) ipCount++
   }
   results.push(`✓ IP assets: ${ipCount}/${ipAssets.length} seeded`)
@@ -261,7 +261,7 @@ export async function POST(req: NextRequest) {
       user_id:    uid,
       ...fin,
       created_at: now.toISOString(),
-    }, { onConflict: 'user_id,period' }).catch(() => ({ error: null }))
+    }, { onConflict: 'user_id,period' })
     if (!error) finCount++
   }
   results.push(`✓ Financials: ${finCount}/${financials.length} snapshots seeded`)
@@ -297,7 +297,7 @@ export async function POST(req: NextRequest) {
       ...sh,
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
-    }, { onConflict: 'user_id,name' }).catch(() => ({ error: null }))
+    }, { onConflict: 'user_id,name' })
     if (!error) shCount++
   }
   results.push(`✓ Stakeholders: ${shCount}/${stakeholders.length} seeded`)
@@ -331,7 +331,7 @@ export async function POST(req: NextRequest) {
       ...pub,
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
-    }, { onConflict: 'user_id,title' }).catch(() => ({ error: null }))
+    }, { onConflict: 'user_id,title' })
     if (!error) pubCount++
   }
   results.push(`✓ Publications: ${pubCount}/${publications.length} seeded`)
