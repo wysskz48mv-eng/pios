@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
  * POST /api/cos/review/generate

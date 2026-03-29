@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
+import { checkPromptSafety } from '@/lib/security-middleware'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60
@@ -17,6 +18,11 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
+  // Prompt injection defence — IS-POL-008
+  const _userText = Object.values(body ?? {}).filter(v => typeof v === 'string').join(' ')
+  const _safety = checkPromptSafety(_userText)
+  if (!_safety.safe) return NextResponse.json({ error: 'Input rejected: ' + _safety.reason }, { status: 400 })
+
     const { mode, context } = body as {
       mode: 'brief' | 'decision' | 'review' | 'okr_commentary' | 'stakeholder_brief' | 'time_audit' | 'report_pack'
       context: Record<string, unknown>

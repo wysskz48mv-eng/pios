@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
  * POST /api/consulting/proposals/generate
@@ -31,6 +32,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
+  // Prompt injection defence — IS-POL-008
+  const _userText = Object.values(body ?? {}).filter(v => typeof v === 'string').join(' ')
+  const _safety = checkPromptSafety(_userText)
+  if (!_safety.safe) return NextResponse.json({ error: 'Input rejected: ' + _safety.reason }, { status: 400 })
+
     const { template, client_name, title, scope, day_rate, estimated_days, expenses, fee_total } = body
 
     // Fetch NemoClaw calibration

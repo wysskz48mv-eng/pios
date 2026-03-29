@@ -23,6 +23,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkPromptSafety } from '@/lib/security-middleware'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -175,7 +176,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json().catch(() => ({}))
+  const body = await req.json()
+  // Prompt injection defence — IS-POL-008
+  const _userText = Object.values(body ?? {}).filter(v => typeof v === 'string').join(' ')
+  const _safety = checkPromptSafety(_userText)
+  if (!_safety.safe) return NextResponse.json({ error: 'Input rejected: ' + _safety.reason }, { status: 400 })
   const { mode = 'scan', keywords, limit = 5 } = body
 
   // Get user's current literature library

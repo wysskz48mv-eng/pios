@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
  * POST /api/email/triage
@@ -67,6 +68,11 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
   const body = await req.json()
+  // Prompt injection defence — IS-POL-008
+  const _userText = Object.values(body ?? {}).filter(v => typeof v === 'string').join(' ')
+  const _safety = checkPromptSafety(_userText)
+  if (!_safety.safe) return NextResponse.json({ error: 'Input rejected: ' + _safety.reason }, { status: 400 })
+
   const emailIds: string[] = body.email_ids ?? []
 
   const admin = createAdmin(

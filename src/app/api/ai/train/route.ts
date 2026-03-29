@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { callClaude }                from '@/lib/ai/client'
+import { checkPromptSafety } from '@/lib/security-middleware'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 30
@@ -45,7 +46,11 @@ export async function POST(req: NextRequest) {
     const p = prof as any
     if (!p?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
-    const body = await req.json() as Record<string, unknown>
+    const body = await req.json()
+  // Prompt injection defence — IS-POL-008
+  const _userText = Object.values(body ?? {}).filter(v => typeof v === 'string').join(' ')
+  const _safety = checkPromptSafety(_userText)
+  if (!_safety.safe) return NextResponse.json({ error: 'Input rejected: ' + _safety.reason }, { status: 400 })
     const action = body.action as string
 
     // ── Save training config ──────────────────────────────────────────────────

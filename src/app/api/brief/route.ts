@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
  * POST /api/brief         — generate today's brief (or return cached)
