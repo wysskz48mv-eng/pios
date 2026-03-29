@@ -43,6 +43,14 @@
     {
       "path": "/api/cron/brief",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cos/daily-brief",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/notifications/smart",
+      "schedule": "0 6 * * *"
     }
   ],
   "functions": {
@@ -96,6 +104,21 @@
     },
     "src/app/api/cos/review/generate/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/cos/daily-brief/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/notifications/smart/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/agents/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/supervisor-prep/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/onboarding/route.ts": {
+      "maxDuration": 30
     }
   }
 }
