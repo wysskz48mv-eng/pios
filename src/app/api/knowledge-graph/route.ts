@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
     const edges: Array<{ source: string; target: string; type: string; weight: number }> = []
     const edgeSet = new Set<string>()
 
-    function addEdge(a: string, b: string, type: string, w = 1) {
+    const addEdge = (a: string, b: string, type: string, w = 1) => {
       const key = [a, b].sort().join('|') + type
       if (!edgeSet.has(key)) { edgeSet.add(key); edges.push({ source: a, target: b, type, weight: w }) }
     }

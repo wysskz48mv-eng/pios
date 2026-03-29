@@ -18,10 +18,6 @@ import { createClient } from '@/lib/supabase/server'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  } catch (err: any) {
-    console.error('[PIOS auth/connect-gmail]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
-  }
   try {
   const supabase = createClient()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
@@ -56,4 +52,8 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.redirect(data.url)
+} catch (err: any) {
+    console.error('[PIOS auth/connect-gmail]', err)
+    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+  }
 }

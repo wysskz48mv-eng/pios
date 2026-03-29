@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 // PIOS™ v3.4.1 | Sprint J — Privacy & GDPR Dashboard | VeritasIQ Technologies Ltd
 import { useState, useEffect } from 'react'

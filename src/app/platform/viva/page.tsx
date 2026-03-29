@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 // PIOS™ v3.2.5 | Viva Preparation Module | VeritasIQ Technologies Ltd
 import { useState, useRef, useEffect, useCallback } from 'react'

@@ -26,10 +26,6 @@ function fmtDate(d: string) {
 }
 
 export async function GET(req: NextRequest) {
-  } catch (err: any) {
-    console.error('[PIOS cron/milestone-alerts]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
-  }
   try {
   const authHeader = req.headers.get('authorization') ?? ''
   const cronOk = process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`
@@ -129,4 +125,8 @@ export async function GET(req: NextRequest) {
     emails_sent: emailsSent,
     alerts:      results,
   })
+} catch (err: any) {
+    console.error('[PIOS cron/milestone-alerts]', err)
+    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+  }
 }

@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic'
 const anthropic = new Anthropic()
 
 // ── Available models + capabilities ──────────────────────────────────────────
-const MODELS = {
+const MODELS: Record<string, { label:string; tier:string; speed:string; cost:string; best_for:string; token_limit:number; colour:string }> = {
   'claude-opus-4-5': {
     label:      'Claude Opus 4.5',
     tier:       'premium',
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
     if (action === 'benchmark') {
       const testPrompt = prompt ?? 'Summarise the key challenge of AI-enabled FM cost forecasting in exactly one sentence.'
       const results = await Promise.all(
-        Object.keys(MODELS).map(async (model) => {
+        Object.keys(MODELS as Record<string,any>).map(async (model) => {
           const start = Date.now()
           try {
             const msg = await anthropic.messages.create({

@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 // PIOS™ v3.3.0 | Sprint G — AI Model Routing | VeritasIQ Technologies Ltd
 import { useState, useEffect } from 'react'

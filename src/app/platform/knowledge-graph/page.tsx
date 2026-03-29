@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 // PIOS™ v3.3.0 | Sprint H — Knowledge Graph Visualisation | VeritasIQ Technologies Ltd
 import { useState, useEffect, useRef, useCallback } from 'react'

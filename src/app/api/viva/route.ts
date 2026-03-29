@@ -174,50 +174,50 @@ TYPICAL SA DBA VIVA PANEL:
 
 // ── SA University examiner profiles ─────────────────────────────────────────
 const SA_EXAMINER_PROFILES: Record<string, string> = {
-  'gibs_up': \`Gordon Institute of Business Science (GIBS) / University of Pretoria — DBA Examiner Profile.
+  'gibs_up': `Gordon Institute of Business Science (GIBS) / University of Pretoria — DBA Examiner Profile.
 Programme: DBA (Doctor of Business Administration) — Triple Crown accredited (AACSB, EQUIS, AMBA).
 Research culture: Strongly practitioner-research integrated. Examiners expect clear managerial/organisational implications alongside academic rigour.
 Typical examiner angle: Will probe the "so what for practice" question heavily. GIBS is known for demanding that research outputs are publishable AND implementable. Expect questions on knowledge transfer to industry.
 Likely question areas: How does your research advance African management theory? What is the managerial implication for C-suite decision-makers? How does your methodology meet CHE NQF Level 10 standards?
-Key challenge: GIBS examiners frequently push on whether the candidate can articulate a theoretical contribution beyond descriptive practitioner findings.\`,
+Key challenge: GIBS examiners frequently push on whether the candidate can articulate a theoretical contribution beyond descriptive practitioner findings.`,
 
-  'uct': \`University of Cape Town (UCT) — Doctoral Examiner Profile.
+  'uct': `University of Cape Town (UCT) — Doctoral Examiner Profile.
 UCT ranks #1 in Africa and operates to international doctoral standards. From 2026, oral exam is compulsory for all PhD candidates.
 Examination panel: 3 examiners of "high international standing with relevant and significant academic experience." Candidate identity of examiners is confidential until after examination.
 Research culture: UCT examiners are internationally oriented. Strong emphasis on publishability and contribution to global scholarly conversation. Interdisciplinary research is valued.
 Likely examiner angle: Will assess whether the thesis holds up to international peer review standards. Expect probing on epistemological rigour, methodological transparency, and literature positioning within global debates.
-Key challenge: UCT examiners are particularly sharp on: "How does this speak to a global audience, not just a South African or African one?" Must demonstrate international relevance.\`,
+Key challenge: UCT examiners are particularly sharp on: "How does this speak to a global audience, not just a South African or African one?" Must demonstrate international relevance.`,
 
-  'unisa': \`University of South Africa (UNISA) — Doctoral Examiner Profile.
+  'unisa': `University of South Africa (UNISA) — Doctoral Examiner Profile.
 Africa's largest open distance learning institution. Oral defence compulsory from 2022 cohort; also requires 2 peer-reviewed manuscript submissions.
 Examination process: Examiners submit reports first; if satisfactory, Non-Examining Chairperson (NEC) arranges viva. Can be conducted online. Results official within one month.
 Research culture: UNISA has a strong transformation and social development ethos. Distance-learning student population means research often addresses equity, access, and community-based issues.
 Likely examiner angle: Will probe the social relevance and transformation implications of findings. Strong interest in POPIA compliance and research ethics. Ubuntu-oriented research ethics expected.
-Key challenge: UNISA examiners also assess whether research contributes to South Africa's development challenges. "What does your research mean for communities who cannot afford the solution you propose?" is a typical probing question.\`,
+Key challenge: UNISA examiners also assess whether research contributes to South Africa's development challenges. "What does your research mean for communities who cannot afford the solution you propose?" is a typical probing question.`,
 
-  'stellenbosch': \`Stellenbosch University (SU) — Doctoral Examiner Profile.
+  'stellenbosch': `Stellenbosch University (SU) — Doctoral Examiner Profile.
 One of SA's top-ranked universities. Historically Afrikaans-medium but now fully bilingual/multilingual. Strong research output; internationally networked faculty.
 Research culture: Rigorous, traditionally conservative academic standards. Strong in quantitative methods, economics, engineering. Business School (USB) increasingly values mixed-methods and African management research.
 Likely examiner angle: Will push on methodological rigour and replicability. Stellenbosch examiners are known for detailed thesis engagement — expect page-by-page probing of methodology chapters. Strong on validity and reliability assessment.
-Key challenge: "How would your findings change under a different epistemological assumption?" Stellenbosch examiners are particularly sharp on research design robustness.\`,
+Key challenge: "How would your findings change under a different epistemological assumption?" Stellenbosch examiners are particularly sharp on research design robustness.`,
 
-  'wits': \`University of the Witwatersrand (Wits) — Doctoral Examiner Profile.
+  'wits': `University of the Witwatersrand (Wits) — Doctoral Examiner Profile.
 Wits Business School (WBS) and the Graduate School of Governance host DBA/PhD programmes. Wits ranks in top 250 globally.
 Research culture: Socially engaged research tradition. Wits has a strong legacy of critical theory, social justice research, and transformative scholarship. Business research must navigate between rigour and social relevance.
 Likely examiner angle: Critical theory lens — will probe whether the candidate's theoretical framework adequately accounts for power dynamics, race, and inequality in the South African context. Transformation implications are not optional.
-Key challenge: "Whose interests does this research serve?" is a Wits examiner signature question. Candidates must demonstrate reflexivity about their positionality as researchers.\`,
+Key challenge: "Whose interests does this research serve?" is a Wits examiner signature question. Candidates must demonstrate reflexivity about their positionality as researchers.`,
 
-  'milpark': \`Milpark Education — DBA Examiner Profile.
+  'milpark': `Milpark Education — DBA Examiner Profile.
 South Africa's private business school with HEQC-accredited DBA. Thesis assessed by 3 examiners + oral defence before final endorsement.
 Research culture: Pragmatic, practitioner-focused. Milpark targets working professionals and senior executives. Research is expected to solve real organisational problems. Ethical and sustainable business focus.
 Likely examiner angle: Will probe the practical implementability of findings. "If I'm a CEO, what do I do Monday morning with your findings?" is the spirit of Milpark examination. Strong emphasis on ethical business practices alignment.
-Key challenge: Milpark examiners expect candidates to have synthesised scholarly literature AND organisational reality. Pure academic abstraction without organisational grounding will be challenged.\`,
+Key challenge: Milpark examiners expect candidates to have synthesised scholarly literature AND organisational reality. Pure academic abstraction without organisational grounding will be challenged.`,
 
-  'regent_mancosa': \`Regent Business School / MANCOSA — DBA Examiner Profile.
+  'regent_mancosa': `Regent Business School / MANCOSA — DBA Examiner Profile.
 Private business schools offering accredited DBA with distance/online delivery. Target market: working professionals across Africa and diaspora.
 Research culture: Access-oriented, practitioner-research focused. Programmes attract students from across Sub-Saharan Africa. African business context is central to curriculum. Online viva capability well established.
 Likely examiner angle: Strong on African management theory and continental business context. Will probe whether findings are relevant beyond SA borders to broader African markets. Entrepreneurship, SME development, and development economics often relevant lenses.
-Key challenge: "How does your research speak to the African entrepreneur, not just the multinational?" Expect probing on Africa-specific applicability of Western management frameworks.\`,
+Key challenge: "How does your research speak to the African entrepreneur, not just the multinational?" Expect probing on Africa-specific applicability of Western management frameworks.`,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
