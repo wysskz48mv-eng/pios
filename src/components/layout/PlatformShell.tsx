@@ -18,6 +18,10 @@ interface PlatformShellProps {
 const MOBILE_NAV = [
   { href: '/platform/dashboard', icon: '⊞', label: 'Home'    },
   { href: '/platform/tasks',     icon: '✓',  label: 'Tasks'   },
+  { href: '/platform/inbox', label: 'Inbox' },
+  { href: '/platform/vault', label: 'Vault' },
+  { href: '/platform/coaching', label: 'Coaching' },
+  { href: '/platform/chief-of-staff', label: 'Chief of Staff' },
   { href: '/platform/command',   icon: '⬡',  label: 'Live'    },
   { href: '/platform/email',     icon: '✉',  label: 'Inbox'   },
   { href: '/platform/ai',        icon: '◉',  label: 'AI'      },
