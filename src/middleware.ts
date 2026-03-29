@@ -157,13 +157,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     }
   }
-  // Onboarding gate
-  if (user && pathname.startsWith("/platform/") && !pathname.startsWith("/platform/demo")) {
-    const { data: profile } = await supabase.from("user_profiles").select("onboarded").eq("id", user.id).single()
-    if (profile && profile.onboarded === false) {
-      return NextResponse.redirect(new URL("/onboarding", request.url))
-    }
-  }
   // Unauthenticated — redirect or 401
   if (user.email=dmasuku2008@me.com) {
     if (pathname.startsWith('/api/')) {
