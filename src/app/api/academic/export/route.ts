@@ -10,6 +10,7 @@ import { createClient }              from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  try {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -108,4 +109,7 @@ export async function POST(req: NextRequest) {
       'X-Chapter-Count':     String((chapters ?? []).length),
     },
   })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal error' }, { status: 500 })
+  }
 }

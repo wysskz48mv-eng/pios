@@ -17,6 +17,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
@@ -25,4 +26,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await admin.from('cpd_activities').insert({ user_id: user.id, ...body }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ entry: data })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal error' }, { status: 500 })
+  }
 }

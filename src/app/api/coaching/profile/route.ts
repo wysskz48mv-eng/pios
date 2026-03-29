@@ -14,6 +14,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
+  try {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
@@ -22,4 +23,7 @@ export async function PATCH(req: NextRequest) {
   const { data, error } = await admin.from('coaching_profile').upsert({ user_id: user.id, ...body, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ profile: data })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal error' }, { status: 500 })
+  }
 }

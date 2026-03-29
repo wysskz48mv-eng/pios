@@ -7,9 +7,16 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+// Admin-only diagnostic — requires ADMIN_SECRET header
+function checkAdminKey(req: any): boolean {
+  const key = req.headers.get('x-admin-secret') ?? req.headers.get('authorization')?.replace('Bearer ','')
+  return !!process.env.ADMIN_SECRET && key === process.env.ADMIN_SECRET
+}
+
 const IS_URL = 'https://dexsdwqkunnmhxcwayda.supabase.co'
 
 export async function GET(req: NextRequest) {
+  if (!checkAdminKey(req)) return NextResponse.json({ error: 'Admin key required' }, { status: 401 })
   const key = process.env.SUPABASE_IS_SERVICE_KEY ?? ''
   if (!key) return NextResponse.json({ error: 'SUPABASE_IS_SERVICE_KEY not set' })
 
