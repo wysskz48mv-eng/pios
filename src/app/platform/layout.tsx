@@ -7,6 +7,13 @@ export default async function PlatformLayout({ children }: { children: React.Rea
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
+  // Check onboarding status
+  const { data: onboardCheck } = await supabase
+    .from('user_profiles')
+    .select('onboarded')
+    .eq('id', user.id)
+    .single()
+  if (onboardCheck && onboardCheck.onboarded === false) redirect('/onboarding')
 
   const { data: profile } = await supabase
     .from('user_profiles')
