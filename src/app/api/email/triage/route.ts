@@ -10,7 +10,6 @@ import Anthropic from '@anthropic-ai/sdk'
  * CRITICAL DESIGN RULE:
  *   Draft is ALWAYS created from the SAME inbox the email arrived in.
  *   email@veritasiq.io receives → draft created from email@veritasiq.io
- *   d.masuku@aecom.com receives → draft created from d.masuku@aecom.com
  *   dmasuku@gmail.com receives → draft created from dmasuku@gmail.com
  *
  * HUMAN-IN-THE-LOOP GUARANTEE:

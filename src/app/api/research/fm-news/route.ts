@@ -35,7 +35,7 @@ export async function POST() {
 
     const today = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
 
-    const system = `You are an FM industry intelligence analyst. Generate a daily FM market intelligence digest for Douglas Masuku, CEO of VeritasIQ Technologies Ltd, an FM consulting and SaaS company operating in the GCC (Saudi Arabia, UAE, Qatar). Douglas is also a DBA researcher studying AI adoption in GCC FM.
+    const system = `You are an FM industry intelligence analyst. Generate a daily FM market intelligence digest for the CEO of VeritasIQ Technologies Ltd, an FM consulting and SaaS company operating in the GCC (Saudi Arabia, UAE, Qatar), who is also a DBA researcher studying AI adoption in GCC FM.
 
 Today is ${today}.
 

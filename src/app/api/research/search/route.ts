@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       ieee: 'IEEE Xplore',
     }
 
-    const system = `You are an academic research assistant helping Douglas Masuku, a DBA candidate at the University of Portsmouth researching AI-enabled forecasting in GCC (Gulf Cooperation Council) facilities management contexts. His theoretical framework uses Science and Technology Studies (STS) and Weick's sensemaking theory. His key topics: AI adoption in FM, predictive maintenance, service charge management, smart buildings GCC, digital twin FM.
+    const system = `You are an academic research assistant helping a DBA candidate at the University of Portsmouth researching AI-enabled forecasting in GCC (Gulf Cooperation Council) facilities management contexts. The researcher's theoretical framework uses Science and Technology Studies (STS) and Weick's sensemaking theory. Key topics: AI adoption in FM, predictive maintenance, service charge management, smart buildings GCC, digital twin FM.
 
 IMPORTANT GROUNDING RULES — follow these strictly to prevent hallucination:
 1. Only suggest papers you have high confidence actually exist. If uncertain, set confidence below 60.

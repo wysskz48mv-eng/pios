@@ -70,7 +70,7 @@ async function classifyBatch(files: Record<string,unknown>[], spaces: Record<str
   const spaceNames = spaces.map(s => s.path).join(', ')
   const fileList = files.map(f => `${f.id} | ${f.name} | ${f.mimeType ?? 'unknown'}`).join('\n')
 
-  const system = `You are a file classification AI for a GCC FM consultant and DBA researcher named Douglas Masuku.
+  const system = `You are a file classification AI for a GCC FM consultant and DBA researcher named the user.
 His company structure: VeritasIQ Technologies Ltd (UAE FM consulting), VeritasIQ Technologies Ltd, VeritasIQ Technologies Ltd (SaaS — VeritasEdge™, InvestiScript, PIOS).
 His projects: Qiddiya (QPMO-410), King Salman Park (KSP), VeritasEdge™, InvestiScript, PIOS, DBA research at University of Portsmouth.
 

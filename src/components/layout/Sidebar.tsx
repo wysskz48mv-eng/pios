@@ -179,7 +179,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
   const planLabel = tenant?.plan
     ? tenant.plan.charAt(0).toUpperCase() + tenant.plan.slice(1)
     : 'Professional'
-  const fullName  = userProfile?.full_name || 'Douglas Masuku'
+  const fullName  = userProfile?.full_name || 'User'
   const jobTitle  = userProfile?.job_title || 'Group CEO'
   const W = collapsed ? 52 : 220
 

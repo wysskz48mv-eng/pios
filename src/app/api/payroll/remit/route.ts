@@ -67,7 +67,7 @@ Other deductions: ${run.currency} ${parseFloat(line.other_deductions ?? 0).toFix
 Net pay: ${run.currency} ${parseFloat(line.net_pay).toFixed(2)}
 Company: ${run.company_entity ?? 'VeritasIQ Technologies Ltd'}`
 
-      let notification = { subject: `Pay Advice — ${month}`, body: `Dear ${line.staff_name},\n\nPlease find your pay advice for ${month}.\n\nNet Pay: ${run.currency} ${parseFloat(line.net_pay).toFixed(2)}\n\nRegards,\nDouglas Masuku` }
+      let notification = { subject: `Pay Advice — ${month}`, body: `Dear ${line.staff_name},\n\nPlease find your pay advice for ${month}.\n\nNet Pay: ${run.currency} ${parseFloat(line.net_pay).toFixed(2)}\n\nRegards,\nthe approved signatory` }
 
       try {
         const raw = await callClaude([{ role: 'user', content: userPrompt }], system, 600)

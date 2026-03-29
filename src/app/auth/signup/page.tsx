@@ -203,7 +203,7 @@ export default function SignupPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label style={labelStyle}>FULL NAME *</label>
-                <input style={inputStyle} placeholder="Douglas Masuku" value={form.full_name} onChange={e => f('full_name', e.target.value)}
+                <input style={inputStyle} placeholder="Your full name" value={form.full_name} onChange={e => f('full_name', e.target.value)}
                   onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'var(--ai)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px var(--ai-glow)' }}
                   onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'var(--pios-border2)'; (e.target as HTMLInputElement).style.boxShadow = 'none' }} />
               </div>

@@ -227,7 +227,7 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
           ['<code style="font-size:11px;background:var(--pios-surface3);padding:2px 6px;border-radius:4px">Policy Name</code>', 'Clear title', 'Data Protection Policy'],
           ['<code style="font-size:11px;background:var(--pios-surface3);padding:2px 6px;border-radius:4px">Category</code>', 'Topic area', 'Information Security'],
           ['<code style="font-size:11px;background:var(--pios-surface3);padding:2px 6px;border-radius:4px">Owner</code>', 'Who maintains it', 'Siphathisiwe Masuku'],
-          ['<code style="font-size:11px;background:var(--pios-surface3);padding:2px 6px;border-radius:4px">Approver</code>', 'Who signs it off', 'Douglas Masuku'],
+          ['<code style="font-size:11px;background:var(--pios-surface3);padding:2px 6px;border-radius:4px">Approver</code>', 'Who signs it off', 'Group CEO'],
           ['<code style="font-size:11px;background:var(--pios-surface3);padding:2px 6px;border-radius:4px">Version</code>', 'Current version number', 'v1.0'],
           ['<code style="font-size:11px;background:var(--pios-surface3);padding:2px 6px;border-radius:4px">Status</code>', 'Where it currently stands', 'Draft / Approved / Under Review'],
           ['<code style="font-size:11px;background:var(--pios-surface3);padding:2px 6px;border-radius:4px">Review Date</code>', 'Next scheduled review', '31 Mar 2027'],

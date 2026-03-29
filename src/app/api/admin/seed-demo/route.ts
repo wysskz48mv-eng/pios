@@ -11,7 +11,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
  *   - 3 OKRs with progress
  *   - 3 decisions (open + pending)
  *   - 3 IP assets (VeritasEdge™, InvestiScript™, PIOS)
- *   - 2 contracts (AECOM FM consultancy, Pocket FM)
+ *   - 2 contracts (GCC FM Consultancy retainer, Pocket FM)
  *   - 2 financial snapshots
  *   - Blood Oath Chronicles series
  *   - 2 stakeholders

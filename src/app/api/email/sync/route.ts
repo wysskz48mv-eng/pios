@@ -82,7 +82,7 @@ async function triageEmail(
   const domainHint = domainOverride
     ? `Force domain to '${domainOverride}'.`
     : `Email from ${context} inbox. Bias domain accordingly.`
-  const system = `PIOS email triage for Douglas Masuku (DBA, FM consultant, SaaS founder). ${domainHint}
+  const system = `PIOS email triage for a senior FM consultant and SaaS founder. ${domainHint}
 Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","priority_score":1-10,"action_required":"string or null","ai_draft_reply":"string or null","is_receipt":true/false,"receipt_data":{"vendor":"","amount":0,"currency":"GBP","date":"","invoice_no":""} or null}`
   try {
     const raw = await callClaude(

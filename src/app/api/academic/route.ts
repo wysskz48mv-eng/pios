@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         .select('full_name,organisation').eq('id', user.id).single()
       const prof = profile as Record<string,unknown> | null
 
-      const system = `You are an expert academic writing assistant helping ${prof?.full_name ?? 'Douglas Masuku'} write their DBA thesis at University of Portsmouth.
+      const system = `You are an expert academic writing assistant helping ${prof?.full_name ?? 'the researcher'} write their DBA thesis at University of Portsmouth.
 Research focus: AI-enabled FM cost forecasting and governance in GCC mixed-use developments.
 Theoretical framework: Socio-technical systems theory + sensemaking theory.
 Three-level evidential typology: Level 1 (technical feasibility), Level 2 (operational analytics), Level 3 (governance-integrated forecasting).

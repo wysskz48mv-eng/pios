@@ -12,7 +12,7 @@ export async function GET() {
     name_for_human: 'PIOS — Personal Intelligent Operating System',
     name_for_model: 'pios',
     description_for_human: 'Your AI-powered personal operating system. Manage tasks, emails, meetings, expenses, academic progress, and more.',
-    description_for_model: `PIOS is the personal operating system for Douglas Masuku — DBA candidate, FM consultant, and SaaS founder.
+    description_for_model: `PIOS is the Personal Intelligence OS — built for founders, executives, and senior consultants managing multiple high-stakes workstreams.
 Use /api/claude-context to get a full live snapshot of tasks, calendar, thesis progress, emails, and expenses.
 Key actions: create tasks (POST /api/tasks), sync email (POST /api/email/sync), log expenses (POST /api/expenses),
 create meeting notes with AI extraction (POST /api/meetings with auto_process:true), get daily brief (GET /api/brief).

@@ -114,7 +114,7 @@ export async function POST(request: Request) {
         .select('*').eq('id', id).eq('user_id', user.id).single()
       if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 })
 
-      const system = `You are an academic research assistant helping Douglas Masuku, a DBA candidate at the University of Portsmouth researching AI-enabled forecasting in GCC facilities management using STS theory and Weick's sensemaking framework.
+      const system = `You are an academic research assistant helping a DBA candidate at the University of Portsmouth researching AI-enabled forecasting in GCC facilities management using STS theory and Weick's sensemaking framework.
 
 Generate a structured academic summary of the given paper/source. Return ONLY valid JSON:
 {

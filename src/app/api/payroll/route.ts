@@ -144,7 +144,7 @@ export async function POST(request: Request) {
       const { transfer_id } = body
       await supabase.from('transfer_queue').update({
         status: 'approved', approved_at: new Date().toISOString(),
-        approved_by: 'Douglas Masuku', updated_at: new Date().toISOString(),
+        approved_by: 'the approved signatory', updated_at: new Date().toISOString(),
       }).eq('id', transfer_id).eq('user_id', user.id)
       return NextResponse.json({ approved: true })
     }
@@ -192,7 +192,7 @@ export async function POST(request: Request) {
       await supabase.from('expense_claims').update({
         status: 'queued_for_payment',
         approved_at: new Date().toISOString(),
-        approved_by: 'Douglas Masuku',
+        approved_by: 'the approved signatory',
         updated_at: new Date().toISOString(),
       }).eq('id', claim_id).eq('user_id', user.id)
 
