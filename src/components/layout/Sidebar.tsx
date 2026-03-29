@@ -399,8 +399,17 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
               <div style={{
                 fontFamily: "'DM Mono', monospace",
                 fontSize: 9, color: C.muted, letterSpacing: '0.02em',
-              }}>{jobTitle} · sign out</div>
+              }}>{jobTitle}</div>
             </div>
+          )}
+          {!collapsed && (
+            <div style={{
+              fontSize: 10, color: 'rgba(169,157,255,0.8)',
+              fontWeight: 600, letterSpacing: '0.05em',
+              padding: '3px 8px', borderRadius: 5, flexShrink: 0,
+              border: '1px solid rgba(99,73,255,0.3)',
+              background: 'rgba(99,73,255,0.1)',
+            }}>↪ Out</div>
           )}
         </div>
       </div>

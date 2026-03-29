@@ -1816,6 +1816,50 @@ where table_schema = 'public'
 `,
   },
 
+  '011': {
+    name: 'M011: contracts table + okr_notification_prefs columns',
+    sentinel_table: 'contracts',
+    sql: `-- ============================================================
+-- PIOS Migration 011 — Contracts + OKR prefs
+-- ============================================================
+create table if not exists public.contracts (
+  id                  uuid primary key default uuid_generate_v4(),
+  user_id             uuid references auth.users(id) on delete cascade not null,
+  tenant_id           uuid references public.tenants(id) on delete cascade,
+  title               text not null,
+  contract_type       text default 'service',
+  counterparty        text,
+  status              text default 'active',
+  value               numeric(14,2),
+  currency            text default 'GBP',
+  start_date          date,
+  end_date            date,
+  auto_renewal        boolean default false,
+  notice_period_days  integer default 30,
+  key_terms           text,
+  obligations         text,
+  file_url            text,
+  notes               text,
+  created_at          timestamptz default now(),
+  updated_at          timestamptz default now()
+);
+alter table public.contracts enable row level security;
+do $$ begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='contracts' and policyname='contracts_own') then
+    create policy contracts_own on public.contracts for all using (user_id = auth.uid());
+  end if;
+end $$;
+create index if not exists idx_contracts_user on public.contracts(user_id, status);
+
+alter table public.okr_notification_prefs
+  add column if not exists email_address  text,
+  add column if not exists weekly_digest  boolean default false,
+  add column if not exists digest_enabled boolean default true;
+
+select count(*) as contracts from public.contracts;
+`,
+  },
+
 async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {
   try {
     const { error } = await supabase.from(tableName).select('id').limit(1)
