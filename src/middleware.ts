@@ -54,7 +54,7 @@ const SEC_HEADERS: Record<string, string> = {
 
 // ── Rate limiting — 100 req/15min per IP ────────────────────────────────────
 const ipAttempts = new Map<string, { count: number; resetAt: number }>()
-function rateLimit(ip: string, limit = 100, windowMs = 15 * 60 * 1000): boolean {
+function rateLimit(ip: string, limit = 500, windowMs = 15 * 60 * 1000): boolean {
   const now = Date.now()
   const e = ipAttempts.get(ip)
   if (!e || e.resetAt < now) { ipAttempts.set(ip, { count: 1, resetAt: now + windowMs }); return true }
