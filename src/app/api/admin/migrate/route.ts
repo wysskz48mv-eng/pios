@@ -1329,7 +1329,7 @@ where id = '47621611-96bc-465c-913e-0d23a89465f5';
   '009': {
     name: 'M009: user_profiles — deployment_mode, active_modules, it_policy_acknowledged',
     sentinel_table: 'user_profiles',
-    sql: \`-- ============================================================
+    sql: `-- ============================================================
 -- PIOS Migration 009 — Onboarding completion columns
 -- deployment_mode, active_modules, it_policy_acknowledged
 -- Written by /api/onboarding/complete but missing from schema
@@ -1343,7 +1343,7 @@ alter table public.user_profiles
 select column_name FROM information_schema.columns
 where table_name = 'user_profiles'
   and column_name in ('deployment_mode','active_modules','it_policy_acknowledged');
-\`,
+`,
   },
 
   '010': {

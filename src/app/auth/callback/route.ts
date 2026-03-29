@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
   // Check existing profile
   const { data: existingProfile } = await admin
     .from('user_profiles')
-    .select('id, onboarded, full_name')
+    .select('id, onboarded, full_name, google_refresh_token')
     .eq('id', user.id)
     .single()
 
