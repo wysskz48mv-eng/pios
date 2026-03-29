@@ -314,7 +314,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
       {isExpired && <TrialExpiredGate userName={userProfile?.full_name as string | undefined} />}
       <GlobalSearch />
       {chatOpen && <AiChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />}
+      <NemoClawPA />
     </div>
-    <NemoClawPA />
   )
 }

@@ -123,8 +123,8 @@ export default function VaultPage() {
     setLoading(true)
     try {
       const [docsRes, foldersRes] = await Promise.allSettled([
-        fetch('/api/vault/documents').then(r => r.ok ? r.json() : {}),
-        fetch('/api/vault/folders').then(r => r.ok ? r.json() : {}),
+        fetch('/api/vault/documents').then(r => r.ok ? r.json() : {documents:[],stats:null}),
+        fetch('/api/vault/folders').then(r => r.ok ? r.json() : {folders:[]}),
       ])
       if (docsRes.status === 'fulfilled') {
         setDocs(docsRes.value.documents ?? [])

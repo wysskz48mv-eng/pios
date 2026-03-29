@@ -168,7 +168,7 @@ export async function GET(req: NextRequest) {
     .select('user_id')
     .eq('status', 'active')
 
-  const uniqueUsers = [...new Set((users ?? []).map((u: {user_id:string}) => u.user_id))]
+  const uniqueUsers = Array.from(new Set((users ?? []).map((u: {user_id:string}) => u.user_id)))
   const results: string[] = []
 
   for (const userId of uniqueUsers) {

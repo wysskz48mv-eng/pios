@@ -134,7 +134,7 @@ export default function InboxPage() {
   const untriagedCount= emails.filter(e => !e.triage_class).length
 
   /* ── Inbox grouping by address ── */
-  const inboxes = [...new Set(emails.map(e => e.inbox_address))].sort()
+  const inboxes = Array.from(new Set((emails ?? []).map(e => e.inbox_address))).sort()
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 900, margin: '0 auto' }}>

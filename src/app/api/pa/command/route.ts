@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 }
 
 /* ── Load all PIOS context ──────────────────────────────────── */
-async function loadPAContext(userId: string, admin: ReturnType<typeof createAdmin>) {
+async function loadPAContext(userId: string, admin: any) {
   const today = new Date().toISOString().split('T')[0]
   const week  = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
 
@@ -102,18 +102,18 @@ async function loadPAContext(userId: string, admin: ReturnType<typeof createAdmi
   )
 
   // Stale decisions
-  const staleDecisions = (decisions as {created_at:string;title:string}[]).filter(d =>
+  const staleDecisions = ((decisions ?? []) as {created_at:string;title:string}[]).filter(d =>
     (Date.now() - new Date(d.created_at).getTime()) > 14 * 86400000
   )
 
   // Overdue stakeholder contact
-  const overdueContact = (stakes as {name:string;last_contact_date?:string;contact_cadence_days?:number;organisation:string}[]).filter(s =>
+  const overdueContact = ((stakes ?? []) as {name:string;last_contact_date?:string;contact_cadence_days?:number;organisation:string}[]).filter(s =>
     s.contact_cadence_days && s.last_contact_date &&
     (Date.now() - new Date(s.last_contact_date).getTime()) > (s.contact_cadence_days * 86400000)
   )
 
   return {
-    userName:    profile?.full_name ?? 'there',
+    userName:    (profile as any)?.full_name ?? 'there',
     calib, tasks, okrs, decisions, stakes, emails,
     expiring, alerts, overdue, staleDecisions, overdueContact,
   }
@@ -133,9 +133,9 @@ function buildPASystemPrompt(ctx: Awaited<ReturnType<typeof loadPAContext>>): st
     `- ${d.title} (open ${Math.floor((Date.now()-new Date(d.created_at).getTime())/86400000)}d)`
 
   return `You are NemoClaw™, the personal AI assistant for ${userName}.
-Profile: ${calib?.calibration_summary ?? 'Senior professional'}
-Industry: ${calib?.primary_industry ?? 'consulting'}
-Communication register: ${calib?.communication_register ?? 'professional'}
+Profile: ${(calib as any)?.calibration_summary ?? 'Senior professional'}
+Industry: ${(calib as any)?.primary_industry ?? 'consulting'}
+Communication register: ${(calib as any)?.communication_register ?? 'professional'}
 
 LIVE PIOS CONTEXT:
 ${tasks.length > 0 ? `Open tasks (${tasks.length}):\n${(tasks as {title:string;priority:string;due_date?:string}[]).map(fmtTask).join('\n')}` : 'No open tasks.'}
@@ -189,7 +189,7 @@ function parseResponse(raw: string): { response: string; actions: {type:string;l
 async function executeAutoActions(
   actions: {type:string;requires_confirmation:boolean}[],
   _userId: string,
-  _admin: ReturnType<typeof createAdmin>
+  _admin: any
 ): Promise<void> {
   // Only execute actions that don't require confirmation
   const autoActions = actions.filter(a => !a.requires_confirmation)

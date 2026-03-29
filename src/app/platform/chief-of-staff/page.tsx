@@ -71,10 +71,10 @@ export default function ChiefOfStaffPage() {
     setLoading(true)
     try {
       const [wsRes, reviewRes, briefsRes, commitRes] = await Promise.allSettled([
-        fetch('/api/cos/workstreams').then(r => r.ok ? r.json() : {}),
-        fetch('/api/cos/review/latest').then(r => r.ok ? r.json() : {}),
-        fetch('/api/cos/decision-briefs').then(r => r.ok ? r.json() : {}),
-        fetch('/api/cos/commitments').then(r => r.ok ? r.json() : {}),
+        fetch('/api/cos/workstreams').then(r => r.ok ? r.json() : {workstreams:[]}),
+        fetch('/api/cos/review/latest').then(r => r.ok ? r.json() : {review:null}),
+        fetch('/api/cos/decision-briefs').then(r => r.ok ? r.json() : {briefs:[]}),
+        fetch('/api/cos/commitments').then(r => r.ok ? r.json() : {commitments:[]}),
       ])
       if (wsRes.status     === 'fulfilled') setWorkstreams(wsRes.value.workstreams ?? [])
       if (reviewRes.status === 'fulfilled') setReview(reviewRes.value.review ?? null)

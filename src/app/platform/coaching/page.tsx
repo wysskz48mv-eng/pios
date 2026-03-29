@@ -74,9 +74,9 @@ export default function CoachingPage() {
     setLoading(true)
     try {
       const [goalsRes, sessionsRes, profileRes] = await Promise.allSettled([
-        fetch('/api/coaching/goals').then(r => r.ok ? r.json() : {}),
-        fetch('/api/coaching/sessions?limit=10').then(r => r.ok ? r.json() : {}),
-        fetch('/api/coaching/profile').then(r => r.ok ? r.json() : {}),
+        fetch('/api/coaching/goals').then(r => r.ok ? r.json() : {goals:[]}),
+        fetch('/api/coaching/sessions?limit=10').then(r => r.ok ? r.json() : {sessions:[]}),
+        fetch('/api/coaching/profile').then(r => r.ok ? r.json() : {profile:null}),
       ])
       if (goalsRes.status    === 'fulfilled') setGoals(goalsRes.value.goals ?? [])
       if (sessionsRes.status === 'fulfilled') setSessions(sessionsRes.value.sessions ?? [])

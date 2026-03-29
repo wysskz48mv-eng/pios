@@ -37,7 +37,7 @@ export function NemoClawPA() {
   // Load nudge from staleness radar on mount
   useEffect(() => {
     fetch('/api/pa/nudge')
-      .then(r => r.ok ? r.json() : {})
+      .then(r => r.ok ? r.json() : {} as any)
       .then(d => { if (d.nudge) setNudge(d.nudge) })
       .catch(() => {})
   }, [])

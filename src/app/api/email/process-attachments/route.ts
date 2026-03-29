@@ -390,7 +390,7 @@ async function downloadGmailAttachment({
   inboxAddress, gmailMsgId, gmailAttachId, userId, admin,
 }: {
   inboxAddress: string; gmailMsgId: string; gmailAttachId: string
-  userId: string; admin: ReturnType<typeof createAdmin>
+  userId: string; admin: any
 }): Promise<string | null> {
   try {
     const { data: account } = await admin
@@ -400,7 +400,7 @@ async function downloadGmailAttachment({
       .eq('email_address', inboxAddress)
       .single()
 
-    if (!account?.access_token) return null
+    if (!account?.access_token as unknown as string) return null
 
     const res = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(inboxAddress)}/messages/${gmailMsgId}/attachments/${gmailAttachId}`,
@@ -428,7 +428,7 @@ async function assignToFolders({
 }: {
   vaultDocId: string; userId: string; docType: string
   orgName?: string; stakeholderId?: string
-  admin: ReturnType<typeof createAdmin>
+  admin: any
 }): Promise<void> {
   const folderIds: string[] = []
 
@@ -451,7 +451,7 @@ async function assignToFolders({
 }
 
 async function getOrCreateFolder(
-  admin: ReturnType<typeof createAdmin>,
+  admin: any,
   userId: string, name: string, folderType: string
 ): Promise<string | null> {
   const { data: existing } = await admin

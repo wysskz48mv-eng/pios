@@ -180,7 +180,7 @@ async function sendGmailEmail({
 /* ── Delete Gmail draft ─────────────────────────────────────── */
 async function deleteGmailDraft(
   inboxAddress: string, draftId: string,
-  userId: string, admin: ReturnType<typeof createAdmin>
+  userId: string, admin: any
 ): Promise<void> {
   try {
     const { data: account } = await admin
@@ -190,7 +190,7 @@ async function deleteGmailDraft(
       .eq('email_address', inboxAddress)
       .single()
 
-    if (!account?.access_token) return
+    if (!account?.access_token as unknown as string) return
 
     await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(inboxAddress)}/drafts/${draftId}`,

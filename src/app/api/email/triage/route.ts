@@ -168,7 +168,7 @@ async function triageAndDraft({
   calib:    Record<string, unknown> | null
   userName: string
   client:   Anthropic
-  admin:    ReturnType<typeof createAdmin>
+  admin: any
   userId:   string
 }): Promise<string> {
 

@@ -110,7 +110,7 @@ export default function OnboardingPage() {
   /* ── Persona selection ───── */
   const selectPersona = (p: Persona) => {
     setPersona(p)
-    const preChecked = new Set(PERSONA_MODULES[p]) as Set<ModuleKey>
+    const preChecked = new Set(PERSONA_MODULES[p]) as unknown as Set<ModuleKey> as unknown as Set<ModuleKey> as Set<ModuleKey>
     // Always-on modules always included
     ALL_MODULES.filter(m => m.alwaysOn).forEach(m => preChecked.add(m.key))
     setModules(preChecked)
@@ -417,7 +417,7 @@ export default function OnboardingPage() {
 
           <IntCard id="gmail"   label="Gmail"            desc="Email triage — NemoClaw™ processes your inbox"    disabled={isStandalone} />
           <IntCard id="outlook" label="Outlook / M365"   desc="Email + Teams meetings → action items"            disabled={isStandalone} />
-          <IntCard id="gcal"    label="Google Calendar"  desc="Meetings → tasks, conflict detection"              disabled={isStandalone && deployMode !== 'hybrid'} />
+          <IntCard id="gcal"    label="Google Calendar"  desc="Meetings → tasks, conflict detection"              disabled={deployMode === 'standalone'} />
           <IntCard id="xero"    label="Xero"             desc="Invoices, expenses, bank feeds, VAT"               disabled={isStandalone} />
 
           <div style={{ fontSize: 12, color: 'var(--pios-dim)', margin: '16px 0' }}>

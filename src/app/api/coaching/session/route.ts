@@ -161,8 +161,8 @@ Respond JSON only:
     try {
       const text  = extractMsg.content[0].type === 'text' ? extractMsg.content[0].text : '{}'
       const parsed = JSON.parse(text.replace(/```json|```/g, '').trim())
-      insights = parsed.insights ?? []
-      themes   = parsed.themes   ?? []
+      insights = (parsed as any).insights ?? []
+      themes   = (parsed as any).themes   ?? []
       title    = parsed.title    ?? session.mode
       summary  = parsed.summary  ?? ''
     } catch { /* non-fatal */ }
@@ -197,7 +197,7 @@ Respond JSON only:
 }
 
 /* ── Load coaching context ──────────────────────────────────── */
-async function loadCoachingContext(userId: string, admin: ReturnType<typeof createAdmin>) {
+async function loadCoachingContext(userId: string, admin: any) {
   const [calibRes, okrRes, decRes, stakeRes, sessionRes] = await Promise.allSettled([
     admin.from('nemoclaw_calibration').select('calibration_summary,seniority_level,primary_industry,communication_register').eq('user_id', userId).single(),
     admin.from('executive_okrs').select('objective,progress,status').eq('user_id', userId).eq('status','active').limit(3),
@@ -219,15 +219,15 @@ async function loadCoachingContext(userId: string, admin: ReturnType<typeof crea
 function buildSystemPrompt(mode: CoachMode, ctx: Awaited<ReturnType<typeof loadCoachingContext>>): string {
   const { calib, okrs, decisions, stakeholders, recentSessions } = ctx
 
-  const recentThemes = (recentSessions as {themes:string[]}[]).flatMap(s => s.themes ?? []).slice(0, 6).join(', ')
+  const recentThemes = (recentSessions as {themes:string[]}[]).flatMap((s: any) => (s as any).themes ?? []).slice(0, 6).join(', ')
   const stakeList    = (stakeholders as {name:string;organisation:string}[]).map(s => `${s.name} (${s.organisation})`).join(', ')
   const okrList      = (okrs as {objective:string;progress:number}[]).map(o => `${o.objective} (${o.progress}%)`).join('; ')
   const decList      = (decisions as {title:string}[]).map(d => d.title).join('; ')
 
-  return `You are NemoClaw™, an executive coaching AI for a ${calib?.seniority_level ?? 'senior'} professional in ${calib?.primary_industry ?? 'consulting'}.
+  return `You are NemoClaw™, an executive coaching AI for a ${(calib as any)?.seniority_level ?? 'senior'} professional in ${(calib as any)?.primary_industry ?? 'consulting'}.
 
 COACHING PROFILE:
-${calib?.calibration_summary ?? 'Experienced professional'}
+${(calib as any)?.calibration_summary ?? 'Experienced professional'}
 
 CURRENT CONTEXT:
 Active OKRs: ${okrList || 'None logged'}
@@ -243,7 +243,7 @@ COACHING PRINCIPLES:
 - Draw from the user's actual context (their OKRs, stakeholders, decisions)
 - One question at a time — never stack questions
 - Reflect back what you hear before probing deeper
-- Use their communication register: ${calib?.communication_register ?? 'professional'}
+- Use their communication register: ${(calib as any)?.communication_register ?? 'professional'}
 - UK English, British spellings
 - Be direct and concise — this is executive coaching, not therapy
 - Never be sycophantic — challenge respectfully when the thinking is unclear
@@ -268,7 +268,7 @@ function buildOpeningPrompt(mode: CoachMode, ctx: Awaited<ReturnType<typeof load
       return `Open a post-event debrief. Start with a simple, open question about what happened. One question only. Keep it light — you don't know yet if the event went well or badly.`
 
     case 'deep':
-      return `Open a deep coaching session. Based on their recent themes${ctx.recentSessions.length > 0 ? ' from past sessions' : ''}, identify the most promising area to explore. Open with a powerful question about something that matters to their growth. One question only.`
+      return `Open a deep coaching session. Based on their recent themes${((ctx.recentSessions ?? []) ?? []).length > 0 ? ' from past sessions' : ''}, identify the most promising area to explore. Open with a powerful question about something that matters to their growth. One question only.`
 
     default:
       return 'Open the coaching session with a grounding question. One question only.'
@@ -291,7 +291,7 @@ function buildSessionTitle(mode: CoachMode, context?: string): string {
 /* ── Update coaching profile (every 5 sessions) ─────────────── */
 async function updateCoachingProfile(
   userId: string,
-  admin: ReturnType<typeof createAdmin>,
+  admin: any,
   client: Anthropic
 ): Promise<void> {
   try {
@@ -301,8 +301,8 @@ async function updateCoachingProfile(
 
     if (!sessions?.length) return
 
-    const allInsights = sessions.flatMap(s => s.insights ?? []).join('\n')
-    const allThemes   = sessions.flatMap(s => s.themes   ?? [])
+    const allInsights = sessions.flatMap((s: any) => (s as any).insights ?? []).join('\n')
+    const allThemes   = sessions.flatMap(s => (s as any).themes   ?? [])
     const themeCounts: Record<string, number> = {}
     for (const t of allThemes) themeCounts[t] = (themeCounts[t] ?? 0) + 1
 
