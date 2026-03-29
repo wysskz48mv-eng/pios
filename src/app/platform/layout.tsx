@@ -4,7 +4,7 @@ import { PlatformShell } from '@/components/layout/PlatformShell'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
   // Check onboarding status
