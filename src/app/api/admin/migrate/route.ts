@@ -1307,6 +1307,24 @@ select
   (select count(*) from public.transfer_queue)   as transfers;
 `,
   },
+
+  '008': {
+    name: 'M008: user_profiles — primary_project & consulting_context',
+    sentinel_table: 'user_profiles',
+    sql: `-- M008: Professional context fields on user_profiles
+alter table public.user_profiles
+  add column if not exists primary_project     text,
+  add column if not exists consulting_context  text,
+  add column if not exists billing_email       text;
+
+update public.user_profiles
+set
+  primary_project    = 'King Salman Park (SAR 229.6M)',
+  consulting_context = 'GCC FM consultancy — King Salman Park (KSP-001), Qiddiya (QPMO-410-CT-07922). VeritasEdge platform.',
+  updated_at         = now()
+where id = '56cd891c-17dc-4e66-89aa-d089ee35f3ad';
+`,
+  },
 }
 
 async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {

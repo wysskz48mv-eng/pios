@@ -415,7 +415,7 @@ export default function SettingsPage() {
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)
   const [saved,   setSaved]   = useState(false)
-  const [form, setForm] = useState<Record<string,string>>({ full_name:'', programme_name:'', university:'', timezone:'Europe/London', job_title:'', organisation:'', billing_email:'' })
+  const [form, setForm] = useState<Record<string,string>>({ full_name:'', programme_name:'', university:'', timezone:'Europe/London', job_title:'', organisation:'', billing_email:'', primary_project:'', consulting_context:'' })
   useEffect(() => {
     async function load() {
       const [pR, fR] = await Promise.all([
@@ -434,6 +434,8 @@ export default function SettingsPage() {
         timezone:       ((pR as Record<string,unknown>).profile as ProfileRecord)?.timezone       ?? 'Europe/London',
         job_title:      ((pR as Record<string,unknown>).profile as ProfileRecord)?.job_title      ?? '',
         organisation:   ((pR as Record<string,unknown>).profile as ProfileRecord)?.organisation   ?? '',
+        primary_project:((pR as Record<string,unknown>).profile as any)?.primary_project ?? '',
+        consulting_context:((pR as Record<string,unknown>).profile as any)?.consulting_context ?? '',
       })
       setLoading(false)
       // Handle Stripe portal return params
@@ -500,6 +502,7 @@ export default function SettingsPage() {
             <div style={{ display:'flex',flexDirection:'column' as const,gap:10 }}>
               {[
                 ['full_name','Full name'],['job_title','Job title'],['organisation','Organisation'],['billing_email','Email for daily brief'],
+                ['primary_project','Primary project baseline'],['consulting_context','Consulting context'],
                 ['programme_name','Programme'],['university','University'],['timezone','Timezone'],
               ].map(([k,l]) => (
                 <div key={String(k ?? "")}>
@@ -519,6 +522,7 @@ export default function SettingsPage() {
                 ['Email',    user?.email ?? '—'],
                 ['Role',     profile?.job_title ?? '—'],
                 ['Organisation', profile?.organisation ?? '—'],
+                ['Baseline', (profile as any)?.primary_project ?? '—'],
                 ['Programme',profile?.programme_name ?? '—'],
                 ['University',profile?.university ?? '—'],
                 ['Timezone', profile?.timezone ?? 'Europe/London'],

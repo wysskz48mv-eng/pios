@@ -19,6 +19,7 @@ const ALLOWED_FIELDS = [
   'timezone', 'job_title', 'organisation', 'phone',
   'preferred_domains', 'notification_prefs', 'avatar_url', 'persona_type',
   'onboarded', 'cv_storage_path', 'cv_filename', 'cv_processing_status', 'cv_uploaded_at',
+  'primary_project', 'consulting_context',
 ]
 
 const VALID_TIMEZONES_PARTIAL = [
@@ -71,7 +72,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Trim string fields
-    for (const k of ['full_name','billing_email','programme_name','university','job_title','organisation']) {
+    for (const k of ['full_name','billing_email','programme_name','university','job_title','organisation','primary_project','consulting_context']) {
       if (safe[k] !== undefined && typeof safe[k] === 'string') {
         safe[k] = (safe[k] as string).trim()
       }
