@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
     // Update user_profiles tokens
     await admin.from('user_profiles').update({
       google_access_token:  providerToken,
-      google_refresh_token: providerRefreshToken ?? existingProfile?.google_refresh_token,
+      google_refresh_token: providerRefreshToken ?? null,
       google_email:         googleEmail,
       google_token_expiry:  tokenExpiry,
       updated_at:           new Date().toISOString(),
