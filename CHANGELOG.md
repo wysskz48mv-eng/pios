@@ -1,3 +1,33 @@
+## [v3.3.0] — 2026-03-29 — Sprint D — Viva Preparation Module
+
+### New: PIOS™ Viva Preparation Engine
+
+**API: /api/viva** (POST + GET)
+Six modes:
+- `standard` — UKCGE-aligned question bank (50 questions, 8 categories) — fair & rigorous
+- `examiner` — Simulates specific examiner (Ozlem Bak / Raja Sreedharan) based on publication profile
+- `stress` — Adversarial: probes weaknesses, demands evidence, rejects vague answers
+- `feedback` — Evaluates submitted answer: score (1-5), strengths, weaknesses, improved answer, follow-up
+- `profile` — Generates examiner profile from name + institution
+- `summary` — AI-generated one-page chapter viva summary from uploaded text
+
+Question bank: 50 questions across 8 categories (originality, methodology, literature, findings,
+limitations, significance, professional_doctorate, technical). Portsmouth DBA context injected
+into all examiner simulations: QAA Level 8, CEGD supervisors, socio-technical + sensemaking lens.
+
+**Page: /platform/viva**
+- Three-mode selector (Standard / Examiner / Stress) with colour-coded UX
+- Category filter: all topics or specific focus area
+- Examiner selector: Dr Ozlem Bak, Dr Raja Sreedharan, External
+- Full Q&A session flow: question → answer → feedback → follow-up → next
+- Session stats: score heatmap per question, average score tracking
+- Examiner profile tab: publication research interest profiles and challenge question predictions
+- Prep tips tab: Portsmouth DBA format, UKCGE best practice checklist, question category guide
+- Sidebar: added to Academic section with NEW badge
+
+Competitive moat: No existing tool (Final Round AI, Yoodli, Skillora, ChatGPT) has:
+thesis-specific context, Portsmouth DBA rules, examiner profiling, or socio-technical lens.
+
 ## [v3.2.5] — 2026-03-29 — Investment Grade Hardening
 
 ### Critical

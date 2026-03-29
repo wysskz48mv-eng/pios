@@ -105,6 +105,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/platform/academic',     icon: 'academic',   label: 'Academic Hub',            accent: C.academic },
       { href: '/platform/literature',   icon: 'knowledge',  label: 'Literature Agent',        accent: C.academic },
+      { href: '/platform/viva',         icon: 'academic',   label: 'Viva Preparation', badge:'NEW', accent: C.academic },
       { href: '/platform/research',     icon: 'research',   label: 'Research',                accent: C.academic },
       { href: '/platform/learning',     icon: 'learning',   label: 'Learning Hub',            accent: C.violet },
       { href: '/platform/policy-coach', icon: 'policy',     label: 'Policy Coach', badge:'NEW',accent: C.amber },
