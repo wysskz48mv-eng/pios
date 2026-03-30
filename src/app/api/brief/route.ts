@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -151,23 +152,11 @@ Para 3: 2-3 specific actions to take.
 Direct, no filler. Address ${userName.split(' ')[0]} directly.`
 
     // Call Claude
-    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type':      'application/json',
-        'x-api-key':         process.env.ANTHROPIC_API_KEY ?? '',
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model:      'claude-sonnet-4-6',
-        max_tokens: 500,
-        system,
-        messages: [{ role: 'user', content: `Generate my morning brief.\n\n${context}` }],
-      }),
-    })
-
-    const aiData  = await aiRes.json()
-    const content = aiData?.content?.[0]?.text ?? 'Brief generation failed — try again.'
+    const content = await callClaude(
+      [{ role: 'user', content: `Generate my morning brief.\n\n${context}` }],
+      system,
+      500
+    ) || 'Brief generation failed — try again.'
 
     // Upsert brief
     await supabase.from('morning_briefs').upsert({

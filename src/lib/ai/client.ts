@@ -42,10 +42,19 @@ function filterOutput(text: string): string {
   return text
 }
 
+/** Supported model shortcuts */
+export const MODELS = {
+  sonnet: 'claude-sonnet-4-20250514',
+  haiku:  'claude-haiku-4-5-20251001',
+} as const
+
+export type ModelKey = keyof typeof MODELS
+
 export async function callClaude(
   messages: AIMessage[],
   system: string,
-  maxTokens = 1000
+  maxTokens = 1000,
+  model: ModelKey = 'sonnet'
 ): Promise<string> {
   const res = await fetch(ANTHROPIC_API, {
     method: 'POST',
@@ -55,7 +64,7 @@ export async function callClaude(
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model:      'claude-sonnet-4-20250514',
+      model:      MODELS[model],
       max_tokens: maxTokens,
       temperature: 0.2,   // deterministic for factual/operational tasks
       system,             // server-side only

@@ -6,6 +6,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { callClaude as callClaudeAI } from '@/lib/ai/client'
 
 import { checkPromptSafety } from '@/lib/security-middleware'
 
@@ -13,22 +14,7 @@ export const runtime     = 'nodejs'
 export const maxDuration = 60
 
 async function callClaude(prompt: string, system: string, maxTokens = 1500): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method:  'POST',
-    headers: {
-      'Content-Type':      'application/json',
-      'x-api-key':         process.env.ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model:      'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  })
-  const data = await res.json()
-  return data?.content?.[0]?.text ?? ''
+  return callClaudeAI([{ role: 'user', content: prompt }], system, maxTokens)
 }
 
 export async function GET() {

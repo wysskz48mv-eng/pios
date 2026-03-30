@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { morningBriefHtml, morningBriefText, sendEmail, type BriefData } from '@/lib/email'
+import { callClaude as callClaudeAI } from '@/lib/ai/client'
 
 /**
  * POST /api/cron/morning-brief
@@ -37,23 +38,7 @@ function adminDb() {
 }
 
 async function callClaude(prompt: string, system: string): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type':      'application/json',
-      'x-api-key':         process.env.ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 600,
-      system,
-      messages:   [{ role: 'user', content: prompt }],
-    }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data?.error?.message ?? 'Claude API error')
-  return data?.content?.[0]?.text ?? ''
+  return callClaudeAI([{ role: 'user', content: prompt }], system, 600)
 }
 
 async function gatherContext(supabase: ReturnType<typeof adminDb>, userId: string) {

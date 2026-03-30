@@ -145,6 +145,19 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Onboarding gate — redirect incomplete users to wizard
+  if (user && pathname.startsWith('/platform/') && !pathname.startsWith('/platform/demo')) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarded')
+      .eq('id', user.id)
+      .single()
+    if (profile && profile.onboarded === false) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+  }
+
+
   // Unauthenticated — redirect or 401
   if (!user) {
     if (pathname.startsWith('/api/')) {
@@ -156,18 +169,6 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('next', encodeURIComponent(pathname))
     return NextResponse.redirect(loginUrl)
-  }
-
-  // Onboarding gate — redirect incomplete users to wizard
-  if (user && pathname.startsWith('/platform/') && !pathname.startsWith('/platform/demo')) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('onboarded')
-      .eq('id', user.id)
-      .single()
-    if (profile && profile.onboarded === false) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
-    }
   }
 
   // Authenticated user on login/signup — redirect to dashboard

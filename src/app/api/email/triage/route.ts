@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -129,7 +129,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, processed: 0, message: 'No emails to triage' })
   }
 
-  const client   = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const results: Record<string, string> = {}
 
   for (const email of emails) {
@@ -140,7 +139,7 @@ export async function POST(req: NextRequest) {
 
       if (!account) {
         // Inbox not connected — classify only, no draft
-        const classification = await classifyEmail(email, calib, client)
+        const classification = await classifyEmail(email, calib)
         await admin.from('email_items').update({
           triage_class: classification.class,
           triage_at:    new Date().toISOString(),
@@ -152,7 +151,7 @@ export async function POST(req: NextRequest) {
 
       // Full triage + draft
       const result = await triageAndDraft({
-        email, account, calib, userName, client, admin, userId: user.id,
+        email, account, calib, userName, admin, userId: user.id,
       })
       results[email.id] = result
 
@@ -166,19 +165,18 @@ export async function POST(req: NextRequest) {
 
 /* ── Full triage + draft for one email ─────────────────────── */
 async function triageAndDraft({
-  email, account, calib, userName, client, admin, userId,
+  email, account, calib, userName, admin, userId,
 }: {
   email:    EmailItem
   account:  ConnectedAccount
   calib:    Record<string, unknown> | null
   userName: string
-  client:   Anthropic
   admin: any
   userId:   string
 }): Promise<string> {
 
   // Step 1: Classify
-  const classification = await classifyEmail(email, calib, client)
+  const classification = await classifyEmail(email, calib)
   const cls = classification.class as EmailClass
 
   // Step 2: If junk or FYI with no action needed — just classify and move on
@@ -198,7 +196,7 @@ async function triageAndDraft({
   if (['urgent', 'opportunity', 'personal'].includes(cls)) {
     // Generate NemoClaw™ draft using the CORRECT inbox context
     draftBody = await generateDraft({
-      email, account, calib, userName, classification, client,
+      email, account, calib, userName, classification,
     })
 
     // Create Gmail draft from the CORRECT account
@@ -274,7 +272,6 @@ async function triageAndDraft({
 async function classifyEmail(
   email: EmailItem,
   calib: Record<string, unknown> | null,
-  client: Anthropic,
 ): Promise<{ class: EmailClass; reasoning: string; urgency: number }> {
 
   const prompt = `Classify this email for a ${calib?.seniority_level ?? 'senior'} professional in ${calib?.primary_industry ?? 'consulting'}.
@@ -295,13 +292,12 @@ Classify as exactly ONE of:
 Respond in JSON only:
 {"class": "urgent|opportunity|file_doc|fyi|junk|personal", "reasoning": "one sentence", "urgency": 1-10}`
 
-  const msg = await client.messages.create({
-    model:      'claude-haiku-4-5-20251001',
-    max_tokens: 200,
-    messages:   [{ role: 'user', content: prompt }],
-  })
-
-  const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+  const text = await callClaude(
+    [{ role: 'user', content: prompt }],
+    'You are an email classification agent. Return JSON only.',
+    200,
+    'haiku'
+  )
   try {
     const clean = text.replace(/```json|```/g, '').trim()
     return JSON.parse(clean)
@@ -312,14 +308,13 @@ Respond in JSON only:
 
 /* ── NemoClaw™ draft generation ────────────────────────────── */
 async function generateDraft({
-  email, account, calib, userName, classification, client,
+  email, account, calib, userName, classification,
 }: {
   email:          EmailItem
   account:        ConnectedAccount
   calib:          Record<string, unknown> | null
   userName:       string
   classification: { class: string; reasoning: string }
-  client:         Anthropic
 }): Promise<string> {
 
   // Inbox type affects tone — employer inbox is more formal than personal
@@ -360,14 +355,11 @@ ${classification.class === 'personal' ? '- Responds warmly and appropriately to 
 
 Keep it under 150 words unless more detail is clearly needed.`
 
-  const msg = await client.messages.create({
-    model:      'claude-sonnet-4-5-20251001',
-    max_tokens: 600,
+  return await callClaude(
+    [{ role: 'user', content: user_prompt }],
     system,
-    messages:   [{ role: 'user', content: user_prompt }],
-  })
-
-  return msg.content[0].type === 'text' ? msg.content[0].text : ''
+    600
+  )
 }
 
 /* ── Gmail draft creation ───────────────────────────────────── */

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { callClaude, type AIMessage } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -54,21 +54,17 @@ export async function POST(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   /* ── ACTION: START ────────────────────────────────────────── */
   if (action === 'start') {
     const ctx = await loadCoachingContext(user.id, admin)
     const openingPrompt = buildOpeningPrompt(mode as CoachMode, ctx, context)
 
-    const msg = await client.messages.create({
-      model:      'claude-sonnet-4-5-20251001',
-      max_tokens: 400,
-      system:     buildSystemPrompt(mode as CoachMode, ctx),
-      messages:   [{ role: 'user', content: openingPrompt }],
-    })
-
-    const openingMessage = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    const openingMessage = await callClaude(
+      [{ role: 'user', content: openingPrompt }],
+      buildSystemPrompt(mode as CoachMode, ctx),
+      400
+    )
 
     // Create session record
     const { data: session } = await admin.from('coaching_sessions').insert({
@@ -109,14 +105,11 @@ export async function POST(req: NextRequest) {
       ? '\n\nThis is the final question in this session. After the user responds, give a brief synthesis of the key insights from this session (2-3 sentences). Then write exactly "---SESSION_COMPLETE---" on its own line.'
       : ''
 
-    const msg = await client.messages.create({
-      model:      'claude-sonnet-4-5-20251001',
-      max_tokens: 500,
-      system:     buildSystemPrompt(session.mode as CoachMode, ctx) + systemExtra,
-      messages:   claudeMessages,
-    })
-
-    const coachReply    = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    const coachReply = await callClaude(
+      claudeMessages as AIMessage[],
+      buildSystemPrompt(session.mode as CoachMode, ctx) + systemExtra,
+      500
+    )
     const sessionComplete = coachReply.includes('---SESSION_COMPLETE---')
     const cleanReply    = coachReply.replace('---SESSION_COMPLETE---', '').trim()
 
@@ -145,12 +138,10 @@ export async function POST(req: NextRequest) {
     const fullText = history.map(m => `${m.role}: ${m.content}`).join('\n')
 
     // Extract insights and themes
-    const extractMsg = await client.messages.create({
-      model:      'claude-haiku-4-5-20251001',
-      max_tokens: 400,
-      messages: [{
-        role: 'user',
-        content: `Extract from this coaching session:
+    let insights: string[] = [], themes: string[] = [], title = '', summary = ''
+    try {
+      const text = await callClaude(
+        [{ role: 'user', content: `Extract from this coaching session:
 1. Key insights (max 3, one sentence each)
 2. Themes (max 3, 2-3 words each)
 3. Session title (6 words max)
@@ -159,13 +150,11 @@ Session:
 ${fullText.slice(0, 3000)}
 
 Respond JSON only:
-{"insights":["..."],"themes":["..."],"title":"...","summary":"2-sentence summary"}`
-      }],
-    })
-
-    let insights: string[] = [], themes: string[] = [], title = '', summary = ''
-    try {
-      const text  = extractMsg.content[0].type === 'text' ? extractMsg.content[0].text : '{}'
+{"insights":["..."],"themes":["..."],"title":"...","summary":"2-sentence summary"}` }],
+        'Extract coaching session insights. Return JSON only.',
+        400,
+        'haiku'
+      )
       const parsed = JSON.parse(text.replace(/```json|```/g, '').trim())
       insights = (parsed as any).insights ?? []
       themes   = (parsed as any).themes   ?? []
@@ -193,7 +182,7 @@ Respond JSON only:
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
     if (count && count % 5 === 0) {
-      await updateCoachingProfile(user.id, admin, client)
+      await updateCoachingProfile(user.id, admin)
     }
 
     return NextResponse.json({ ok: true, title, themes, summary })
@@ -297,8 +286,7 @@ function buildSessionTitle(mode: CoachMode, context?: string): string {
 /* ── Update coaching profile (every 5 sessions) ─────────────── */
 async function updateCoachingProfile(
   userId: string,
-  admin: any,
-  client: Anthropic
+  admin: any
 ): Promise<void> {
   try {
     const { data: sessions } = await admin.from('coaching_sessions')
@@ -312,12 +300,8 @@ async function updateCoachingProfile(
     const themeCounts: Record<string, number> = {}
     for (const t of allThemes) themeCounts[t] = (themeCounts[t] ?? 0) + 1
 
-    const msg = await client.messages.create({
-      model:      'claude-haiku-4-5-20251001',
-      max_tokens: 600,
-      messages: [{
-        role: 'user',
-        content: `Analyse these coaching session insights and identify patterns.
+    const text = await callClaude(
+      [{ role: 'user', content: `Analyse these coaching session insights and identify patterns.
 
 INSIGHTS FROM ${sessions.length} SESSIONS:
 ${allInsights.slice(0, 3000)}
@@ -330,11 +314,11 @@ Return JSON only:
   "strengths": [{"theme":"...","evidence":"one sentence"}],
   "recurring_themes": [{"theme":"...","count":0}],
   "growth_edges": [{"area":"...","progress":"one sentence"}]
-}`
-      }],
-    })
-
-    const text   = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+}` }],
+      'Analyse coaching patterns and return JSON only.',
+      600,
+      'haiku'
+    )
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim())
 
     await admin.from('coaching_profile').upsert({

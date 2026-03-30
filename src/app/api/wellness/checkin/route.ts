@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -92,27 +93,11 @@ export async function POST(req: NextRequest) {
       ].filter(Boolean).join(', ')
 
       try {
-        const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type':      'application/json',
-            'x-api-key':         process.env.ANTHROPIC_API_KEY,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model:      'claude-sonnet-4-6',
-            max_tokens: 150,
-            system: `You are a wellness coach for a busy founder/CEO. 
-Give a single, direct 2-sentence observation based on today's check-in scores. 
-Be specific and actionable. No filler phrases.`,
-            messages: [{
-              role:    'user',
-              content: `Today's wellness check-in: ${scores}. Brief insight:`,
-            }],
-          }),
-        })
-        const aiData = await aiRes.json()
-        ai_insight = aiData?.content?.[0]?.text ?? null
+        ai_insight = await callClaude(
+          [{ role: 'user', content: `Today's wellness check-in: ${scores}. Brief insight:` }],
+          `You are a wellness coach for a busy founder/CEO. Give a single, direct 2-sentence observation based on today's check-in scores. Be specific and actionable. No filler phrases.`,
+          150
+        ) || null
       } catch {
         // Non-fatal — insight is optional
       }

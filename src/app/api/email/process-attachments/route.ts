@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { callClaude } from '@/lib/ai/client'
 
 /**
  * POST /api/email/process-attachments
@@ -117,7 +117,6 @@ export async function POST(req: NextRequest) {
     .in('status', ['sent', 'negotiating'])
     .limit(10)
 
-  const client  = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const results: Record<string, string> = {}
 
   for (const item of queue) {
@@ -157,7 +156,6 @@ export async function POST(req: NextRequest) {
         stakeholders:  stakeholders ?? [],
         decisions:     activeDecisions ?? [],
         proposals:     activeProposals ?? [],
-        client,
       })
 
       // Find matching stakeholder
@@ -267,14 +265,13 @@ export async function POST(req: NextRequest) {
 /* ── NemoClaw™ document analysis ───────────────────────────── */
 async function analyseDocument({
   content, filename, fromAddress, fromName, emailSubject,
-  stakeholders, decisions, proposals, client,
+  stakeholders, decisions, proposals,
 }: {
   content: string; filename: string; fromAddress: string
   fromName: string; emailSubject: string
   stakeholders: {id:string;name:string;organisation:string}[]
   decisions:    {id:string;title:string}[]
   proposals:    {id:string;title:string}[]
-  client: Anthropic
 }): Promise<{
   doc_type: string; doc_subtype?: string; title?: string
   description?: string; key_parties?: string[]
@@ -324,13 +321,11 @@ Extract and return JSON only:
 }`
 
   try {
-    const msg = await client.messages.create({
-      model:      'claude-sonnet-4-5-20251001',
-      max_tokens: 800,
-      messages:   [{ role: 'user', content: prompt }],
-    })
-
-    const text  = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+    const text = await callClaude(
+      [{ role: 'user', content: prompt }],
+      'You are a document analysis agent. Analyse the document and return structured JSON metadata.',
+      800
+    )
     const clean = text.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(clean)
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -94,16 +94,11 @@ Write a complete proposal document in Markdown with these sections:
 
 Keep it professional, concise, and persuasive. This goes directly to a client.`
 
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-    const message = await client.messages.create({
-      model:      'claude-sonnet-4-5-20251001',
-      max_tokens: 2000,
-      system:     systemPrompt,
-      messages:   [{ role: 'user', content: userPrompt }],
-    })
-
-    const content = message.content[0].type === 'text' ? message.content[0].text : ''
+    const content = await callClaude(
+      [{ role: 'user', content: userPrompt }],
+      systemPrompt,
+      2000
+    )
 
     // Deduct AI credit
     await supabase.from('exec_intelligence_config')

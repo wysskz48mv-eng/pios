@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -255,26 +256,11 @@ export async function POST(req: NextRequest) {
   }).join('\n\n')
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type':      'application/json',
-        'x-api-key':         process.env.ANTHROPIC_API_KEY ?? '',
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model:      'claude-sonnet-4-6',
-        max_tokens: 2000,
-        system:     buildSystemPrompt(job_type),
-        messages: [{
-          role:    'user',
-          content: `Review the following episodes (range ${episode_from}–${episode_to}):\n\n${episodeContent}\n\nReturn ONLY valid JSON, no preamble.`,
-        }],
-      }),
-    })
-
-    const aiData = await res.json()
-    const rawText = aiData?.content?.[0]?.text ?? '{}'
+    const rawText = await callClaude(
+      [{ role: 'user', content: `Review the following episodes (range ${episode_from}–${episode_to}):\n\n${episodeContent}\n\nReturn ONLY valid JSON, no preamble.` }],
+      buildSystemPrompt(job_type),
+      2000
+    ) || '{}'
 
     let parsed: { overall_score?: number; summary?: string; findings?: unknown[]; recommendations?: unknown[] } = {}
     try {

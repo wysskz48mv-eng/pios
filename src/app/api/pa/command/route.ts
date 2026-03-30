@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { callClaude, type AIMessage } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -40,8 +40,6 @@ export async function POST(req: NextRequest) {
   // Load comprehensive PIOS context for NemoClaw™
   const ctx = await loadPAContext(user.id, admin)
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
   // Build conversation history
   const claudeHistory = history
     .filter((m: {role:string}) => m.role !== 'system')
@@ -51,14 +49,11 @@ export async function POST(req: NextRequest) {
     }))
   claudeHistory.push({ role: 'user', content: message })
 
-  const msg = await client.messages.create({
-    model:      'claude-sonnet-4-5-20251001',
-    max_tokens: 600,
-    system:     buildPASystemPrompt(ctx),
-    messages:   claudeHistory,
-  })
-
-  const rawResponse = msg.content[0].type === 'text' ? msg.content[0].text : ''
+  const rawResponse = await callClaude(
+    claudeHistory as AIMessage[],
+    buildPASystemPrompt(ctx),
+    600
+  )
 
   // Parse actions from response if any
   const { response, actions } = parseResponse(rawResponse)

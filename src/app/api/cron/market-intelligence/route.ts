@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+// Uses direct fetch — callClaude doesn't support web_search tool
 
 /**
  * POST /api/cron/market-intelligence
@@ -59,7 +59,6 @@ export async function POST(req: NextRequest) {
   }
 
   const results: string[] = []
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   for (const config of configs) {
     try {
@@ -114,22 +113,34 @@ Only include intelligence from the last 48 hours unless specifically researching
         categories, depth,
       })
 
-      // 4. Run web-search-enabled Claude
-      const message = await client.messages.create({
-        model:      'claude-sonnet-4-5-20251001',
-        max_tokens: depth === 'deep' ? 3000 : 1500,
-        system:     systemPrompt,
-        tools: [{
-          type: 'web_search_20250305' as const,
-          name: 'web_search',
-        }],
-        messages: [{ role: 'user', content: userPrompt }],
+      // 4. Run web-search-enabled Claude (direct fetch — callClaude doesn't support tools)
+      const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type':      'application/json',
+          'x-api-key':         process.env.ANTHROPIC_API_KEY ?? '',
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model:      'claude-sonnet-4-20250514',
+          max_tokens: depth === 'deep' ? 3000 : 1500,
+          system:     systemPrompt,
+          tools:      [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages:   [{ role: 'user', content: userPrompt.replace(/\0/g, '').slice(0, 40_000) }],
+        }),
       })
+      if (!aiRes.ok) {
+        results.push(`${uid}: Claude API error ${aiRes.status}`)
+        continue
+      }
+      const message = await aiRes.json()
+      console.info('[PIOS-AI] market-intel tokens in=%d out=%d',
+        message.usage?.input_tokens ?? 0, message.usage?.output_tokens ?? 0)
 
       // 5. Extract text content from response
-      const intelText = message.content
-        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-        .map(b => b.text)
+      const intelText = (message.content ?? [])
+        .filter((b: { type: string }) => b.type === 'text')
+        .map((b: { type: string; text: string }) => b.text)
         .join('\n')
 
       if (!intelText.trim()) {
@@ -148,7 +159,7 @@ Only include intelligence from the last 48 hours unless specifically researching
         sections:      sections,
         categories:    categories,
         depth:         depth,
-        model_used:    'claude-sonnet-4-5-20251001',
+        model_used:    'claude-sonnet-4-20250514',
         generated_at:  new Date().toISOString(),
       }, { onConflict: 'user_id,date' })
 

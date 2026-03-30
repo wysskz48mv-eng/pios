@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -34,8 +34,6 @@ export async function POST(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
   const today = new Date().toISOString().split('T')[0]
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
 
@@ -100,11 +98,11 @@ Return JSON only:
   "summary": "One sentence on the day's focus"
 }`
 
-  const msg = await client.messages.create({
-    model:      'claude-sonnet-4-5-20251001',
-    max_tokens: 1000,
-    messages:   [{ role: 'user', content: prompt }],
-  })
+  const rawText = await callClaude(
+    [{ role: 'user', content: prompt }],
+    'You are a professional day planner for a multi-domain executive. Return only valid JSON.',
+    1000
+  )
 
   let plan: {
     time_blocks:   {start:string;end:string;title:string;type:string;task_index?:number}[]
@@ -114,8 +112,7 @@ Return JSON only:
   } | null = null
 
   try {
-    const text   = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
-    const clean  = text.replace(/```json|```/g, '').trim()
+    const clean  = rawText.replace(/```json|```/g, '').trim()
     plan         = JSON.parse(clean)
   } catch {
     return NextResponse.json({ error: 'Plan generation failed' }, { status: 500 })

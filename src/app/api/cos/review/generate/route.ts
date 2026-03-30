@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 
 /**
@@ -85,8 +85,6 @@ export async function POST(req: NextRequest) {
     .map(e => `  ${e.title ?? e.doc_type} expires ${e.expiry_date}`)
     .join('\n')
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
   const prompt = `You are NemoClaw™, acting as Chief of Staff for a ${calib?.seniority_level ?? 'Founder'} in ${calib?.primary_industry ?? 'consulting'}.
 Profile: ${calib?.calibration_summary ?? 'Senior professional running multiple ventures'}
 
@@ -122,13 +120,11 @@ Generate the review in JSON:
 Be direct. No padding. Write as a strategic advisor, not a chatbot.
 UK English. Use specific names and dates from the data.`
 
-  const msg = await client.messages.create({
-    model:      'claude-sonnet-4-5-20251001',
-    max_tokens: 1200,
-    messages:   [{ role: 'user', content: prompt }],
-  })
-
-  const text = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+  const text = await callClaude(
+    [{ role: 'user', content: prompt }],
+    'You are NemoClaw™ acting as Chief of Staff. Generate a strategic weekly review. Return JSON only.',
+    1200
+  )
   let review: Record<string, unknown> = {}
   try {
     review = JSON.parse(text.replace(/```json|```/g, '').trim())
