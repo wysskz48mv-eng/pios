@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
         google_access_token:  providerToken,
         google_refresh_token: providerRefreshToken,
         google_token_expiry:  tokenExpiry,
-        google_scopes:        'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar',
+        google_scopes:        ['email', 'profile', 'https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/calendar'],
         connected_at:         new Date().toISOString(),
       }, { onConflict: 'user_id,email_address' })
     }

@@ -55,10 +55,10 @@ interface ConnectedAccount {
   id: string
   email_address: string
   provider: string
-  access_token: string
-  refresh_token: string
-  inbox_type: string        // business | personal | academic | employer
-  triage_enabled: boolean
+  google_access_token: string
+  google_refresh_token: string
+  context: string             // personal | academic | work | consulting
+  ai_triage_enabled: boolean
 }
 
 /* ── Main handler ─────────────────────────────────────────── */
@@ -98,9 +98,9 @@ export async function POST(req: NextRequest) {
   // Load ALL connected accounts for this user — keyed by email address
   const { data: accounts } = await admin
     .from('connected_email_accounts')
-    .select('id,email_address,provider,access_token,refresh_token,inbox_type,triage_enabled')
+    .select('id,email_address,provider,google_access_token,google_refresh_token,context,ai_triage_enabled')
     .eq('user_id', user.id)
-    .eq('triage_enabled', true)
+    .eq('ai_triage_enabled', true)
 
   const accountMap = new Map<string, ConnectedAccount>()
   for (const acc of (accounts ?? [])) {
@@ -200,10 +200,10 @@ async function triageAndDraft({
     })
 
     // Create Gmail draft from the CORRECT account
-    if (draftBody && account.provider === 'gmail' && account.access_token) {
+    if (draftBody && account.provider === 'gmail' && account.google_access_token) {
       draftId = await createGmailDraft({
-        accessToken:  account.access_token,
-        refreshToken: account.refresh_token,
+        accessToken:  account.google_access_token,
+        refreshToken: account.google_refresh_token,
         fromAddress:  account.email_address,   // ← CORRECT inbox
         toAddress:    email.from_address,
         subject:      replySubject(email.subject ?? ''),
@@ -237,7 +237,7 @@ async function triageAndDraft({
       description: `From: ${email.from_address}\nPreview: ${email.body_preview ?? ''}`,
       priority:    'high',
       status:      'todo',
-      domain:      mapInboxToDomain(account.inbox_type),
+      domain:      mapInboxToDomain(account.context),
       due_date:    new Date(Date.now() + 86400000).toISOString(),
       source:      'email_triage',
       created_at:  new Date().toISOString(),
@@ -317,13 +317,15 @@ async function generateDraft({
   classification: { class: string; reasoning: string }
 }): Promise<string> {
 
-  // Inbox type affects tone — employer inbox is more formal than personal
+  // Context affects tone — work inbox is more formal than personal
   const inboxContext = {
-    business:  'This is a business inbox. Professional, direct tone.',
-    employer:  'This is an employer/work inbox. Formal, corporate tone.',
-    personal:  'This is a personal inbox. Warm but still professional.',
-    academic:  'This is a university inbox. Scholarly, structured tone.',
-  }[account.inbox_type] ?? 'Professional tone.'
+    work:        'This is a business inbox. Professional, direct tone.',
+    consulting:  'This is a consulting inbox. Formal, corporate tone.',
+    secondment:  'This is an employer/work inbox. Formal, corporate tone.',
+    personal:    'This is a personal inbox. Warm but still professional.',
+    academic:    'This is a university inbox. Scholarly, structured tone.',
+    client:      'This is a client inbox. Professional, service-oriented tone.',
+  }[account.context] ?? 'Professional tone.'
 
   const system = `You are NemoClaw™, drafting an email reply for ${userName}.
 PROFILE: ${calib?.calibration_summary ?? 'Senior professional'}
@@ -448,6 +450,6 @@ function replySubject(subject: string): string {
   return `Re: ${subject}`
 }
 
-function mapInboxToDomain(inboxType: string): string {
-  return { business: 'business', employer: 'fm_consulting', personal: 'personal', academic: 'academic' }[inboxType] ?? 'business'
+function mapInboxToDomain(context: string): string {
+  return { work: 'business', consulting: 'fm_consulting', personal: 'personal', academic: 'academic', secondment: 'fm_consulting', client: 'business' }[context] ?? 'business'
 }
