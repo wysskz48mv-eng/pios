@@ -209,9 +209,9 @@ export async function PATCH(req: NextRequest) {
 
     if (entity === 'chapter') {
       for (const k of ['title','chapter_num','status','word_count','target_words','notes','content','ai_summary']) { if (k in updates) safe[k] = updates[k] }
-      if (safe.status && !CHAPTER_STATUSES.includes(safe.status)) return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-      if (safe.word_count !== undefined)   safe.word_count   = parseInt(safe.word_count)   || 0
-      if (safe.target_words !== undefined) safe.target_words = parseInt(safe.target_words) || 8000
+      if (safe.status && !CHAPTER_STATUSES.includes(safe.status as string)) return NextResponse.json({ error: 'invalid status' }, { status: 400 })
+      if (safe.word_count !== undefined)   safe.word_count   = parseInt(String(safe.word_count))   || 0
+      if (safe.target_words !== undefined) safe.target_words = parseInt(String(safe.target_words)) || 8000
       const { data, error } = await supabase.from('thesis_chapters').update(safe).eq('id',id).eq('user_id',user.id).select().single()
       if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ chapter: data })
@@ -219,8 +219,8 @@ export async function PATCH(req: NextRequest) {
 
     if (entity === 'module') {
       for (const k of ['title','module_type','status','deadline','credits','sort_order','grade','notes']) { if (k in updates) safe[k] = updates[k] }
-      if (safe.status      && !MODULE_STATUSES.includes(safe.status))  return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-      if (safe.module_type && !MODULE_TYPES.includes(safe.module_type)) return NextResponse.json({ error: 'invalid module_type' }, { status: 400 })
+      if (safe.status      && !MODULE_STATUSES.includes(safe.status as string))  return NextResponse.json({ error: 'invalid status' }, { status: 400 })
+      if (safe.module_type && !MODULE_TYPES.includes(safe.module_type as string)) return NextResponse.json({ error: 'invalid module_type' }, { status: 400 })
       const { data, error } = await supabase.from('academic_modules').update(safe).eq('id',id).eq('user_id',user.id).select().single()
       if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ module: data })
@@ -228,7 +228,7 @@ export async function PATCH(req: NextRequest) {
 
     if (entity === 'session') {
       for (const k of ['supervisor','session_date','session_type','format','duration_mins','notes','action_items','agenda','next_session','ai_summary']) { if (k in updates) safe[k] = updates[k] }
-      if (safe.session_type && !SESSION_TYPES.includes(safe.session_type)) return NextResponse.json({ error: 'invalid session_type' }, { status: 400 })
+      if (safe.session_type && !SESSION_TYPES.includes(safe.session_type as string)) return NextResponse.json({ error: 'invalid session_type' }, { status: 400 })
       const { data, error } = await supabase.from('supervision_sessions').update(safe).eq('id',id).eq('user_id',user.id).select().single()
       if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
       return NextResponse.json({ session: data })
@@ -251,7 +251,7 @@ export async function DELETE(req: NextRequest) {
     if (!id || !entity) return NextResponse.json({ error: 'id and entity required' }, { status: 400 })
     const table = entity==='chapter'?'thesis_chapters':entity==='module'?'academic_modules':entity==='session'?'supervision_sessions':null
     if (!table) return NextResponse.json({ error: 'invalid entity' }, { status: 400 })
-    const { error } = await supabase.fromtable.delete().eq('id',id).eq('user_id',user.id)
+    const { error } = await supabase.from(table).delete().eq('id',id).eq('user_id',user.id)
     if (error) return NextResponse.json({ error: (error as Error).message }, { status: 400 })
     return NextResponse.json({ deleted: true })
   } catch (err: unknown) {

@@ -240,7 +240,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 // ── AI Processing ──────────────────────────────────────────────────────────────
-async function processMeetingNotes(supabase: any, meeting: unknown, userId: string) {
+async function processMeetingNotes(supabase: any, meeting: any, userId: string) {
   const content = meeting.raw_transcript || meeting.raw_notes || ''
   if (!content.trim()) return meeting
 

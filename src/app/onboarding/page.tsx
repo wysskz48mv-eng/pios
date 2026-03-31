@@ -426,7 +426,7 @@ export default function OnboardingPage() {
 
           <IntCard id="gmail"   label="Gmail"            desc="Email triage — NemoClaw™ processes your inbox"    disabled={isStandalone} />
           <IntCard id="outlook" label="Outlook / M365"   desc="Email + Teams meetings → action items"            disabled={isStandalone} />
-          <IntCard id="gcal"    label="Google Calendar"  desc="Meetings → tasks, conflict detection"              disabled={isStandalone && deployMode !== 'hybrid'} />
+          <IntCard id="gcal"    label="Google Calendar"  desc="Meetings → tasks, conflict detection"              disabled={isStandalone && (deployMode as string) !== 'hybrid'} />
           <IntCard id="xero"    label="Xero"             desc="Invoices, expenses, bank feeds, VAT"               disabled={isStandalone} />
 
           <div style={{ fontSize: 12, color: 'var(--pios-dim)', margin: '16px 0' }}>

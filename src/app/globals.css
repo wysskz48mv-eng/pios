@@ -44,8 +44,28 @@
 
   /* ── Fonts — Obsidian Command system ── */
   --font-display: 'Instrument Serif', Georgia, serif;
+  --font-serif:   'Cormorant Garamond', 'Instrument Serif', Georgia, serif;
   --font-sans:    'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono:    'DM Mono', 'SF Mono', 'Fira Code', monospace;
+
+  /* ── Landing page palette ── */
+  --ink:          #1a1610;
+  --ink2:         #3d3626;
+  --ink3:         #6b6050;
+  --paper:        #f7f5f0;
+  --paper2:       #efecea;
+  --card:         #faf8f4;
+  --rule:         #e2dfd8;
+  --gold:         #b8860b;
+  --gold2:        #d4a017;
+  --gold3:        #f0c040;
+  --gold-light:   #fdf5d0;
+  --teal:         #1a5c45;
+  --teal2:        #2a8a68;
+  --teal-light:   #e4f7f4;
+  --cobalt:       #1a3d7a;
+  --cobalt2:      #2d5fa0;
+  --cobalt-light: #e4eef8;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

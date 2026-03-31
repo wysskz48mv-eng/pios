@@ -110,13 +110,13 @@ export async function PATCH(request: Request) {
     const safe: Record<string,unknown> = { updated_at: new Date().toISOString() }
     for (const k of (ALLOWED as any[])) { if (k in body) safe[k] = body[k] }
 
-    if (safe.status   && !VALID_STATUSES.includes(safe.status))
+    if (safe.status   && !VALID_STATUSES.includes(safe.status as string))
       return NextResponse.json({ error: 'invalid status' }, { status: 400 })
-    if (safe.priority && !VALID_PRIORITIES.includes(safe.priority))
+    if (safe.priority && !VALID_PRIORITIES.includes(safe.priority as string))
       return NextResponse.json({ error: 'invalid priority' }, { status: 400 })
-    if (safe.domain   && !VALID_DOMAINS.includes(safe.domain))
+    if (safe.domain   && !VALID_DOMAINS.includes(safe.domain as string))
       return NextResponse.json({ error: 'invalid domain' }, { status: 400 })
-    if (safe.source   && !VALID_SOURCES.includes(safe.source))
+    if (safe.source   && !VALID_SOURCES.includes(safe.source as string))
       return NextResponse.json({ error: 'invalid source' }, { status: 400 })
 
     // Auto-set completed_at
@@ -128,7 +128,7 @@ export async function PATCH(request: Request) {
     if (safe.status && safe.status !== 'done') safe.completed_at = null
 
     // Clamp duration
-    if (safe.duration_mins !== undefined) safe.duration_mins = Math.max(5, Math.min(480, parseInt(safe.duration_mins) || 30))
+    if (safe.duration_mins !== undefined) safe.duration_mins = Math.max(5, Math.min(480, parseInt(String(safe.duration_mins)) || 30))
 
     const { data, error } = await supabase.from('tasks')
       .update(safe).eq('id', id).eq('user_id', user.id).select().single()
