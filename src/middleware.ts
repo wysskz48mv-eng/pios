@@ -16,6 +16,8 @@ const PUBLIC_PATHS = new Set([
   '/auth/verify',
   '/auth/callback',
   '/auth/reset-password',
+  '/',                     // Landing page — public marketing, auth checked in server component
+  '/research',             // White paper — public marketing page
   '/privacy',
   '/terms',
   '/pricing',              // Public marketing page — no auth needed
