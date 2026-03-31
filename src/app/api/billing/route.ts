@@ -43,8 +43,8 @@ export async function GET(req: NextRequest) {
     const tenant  = tenantR.data  as any
     const usage   = usageR.data   as any[] ?? []
 
-    const plan      = tenant?.plan ?? 'professional'
-    const planInfo  = PLANS[plan as keyof typeof PLANS] ?? PLANS.professional
+    const plan      = tenant?.plan ?? 'executive'
+    const planInfo  = PLANS[plan as keyof typeof PLANS] ?? PLANS.executive
     const credLimit = tenant?.ai_credits_limit ?? planInfo.credits
     const credUsed  = usage.reduce((s, r) => s + (Number(r.tokens_used) || 0), 0)
     const credPct   = credLimit > 0 ? Math.round(credUsed / credLimit * 100) : 0

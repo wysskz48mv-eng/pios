@@ -51,6 +51,18 @@
     {
       "path": "/api/notifications/smart",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/wellness-patterns",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-value-summary",
+      "schedule": "0 16 * * 5"
+    },
+    {
+      "path": "/api/cron/data-retention",
+      "schedule": "0 2 * * 0"
     }
   ],
   "functions": {
@@ -119,6 +131,15 @@
     },
     "src/app/api/onboarding/route.ts": {
       "maxDuration": 30
+    },
+    "src/app/api/cron/wellness-patterns/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/weekly-value-summary/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/data-retention/route.ts": {
+      "maxDuration": 60
     }
   }
 }

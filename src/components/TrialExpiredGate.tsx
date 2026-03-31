@@ -8,26 +8,26 @@ import Link from 'next/link'
 
 const PLANS = [
   {
-    key: 'student',
-    name: 'Student',
-    price: '$9',
-    colour: '#6c8eff',
+    key: 'starter',
+    name: 'Starter',
+    price: '£9',
+    colour: '#26aee8',
     features: ['Academic Lifecycle', 'AI Calendar', 'Personal Tasks', '2,000 AI credits/mo'],
   },
   {
-    key: 'student',
-    name: 'Individual',
-    price: '$19',
+    key: 'pro',
+    name: 'Pro',
+    price: '£19',
     colour: '#a78bfa',
     popular: true,
-    features: ['Everything in Student', 'Gmail Triage', 'Projects + Expenses', 'PIOS AI Companion', '5,000 AI credits/mo'],
+    features: ['Everything in Starter', 'Gmail Triage', 'Projects + Expenses', 'PIOS AI Companion', '5,000 AI credits/mo'],
   },
   {
-    key: 'professional',
-    name: 'Professional',
-    price: '$39',
+    key: 'executive',
+    name: 'Executive',
+    price: '£24',
     colour: '#22d3ee',
-    features: ['Everything in Individual', 'FM Consulting Engine', '15,000 AI credits/mo', 'Priority support'],
+    features: ['Everything in Pro', 'Consulting Frameworks', 'Executive OS', '10,000 AI credits/mo', 'Priority support'],
   },
 ]
 

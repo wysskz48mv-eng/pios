@@ -145,6 +145,31 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // ── ISO 27001 A.9.4.2 — Session idle timeout (4 hours) ────────────────────
+  // If the user's session is older than 4 hours, sign out and redirect to login.
+  // The middleware refreshes the token on every request; this catches sessions
+  // where the user was inactive for an extended period.
+  if (user) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      const SESSION_MAX_AGE_MS = 4 * 60 * 60 * 1000 // 4 hours
+      const lastSignIn = user.last_sign_in_at
+        ? new Date(user.last_sign_in_at).getTime()
+        : 0
+      const sessionCreated = session.expires_at
+        ? (session.expires_at * 1000) - 3600000 // Supabase default expiry is 1hr after creation
+        : lastSignIn
+      const sessionAge = Date.now() - Math.max(lastSignIn, sessionCreated)
+
+      if (sessionAge > SESSION_MAX_AGE_MS) {
+        await supabase.auth.signOut()
+        const expiredUrl = new URL('/auth/login', request.url)
+        expiredUrl.searchParams.set('reason', 'session_expired')
+        return NextResponse.redirect(expiredUrl)
+      }
+    }
+  }
+
   // Onboarding gate — redirect incomplete users to wizard
   if (user && pathname.startsWith('/platform/') && !pathname.startsWith('/platform/demo')) {
     const { data: profile } = await supabase

@@ -5,8 +5,8 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 })
 
 export const PLANS = {
-  student: {
-    name: 'Student',
+  starter: {
+    name: 'Starter',
     price: 9,
     priceId: process.env.STRIPE_PRICE_STUDENT!,
     maxUsers: 1,
@@ -22,8 +22,26 @@ export const PLANS = {
       '5 GB storage',
     ],
   },
-  professional: {
-    name: 'Professional',
+  pro: {
+    name: 'Pro',
+    price: 19,
+    priceId: process.env.STRIPE_PRICE_PRO!,
+    maxUsers: 1,
+    maxInvestigations: null,
+    credits: 5000,
+    description: 'For postgraduates and independent professionals',
+    features: [
+      'Everything in Starter',
+      'Gmail Triage + Email AI',
+      'Projects + Expenses',
+      'PIOS AI Companion',
+      'Coaching Engine (5 modes)',
+      '5,000 AI credits/mo',
+      '10 GB storage',
+    ],
+  },
+  executive: {
+    name: 'Executive',
     price: 24,
     priceId: process.env.STRIPE_PRICE_PROFESSIONAL!,
     maxUsers: 1,
@@ -31,7 +49,7 @@ export const PLANS = {
     credits: 10000,
     description: 'Full CEO/Founder OS — all 41 modules, 15 frameworks',
     features: [
-      'Everything in Student',
+      'Everything in Pro',
       'Command Centre + Daily AI Brief (7am)',
       'Payroll Engine (detect → remit → chase)',
       'Consulting Framework Engine (15 NemoClaw™ frameworks)',
@@ -53,7 +71,7 @@ export const PLANS = {
     credits: -1, // unlimited
     description: 'Institution / team — shared workspaces, SSO, dept admin',
     features: [
-      'Everything in Professional',
+      'Everything in Executive',
       'Shared research workspaces',
       'Department-level admin',
       'SSO / institutional login',

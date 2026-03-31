@@ -8,7 +8,7 @@ import { useState } from 'react'
 
 const PLANS = [
   {
-    name: 'Researcher',
+    name: 'Starter',
     price: '£9',
     annual: '£7',
     period: '/mo',
@@ -24,10 +24,31 @@ const PLANS = [
       'Viva prep with concept mapping and argument structure',
     ],
     cta: 'Start free trial',
-    ctaHref: '/auth/signup?plan=student',
+    ctaHref: '/auth/signup?plan=starter',
   },
   {
-    name: 'Founder',
+    name: 'Pro',
+    price: '£19',
+    annual: '£15',
+    period: '/mo',
+    colour: '#a78bfa',
+    highlight: false,
+    headline: 'For postgraduates and independent professionals who need more AI.',
+    description: 'Everything in Starter plus email triage, projects, expenses, and PIOS AI Companion.',
+    features: [
+      'Everything in Starter',
+      'Gmail Triage + Email AI',
+      'Projects + Expenses tracking',
+      'PIOS AI Companion',
+      'Coaching Engine (5 modes)',
+      '5,000 AI interactions per month',
+      '10 GB storage',
+    ],
+    cta: 'Start free trial',
+    ctaHref: '/auth/signup?plan=pro',
+  },
+  {
+    name: 'Executive',
     price: '£24',
     annual: '£19',
     period: '/mo',
@@ -47,7 +68,7 @@ const PLANS = [
       '10,000 AI interactions per month',
     ],
     cta: 'Start free trial',
-    ctaHref: '/auth/signup?plan=professional',
+    ctaHref: '/auth/signup?plan=executive',
   },
   {
     name: 'Team',
@@ -146,7 +167,7 @@ export default function PricingPage() {
           <em style={{ fontStyle: 'italic', color: 'rgba(155,135,245,0.9)' }}>who'd rather be building.</em>
         </h1>
         <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, marginBottom: 14 }}>
-          Everything you need to run the business — payroll, contracts, strategy, knowledge — without the chaos. One OS. £24/month.
+          Everything you need to run the business — payroll, contracts, strategy, knowledge — without the chaos. One OS. From £9/month.
         </p>
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.02em' }}>
           14-day free trial · No credit card · Cancel anytime
