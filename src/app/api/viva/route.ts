@@ -303,10 +303,11 @@ export async function POST(req: NextRequest) {
     const currentQuestion = question ?? pickedQ
     const examinerProfile = examiner ? (EXAMINER_PROFILES[examiner as string] ?? '') : ''
 
-    // Select context based on institution type
+    // Select context based on institution type (generic fallback if no institution specified)
+    const GENERIC_DOCTORAL_CONTEXT = `You are operating within a standard UK doctoral examination context.\nViva format: oral examination before a panel of examiners.\nOutcome categories: Pass, Minor corrections, Major corrections, Resubmission.\nThe candidate is a doctoral student defending their thesis.`
     const institutionCtx = body.institutionKey
       ? (SA_EXAMINER_PROFILES[body.institutionKey] ? SA_DOCTORAL_CONTEXT : PORTSMOUTH_DBA_CONTEXT)
-      : PORTSMOUTH_DBA_CONTEXT
+      : (examiner && EXAMINER_PROFILES[examiner as string] ? PORTSMOUTH_DBA_CONTEXT : GENERIC_DOCTORAL_CONTEXT)
     const saExaminerProfile = body.institutionKey ? (SA_EXAMINER_PROFILES[body.institutionKey] ?? '') : ''
     const activeExaminerProfile = examinerProfile || saExaminerProfile
 
@@ -316,7 +317,7 @@ export async function POST(req: NextRequest) {
       stress: `You are a demanding external examiner who is sceptical of practitioner-research. You will ask the question below and regardless of the answer, probe for weaknesses, demand specific evidence, and challenge generalisability. Do not accept vague answers. Push hard but remain professional.`,
     }
 
-    const systemPrompt = `${institutionCtx}\n\n${modeInstructions[mode] ?? modeInstructions.standard}\n\nThesis context: ${thesisContext ?? 'DBA on AI-enabled FM cost forecasting in GCC master communities (VeritasEdge™ as practitioner case)'}`
+    const systemPrompt = `${institutionCtx}\n\n${modeInstructions[mode] ?? modeInstructions.standard}\n\nThesis context: ${thesisContext ?? 'Doctoral research thesis (candidate has not specified topic — ask general examination questions)'}`
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514', max_tokens: 400,

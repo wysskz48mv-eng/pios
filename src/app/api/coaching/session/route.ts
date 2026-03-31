@@ -219,7 +219,21 @@ function buildSystemPrompt(mode: CoachMode, ctx: Awaited<ReturnType<typeof loadC
   const okrList      = (okrs as {objective:string;progress:number}[]).map(o => `${o.objective} (${o.progress}%)`).join('; ')
   const decList      = (decisions as {title:string}[]).map(d => d.title).join('; ')
 
-  return `You are NemoClaw™, an executive coaching AI for a ${(calib as any)?.seniority_level ?? 'senior'} professional in ${(calib as any)?.primary_industry ?? 'consulting'}.
+  // Detect academic context from calibration or session content
+  const isAcademic = (calib as any)?.primary_industry === 'academic' ||
+    (calib as any)?.primary_industry === 'education' ||
+    ((calib as any)?.calibration_summary ?? '').toLowerCase().match(/\b(phd|dba|mba|msc|thesis|doctoral|postgraduate)\b/)
+
+  const academicCoachingGuide = isAcademic ? `
+ACADEMIC COACHING CONTEXT:
+This user is a doctoral/postgraduate student. Adapt your coaching accordingly:
+${mode === 'daily_reflection' ? '- If the user mentions academic work, connect reflections to their thesis progress, supervision relationship, and the documented challenge of balancing multiple identities (professional vs academic vs personal).' : ''}
+${mode === 'deep' ? '- For academic users, explore the relationship between professional identity and doctoral identity. Part-time doctoral students face documented role conflict — 34% cite personal problems as the reason for dropping out. Probe how they manage the cognitive load of multiple domains.' : ''}
+${mode === 'situation_prep' ? '- For viva/supervision/academic contexts, use structured questioning: What is the examiner likely to probe? What is your weakest argument? What evidence would change your conclusion?' : ''}
+${mode === 'debrief' ? '- For supervision debriefs, help extract concrete actions and connect feedback to thesis progression. Ask what the supervisor said that surprised them.' : ''}
+` : ''
+
+  return `You are NemoClaw™, ${isAcademic ? 'an academic' : 'an executive'} coaching AI for a ${(calib as any)?.seniority_level ?? 'senior'} professional in ${(calib as any)?.primary_industry ?? 'consulting'}.
 
 COACHING PROFILE:
 ${(calib as any)?.calibration_summary ?? 'Experienced professional'}
@@ -229,7 +243,7 @@ Active OKRs: ${okrList || 'None logged'}
 Open decisions: ${decList || 'None logged'}
 Key stakeholders: ${stakeList || 'None logged'}
 Recent coaching themes: ${recentThemes || 'First session'}
-
+${academicCoachingGuide}
 COACHING MODE: ${mode.replace('_', ' ')}
 STYLE: ${MODE_CONTRACTS[mode].style}
 
@@ -240,7 +254,7 @@ COACHING PRINCIPLES:
 - Reflect back what you hear before probing deeper
 - Use their communication register: ${(calib as any)?.communication_register ?? 'professional'}
 - UK English, British spellings
-- Be direct and concise — this is executive coaching, not therapy
+- Be direct and concise — this is ${isAcademic ? 'academic' : 'executive'} coaching, not therapy
 - Never be sycophantic — challenge respectfully when the thinking is unclear
 - When doing role-play: stay fully in character as the counterparty`
 }

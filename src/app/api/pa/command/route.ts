@@ -69,10 +69,12 @@ async function loadPAContext(userId: string, admin: any) {
   const today = new Date().toISOString().split('T')[0]
   const week  = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
 
-  const [calibRes, profileRes, taskRes, okrRes, decRes, stakeRes, emailRes, vaultRes, alertRes] =
+  const sixtyDaysOut = new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0]
+
+  const [calibRes, profileRes, taskRes, okrRes, decRes, stakeRes, emailRes, vaultRes, alertRes, chaptersRes, modulesRes, supervisionsRes] =
     await Promise.allSettled([
       admin.from('nemoclaw_calibration').select('calibration_summary,seniority_level,primary_industry,communication_register').eq('user_id', userId).single(),
-      admin.from('user_profiles').select('full_name').eq('user_id', userId).single(),
+      admin.from('user_profiles').select('full_name,persona_type').eq('user_id', userId).single(),
       admin.from('tasks').select('id,title,priority,status,due_date,domain').eq('user_id', userId).neq('status','done').order('priority',{ascending:false}).limit(10),
       admin.from('executive_okrs').select('id,objective,progress,status').eq('user_id', userId).eq('status','active').limit(5),
       admin.from('executive_decisions').select('id,title,context,created_at').eq('user_id', userId).eq('status','open').limit(5),
@@ -80,6 +82,10 @@ async function loadPAContext(userId: string, admin: any) {
       admin.from('email_items').select('id,from_name,from_address,subject,triage_class,received_at').eq('user_id', userId).is('triage_class',null).order('received_at',{ascending:false}).limit(5),
       admin.from('vault_documents').select('id,title,doc_type,organisation_name,expiry_date').eq('user_id', userId).lte('expiry_date', week).gte('expiry_date', today).limit(5),
       admin.from('staleness_alerts').select('id,entity_type,message,alert_type').eq('user_id', userId).eq('dismissed', false).limit(5),
+      // Academic context
+      admin.from('thesis_chapters').select('chapter_num,title,status,word_count,target_words').eq('user_id', userId).order('chapter_num').limit(10),
+      admin.from('academic_modules').select('title,module_type,deadline,status').eq('user_id', userId).lte('deadline', sixtyDaysOut).order('deadline').limit(10),
+      admin.from('supervision_sessions').select('supervisor,session_date,next_session,session_type,agreed_actions').eq('user_id', userId).order('session_date', { ascending: false }).limit(5),
     ])
 
   const calib    = calibRes.status    === 'fulfilled' ? calibRes.value.data    : null
@@ -91,6 +97,9 @@ async function loadPAContext(userId: string, admin: any) {
   const emails   = emailRes.status    === 'fulfilled' ? emailRes.value.data    : []
   const expiring = vaultRes.status    === 'fulfilled' ? vaultRes.value.data    : []
   const alerts   = alertRes.status    === 'fulfilled' ? alertRes.value.data    : []
+  const chapters = chaptersRes.status === 'fulfilled' ? (chaptersRes.value.data ?? []) : []
+  const modules  = modulesRes.status  === 'fulfilled' ? (modulesRes.value.data ?? []) : []
+  const supervisions = supervisionsRes.status === 'fulfilled' ? (supervisionsRes.value.data ?? []) : []
 
   // Overdue tasks
   const overdue  = (tasks as {due_date?:string;status:string}[]).filter(t =>
@@ -110,14 +119,16 @@ async function loadPAContext(userId: string, admin: any) {
 
   return {
     userName:    (profile as any)?.full_name ?? 'there',
+    personaType: (profile as any)?.persona_type ?? null,
     calib, tasks, okrs, decisions, stakes, emails,
     expiring, alerts, overdue, staleDecisions, overdueContact,
+    chapters, modules, supervisions,
   }
 }
 
 /* ── System prompt ──────────────────────────────────────────── */
 function buildPASystemPrompt(ctx: Awaited<ReturnType<typeof loadPAContext>>): string {
-  const { userName, calib, tasks, okrs, decisions, overdue, staleDecisions, emails, expiring, overdueContact } = ctx
+  const { userName, calib, tasks, okrs, decisions, overdue, staleDecisions, emails, expiring, overdueContact, chapters, modules, supervisions } = ctx
 
   const fmtTask = (t: {title:string;priority:string;due_date?:string}) =>
     `- ${t.title} [${t.priority}]${t.due_date ? ` due ${new Date(t.due_date).toLocaleDateString('en-GB', {day:'numeric',month:'short'})}` : ''}`
@@ -142,6 +153,9 @@ ${staleDecisions.length > 0 ? `\nSTALE DECISIONS (>14 days): ${(staleDecisions a
 ${emails.length > 0 ? `\nUntriaged emails: ${emails.length}` : ''}
 ${expiring.length > 0 ? `\nDocuments expiring this week: ${(expiring as {title?:string;doc_type:string}[]).map(d=>d.title??d.doc_type).join(', ')}` : ''}
 ${overdueContact.length > 0 ? `\nOverdue stakeholder contact: ${(overdueContact as {name:string}[]).map(s=>s.name).join(', ')}` : ''}
+${(chapters as any[]).length > 0 ? `\nThesis chapters:\n${(chapters as {chapter_num:number;title:string;status:string;word_count:number;target_words:number}[]).map(c => `- Ch${c.chapter_num} "${c.title}" [${c.status}] ${c.word_count}/${c.target_words} words`).join('\n')}\nTotal words: ${(chapters as {word_count:number}[]).reduce((s,c) => s + (c.word_count ?? 0), 0)}` : ''}
+${(modules as any[]).length > 0 ? `\nAcademic deadlines (next 60 days):\n${(modules as {title:string;deadline:string;status:string}[]).map(m => `- ${m.title} [${m.status}] due ${m.deadline}`).join('\n')}` : ''}
+${(supervisions as any[]).length > 0 ? `\nSupervision sessions:\n${(supervisions as {supervisor:string;session_date:string;next_session?:string;session_type:string}[]).map(s => `- ${s.supervisor} · ${s.session_type} · ${s.session_date}${s.next_session ? ` → next: ${s.next_session}` : ''}`).join('\n')}` : ''}
 
 PA RULES:
 1. Be extremely concise. Under 80 words unless user asks for detail.

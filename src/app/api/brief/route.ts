@@ -96,7 +96,10 @@ export async function POST(req: NextRequest) {
     const now    = new Date()
     const todayStr = now.toISOString().split('T')[0]
 
-    const [tasksRes, okrsRes, decisionsRes, profileRes, wellnessRes] = await Promise.allSettled([
+    const thirtyDaysOut = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+    const fourteenDaysOut = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]
+
+    const [tasksRes, okrsRes, decisionsRes, profileRes, wellnessRes, chaptersRes, modulesRes, supervisionsRes] = await Promise.allSettled([
       supabase.from('tasks').select('title,priority,due_date,status')
         .eq('user_id', user.id).neq('status', 'done').order('priority', { ascending: false }).limit(10),
       supabase.from('okrs').select('title,progress_pct,health')
@@ -107,6 +110,13 @@ export async function POST(req: NextRequest) {
         .eq('id', user.id).single(),
       supabase.from('wellness_streaks').select('current_streak')
         .eq('user_id', user.id).single(),
+      // Academic context
+      supabase.from('thesis_chapters').select('chapter_num,title,status,word_count,target_words')
+        .eq('user_id', user.id).neq('status', 'passed').order('chapter_num').limit(5),
+      supabase.from('academic_modules').select('title,module_type,deadline,status')
+        .eq('user_id', user.id).lte('deadline', thirtyDaysOut).order('deadline').limit(5),
+      supabase.from('supervision_sessions').select('supervisor,next_session,session_type')
+        .eq('user_id', user.id).gte('next_session', todayStr).lte('next_session', fourteenDaysOut).limit(3),
     ])
 
     const tasks     = tasksRes.status     === 'fulfilled' ? (tasksRes.value.data     ?? []) : []
@@ -114,6 +124,9 @@ export async function POST(req: NextRequest) {
     const decisions = decisionsRes.status === 'fulfilled' ? (decisionsRes.value.data ?? []) : []
     const profile   = profileRes.status   === 'fulfilled' ? profileRes.value.data    : null
     const wellness  = wellnessRes.status  === 'fulfilled' ? wellnessRes.value.data   : null
+    const chapters  = chaptersRes.status  === 'fulfilled' ? (chaptersRes.value.data  ?? []) : []
+    const modules   = modulesRes.status   === 'fulfilled' ? (modulesRes.value.data   ?? []) : []
+    const supervisions = supervisionsRes.status === 'fulfilled' ? (supervisionsRes.value.data ?? []) : []
 
     const userName = profile?.full_name ?? 'there'
     const dayStr   = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -142,14 +155,27 @@ export async function POST(req: NextRequest) {
       atRiskOkrs.length > 0
         ? `AT RISK: ${atRiskOkrs.length} OKRs need attention`
         : '',
+      // Academic context (only if data present)
+      chapters.length > 0
+        ? `Thesis chapters in progress: ${(chapters as {chapter_num:number;title:string;status:string;word_count:number;target_words:number}[]).map(c => `Ch${c.chapter_num} "${c.title}" — ${c.status}, ${c.word_count}/${c.target_words}w`).join('; ')}`
+        : '',
+      modules.length > 0
+        ? `Academic deadlines (next 30 days): ${(modules as {title:string;deadline:string;status:string}[]).map(m => `${m.title} [${m.status}] due ${m.deadline}`).join('; ')}`
+        : '',
+      supervisions.length > 0
+        ? `Next supervision: ${(supervisions as {supervisor:string;next_session:string;session_type:string}[]).map(s => `${s.supervisor} on ${s.next_session} (${s.session_type})`).join('; ')}`
+        : '',
     ].filter(Boolean).join('\n')
 
-    const system = `You are NemoClaw™, the personal AI intelligence layer for ${userName}, a founder/CEO/consultant using PIOS.
+    const isAcademic = profile?.persona_type === 'academic' || chapters.length > 0 || modules.length > 0
+    const personaDesc = isAcademic ? 'a doctoral/postgraduate student' : 'a founder/CEO/consultant'
+
+    const system = `You are NemoClaw™, the personal AI intelligence layer for ${userName}, ${personaDesc} using PIOS.
 Write a concise morning brief: 3 focused paragraphs, max 220 words. No bullet points, plain prose.
 Para 1: single most important priority today.
-Para 2: cross-domain risks or conflicts requiring attention.
+Para 2: cross-domain risks or conflicts requiring attention.${isAcademic ? ' Include academic deadlines and thesis progress if relevant.' : ''}
 Para 3: 2-3 specific actions to take.
-Direct, no filler. Address ${userName.split(' ')[0]} directly.`
+Direct, no filler. Address ${userName.split(' ')[0]} directly.${isAcademic ? '\nIf academic context is present, weave thesis progress and supervision dates into the brief naturally.' : ''}`
 
     // Call Claude
     const content = await callClaude(
