@@ -24,6 +24,8 @@ const PUBLIC_PATHS = new Set([
   '/api/health',
   '/api/health/smoke',     // Smoke test — auth checked inside route
   '/api/auth/connect-gmail', // OAuth initiation — no user session yet
+  '/api/cron',               // Cron jobs — auth via CRON_SECRET header, not session
+  '/api/admin/send-uat-invites', // UAT emails — auth via CRON_SECRET
   '/llms.txt',             // Claude for Chrome manifest — public
 ])
 
