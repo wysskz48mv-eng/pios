@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         it_policy_acknowledged: deploy_mode === 'standalone',
         updated_at:      new Date().toISOString(),
       })
-      .eq('user_id', user.id)
+      .eq('id', user.id)
 
     if (profileErr) {
       console.error('[onboarding] profile update error:', profileErr)

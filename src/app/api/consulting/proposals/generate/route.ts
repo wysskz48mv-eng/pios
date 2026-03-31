@@ -100,9 +100,14 @@ Keep it professional, concise, and persuasive. This goes directly to a client.`
       2000
     )
 
-    // Deduct AI credit
+    // Deduct AI credit (read-then-write)
+    const { data: currentCredits } = await supabase
+      .from('exec_intelligence_config')
+      .select('ai_calls_used')
+      .eq('user_id', user.id)
+      .single()
     await supabase.from('exec_intelligence_config')
-      .update({ ai_calls_used: supabase.rpc('increment', { x: 1 }) as unknown as number })
+      .update({ ai_calls_used: (currentCredits?.ai_calls_used ?? 0) + 1 })
       .eq('user_id', user.id)
 
     return NextResponse.json({ content })

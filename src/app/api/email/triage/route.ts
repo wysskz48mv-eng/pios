@@ -394,6 +394,20 @@ async function createGmailDraft({
       })
       const refreshData = await refreshRes.json()
       token = refreshData.access_token
+
+      // Persist refreshed token back to DB to avoid re-refreshing every call
+      if (token) {
+        const persistAdmin = createAdmin(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+        await persistAdmin.from('connected_email_accounts')
+          .update({
+            access_token: token,
+            ...(refreshData.expires_in ? { token_expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString() } : {}),
+          })
+          .eq('email_address', fromAddress)
+      }
     }
 
     if (!token) return null
