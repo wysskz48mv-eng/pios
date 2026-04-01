@@ -204,7 +204,7 @@ export default function PricingPage() {
           <em style={{ fontStyle: 'italic', color: 'rgba(155,135,245,0.9)' }}>who'd rather be building.</em>
         </h1>
         <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, marginBottom: 14 }}>
-          Everything you need to run the business — payroll, contracts, strategy, knowledge — without the chaos. One OS. From £9/month.
+          Everything you need to run the business — payroll, contracts, strategy, knowledge — without the chaos. One OS. From £15/month.
         </p>
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.02em' }}>
           14-day free trial · No credit card · Cancel anytime
