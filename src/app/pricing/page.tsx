@@ -9,9 +9,10 @@ import { useState } from 'react'
 const PLANS = [
   {
     name: 'Starter',
-    price: '£9',
-    annual: '£7',
+    price: '£15',
+    annual: '£12',
     period: '/mo',
+    savings: 'Save £36/year',
     colour: '#26aee8',
     highlight: false,
     headline: 'For doctoral and postgraduate researchers.',
@@ -22,74 +23,110 @@ const PLANS = [
       'Log every supervisor session, keep every action item',
       'AI that searches your uploaded papers, prevents repetition',
       'Viva prep with concept mapping and argument structure',
+      '100 GB storage',
+      'Email support',
     ],
     cta: 'Start free trial',
     ctaHref: '/auth/signup?plan=starter',
   },
   {
     name: 'Pro',
-    price: '£19',
-    annual: '£15',
+    price: '£35',
+    annual: '£28',
     period: '/mo',
+    savings: 'Save £84/year',
     colour: '#a78bfa',
     highlight: false,
     headline: 'For postgraduates and independent professionals who need more AI.',
     description: 'Everything in Starter plus email triage, projects, expenses, and PIOS AI Companion.',
     features: [
       'Everything in Starter',
-      'Gmail Triage + Email AI',
+      'Gmail Triage + Email AI (unlimited)',
       'Projects + Expenses tracking',
-      'PIOS AI Companion',
-      'Coaching Engine (5 modes)',
+      'PIOS AI Companion (5 coaching modes)',
       '5,000 AI interactions per month',
-      '10 GB storage',
+      '500 GB storage',
+      'Priority email support',
+      'Research library with 10K+ papers',
     ],
     cta: 'Start free trial',
     ctaHref: '/auth/signup?plan=pro',
   },
   {
     name: 'Executive',
-    price: '£24',
-    annual: '£19',
+    price: '£45',
+    annual: '£36',
     period: '/mo',
+    savings: 'Save £108/year',
     colour: '#9b87f5',
     highlight: true,
     badge: 'Most popular',
     headline: 'The back office for founders who\'d rather be building.',
-    description: 'Everything you need to run the business — payroll, contracts, strategy, knowledge — without the chaos.',
+    description: 'Everything you need to run the business — payroll, contracts, strategy, knowledge — without the chaos. Built for founders, leaders, and decision-makers.',
     features: [
-      '7am AI briefing so you start every day knowing what needs your attention',
-      'Payroll that closes — auto-reconcile and remit, no more Sunday tie-outs',
-      'Contract renewal alerts before they catch you out',
-      'Institutional memory — every decision and framework stays when people leave',
-      'Group P&L across all entities, no spreadsheets duct-taped together',
-      'Email triage and meeting intelligence so you don\'t live in your inbox',
-      'Calendar protection — block the time that matters before others fill it',
-      '10,000 AI interactions per month',
+      '7am Daily Command Centre — AI briefing of priorities, risks, decisions',
+      'Payroll that closes — auto-reconcile and remit payroll',
+      'Contract renewal alerts before anything auto-renews',
+      'Institutional memory — every decision and framework in searchable vault',
+      'Group P&L across all entities and companies',
+      'Email triage, meeting intelligence, and inbox management',
+      'Calendar protection and time sovereignty tools',
+      '10,000+ AI interactions per month',
+      '1 TB storage',
+      'Phone + email support (24/7)',
     ],
     cta: 'Start free trial',
     ctaHref: '/auth/signup?plan=executive',
   },
   {
     name: 'Team',
-    price: 'Custom',
+    price: '£8–15',
     annual: 'Custom',
-    period: '',
+    period: '/person/mo',
     colour: '#26c99a',
     highlight: false,
-    badge: 'Enterprise',
-    headline: 'One intelligence layer across your whole leadership team.',
-    description: 'Shared knowledge, department admin, SSO, and a dedicated onboarding partner.',
+    badge: 'Organization',
+    headline: 'One intelligence layer across your entire team or department.',
+    description: 'Shared knowledge, team admin, SSO, compliance, and a dedicated onboarding partner. Starting at £8/person for 5–25 people, scaling to £15/person for 100–500 people.',
     features: [
-      'Shared knowledge base and research libraries across your team',
-      'Department-level admin — see activity and usage across the org',
-      'Single sign-on with Microsoft or Google',
-      'White-label with your brand and custom domain',
-      'Dedicated onboarding, SLA, and data processing agreement',
+      'Everything in Executive (all features unlocked)',
+      'Shared knowledge base and research libraries',
+      'Team-level admin dashboard with usage analytics',
+      'Single sign-on (SSO) with Microsoft or Google',
+      'White-label options available',
+      'Team member provisioning and role management',
+      'Email and Slack integrations',
+      'Dedicated support team',
+      'Data processing agreement (DPA) included',
       'Unlimited AI interactions',
     ],
-    cta: 'Contact us',
-    ctaHref: 'mailto:info@veritasiq.io?subject=PIOS Team Plan',
+    cta: 'Request Demo',
+    ctaHref: 'mailto:sales@veritasiq.io?subject=PIOS Team Plan — [Company Name]',
+  },
+  {
+    name: 'Enterprise',
+    price: '£15–20',
+    annual: 'Custom',
+    period: '/person/mo',
+    colour: '#ec4899',
+    highlight: false,
+    badge: 'Custom',
+    headline: 'Custom deployment for large organizations, government, and universities.',
+    description: 'White-label with your branding, custom domain, dedicated infrastructure, 24/7 support, and enterprise SLA guarantees.',
+    features: [
+      'Everything in Team plan',
+      'White-label with custom domain and branding',
+      'Dedicated infrastructure (private deployment)',
+      '99.99% uptime SLA with dedicated incident commander',
+      '24/7 phone + email support team',
+      'Quarterly business reviews and optimization sessions',
+      'Custom integrations with your systems',
+      'Advanced security: IP allowlist, role-based access (RBAC)',
+      'ISO 27001 & SOC 2 Type II attestation',
+      'Data residency: UK, EU, or US (your choice)',
+    ],
+    cta: 'Contact Enterprise Sales',
+    ctaHref: 'mailto:enterprise@veritasiq.io?subject=PIOS Enterprise Plan',
   },
 ]
 
@@ -281,18 +318,170 @@ export default function PricingPage() {
         </div>
       </div>
 
+      {/* ── Comparison vs Competitors ── */}
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 32, fontWeight: 400, letterSpacing: '-0.025em', marginBottom: 12 }}>
+            How PIOS compares
+          </h2>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>Why founders choose PIOS over task managers and spreadsheets</p>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <th style={{ textAlign: 'left', padding: '12px 0', color: 'rgba(255,255,255,0.5)', fontWeight: 600, fontSize: 12 }}>Feature</th>
+                <th style={{ textAlign: 'center', padding: '12px 8px', color: '#6349FF', fontWeight: 700 }}>PIOS</th>
+                <th style={{ textAlign: 'center', padding: '12px 8px', color: 'rgba(255,255,255,0.4)' }}>Notion</th>
+                <th style={{ textAlign: 'center', padding: '12px 8px', color: 'rgba(255,255,255,0.4)' }}>Asana</th>
+                <th style={{ textAlign: 'center', padding: '12px 8px', color: 'rgba(255,255,255,0.4)' }}>Monday</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { feature: 'AI Decision Support', pios: '✓', notion: '△', asana: '△', monday: '△' },
+                { feature: 'Email Triage', pios: '✓', notion: '✗', asana: '✗', monday: '✗' },
+                { feature: 'Coaching Engine', pios: '✓', notion: '✗', asana: '✗', monday: '✗' },
+                { feature: 'Payroll Management', pios: '✓', notion: '✗', asana: '✗', monday: '✗' },
+                { feature: 'Contract Alerts', pios: '✓', notion: '✗', asana: '✗', monday: '✗' },
+                { feature: 'Meeting Intelligence', pios: '✓', notion: '△', asana: '△', monday: '△' },
+                { feature: 'Research Library', pios: '✓', notion: '△', asana: '✗', monday: '✗' },
+                { feature: 'Task Management', pios: '✓', notion: '✓', asana: '✓', monday: '✓' },
+                { feature: 'Database/Wiki', pios: '✓', notion: '✓', asana: '△', monday: '△' },
+              ].map((row, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <td style={{ padding: '12px 0', color: 'rgba(255,255,255,0.7)' }}>{row.feature}</td>
+                  <td style={{ textAlign: 'center', padding: '12px 8px', color: row.pios === '✓' ? '#10d9a0' : 'rgba(255,255,255,0.4)' }}>{row.pios}</td>
+                  <td style={{ textAlign: 'center', padding: '12px 8px', color: 'rgba(255,255,255,0.3)' }}>{row.notion}</td>
+                  <td style={{ textAlign: 'center', padding: '12px 8px', color: 'rgba(255,255,255,0.3)' }}>{row.asana}</td>
+                  <td style={{ textAlign: 'center', padding: '12px 8px', color: 'rgba(255,255,255,0.3)' }}>{row.monday}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 24, textAlign: 'center' }}>
+          ✓ = Full support  |  △ = Limited/via integration  |  ✗ = Not available
+        </p>
+      </div>
+
+      {/* ── Operating Costs & Transparency ── */}
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 32, fontWeight: 400, letterSpacing: '-0.025em', marginBottom: 12 }}>
+            Transparent pricing
+          </h2>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>All-inclusive costs. No surprise bills. Real-time usage tracking.</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+          {[
+            { title: 'What\'s Included', items: ['All platform features', 'Hosting & infrastructure', 'AI interactions (5K–10K+/mo)', 'Email integrations', 'Data backups', '24/7 monitoring'] },
+            { title: 'What\'s Optional', items: ['Overage AI tokens: £0.02/1K', 'White-label domain: +£100/mo', 'Advanced SLA (99.99%): +£500/mo', 'Custom integrations: Quote separately', 'Enterprise support: Included at scale'] },
+            { title: 'Cost Visibility', items: ['Real-time AI usage dashboard', 'Monthly cost forecasting', 'Usage alerts at 80% limit', 'No surprise invoices', 'Export cost reports anytime'] },
+          ].map((section, i) => (
+            <div key={i} style={{ background: 'rgba(99,73,255,0.05)', border: '1px solid rgba(99,73,255,0.15)', borderRadius: 12, padding: '24px' }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>{section.title}</h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {section.items.map((item, j) => (
+                  <li key={j} style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', display: 'flex', gap: 8 }}>
+                    <span style={{ color: '#10d9a0', flexShrink: 0 }}>✓</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Enterprise & Organization ── */}
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 32, fontWeight: 400, letterSpacing: '-0.025em', marginBottom: 12 }}>
+            Organization & Enterprise
+          </h2>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>Flexible pricing scaled for departments, institutions, and large organizations</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+          {[
+            { name: 'Department', size: '5–25 people', price: '£8/person', annual: '£7.50/person (annual)', features: ['Team admin', 'Shared knowledge', 'Basic SSO', 'Email support'] },
+            { name: 'Team', size: '25–100 people', price: '£12/person', annual: '£10/person (annual)', features: ['Everything in Department', 'Advanced analytics', 'Priority support', 'Integrations'] },
+            { name: 'Organization', size: '100–500 people', price: '£15/person', annual: '£12/person (annual)', features: ['Everything in Team', 'White-label options', 'DPA included', 'Compliance features'] },
+            { name: 'Enterprise', size: '500+ people', price: '£15–20/person', annual: 'Custom (3-year)', features: ['Custom deployment', '99.99% SLA', '24/7 support', 'Dedicated team'] },
+          ].map((tier, i) => (
+            <div key={i} style={{ background: 'rgba(99,73,255,0.05)', border: '1px solid rgba(99,73,255,0.15)', borderRadius: 12, padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{tier.name}</h3>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>{tier.size}</p>
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 20, fontWeight: 700, color: '#6349FF', margin: '4px 0' }}>{tier.price}</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '4px 0' }}>{tier.annual}</p>
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                {tier.features.map((f, j) => (
+                  <li key={j} style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', display: 'flex', gap: 6 }}>
+                    <span style={{ color: '#10d9a0' }}>✓</span> {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 40 }}>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>
+            For organizations, <strong>volume discounts and multi-year commitments available</strong>. Contact sales for custom pricing.
+          </p>
+          <a href="mailto:sales@veritasiq.io?subject=Organization Pricing Inquiry" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 10, background: 'rgba(99,73,255,0.2)', border: '1px solid rgba(99,73,255,0.5)', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 700, transition: 'all 0.2s' }}>
+            Request Organization Quote →
+          </a>
+        </div>
+      </div>
+
+      {/* ── Security & Compliance ── */}
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 32, fontWeight: 400, letterSpacing: '-0.025em', marginBottom: 12 }}>
+            Enterprise-ready security
+          </h2>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>ISO 27001, SOC 2, GDPR, and compliance audit logs included</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+          {[
+            { icon: '🔐', title: 'Certifications', desc: 'ISO 27001, SOC 2 Type II, GDPR compliant, UK Data Residency' },
+            { icon: '📋', title: 'Audit Logs', desc: '2-year retention, 24/7 monitoring, tamper-proof trail, exportable' },
+            { icon: '📊', title: 'Uptime SLA', desc: '99.5% (Standard), 99.9% (Team), 99.99% (Enterprise)' },
+            { icon: '🤝', title: 'Data Agreements', desc: 'Standard DPA included, can sign your template, <5 day turnaround' },
+            { icon: '🔄', title: 'Disaster Recovery', desc: 'Hourly backups, RTO <1 hour, RPO <15 minutes' },
+            { icon: '🛡️', title: 'Encryption', desc: 'TLS 1.3 in transit, AES-256 at rest, FIPS-140-2 ready' },
+          ].map((item, i) => (
+            <div key={i} style={{ background: 'rgba(99,73,255,0.05)', border: '1px solid rgba(99,73,255,0.15)', borderRadius: 12, padding: '24px', textAlign: 'center' }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>{item.icon}</div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 8 }}>{item.title}</h3>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── Bottom line ── */}
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 24px 72px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '60px 24px 72px', textAlign: 'center' }}>
         <div style={{ background: 'rgba(99,73,255,0.07)', border: '1px solid rgba(99,73,255,0.2)', borderRadius: 16, padding: '36px 32px' }}>
           <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 28, fontWeight: 400, letterSpacing: '-0.025em', marginBottom: 12 }}>
             The bottom line
           </h2>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: 24 }}>
-            £24/month is less than you'd spend on the coffee it takes to manually reconcile your payroll.
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: 12 }}>
+            Individual plans start at £15/month. Organization pricing from £8/person. Enterprise custom.
           </p>
-          <Link href="/auth/signup" style={{ display: 'inline-block', padding: '13px 32px', borderRadius: 10, background: '#6349FF', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
-            Start free trial →
-          </Link>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>
+            Every plan includes AI interactions, hosting, backups, and monitoring. No hidden costs.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+            <Link href="/auth/signup" style={{ display: 'inline-block', padding: '13px 32px', borderRadius: 10, background: '#6349FF', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
+              Start free trial →
+            </Link>
+            <a href="mailto:sales@veritasiq.io?subject=Pricing Question" style={{ display: 'inline-block', padding: '13px 32px', borderRadius: 10, background: 'rgba(99,73,255,0.15)', border: '1px solid rgba(99,73,255,0.3)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
+              Contact sales
+            </a>
+          </div>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, letterSpacing: '0.02em' }}>
             14 days free · No credit card · Cancel anytime
           </p>
