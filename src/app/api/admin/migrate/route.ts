@@ -2426,7 +2426,7 @@ where table_schema = 'public'
   and table_name in ('coaching_sessions','day_plans','financial_snapshots','user_feed_settings','cpd_activities');
 `,
   },
-
+]
 async function checkTableExists(supabase: any, tableName: string): Promise<boolean> {
   try {
     const { error } = await supabase.from(tableName).select('id').limit(1)
