@@ -78,7 +78,7 @@ export default function TrialBanner() {
             fontFamily: "'DM Sans', system-ui, sans-serif",
           }}
         >
-          Upgrade — from £9/mo
+          Upgrade — from £15/mo
         </button>
         {!status.expired && (
           <button
