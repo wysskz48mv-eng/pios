@@ -186,7 +186,7 @@ export default function CoachingPage() {
           <div key={m.key}
             style={{ ...card, cursor: 'pointer', transition: 'border-color 0.15s' }}
             onClick={() => {
-              if (m.key === 'role_play') { const c = prompt('Who should NemoClaw™ simulate? (e.g. "sceptical FM director", "DBA supervisor", "AECOM client")'); if (c) { setRolePlayContext(c); startSession(m.key) } }
+              if (m.key === 'role_play') { const c = prompt('Who should NemoClaw™ simulate? (e.g. "sceptical stakeholder", "senior executive", "external client")'); if (c) { setRolePlayContext(c); startSession(m.key) } }
               else if (m.key === 'situation_prep') { const c = prompt('What situation are you preparing for?'); if (c) { setSituationContext(c); startSession(m.key) } }
               else startSession(m.key)
             }}>
