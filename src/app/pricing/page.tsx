@@ -80,14 +80,14 @@ const PLANS = [
   },
   {
     name: 'Team',
-    price: '£8–15',
+    price: '£12–15',
     annual: 'Custom',
     period: '/person/mo',
     colour: '#26c99a',
     highlight: false,
     badge: 'Organization',
     headline: 'One intelligence layer across your entire team or department.',
-    description: 'Shared knowledge, team admin, SSO, compliance, and a dedicated onboarding partner. Starting at £8/person for 5–25 people, scaling to £15/person for 100–500 people.',
+    description: 'Shared knowledge, team admin, SSO, compliance, and a dedicated onboarding partner. Starting at £12/person for 5–25 people, scaling to £15/person for 100–500 people.',
     features: [
       'Everything in Executive (all features unlocked)',
       'Shared knowledge base and research libraries',
@@ -404,7 +404,7 @@ export default function PricingPage() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
           {[
-            { name: 'Department', size: '5–25 people', price: '£8/person', annual: '£7.50/person (annual)', features: ['Team admin', 'Shared knowledge', 'Basic SSO', 'Email support'] },
+            { name: 'Department', size: '5–25 people', price: '£10/person', annual: '£8.50/person (annual)', features: ['Team admin', 'Shared knowledge', 'Basic SSO', 'Email support'] },
             { name: 'Team', size: '25–100 people', price: '£12/person', annual: '£10/person (annual)', features: ['Everything in Department', 'Advanced analytics', 'Priority support', 'Integrations'] },
             { name: 'Organization', size: '100–500 people', price: '£15/person', annual: '£12/person (annual)', features: ['Everything in Team', 'White-label options', 'DPA included', 'Compliance features'] },
             { name: 'Enterprise', size: '500+ people', price: '£15–20/person', annual: 'Custom (3-year)', features: ['Custom deployment', '99.99% SLA', '24/7 support', 'Dedicated team'] },
