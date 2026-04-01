@@ -240,7 +240,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
 
       {/* ── Nav ── */}
       <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '6px 0 10px' }}>
-        {NAV_GROUPS.map((group, gi) => (
+        {filterNavByPersona(userProfile?.persona_type).map((group, gi) => (
           <div key={gi}>
             {/* Group label */}
             {!collapsed && group.label && (
