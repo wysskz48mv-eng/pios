@@ -98,17 +98,17 @@ export default async function Home() {
         <div className={s.bandInner}>
           <span className={s.bandLabel}>PRO — The professional doing everything at once</span>
           <div className={s.bandHero}>
-            <span className={s.bandStat}>$66</span>
+            <span className={s.bandStat}>&pound;52</span>
             <span className={s.bandStatLabel}>spent monthly across 4 fragmented AI tools</span>
           </div>
           <p className={s.bandCopy}>
-            Professionals spend $66/mo across 4 fragmented AI tools. Knowledge
-            workers lose 4 hours every week just reorienting between them. You
-            are running a practice, completing a doctorate, and managing a
-            business — simultaneously. No tool was built for this. PIOS was.
+            Professionals spend &pound;52/mo across 4 fragmented AI tools
+            &mdash; and lose 4 hours every week just reorienting between them.
+            You are running a practice, completing a doctorate, and managing a
+            business &mdash; simultaneously. No tool was built for this. PIOS was.
           </p>
           <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
-            SubChoice 2026; Harvard Business Review 2022
+            SubChoice, 2026 &middot; Harvard Business Review, 2022 (converted from USD)
           </p>
           <p className={s.bandBridge}>
             Modules: Daily Brief, Email Intelligence, Tasks, Coaching, Consulting, Financials, Academic Suite
@@ -150,7 +150,7 @@ export default async function Home() {
           </div>
           <p className={s.bandCopy}>
             80% of corporate workers already use unapproved AI tools. The
-            average shadow AI data breach costs $4.2 million. PIOS gives your
+            average shadow AI data breach costs &pound;3.3 million. PIOS gives your
             organisation a sanctioned personal intelligence layer — with data
             isolation, IT-approvable security architecture, and a white-label
             option that carries your brand.
@@ -215,23 +215,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── 5. Research strip ──────────────────────────────────────── */}
-      <section className={s.researchStrip}>
-        <div className={s.researchInner}>
-          <h2 className={s.researchHeadline}>Built on evidence, not hype.</h2>
-          <p className={s.researchSub}>
-            24 peer-reviewed studies. Three user groups. One platform.
-          </p>
-          <Link href="/research" className={s.researchLink}>
-            Read the research foundation
-          </Link>
-        </div>
-      </section>
-
-      {/* ── 6. Pricing (client component with annual/monthly toggle) ── */}
-      <PricingSection />
-
-      {/* ── 7. How it works ────────────────────────────────────────── */}
+      {/* ── 5. How it works ────────────────────────────────────────── */}
       <section className={s.principles}>
         <div className={s.principlesInner}>
           <h2 className={s.sectionTitleLight}>How it works</h2>
@@ -268,6 +252,22 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── 6. Research strip ──────────────────────────────────────── */}
+      <section className={s.researchStrip}>
+        <div className={s.researchInner}>
+          <h2 className={s.researchHeadline}>Built on evidence, not hype.</h2>
+          <p className={s.researchSub}>
+            24 peer-reviewed studies. Three user groups. One platform.
+          </p>
+          <Link href="/research" className={s.researchLink}>
+            Read the research foundation
+          </Link>
+        </div>
+      </section>
+
+      {/* ── 7. Pricing (client component with annual/monthly toggle) ── */}
+      <PricingSection />
 
       {/* ── 8. CTA ─────────────────────────────────────────────────── */}
       <section className={s.cta}>
