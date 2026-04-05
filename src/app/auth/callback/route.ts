@@ -1,22 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * GET /auth/callback
  * Handles Supabase auth redirect after OAuth or magic link.
  *
  * Flow:
- *   1. Exchange code for session
+ *   1. Exchange code for session (with proper cookie persistence)
  *   2. Upsert user_profiles row (create on first visit)
  *   3. Store Google OAuth tokens → user_profiles (enables Gmail/Calendar)
  *   4. New users → /onboarding
  *   5. Returning users → ?next= param or /platform/dashboard
  *
- * VeritasIQ Technologies Ltd · PIOS v3.2.4
+ * VeritasIQ Technologies Ltd · PIOS
  */
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -33,9 +35,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/auth/login?error=missing_code`)
   }
 
-  const supabase = await createClient()
+  // Create Supabase client with direct cookie access for reliable session persistence
+  const cookieStore = await cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options as Parameters<typeof cookieStore.set>[2])
+          })
+        },
+      },
+    }
+  )
 
-  // Exchange code for session — session contains provider tokens
+  // Exchange code for session — this MUST set cookies successfully
   const { data: sessionData, error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code)
   if (exchangeErr) {
     console.error('[auth/callback] exchange error:', exchangeErr.message)
@@ -50,7 +67,6 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Extract Google OAuth tokens from session ──────────────────────────────
-  // provider_token / provider_refresh_token are only present on OAuth sign-ins
   const providerToken        = sessionData?.session?.provider_token        ?? null
   const providerRefreshToken = sessionData?.session?.provider_refresh_token ?? null
   const googleEmail          = user.user_metadata?.email ?? user.email ?? null
@@ -76,14 +92,12 @@ export async function GET(request: NextRequest) {
       ?? user.email?.split('@')[0]
       ?? 'there'
 
-    // NOTE: no 'email' column on user_profiles — identity is via id (FK to auth.users)
     await admin.from('user_profiles').upsert({
       id:                   user.id,
       full_name:            fullName,
       plan:                 'free',
       persona_type:         'executive',
       onboarded:            false,
-      // Google tokens — may be null for magic link sign-ins
       google_access_token:  providerToken,
       google_refresh_token: providerRefreshToken,
       google_email:         googleEmail,
@@ -111,7 +125,6 @@ export async function GET(request: NextRequest) {
   if (providerToken) {
     const tokenExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
 
-    // Update user_profiles tokens
     await admin.from('user_profiles').update({
       google_access_token:  providerToken,
       google_refresh_token: providerRefreshToken ?? null,
@@ -120,7 +133,6 @@ export async function GET(request: NextRequest) {
       updated_at:           new Date().toISOString(),
     }).eq('id', user.id)
 
-    // Upsert connected_email_accounts so inbox page shows Gmail as connected
     if (googleEmail) {
       await admin.from('connected_email_accounts').upsert({
         user_id:              user.id,
@@ -154,7 +166,7 @@ async function sendWelcomeEmail(to: string, name: string): Promise<void> {
   const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <info@veritasiq.io>'
   if (!apiKey || !to) return
   const first = name.split(' ')[0]
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-wysskz48mv-engs-projects.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-coral.vercel.app'
 
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
