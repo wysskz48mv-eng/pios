@@ -166,7 +166,7 @@ async function sendWelcomeEmail(to: string, name: string): Promise<void> {
   const from   = process.env.RESEND_FROM_EMAIL ?? 'PIOS <info@veritasiq.io>'
   if (!apiKey || !to) return
   const first = name.split(' ')[0]
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-coral.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-wysskz48mv-engs-projects.vercel.app'
 
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
