@@ -672,20 +672,26 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Quick access grid ── */}
+      {/* ── Quick access grid — persona-filtered ── */}
       <div>
-        <SectionLabel>Professional OS — Quick Access</SectionLabel>
+        <SectionLabel>{persona === 'academic' ? 'Research OS' : 'Professional OS'} — Quick Access</SectionLabel>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 8 }}>
           {([
-            { href: '/platform/command',      icon: '⬡', label: 'Live Data',       sub: 'Real-time cockpit',   color: 'var(--academic)' },
-            { href: '/platform/executive',    icon: '⚡', label: 'Executive OS',    sub: 'OKRs + decisions',    color: 'var(--pro)' },
-            { href: '/platform/consulting',   icon: '◎', label: 'Frameworks',      sub: 'NemoClaw™ tools',     color: 'var(--ai)' },
-            { href: '/platform/ip-vault',     icon: '⊛', label: 'IP Vault',        sub: 'TMs + frameworks',    color: 'var(--ai)' },
-            { href: '/platform/contracts',    icon: '§', label: 'Contracts',       sub: 'Register + renewals', color: 'var(--academic)' },
-            { href: '/platform/financials',   icon: '↗', label: 'Group P&L',       sub: 'YTD + pipeline',      color: 'var(--fm)' },
-            { href: '/platform/knowledge',    icon: '⊡', label: 'SE-MIL',          sub: 'Institutional memory', color: 'var(--fm)' },
-            { href: '/platform/time-sovereignty', icon: '◷', label: 'Time Sovereignty', sub: 'TSA™ engine', color: 'var(--pro)' },
-          ] as { href: string; icon: string; label: string; sub: string; color: string }[]).map(m => (
+            { href: '/platform/command',      icon: '⬡', label: 'Live Data',       sub: 'Real-time cockpit',   color: 'var(--academic)', personas: ['ceo','executive','cos'] },
+            { href: '/platform/executive',    icon: '⚡', label: 'Executive OS',    sub: 'OKRs + decisions',    color: 'var(--pro)',      personas: ['ceo','executive','cos'] },
+            { href: '/platform/consulting',   icon: '◎', label: 'Frameworks',      sub: 'NemoClaw™ tools',     color: 'var(--ai)',       personas: ['ceo','consultant','executive'] },
+            { href: '/platform/ip-vault',     icon: '⊛', label: 'IP Vault',        sub: 'TMs + frameworks',    color: 'var(--ai)',       personas: ['ceo','executive'] },
+            { href: '/platform/contracts',    icon: '§', label: 'Contracts',       sub: 'Register + renewals', color: 'var(--academic)', personas: ['ceo','consultant','executive'] },
+            { href: '/platform/financials',   icon: '↗', label: 'Group P&L',       sub: 'YTD + pipeline',      color: 'var(--fm)',       personas: ['ceo','consultant','executive'] },
+            { href: '/platform/knowledge',    icon: '⊡', label: 'SE-MIL',          sub: 'Institutional memory', color: 'var(--fm)',      personas: ['academic'] },
+            { href: '/platform/time-sovereignty', icon: '◷', label: 'Time Sovereignty', sub: 'TSA™ engine', color: 'var(--pro)', personas: ['ceo','executive','cos'] },
+            { href: '/platform/academic',     icon: '◎', label: 'Academic Hub',    sub: 'Thesis + modules',    color: 'var(--academic)', personas: ['academic'] },
+            { href: '/platform/literature',   icon: '⊕', label: 'Literature',      sub: 'Library + gaps',      color: 'var(--academic)', personas: ['academic'] },
+            { href: '/platform/viva',         icon: '◈', label: 'Viva Prep',       sub: '6 practice modes',    color: 'var(--academic)', personas: ['academic'] },
+          ] as { href: string; icon: string; label: string; sub: string; color: string; personas: string[] }[])
+          .filter(m => !persona || m.personas.includes(persona) || m.personas.includes('ceo'))
+          .slice(0, 8)
+          .map(m => (
             <Link key={m.href} href={m.href} style={{ textDecoration: 'none' }}>
               <div style={{
                 background: 'var(--pios-surface)', border: '1px solid var(--pios-border)',

@@ -83,7 +83,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Professional', color: C.pro,
+    label: 'Executive', color: C.pro,
     items: [
       { href: '/platform/executive',        icon: 'executive',    label: 'Executive OS',      badge: 'EOSA™', accent: C.pro },
       { href: '/platform/consulting',       icon: 'consulting',   label: 'Consulting',        badge: 'CSA™',  accent: C.violet },
@@ -154,6 +154,63 @@ const NAV_GROUPS = [
   },
 ]
 
+// ── Persona-based nav filtering ─────────────────────────────────────────────
+// Only show modules relevant to the user's persona. Core items are always shown.
+const PERSONA_VISIBLE_HREFS: Record<string, Set<string>> = {
+  ceo: new Set([
+    '/platform/executive','/platform/consulting','/platform/projects','/platform/tasks',
+    '/platform/contracts','/platform/financials','/platform/board-pack','/platform/expenses',
+    '/platform/ip-vault','/platform/intelligence','/platform/stakeholders','/platform/time-sovereignty',
+    '/platform/daily-brief','/platform/deadline-tracker','/platform/payroll',
+    '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
+    '/platform/ai','/platform/wellness','/platform/coaching',
+  ]),
+  consultant: new Set([
+    '/platform/consulting','/platform/projects','/platform/tasks','/platform/contracts',
+    '/platform/financials','/platform/expenses','/platform/stakeholders',
+    '/platform/daily-brief','/platform/deadline-tracker',
+    '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
+    '/platform/ai','/platform/wellness','/platform/coaching',
+  ]),
+  executive: new Set([
+    '/platform/executive','/platform/projects','/platform/tasks','/platform/contracts',
+    '/platform/financials','/platform/board-pack','/platform/expenses',
+    '/platform/intelligence','/platform/stakeholders','/platform/time-sovereignty',
+    '/platform/daily-brief','/platform/deadline-tracker',
+    '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
+    '/platform/ai','/platform/wellness','/platform/coaching',
+  ]),
+  academic: new Set([
+    '/platform/academic','/platform/literature','/platform/viva','/platform/research',
+    '/platform/learning','/platform/study','/platform/knowledge','/platform/supervisor-prep',
+    '/platform/tasks','/platform/daily-brief','/platform/deadline-tracker',
+    '/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
+    '/platform/ai','/platform/wellness','/platform/policy-coach',
+  ]),
+  cos: new Set([
+    '/platform/executive','/platform/projects','/platform/tasks',
+    '/platform/stakeholders','/platform/time-sovereignty',
+    '/platform/daily-brief','/platform/deadline-tracker',
+    '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
+    '/platform/ai','/platform/wellness','/platform/coaching',
+  ]),
+}
+
+// Items that are always visible regardless of persona
+const ALWAYS_VISIBLE = new Set([
+  '/platform/dashboard',
+  '/platform/notifications','/platform/billing',
+  '/platform/settings','/platform/help','/platform/changelog',
+  '/platform/admin','/platform/setup','/platform/operator','/platform/demo',
+  '/platform/documents','/platform/files',
+])
+
+function isItemVisible(href: string, persona: string | undefined): boolean {
+  if (ALWAYS_VISIBLE.has(href)) return true
+  const personaSet = PERSONA_VISIBLE_HREFS[persona ?? ''] ?? PERSONA_VISIBLE_HREFS['ceo']
+  return personaSet.has(href)
+}
+
 interface SidebarProps {
   userProfile?: Record<string,string> | null
   tenant?: Record<string,string> | null
@@ -162,6 +219,7 @@ interface SidebarProps {
 export function Sidebar({ userProfile, tenant }: SidebarProps) {
   const pathname = usePathname()
   const router   = useRouter()
+  const persona  = userProfile?.persona_type ?? 'ceo'
   const supabase = createClient()
   const [collapsed, setCollapsed] = useState(false)
   const [unread,    setUnread]    = useState(0)
@@ -187,7 +245,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
     : 'DM'
   const planLabel = tenant?.plan
     ? tenant.plan.charAt(0).toUpperCase() + tenant.plan.slice(1)
-    : 'Professional'
+    : 'Executive'
   const fullName  = userProfile?.full_name || 'User'
   const jobTitle  = userProfile?.job_title || 'Group CEO'
   const W = collapsed ? 52 : 220
@@ -243,7 +301,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi}>
             {/* Group label */}
-            {!collapsed && group.label && (
+            {!collapsed && group.label && group.items.some((it: Record<string, unknown>) => isItemVisible(it.href as string, persona)) && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '12px 16px 4px',
@@ -260,7 +318,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
               <div style={{ height: 1, background: C.border, margin: '5px 10px' }} />
             )}
 
-            {group.items.map((item: Record<string, unknown>) => {
+            {group.items.filter((item: Record<string, unknown>) => isItemVisible(item.href as string, persona)).map((item: Record<string, unknown>) => {
               const href     = item.href as string
               const iconName = item.icon as string
               const label    = item.label as string

@@ -168,9 +168,19 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join('\n')
 
     const isAcademic = profile?.persona_type === 'academic' || chapters.length > 0 || modules.length > 0
-    const personaDesc = isAcademic ? 'a doctoral/postgraduate student' : 'a founder/CEO/consultant'
+    const personaType = profile?.persona_type ?? 'ceo'
 
-    const system = `You are NemoClaw™, the personal AI intelligence layer for ${userName}, ${personaDesc} using PIOS.
+    const PERSONA_BRIEF_FOCUS: Record<string, string> = {
+      ceo: 'You are briefing a CEO/founder. Lead with strategic decisions pending, board commitments, portfolio health, and revenue signals.',
+      executive: 'You are briefing a senior executive. Lead with strategic decisions pending, board commitments, and portfolio health.',
+      consultant: 'You are briefing a consultant. Lead with client deliverables, proposal deadlines, billable priorities, and engagement status.',
+      academic: 'You are briefing a doctoral researcher. Lead with thesis progress, supervision preparation, literature gaps, and submission deadlines.',
+      cos: 'You are briefing a Chief of Staff. Lead with portfolio workstream health, pending decisions, commitment tracking, and principal schedule.',
+    }
+    const personaFocus = PERSONA_BRIEF_FOCUS[personaType] ?? PERSONA_BRIEF_FOCUS['ceo']
+
+    const system = `You are NemoClaw™, the personal AI intelligence layer for ${userName} using PIOS.
+${personaFocus}
 Write a concise morning brief: 3 focused paragraphs, max 220 words. No bullet points, plain prose.
 Para 1: single most important priority today.
 Para 2: cross-domain risks or conflicts requiring attention.${isAcademic ? ' Include academic deadlines and thesis progress if relevant.' : ''}

@@ -1,6 +1,4 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import s from './landing.module.css'
 
@@ -8,23 +6,9 @@ export default async function Home() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (user) {
-    // Check onboarding status — never skip the wizard
-    const admin = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { data: profile } = await admin
-      .from('user_profiles')
-      .select('onboarded')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.onboarded === false) {
-      redirect('/onboarding')
-    }
-    redirect('/platform/dashboard')
-  }
+  // Landing page is always public — authenticated users see it too
+  // They get a "Go to dashboard" CTA instead of "Start free trial"
+  const isLoggedIn = !!user
 
   /* ------------------------------------------------------------------ */
   /*  Landing page — unauthenticated visitors                           */
@@ -41,7 +25,9 @@ export default async function Home() {
             <Link href="/research" className={s.navLink}>Research</Link>
             <a href="#pricing" className={s.navLink}>Pricing</a>
           </div>
-          <Link href="/auth/signup" className={s.navCta}>Start free trial</Link>
+          <Link href={isLoggedIn ? "/platform/dashboard" : "/auth/signup"} className={s.navCta}>
+            {isLoggedIn ? 'Go to dashboard' : 'Start free trial'}
+          </Link>
         </div>
       </nav>
 
@@ -234,18 +220,18 @@ export default async function Home() {
           <div className={s.pricingGrid}>
 
             <div className={s.priceCard}>
-              <h3 className={s.priceTier}>Student</h3>
+              <h3 className={s.priceTier}>Starter</h3>
               <div className={s.priceAmount}>&pound;9<span className={s.pricePeriod}>/mo</span></div>
               <p className={s.priceCredits}>2,000 AI credits</p>
               <p className={s.priceDesc}>
-                For undergraduates managing deadlines, modules, and part-time
-                work.
+                For students and early-career professionals managing deadlines,
+                modules, and part-time work.
               </p>
               <Link href="/auth/signup" className={s.priceCta}>Start free trial</Link>
             </div>
 
             <div className={s.priceCard}>
-              <h3 className={s.priceTier}>Individual</h3>
+              <h3 className={s.priceTier}>Pro</h3>
               <div className={s.priceAmount}>&pound;19<span className={s.pricePeriod}>/mo</span></div>
               <p className={s.priceCredits}>5,000 AI credits</p>
               <p className={s.priceDesc}>
@@ -255,7 +241,7 @@ export default async function Home() {
             </div>
 
             <div className={`${s.priceCard} ${s.priceCardFeatured}`}>
-              <h3 className={s.priceTier}>Professional</h3>
+              <h3 className={s.priceTier}>Executive</h3>
               <div className={s.priceAmount}>&pound;24<span className={s.pricePeriod}>/mo</span></div>
               <p className={s.priceCredits}>10,000 AI credits</p>
               <p className={s.priceDesc}>
@@ -265,7 +251,7 @@ export default async function Home() {
             </div>
 
             <div className={s.priceCard}>
-              <h3 className={s.priceTier}>Enterprise</h3>
+              <h3 className={s.priceTier}>Team</h3>
               <div className={s.priceAmount}>Custom</div>
               <p className={s.priceCredits}>Unlimited</p>
               <p className={s.priceDesc}>
