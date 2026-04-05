@@ -74,7 +74,23 @@ const Icon = ({ name, size = 14, color = 'currentColor' }: { name: string; size?
   }
   return <>{icons[name] ?? icons['dashboard']}</>
 }
-
+// Filter nav items by persona
+function filterNavByPersona(persona: string | undefined): typeof NAV_GROUPS {
+  if (!persona) return NAV_GROUPS
+  
+  const personaFilters: Record<string, string[]> = {
+    academic: ['Command Centre', 'Academic Hub', 'Literature Agent', 'Viva Preparation', 'Research', 'Learning Hub', 'Policy Coach', 'Study Timer', 'SE-MIL', 'Inbox', 'Calendar', 'Agentic Meetings', 'Meetings', 'Documents', 'File Intel', 'NemoClaw™ AI', 'Wellness Intelligence', 'Notifications', 'Help'],
+    executive: ['Command Centre', 'Executive OS', 'Projects', 'Tasks', 'Contracts', 'Group P&L', 'Board Pack', 'Expenses', 'Payroll', 'IP Vault', 'Morning Brief', 'Knowledge Graph', 'Intelligence', 'Stakeholders', 'Time Sovereignty', 'Comms Hub', 'Inbox', 'Calendar', 'Agentic Meetings', 'Meetings', 'Documents', 'NemoClaw™ AI', 'Wellness Intelligence', 'Billing', 'Notifications', 'Help'],
+    consultant: ['Command Centre', 'Consulting', 'Projects', 'Tasks', 'Contracts', 'Expenses', 'IP Vault', 'Morning Brief', 'Intelligence', 'Inbox', 'Calendar', 'Agentic Meetings', 'Meetings', 'Documents', 'NemoClaw™ AI', 'Wellness Intelligence', 'Billing', 'Notifications', 'Help'],
+  }
+  
+  const allowed = personaFilters[persona] || personaFilters['executive']
+  
+  return NAV_GROUPS.map(group => ({
+    ...group,
+    items: group.items.filter(item => allowed.includes(item.label as string))
+  }))
+}
 const NAV_GROUPS = [
   {
     label: null, color: null,
@@ -240,7 +256,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
 
       {/* ── Nav ── */}
       <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '6px 0 10px' }}>
-        {NAV_GROUPS.map((group, gi) => (
+        {filterNavByPersona(userProfile?.persona_type).map((group, gi) => (
           <div key={gi}>
             {/* Group label */}
             {!collapsed && group.label && (

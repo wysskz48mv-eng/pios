@@ -13,7 +13,7 @@
  * VeritasIQ Technologies Ltd · PIOS Sprint K
  */
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -182,7 +182,19 @@ export default function OnboardingPage() {
   /* ── Step navigation ─────── */
   const next = () => setStep(s => s + 1)
   const back = () => setStep(s => s - 1)
-
+  // Restore step after OAuth redirect
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const stepParam = params.get('step')
+    if (stepParam) {
+      const targetStep = parseInt(stepParam, 10)
+      if (!isNaN(targetStep) && targetStep > step) {
+        setStep(targetStep)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
+  }, [])
   /* ── Step resolver ───────── */
   // Insert IT policy step (step 4) only for executive persona
   const effectiveStep = (persona === 'executive' && step >= 4) ? step : (step >= 4 ? step + 1 : step)
