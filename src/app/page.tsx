@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import s from './landing.module.css'
+import { PricingSection } from './PricingSection'
 
 export default async function Home() {
   const supabase = createClient()
@@ -66,85 +67,99 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── 3. Pain bands ──────────────────────────────────────────── */}
+      {/* ── 3. Personas ──────────────────────────────────────────── */}
 
-      {/* Band 1 — Undergraduate */}
+      {/* Starter */}
       <section className={s.bandLight}>
         <div className={s.bandInner}>
-          <span className={s.bandLabel}>UNDERGRADUATE</span>
+          <span className={s.bandLabel}>STARTER — The student building their future</span>
           <div className={s.bandHero}>
-            <span className={s.bandStat}>75%</span>
-            <span className={s.bandStatLabel}>feel overwhelmed by academic workload</span>
+            <span className={s.bandStat}>72%</span>
+            <span className={s.bandStatLabel}>of students underestimate how long tasks take</span>
           </div>
-          <blockquote className={s.bandQuote}>
-            &ldquo;I always think I have more time than I do, then everything
-            piles up.&rdquo;
-          </blockquote>
           <p className={s.bandCopy}>
-            Research shows 72% of students systematically underestimate how long
-            tasks will take. Combine that with tool fragmentation across LMS
-            platforms, note-taking apps, and calendar tools, and the cognitive
-            load becomes unsustainable. 55% of undergraduates now work part-time
-            alongside their studies, compressing an already-strained schedule
-            further.
+            72% of students underestimate how long tasks take — and 43% of
+            doctoral students never finish their degree. University removed the
+            structure school provided. PIOS gives it back — deadline
+            intelligence, thesis tracking, supervision prep, and a morning brief
+            that knows your exam schedule.
+          </p>
+          <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
+            Frontiers in Psychology, 2022; Council of Graduate Schools
           </p>
           <p className={s.bandBridge}>
-            PIOS gives undergraduates the self-regulation scaffolding that
-            university assumes but never teaches.
+            Modules: Daily Brief, Tasks, Academic Suite (Thesis, Literature, Viva), Coaching, Wellness
           </p>
         </div>
       </section>
 
-      {/* Band 2 — Postgraduate */}
+      {/* Pro */}
       <section className={s.bandDark}>
         <div className={s.bandInner}>
-          <span className={s.bandLabel}>POSTGRADUATE</span>
+          <span className={s.bandLabel}>PRO — The professional doing everything at once</span>
           <div className={s.bandHero}>
-            <span className={s.bandStat}>43%</span>
-            <span className={s.bandStatLabel}>never complete their doctoral programme</span>
+            <span className={s.bandStat}>$66</span>
+            <span className={s.bandStatLabel}>spent monthly across 4 fragmented AI tools</span>
           </div>
-          <blockquote className={s.bandQuote}>
-            &ldquo;I feel like I&rsquo;m failing at everything&nbsp;&mdash;
-            work, the doctorate, and being a parent&nbsp;&mdash; all at
-            once.&rdquo;
-          </blockquote>
           <p className={s.bandCopy}>
-            Doctoral attrition is driven by role conflict, administrative
-            fragmentation, and isolation. Postgraduates juggle supervisory
-            meetings, ethics applications, teaching duties, and literature
-            management across disconnected tools. 34% of those who withdraw cite
-            personal problems arising from the inability to manage competing
-            demands.
+            Professionals spend $66/mo across 4 fragmented AI tools. Knowledge
+            workers lose 4 hours every week just reorienting between them. You
+            are running a practice, completing a doctorate, and managing a
+            business — simultaneously. No tool was built for this. PIOS was.
+          </p>
+          <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
+            SubChoice 2026; Harvard Business Review 2022
           </p>
           <p className={s.bandBridge}>
-            PIOS replaces the cognitive overhead of managing deadlines,
-            supervisory prep, and thesis progress across fragmented tools.
+            Modules: Daily Brief, Email Intelligence, Tasks, Coaching, Consulting, Financials, Academic Suite
           </p>
         </div>
       </section>
 
-      {/* Band 3 — Executive */}
+      {/* Executive */}
       <section className={s.bandLight}>
         <div className={s.bandInner}>
-          <span className={s.bandLabel}>EXECUTIVE</span>
+          <span className={s.bandLabel}>EXECUTIVE — The leader who runs at full capacity</span>
           <div className={s.bandHero}>
-            <span className={s.bandStat}>1,200</span>
-            <span className={s.bandStatLabel}>app switches per day</span>
+            <span className={s.bandStat}>60%</span>
+            <span className={s.bandStatLabel}>of executives experience impaired judgement</span>
           </div>
-          <blockquote className={s.bandQuote}>
-            &ldquo;I spend more time switching between tools than actually
-            thinking.&rdquo;
-          </blockquote>
           <p className={s.bandCopy}>
-            Knowledge workers lose 40% of productive time to context switching
-            and tool fragmentation. The average executive spends four hours per
-            week simply reorienting after interruptions. Decision fatigue
-            compounds across the day, degrading the quality of strategic
-            judgement precisely when it matters most.
+            60% of executives experience measurably impaired judgement after
+            sustained decision-making. 36% of a founder&apos;s week is lost to
+            admin. Your decisions compound. Your time does not. PIOS
+            consolidates email, decisions, stakeholder intelligence, board
+            communications, and strategic frameworks into one layer.
+          </p>
+          <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
+            University of Cambridge 2023; Agility PR 2025
           </p>
           <p className={s.bandBridge}>
-            PIOS consolidates tasks, email triage, proposals, and strategic
-            frameworks into one AI layer.
+            Modules: Daily Brief, Email Intelligence, Decisions, Stakeholders, EOSA, Board Pack, Chief of Staff, Financials
+          </p>
+        </div>
+      </section>
+
+      {/* Enterprise */}
+      <section className={s.bandDark}>
+        <div className={s.bandInner}>
+          <span className={s.bandLabel}>ENTERPRISE — The organisation that takes intelligence seriously</span>
+          <div className={s.bandHero}>
+            <span className={s.bandStat}>80%</span>
+            <span className={s.bandStatLabel}>of corporate workers use unapproved AI tools</span>
+          </div>
+          <p className={s.bandCopy}>
+            80% of corporate workers already use unapproved AI tools. The
+            average shadow AI data breach costs $4.2 million. PIOS gives your
+            organisation a sanctioned personal intelligence layer — with data
+            isolation, IT-approvable security architecture, and a white-label
+            option that carries your brand.
+          </p>
+          <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
+            UpGuard 2025; IBM Cost of Data Breach Report 2024
+          </p>
+          <p className={s.bandBridge}>
+            Modules: All modules, admin dashboard, team management, custom onboarding, DPA included
           </p>
         </div>
       </section>
@@ -213,56 +228,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── 6. Pricing ─────────────────────────────────────────────── */}
-      <section className={s.pricing} id="pricing">
-        <div className={s.pricingInner}>
-          <h2 className={s.sectionTitle}>Pricing</h2>
-          <div className={s.pricingGrid}>
-
-            <div className={s.priceCard}>
-              <h3 className={s.priceTier}>Starter</h3>
-              <div className={s.priceAmount}>&pound;9<span className={s.pricePeriod}>/mo</span></div>
-              <p className={s.priceCredits}>2,000 AI credits</p>
-              <p className={s.priceDesc}>
-                For students and early-career professionals managing deadlines,
-                modules, and part-time work.
-              </p>
-              <Link href="/auth/signup" className={s.priceCta}>Start free trial</Link>
-            </div>
-
-            <div className={s.priceCard}>
-              <h3 className={s.priceTier}>Pro</h3>
-              <div className={s.priceAmount}>&pound;19<span className={s.pricePeriod}>/mo</span></div>
-              <p className={s.priceCredits}>5,000 AI credits</p>
-              <p className={s.priceDesc}>
-                For postgraduates and independent professionals.
-              </p>
-              <Link href="/auth/signup" className={s.priceCta}>Start free trial</Link>
-            </div>
-
-            <div className={`${s.priceCard} ${s.priceCardFeatured}`}>
-              <h3 className={s.priceTier}>Executive</h3>
-              <div className={s.priceAmount}>&pound;24<span className={s.pricePeriod}>/mo</span></div>
-              <p className={s.priceCredits}>10,000 AI credits</p>
-              <p className={s.priceDesc}>
-                For executives, consultants, and multi-domain operators.
-              </p>
-              <Link href="/auth/signup" className={s.priceCta}>Start free trial</Link>
-            </div>
-
-            <div className={s.priceCard}>
-              <h3 className={s.priceTier}>Team</h3>
-              <div className={s.priceAmount}>Custom</div>
-              <p className={s.priceCredits}>Unlimited</p>
-              <p className={s.priceDesc}>
-                For teams and newsrooms.
-              </p>
-              <Link href="/auth/signup" className={s.priceCta}>Start free trial</Link>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      {/* ── 6. Pricing (client component with annual/monthly toggle) ── */}
+      <PricingSection />
 
       {/* ── 7. How it works ────────────────────────────────────────── */}
       <section className={s.principles}>

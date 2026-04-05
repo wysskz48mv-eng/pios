@@ -126,6 +126,12 @@ export default function LoginPage() {
           )}
         </div>
 
+        <p style={{ fontSize: 11.5, color: 'var(--pios-dim)', textAlign: 'center', marginTop: 16, lineHeight: 1.6, maxWidth: 340 }}>
+          By continuing you agree to our{' '}
+          <Link href="/terms" style={{ color: 'var(--pios-muted)', textDecoration: 'underline' }}>Terms of Service</Link> and{' '}
+          <Link href="/privacy" style={{ color: 'var(--pios-muted)', textDecoration: 'underline' }}>Privacy Policy</Link>.
+          Your email will be used to triage your inbox automatically. You can disconnect this at any time in Settings.
+        </p>
         <p className="pios-login-foot">
           No account?{' '}
           <Link href="/auth/signup" className="pios-login-link">
