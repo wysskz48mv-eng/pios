@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
     const body = await req.json()
-    const { persona, deploy_mode, active_modules, integrations } = body
+    const { persona, deploy_mode, active_modules, integrations, goals, email_triage_consent } = body
 
     if (!persona) return NextResponse.json({ error: 'Persona required' }, { status: 400 })
 
@@ -36,18 +36,29 @@ export async function POST(req: NextRequest) {
 
     // Map persona to persona_type for user_profiles
     const personaMap: Record<string, string> = {
+      starter:    'academic',
+      pro:        'consultant',
+      enterprise: 'executive',
       founder:    'executive',   // Founder uses executive persona in NemoClaw
       consultant: 'consultant',
       executive:  'executive',
       academic:   'academic',
+      professional: 'consultant',
       other:      'executive',
     }
+
+    const normalizedPersona = personaMap[persona] ?? 'executive'
+    const triageConsent = typeof email_triage_consent === 'boolean'
+      ? email_triage_consent
+      : typeof integrations?.email_triage === 'boolean'
+      ? integrations.email_triage
+      : true
 
     // Update user_profiles
     const { error: profileErr } = await admin
       .from('user_profiles')
       .update({
-        persona_type:    personaMap[persona] ?? 'executive',
+        persona_type:    normalizedPersona,
         onboarded:       true,
         deployment_mode: deploy_mode ?? 'full',
         active_modules:  active_modules ?? [],
@@ -66,19 +77,54 @@ export async function POST(req: NextRequest) {
       .from('exec_intelligence_config')
       .upsert({
         user_id:    user.id,
-        persona:    personaMap[persona] ?? 'executive',
+        persona:    normalizedPersona,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
+
+    if (typeof goals === 'string' && goals.trim()) {
+      await admin
+        .from('knowledge_entries')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('category', 'goals')
+        .eq('source', 'onboarding')
+
+      await admin
+        .from('knowledge_entries')
+        .insert({
+          user_id:    user.id,
+          title:      '90-day onboarding goals',
+          content:    goals.trim(),
+          category:   'goals',
+          source:     'onboarding',
+          tags:       ['onboarding', 'goals'],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+    }
+
+    await admin
+      .from('connected_email_accounts')
+      .update({
+        ai_triage_enabled: triageConsent,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', user.id)
+      .eq('is_active', true)
 
     // Send welcome email via RESEND if configured
     const resendKey = process.env.RESEND_API_KEY
     if (resendKey) {
       try {
         const personaLabels: Record<string, string> = {
+          starter:    'Student',
+          pro:        'Professional',
+          enterprise: 'Enterprise Leader',
           founder:    'Founder / CEO',
           consultant: 'Consultant',
           executive:  'Executive',
           academic:   'Academic',
+          professional: 'Professional',
           other:      'Professional',
         }
         await fetch('https://api.resend.com/emails', {
@@ -88,7 +134,7 @@ export async function POST(req: NextRequest) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from:    'PIOS <noreply@veritasiq.io>',
+            from:    process.env.RESEND_FROM_EMAIL ?? 'PIOS <noreply@veritasiq.io>',
             to:      user.email,
             subject: 'Your NemoClaw™ Command Centre is live',
             html: `
@@ -96,7 +142,7 @@ export async function POST(req: NextRequest) {
                 <div style="font-size:20px;font-weight:400;margin-bottom:24px">PIOS</div>
                 <h1 style="font-size:22px;font-weight:500;margin:0 0 12px">Your Command Centre is ready.</h1>
                 <p style="color:#666;line-height:1.6;margin:0 0 20px">
-                  NemoClaw™ has been calibrated for your ${personaLabels[persona] ?? 'Professional'} profile.
+                  NemoClaw™ has been calibrated for your ${personaLabels[persona] ?? personaLabels[normalizedPersona] ?? 'Professional'} profile.
                   Your first morning brief will arrive tomorrow at 07:00.
                 </p>
                 <div style="background:#f5f4fe;border-radius:10px;padding:16px 20px;margin-bottom:24px">
@@ -126,7 +172,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok:      true,
-      persona,
+      persona: normalizedPersona,
       modules: active_modules?.length ?? 0,
       deploy:  deploy_mode,
     })

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import s from './landing.module.css'
 import { PricingSection } from './PricingSection'
 
@@ -7,9 +8,15 @@ export default async function Home() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Landing page is always public — authenticated users see it too
-  // They get a "Go to dashboard" CTA instead of "Start free trial"
-  const isLoggedIn = !!user
+  if (user) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarded')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    redirect(profile?.onboarded === false ? '/onboarding' : '/platform/dashboard')
+  }
 
   /* ------------------------------------------------------------------ */
   /*  Landing page — unauthenticated visitors                           */
@@ -26,8 +33,8 @@ export default async function Home() {
             <Link href="/research" className={s.navLink}>Research</Link>
             <a href="#pricing" className={s.navLink}>Pricing</a>
           </div>
-          <Link href={isLoggedIn ? "/platform/dashboard" : "/auth/signup"} className={s.navCta}>
-            {isLoggedIn ? 'Go to dashboard' : 'Start free trial'}
+          <Link href="/auth/signup" className={s.navCta}>
+            Start free trial
           </Link>
         </div>
       </nav>
