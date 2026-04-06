@@ -2,6 +2,18 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+
+function buildCallbackUrl(next: string | null): string {
+  if (typeof window === 'undefined') return '/auth/callback'
+
+  const callbackUrl = new URL('/auth/callback', window.location.origin)
+  if (next?.startsWith('/')) {
+    callbackUrl.searchParams.set('next', next)
+  }
+
+  return callbackUrl.toString()
+}
 
 export default function LoginPage() {
   const [email,   setEmail]   = useState('')
@@ -10,6 +22,8 @@ export default function LoginPage() {
   const [error,   setError]   = useState('')
 
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next')
 
   async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault()
@@ -17,7 +31,7 @@ export default function LoginPage() {
     setLoading(true); setError('')
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: window.location.origin + '/auth/callback' },
+      options: { emailRedirectTo: buildCallbackUrl(next) },
     })
     if (error) setError(error.message)
     else setSent(true)
@@ -63,7 +77,7 @@ export default function LoginPage() {
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                      redirectTo: window.location.origin + '/auth/callback',
+                      redirectTo: buildCallbackUrl(next),
                       scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
                       queryParams: { access_type: 'offline', prompt: 'consent' },
                     },

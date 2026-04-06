@@ -3,7 +3,18 @@ import React from 'react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+
+function buildCallbackUrl(next: string | null): string {
+  if (typeof window === 'undefined') return '/auth/callback'
+
+  const callbackUrl = new URL('/auth/callback', window.location.origin)
+  if (next?.startsWith('/')) {
+    callbackUrl.searchParams.set('next', next)
+  }
+
+  return callbackUrl.toString()
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Signup v3.0 — Investment-Grade UIX
@@ -30,6 +41,8 @@ export default function SignupPage() {
   })
   const supabase = createClient()
   const router   = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next')
 
   function f(k: string, v: string) { setForm(p => ({ ...p, [k]: v })) }
 
@@ -38,7 +51,7 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: buildCallbackUrl(next),
         scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file',
         queryParams: { access_type: 'offline', prompt: 'consent' },
       },
@@ -66,7 +79,7 @@ export default function SignupPage() {
             organisation: form.organisation, programme_name: form.programme_name,
             university: form.university, persona_type: persona,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: buildCallbackUrl(next),
         },
       })
       if (signUpError) { setError(signUpError.message); setLoading(false); return }

@@ -20,10 +20,26 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+function normaliseNextPath(next: string | null): string {
+  if (!next) return '/platform/dashboard'
+
+  let candidate = next
+  try {
+    candidate = decodeURIComponent(next)
+  } catch {
+    candidate = next
+  }
+
+  if (!candidate.startsWith('/')) return '/platform/dashboard'
+  if (candidate.startsWith('//')) return '/platform/dashboard'
+
+  return candidate
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code     = searchParams.get('code')
-  const next     = searchParams.get('next') ?? '/platform/dashboard'
+  const next     = normaliseNextPath(searchParams.get('next'))
   const errorMsg = searchParams.get('error_description')
 
   if (errorMsg) {

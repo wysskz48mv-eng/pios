@@ -196,7 +196,7 @@ export async function middleware(request: NextRequest) {
       )
     }
     const loginUrl = new URL('/auth/login', request.url)
-    loginUrl.searchParams.set('next', encodeURIComponent(pathname))
+    loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
