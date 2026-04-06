@@ -23,6 +23,11 @@ interface Check {
   ms?:     number
 }
 
+interface TableGroup {
+  name: string
+  candidates: string[]
+}
+
 async function checkDB(): Promise<Check> {
   const t0 = Date.now()
   try {
@@ -64,24 +69,47 @@ async function checkTables(): Promise<Check[]> {
   if (!url || !key) return [{ name: 'tables', status: 'fail', detail: 'Supabase env vars missing' }]
 
   const sb = createClient(url, key)
-  const criticalTables = [
-    'user_profiles', 'tasks', 'okrs', 'decisions',
-    'wellness_sessions', 'wellness_streaks',
-    'nemoclaw_calibration', 'exec_intelligence_config',
-    'morning_briefs', 'ip_assets', 'contracts',
-    'financial_snapshots', 'knowledge_entries',
-    'content_series', 'content_episodes',
-    'stakeholders', 'publications',
+  const tableGroups: TableGroup[] = [
+    { name: 'user_profiles', candidates: ['user_profiles'] },
+    { name: 'tasks', candidates: ['tasks'] },
+    { name: 'okrs', candidates: ['exec_okrs', 'okrs'] },
+    { name: 'decisions', candidates: ['executive_decisions', 'decisions'] },
+    { name: 'wellness_sessions', candidates: ['wellness_sessions'] },
+    { name: 'wellness_streaks', candidates: ['wellness_streaks'] },
+    { name: 'nemoclaw_calibration', candidates: ['nemoclaw_calibration'] },
+    { name: 'exec_intelligence_config', candidates: ['exec_intelligence_config'] },
+    { name: 'morning_briefs', candidates: ['morning_briefs'] },
+    { name: 'ip_assets', candidates: ['ip_assets'] },
+    { name: 'contracts', candidates: ['contracts'] },
+    { name: 'financial_snapshots', candidates: ['financial_snapshots'] },
+    { name: 'knowledge_entries', candidates: ['knowledge_entries'] },
+    { name: 'content_series', candidates: ['content_series'] },
+    { name: 'content_episodes', candidates: ['content_episodes'] },
+    { name: 'stakeholders', candidates: ['stakeholders'] },
+    { name: 'publications', candidates: ['publications'] },
   ]
 
   const checks: Check[] = []
-  for (const table of criticalTables) {
+  for (const group of tableGroups) {
     const t0 = Date.now()
-    const { error } = await sb.from(table).select('id').limit(1)
+    let matchedTable: string | null = null
+    let lastError: string | undefined
+
+    for (const candidate of group.candidates) {
+      const { error } = await sb.from(candidate).select('id').limit(1)
+      if (!error) {
+        matchedTable = candidate
+        break
+      }
+      lastError = `${error.code}: ${error.message.slice(0, 80)}`
+    }
+
     checks.push({
-      name:   `table:${table}`,
-      status: error ? 'fail' : 'ok',
-      detail: error ? `${error.code}: ${error.message.slice(0, 80)}` : undefined,
+      name:   `table:${group.name}`,
+      status: matchedTable ? 'ok' : 'fail',
+      detail: matchedTable
+        ? (matchedTable === group.name ? undefined : `using schema-compatible table ${matchedTable}`)
+        : lastError,
       ms:     Date.now() - t0,
     })
   }
@@ -100,8 +128,10 @@ function checkEnvVars(): Check[] {
     { key: 'STRIPE_SECRET_KEY',          critical: false },
     { key: 'STRIPE_WEBHOOK_SECRET',      critical: false },
     { key: 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', critical: false },
-    { key: 'NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID', critical: false },
-    { key: 'NEXT_PUBLIC_STRIPE_PRO_PRICE_ID',     critical: false },
+    { key: 'STRIPE_PRICE_STUDENT',     critical: false },
+    { key: 'STRIPE_PRICE_PRO',         critical: false },
+    { key: 'STRIPE_PRICE_PROFESSIONAL', critical: false },
+    { key: 'STRIPE_PRICE_TEAM',        critical: false },
     { key: 'SUPABASE_DB_POOLER_URL',     critical: false },
   ]
 

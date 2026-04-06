@@ -52,11 +52,11 @@ export async function GET() {
   // §04 Cron
   const cronOk = envSet('CRON_SECRET')
 
-  // §05 Stripe — keys + all 3 price IDs
+  // §05 Stripe — keys + active checkout price IDs
   const stripeKeysOk    = envSet('STRIPE_SECRET_KEY') && envSet('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY')
   const stripePricesOk  =
     envSet('STRIPE_PRICE_STUDENT') &&
-    envSet('STRIPE_PRICE_INDIVIDUAL') &&
+    envSet('STRIPE_PRICE_PRO') &&
     envSet('STRIPE_PRICE_PROFESSIONAL')
   const stripeWebhookOk = envSet('STRIPE_WEBHOOK_SECRET')
 
@@ -83,7 +83,7 @@ export async function GET() {
     cron_secret:          { ok: cronOk,          label: 'CRON_SECRET',                       required: true,  section: '04', hint: 'openssl rand -hex 32 — also add to Vercel → Settings → Cron Jobs' },
     // §05 Stripe
     stripe_keys:          { ok: stripeKeysOk,    label: 'Stripe keys (secret + publishable)', required: true,  section: '05' },
-    stripe_price_ids:     { ok: stripePricesOk,  label: 'Stripe price IDs (×3)',             required: true,  section: '05', hint: 'POST /api/stripe/setup while logged in as info@veritasiq.io' },
+    stripe_price_ids:     { ok: stripePricesOk,  label: 'Stripe price IDs (student + pro + professional)', required: true,  section: '05', hint: 'Set STRIPE_PRICE_STUDENT, STRIPE_PRICE_PRO, and STRIPE_PRICE_PROFESSIONAL in Vercel to match live Stripe prices' },
     stripe_webhook:       { ok: stripeWebhookOk, label: 'STRIPE_WEBHOOK_SECRET',             required: false, section: '05', hint: 'Stripe → Developers → Webhooks → /api/stripe/webhook' },
     // §06 Live data
     se_live_data:         { ok: seDataOk,        label: 'SUPABASE_SE_SERVICE_KEY (VeritasEdge™)', required: false, section: '06', hint: 'Supabase project oxqqzxvuksgzeeyhufhp → service_role' },
