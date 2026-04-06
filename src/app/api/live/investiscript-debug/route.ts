@@ -13,7 +13,7 @@ function checkAdminKey(req: any): boolean {
   return !!process.env.ADMIN_SECRET && key === process.env.ADMIN_SECRET
 }
 
-const IS_URL = 'https://dexsdwqkunnmhxcwayda.supabase.co'
+const IS_URL = 'https://vonnylhyopcbelzoaufj.supabase.co'
 
 export async function GET(req: NextRequest) {
   if (!checkAdminKey(req)) return NextResponse.json({ error: 'Admin key required' }, { status: 401 })

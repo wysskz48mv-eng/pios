@@ -137,7 +137,7 @@ const STEPS: Step[] = [
         label:    'InvestiScript service key',
         key:      'SUPABASE_IS_SERVICE_KEY',
         value:    '<IS service_role key from Supabase>',
-        url:      'https://supabase.com/dashboard/project/dexsdwqkunnmhxcwayda/settings/api',
+        url:      'https://supabase.com/dashboard/project/vonnylhyopcbelzoaufj/settings/api',
         urlLabel: 'Open IS Supabase API Settings →',
       },
       {

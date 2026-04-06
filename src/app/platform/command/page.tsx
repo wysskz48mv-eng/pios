@@ -502,7 +502,7 @@ export default function CommandPage() {
               <div style={{ fontWeight:700, fontSize:13, marginBottom:12, color:'var(--ai)' }}>⚙ Vercel Environment Variables Needed</div>
               <div style={{ display:'flex', flexDirection:'column' as const, gap:8, fontSize:12 }}>
                 {!se?.connected && <div><code style={{ color:'var(--saas)' }}>SUPABASE_SE_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ VeritasEdge™ service role key (Project oxqqzxvuksgzeeyhufhp)</span></div>}
-                {!is_?.connected && <div><code style={{ color:'var(--saas)' }}>SUPABASE_IS_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ InvestiScript service role key (Project dexsdwqkunnmhxcwayda)</span></div>}
+                {!is_?.connected && <div><code style={{ color:'var(--saas)' }}>SUPABASE_IS_SERVICE_KEY</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ InvestiScript service role key (Project vonnylhyopcbelzoaufj)</span></div>}
                 {!gh?.connected && <div><code style={{ color:'var(--saas)' }}>GITHUB_PAT</code><span style={{ color:'var(--pios-muted)', marginLeft:8 }}>→ GitHub PAT with repo scope</span></div>}
               </div>
             </div>

@@ -223,7 +223,7 @@ async function buildAgentContext(supabase: any, userId: string, agentId: string)
   if (agentId === 'platform_health') {
     ctx.platforms = [
       { name: 'VeritasEdge™',   head: 'a2c7f6e', url: 'sustainedge.vercel.app',             pending: ['M044-M053+M055 migrations', 'Supabase Pro'] },
-      { name: 'InvestiScript™', head: '21568ca',  url: 'investiscript.vercel.app',            pending: ['RESEND_API_KEY', 'Stripe live keys'] },
+      { name: 'InvestiScript™', head: 'cd1b24d', url: 'investiscript.vercel.app',            pending: ['NEXT_PUBLIC_SUPABASE_URL env var', 'SUPABASE_SERVICE_ROLE_KEY env var', 'DATABASE_URL env var', 'RESEND_API_KEY', 'CRON_SECRET', 'Stripe live keys'] },
       { name: 'PIOS™',          head: '9f1f1e2',  url: 'pios-wysskz48mv-engs-projects.vercel.app', pending: ['CRON_SECRET', 'Gmail OAuth'] },
     ]
     ctx.pat_expiry = '16 May 2026 — rotate before 9 May'

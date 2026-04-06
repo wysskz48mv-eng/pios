@@ -87,7 +87,7 @@ export async function GET() {
     stripe_webhook:       { ok: stripeWebhookOk, label: 'STRIPE_WEBHOOK_SECRET',             required: false, section: '05', hint: 'Stripe → Developers → Webhooks → /api/stripe/webhook' },
     // §06 Live data
     se_live_data:         { ok: seDataOk,        label: 'SUPABASE_SE_SERVICE_KEY (VeritasEdge™)', required: false, section: '06', hint: 'Supabase project oxqqzxvuksgzeeyhufhp → service_role' },
-    is_live_data:         { ok: isDataOk,        label: 'SUPABASE_IS_SERVICE_KEY (InvestiScript)', required: false, section: '06', hint: 'Supabase project dexsdwqkunnmhxcwayda → service_role' },
+    is_live_data:         { ok: isDataOk,        label: 'SUPABASE_IS_SERVICE_KEY (InvestiScript)', required: false, section: '06', hint: 'Supabase project vonnylhyopcbelzoaufj → service_role' },
     github_pat:           { ok: githubOk,        label: 'GITHUB_PAT (expires May 16 2026)',  required: false, section: '06', hint: 'Generate a fine-grained PAT at github.com → Settings → Developer settings — rotate before expiry' },
     // §02b Microsoft 365 / Azure OAuth
     azure_client_id:     { ok: envSet('AZURE_CLIENT_ID'),     label: 'AZURE_CLIENT_ID',     required: false, section: '02', hint: 'Azure Portal → App registrations → Overview → Application (client) ID' },

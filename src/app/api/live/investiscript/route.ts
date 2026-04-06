@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 const IS_DB_URL = process.env.SUPABASE_IS_DB_URL ?? ''
 const IS_KEY    = process.env.SUPABASE_IS_SERVICE_KEY ?? ''
-const IS_URL    = 'https://dexsdwqkunnmhxcwayda.supabase.co'
+const IS_URL    = 'https://vonnylhyopcbelzoaufj.supabase.co'
 
 export async function GET(_req: NextRequest) {
   // Auth guard — must be a signed-in PIOS user
