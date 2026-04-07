@@ -1,0 +1,568 @@
+.page {
+  --bg: #07080D;
+  --surf: #0F1117;
+  --surf2: #1A1B22;
+  --gold: #C8A96E;
+  --gold2: #E8D9B5;
+  --text: #E8E3DC;
+  --muted: #6E7080;
+  --dim: #3A3B44;
+  --border: rgba(200, 169, 110, 0.12);
+  --rborder: rgba(200, 169, 110, 0.25);
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  padding-bottom: 80px;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 48px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(7, 8, 13, 0.94);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+}
+
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-style: italic;
+  color: var(--gold);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progressStep {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  transition: all 0.2s;
+}
+
+.progressStep.active {
+  background: rgba(200, 169, 110, 0.12);
+  border-color: var(--rborder);
+  color: var(--gold);
+}
+
+.progressStep.done {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #07080D;
+}
+
+.progressLine {
+  width: 40px;
+  height: 1px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+
+.progressLine.done { background: rgba(200, 169, 110, 0.3); }
+
+.stepContent {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 56px 48px 0;
+}
+
+.stepIntro { margin-bottom: 44px; }
+
+.stepTag {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.stepTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 42px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.stepSub {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 300;
+  line-height: 1.75;
+  max-width: 620px;
+}
+
+.personaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 40px;
+}
+
+.personaCard {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 28px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.personaCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.personaCard:hover { border-color: var(--rborder); }
+
+.personaCard:hover::before { opacity: 0.6; }
+
+.personaCardSelected {
+  border-color: var(--gold) !important;
+  background: rgba(200, 169, 110, 0.03);
+}
+
+.personaCardSelected::before { opacity: 1 !important; }
+
+.pcTag {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.pcTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.pcDesc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 300;
+  margin-bottom: 18px;
+}
+
+.pcModules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.pcMod {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  border-radius: 2px;
+}
+
+.personaCardSelected .pcMod { border-color: rgba(200, 169, 110, 0.2); color: var(--muted); }
+
+.pcPrice {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  color: var(--gold);
+  margin-top: auto;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.fieldFull { margin-bottom: 40px; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.fieldLabel {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.fieldInput {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--rborder);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 12px 14px;
+  outline: none;
+  border-radius: 2px;
+  transition: border 0.2s;
+  width: 100%;
+}
+
+.fieldInput:focus {
+  border-color: var(--gold);
+  background: rgba(200, 169, 110, 0.02);
+}
+
+.fieldInput::placeholder { color: var(--dim); }
+
+.themeSection { margin-bottom: 44px; }
+
+.themeSectionTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.themeSectionSub {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 300;
+  margin-bottom: 24px;
+  line-height: 1.65;
+}
+
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.themeCard {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.themeCard:hover {
+  border-color: var(--rborder);
+  transform: translateY(-2px);
+}
+
+.themeCardSelected { border-color: var(--gold) !important; }
+
+.themePreview {
+  height: 180px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.tpNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.tpLogo { font-size: 11px; font-weight: 400; font-style: italic; }
+
+.tpDots { display: flex; gap: 4px; }
+
+.tpDot {
+  width: 20px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.tpBody {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.tpSidebar {
+  width: 28px;
+  flex-shrink: 0;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tpSideItem {
+  padding: 3px;
+  display: flex;
+  align-items: center;
+}
+
+.tpSideIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.tpMain {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tpCard {
+  border-radius: 3px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tpCardLine {
+  height: 3px;
+  border-radius: 1px;
+}
+
+.tpModuleRow { display: flex; gap: 5px; }
+
+.tpModule {
+  height: 28px;
+  border-radius: 3px;
+  padding: 5px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.tpModuleList {
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tpModulePill {
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+}
+
+.themeInfo {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--surf);
+  border-top: 1px solid var(--border);
+}
+
+.themeInfoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.themeName {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.themeSelected {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(200, 169, 110, 0.1);
+  border: 1px solid rgba(200, 169, 110, 0.2);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.themeTagline {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+.themePersona {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.cvSection { margin-bottom: 36px; }
+
+.cvTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.cvTitle span { font-size: 14px; color: var(--dim); font-family: 'DM Sans', sans-serif; }
+
+.cvSub {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 300;
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+
+.cvDrop {
+  border: 1px dashed var(--rborder);
+  border-radius: 2px;
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(200, 169, 110, 0.01);
+}
+
+.cvDrop:hover {
+  border-color: var(--gold);
+  background: rgba(200, 169, 110, 0.03);
+}
+
+.cvIcon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  opacity: 0.4;
+}
+
+.cvText {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.cvText span { font-size: 11px; color: var(--dim); }
+
+.cvFileName {
+  font-size: 13px;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.cvRemove {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.errorMsg {
+  font-size: 12px;
+  color: #DC503C;
+  margin-bottom: 16px;
+  background: rgba(220, 80, 60, 0.08);
+  border: 1px solid rgba(220, 80, 60, 0.2);
+  padding: 10px 14px;
+  border-radius: 2px;
+}
+
+.stepActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.backBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  padding: 12px 24px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  border-color: var(--rborder);
+  color: var(--text);
+}
+
+.nextBtn,
+.completeBtn {
+  background: var(--gold);
+  color: #07080D;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 40px;
+  border: none;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+
+.nextBtn:hover,
+.completeBtn:hover:not(:disabled) {
+  background: var(--gold2);
+  transform: translateY(-1px);
+}
+
+.completeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 768px) {
+  .stepContent { padding: 40px 24px 0; }
+  .personaGrid { grid-template-columns: 1fr; }
+  .fieldGrid { grid-template-columns: 1fr; }
+  .themeGrid { grid-template-columns: 1fr; }
+  .stepHeader { padding: 16px 24px; }
+}

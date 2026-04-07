@@ -1,0 +1,271 @@
+.page {
+  --bg: #07080D;
+  --surf: #0F1117;
+  --gold: #C8A96E;
+  --gold2: #E8D9B5;
+  --text: #E8E3DC;
+  --muted: #6E7080;
+  --dim: #3A3B44;
+  --border: rgba(200, 169, 110, 0.12);
+  --rborder: rgba(200, 169, 110, 0.25);
+  --error: #DC503C;
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+}
+
+.backLink {
+  position: absolute;
+  top: 28px;
+  left: 36px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: color 0.2s;
+}
+
+.backLink:hover { color: var(--gold); }
+
+.box {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  padding: 56px 52px;
+  width: 100%;
+  max-width: 440px;
+  border-radius: 2px;
+}
+
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.personaBadge {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.75;
+  font-weight: 300;
+  margin-bottom: 32px;
+}
+
+.form { display: flex; flex-direction: column; gap: 0; }
+
+.fieldLabel {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.emailInput {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--rborder);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  padding: 14px 16px;
+  outline: none;
+  border-radius: 2px;
+  transition: border 0.2s, background 0.2s;
+  margin-bottom: 16px;
+}
+
+.emailInput:focus {
+  border-color: var(--gold);
+  background: rgba(200, 169, 110, 0.03);
+}
+
+.emailInput::placeholder { color: var(--dim); }
+
+.errorMsg {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--error);
+  margin-bottom: 12px;
+}
+
+.sendBtn {
+  width: 100%;
+  background: var(--gold);
+  color: #07080D;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.sendBtn:hover:not(:disabled) {
+  background: var(--gold2);
+  transform: translateY(-1px);
+}
+
+.sendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.magicNote {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: var(--dim);
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.divider span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.googleBtn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s;
+  margin-bottom: 28px;
+}
+
+.googleBtn:hover {
+  border-color: var(--dim);
+  color: var(--text);
+}
+
+.terms {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  color: var(--dim);
+  text-align: center;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.terms a { color: var(--dim); text-decoration: underline; text-underline-offset: 2px; }
+
+.signinNote {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--dim);
+  text-align: center;
+}
+
+.signinLink { color: var(--gold); text-decoration: none; }
+
+.signinLink:hover { text-decoration: underline; }
+
+.sentLogo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-style: italic;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.sentIcon {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 20px;
+  opacity: 0.6;
+}
+
+.sentTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.sentSub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.75;
+  font-weight: 300;
+  margin-bottom: 24px;
+}
+
+.sentSub strong { color: var(--gold); font-weight: 500; }
+
+.sentNote {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--dim);
+  text-align: center;
+}
+
+.resend {
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: 'DM Sans', sans-serif;
+  text-underline-offset: 2px;
+}

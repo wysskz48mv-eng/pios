@@ -25,9 +25,24 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
     const body = await req.json()
-    const { persona, deploy_mode, active_modules, integrations, goals, email_triage_consent } = body
+    const {
+      persona,
+      persona_type,
+      deploy_mode,
+      active_modules,
+      integrations,
+      goals,
+      email_triage_consent,
+      command_centre_theme,
+      full_name,
+      job_title,
+      organisation,
+      cv_filename,
+    } = body
 
-    if (!persona) return NextResponse.json({ error: 'Persona required' }, { status: 400 })
+    const requestedPersona = typeof persona_type === 'string' ? persona_type : persona
+
+    if (!requestedPersona) return NextResponse.json({ error: 'Persona required' }, { status: 400 })
 
     const admin = createAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,7 +62,7 @@ export async function POST(req: NextRequest) {
       other:      'executive',
     }
 
-    const normalizedPersona = personaMap[persona] ?? 'executive'
+    const normalizedPersona = personaMap[requestedPersona] ?? 'executive'
     const triageConsent = typeof email_triage_consent === 'boolean'
       ? email_triage_consent
       : typeof integrations?.email_triage === 'boolean'
@@ -58,19 +73,27 @@ export async function POST(req: NextRequest) {
       ?? user.user_metadata?.name
       ?? user.email?.split('@')[0]
       ?? 'PIOS User'
+    const normalizedGoals = typeof goals === 'string' ? goals.trim() : ''
+    const normalizedTheme = command_centre_theme === 'onyx' || command_centre_theme === 'meridian' || command_centre_theme === 'signal'
+      ? command_centre_theme
+      : 'onyx'
 
     // Persist the onboarding milestone atomically so users do not get trapped in redirect loops.
     const { data: profileRow, error: profileErr } = await admin
       .from('user_profiles')
       .upsert({
         id:              user.id,
-        full_name:       fallbackFullName,
+        full_name:       typeof full_name === 'string' && full_name.trim() ? full_name.trim() : fallbackFullName,
         plan:            'free',
         persona_type:    normalizedPersona,
         onboarded:       true,
         deployment_mode: deploy_mode ?? 'full',
-        active_modules:  active_modules ?? [],
+        active_modules:  Array.isArray(active_modules) ? active_modules : [],
         it_policy_acknowledged: deploy_mode === 'standalone',
+        command_centre_theme: normalizedTheme,
+        ...(typeof job_title === 'string' && job_title.trim() ? { job_title: job_title.trim() } : {}),
+        ...(typeof organisation === 'string' && organisation.trim() ? { organisation: organisation.trim() } : {}),
+        ...(typeof cv_filename === 'string' && cv_filename.trim() ? { cv_filename: cv_filename.trim() } : {}),
         updated_at:      now,
         created_at:      now,
       })
@@ -91,7 +114,7 @@ export async function POST(req: NextRequest) {
         updated_at: now,
       }, { onConflict: 'user_id' })
 
-    if (typeof goals === 'string' && goals.trim()) {
+    if (normalizedGoals) {
       await admin
         .from('knowledge_entries')
         .delete()
@@ -104,7 +127,7 @@ export async function POST(req: NextRequest) {
         .insert({
           user_id:    user.id,
           title:      '90-day onboarding goals',
-          content:    goals.trim(),
+          content:    normalizedGoals,
           category:   'goals',
           source:     'onboarding',
           tags:       ['onboarding', 'goals'],
@@ -157,7 +180,7 @@ export async function POST(req: NextRequest) {
                 <div style="font-size:20px;font-weight:400;margin-bottom:24px">PIOS</div>
                 <h1 style="font-size:22px;font-weight:500;margin:0 0 12px">Your Command Centre is ready.</h1>
                 <p style="color:#666;line-height:1.6;margin:0 0 20px">
-                  NemoClaw™ has been calibrated for your ${personaLabels[persona] ?? personaLabels[normalizedPersona] ?? 'Professional'} profile.
+                  NemoClaw™ has been calibrated for your ${personaLabels[requestedPersona] ?? personaLabels[normalizedPersona] ?? 'Professional'} profile.
                   Your first morning brief will arrive tomorrow at 07:00.
                 </p>
                 <div style="background:#f5f4fe;border-radius:10px;padding:16px 20px;margin-bottom:24px">
@@ -188,8 +211,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok:      true,
       persona: normalizedPersona,
-      modules: active_modules?.length ?? 0,
+      modules: Array.isArray(active_modules) ? active_modules.length : 0,
       deploy:  deploy_mode,
+      theme:   normalizedTheme,
     })
 
   } catch (err) {

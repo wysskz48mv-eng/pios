@@ -1,10 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import s from './landing.module.css'
-import { PricingSection } from './PricingSection'
+import styles from './page.module.css'
 
-export default async function Home() {
+export default async function LandingPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -18,286 +17,216 @@ export default async function Home() {
     redirect(profile?.onboarded === false ? '/onboarding' : '/platform/dashboard')
   }
 
-  /* ------------------------------------------------------------------ */
-  /*  Landing page — unauthenticated visitors                           */
-  /* ------------------------------------------------------------------ */
   return (
-    <div className={s.page}>
-
-      {/* ── 1. Sticky nav ──────────────────────────────────────────── */}
-      <nav className={s.nav}>
-        <div className={s.navInner}>
-          <Link href="/" className={s.logo}>PIOS</Link>
-          <div className={s.navLinks}>
-            <a href="#features" className={s.navLink}>Features</a>
-            <Link href="/research" className={s.navLink}>Research</Link>
-            <a href="#pricing" className={s.navLink}>Pricing</a>
+    <div className={styles.page}>
+      <nav className={styles.nav}>
+        <div className={styles.navInner}>
+          <span className={styles.logo}>PIOS</span>
+          <div className={styles.navLinks}>
+            <a href="#platform" className={styles.navLink}>Platform</a>
+            <Link href="/research" className={styles.navLink}>Research</Link>
+            <a href="#pricing" className={styles.navLink}>Pricing</a>
           </div>
-          <Link href="/auth/signup?provider=google&autostart=1" className={s.navCta}>
-            Start with Google
+          <Link href="/auth/signup" className={styles.navCta}>
+            Request Access
           </Link>
         </div>
       </nav>
 
-      {/* ── 2. Hero ────────────────────────────────────────────────── */}
-      <section className={s.hero}>
-        <div className={s.heroInner}>
-          <h1 className={s.heroHeadline}>PIOS: Your mind, amplified.</h1>
-          <p className={s.heroSubtitle}>
-            The AI operating system that thinks across every domain of your
-            life&nbsp;&mdash; academic, professional, personal&nbsp;&mdash; so
-            you can focus on what matters.
+      <section className={styles.hero}>
+        <div className={styles.heroInner}>
+          <div className={styles.heroTag}>Personal Intelligence Operating System</div>
+          <h1 className={styles.heroHeadline}>
+            The intelligence layer<br />
+            for those who <em>lead.</em>
+          </h1>
+          <p className={styles.heroSub}>
+            One AI that holds the full weight of your professional life - decisions,
+            stakeholders, board intelligence, and strategic frameworks - calibrated to
+            you, always on.
           </p>
-
-          <div className={s.statGrid}>
-            <div className={s.statBox}>
-              <span className={s.statNumber}>72%</span>
-              <span className={s.statLabel}>of students underestimate task duration</span>
-              <span className={s.statCite}>Frontiers in Psychology, 2022</span>
+          <div className={styles.statGrid}>
+            <div className={styles.statBox}>
+              <span className={styles.statNum}>60%</span>
+              <span className={styles.statLabel}>of executives experience measurable judgement impairment after sustained decision load</span>
+              <span className={styles.statCite}>University of Cambridge, 2023</span>
             </div>
-            <div className={s.statBox}>
-              <span className={s.statNumber}>1,200</span>
-              <span className={s.statLabel}>app switches per day for knowledge workers</span>
-              <span className={s.statCite}>Harvard Business Review, 2022</span>
+            <div className={styles.statBox}>
+              <span className={styles.statNum}>36%</span>
+              <span className={styles.statLabel}>of a founder's week consumed by administrative work that should not require the founder</span>
+              <span className={styles.statCite}>Agility PR, 2025</span>
             </div>
-            <div className={s.statBox}>
-              <span className={s.statNumber}>43%</span>
-              <span className={s.statLabel}>of doctoral students never complete</span>
-              <span className={s.statCite}>Council of Graduate Schools</span>
-            </div>
-            <div className={s.statBox}>
-              <span className={s.statNumber}>60%</span>
-              <span className={s.statLabel}>of executives report impaired judgement</span>
-              <span className={s.statCite}>University of Cambridge, 2023</span>
+            <div className={styles.statBox}>
+              <span className={styles.statNum}>1,200</span>
+              <span className={styles.statLabel}>context switches per day for senior professionals managing multi-domain responsibilities</span>
+              <span className={styles.statCite}>Harvard Business Review, 2022</span>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── 3. Personas ──────────────────────────────────────────── */}
-
-      {/* Starter */}
-      <section className={s.bandLight}>
-        <div className={s.bandInner}>
-          <span className={s.bandLabel}>STARTER — The student building their future</span>
-          <div className={s.bandHero}>
-            <span className={s.bandStat}>72%</span>
-            <span className={s.bandStatLabel}>of students underestimate how long tasks take</span>
-          </div>
-          <p className={s.bandCopy}>
-            72% of students underestimate how long tasks take — and 43% of
-            doctoral students never finish their degree. University removed the
-            structure school provided. PIOS gives it back — deadline
-            intelligence, thesis tracking, supervision prep, and a morning brief
-            that knows your exam schedule.
-          </p>
-          <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
-            Frontiers in Psychology, 2022; Council of Graduate Schools
-          </p>
-          <p className={s.bandBridge}>
-            Modules: Daily Brief, Tasks, Academic Suite (Thesis, Literature, Viva), Coaching, Wellness
-          </p>
-        </div>
-      </section>
-
-      {/* Pro */}
-      <section className={s.bandDark}>
-        <div className={s.bandInner}>
-          <span className={s.bandLabel}>PRO — The professional doing everything at once</span>
-          <div className={s.bandHero}>
-            <span className={s.bandStat}>&pound;52</span>
-            <span className={s.bandStatLabel}>spent monthly across 4 fragmented AI tools</span>
-          </div>
-          <p className={s.bandCopy}>
-            Professionals spend &pound;52/mo across 4 fragmented AI tools
-            &mdash; and lose 4 hours every week just reorienting between them.
-            You are running a practice, completing a doctorate, and managing a
-            business &mdash; simultaneously. No tool was built for this. PIOS was.
-          </p>
-          <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
-            SubChoice, 2026 &middot; Harvard Business Review, 2022 (converted from USD)
-          </p>
-          <p className={s.bandBridge}>
-            Modules: Daily Brief, Email Intelligence, Tasks, Coaching, Consulting, Financials, Academic Suite
-          </p>
-        </div>
-      </section>
-
-      {/* Executive */}
-      <section className={s.bandLight}>
-        <div className={s.bandInner}>
-          <span className={s.bandLabel}>EXECUTIVE — The leader who runs at full capacity</span>
-          <div className={s.bandHero}>
-            <span className={s.bandStat}>60%</span>
-            <span className={s.bandStatLabel}>of executives experience impaired judgement</span>
-          </div>
-          <p className={s.bandCopy}>
-            60% of executives experience measurably impaired judgement after
-            sustained decision-making. 36% of a founder&apos;s week is lost to
-            admin. Your decisions compound. Your time does not. PIOS
-            consolidates email, decisions, stakeholder intelligence, board
-            communications, and strategic frameworks into one layer.
-          </p>
-          <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
-            University of Cambridge 2023; Agility PR 2025
-          </p>
-          <p className={s.bandBridge}>
-            Modules: Daily Brief, Email Intelligence, Decisions, Stakeholders, EOSA, Board Pack, Chief of Staff, Financials
-          </p>
-        </div>
-      </section>
-
-      {/* Enterprise */}
-      <section className={s.bandDark}>
-        <div className={s.bandInner}>
-          <span className={s.bandLabel}>ENTERPRISE — The organisation that takes intelligence seriously</span>
-          <div className={s.bandHero}>
-            <span className={s.bandStat}>80%</span>
-            <span className={s.bandStatLabel}>of corporate workers use unapproved AI tools</span>
-          </div>
-          <p className={s.bandCopy}>
-            80% of corporate workers already use unapproved AI tools. The
-            average shadow AI data breach costs &pound;3.3 million. PIOS gives your
-            organisation a sanctioned personal intelligence layer — with data
-            isolation, IT-approvable security architecture, and a white-label
-            option that carries your brand.
-          </p>
-          <p style={{ fontSize: 11, color: 'var(--pios-dim)', marginTop: 8 }}>
-            UpGuard 2025; IBM Cost of Data Breach Report 2024
-          </p>
-          <p className={s.bandBridge}>
-            Modules: All modules, admin dashboard, team management, custom onboarding, DPA included
-          </p>
-        </div>
-      </section>
-
-      {/* ── 4. Modules grid ────────────────────────────────────────── */}
-      <section className={s.modules} id="features">
-        <div className={s.modulesInner}>
-          <h2 className={s.sectionTitle}>The platform</h2>
-          <div className={s.moduleGrid}>
-            <div className={s.moduleCard}>
-              <h3 className={s.moduleTitle}>NemoClaw Coaching</h3>
-              <p className={s.moduleDesc}>
-                5 modes, calibrated to your CV. Strategic, operational, academic,
-                reflective, and crisis coaching from one adaptive engine.
-              </p>
-            </div>
-            <div className={s.moduleCard}>
-              <h3 className={s.moduleTitle}>Morning Brief</h3>
-              <p className={s.moduleDesc}>
-                AI daily intelligence synthesised from your live data. Calendar,
-                deadlines, email signals, and strategic priorities in one view.
-              </p>
-            </div>
-            <div className={s.moduleCard}>
-              <h3 className={s.moduleTitle}>Email Triage</h3>
-              <p className={s.moduleDesc}>
-                6-category classification with draft generation. Urgent, action,
-                FYI, delegate, defer, archive&nbsp;&mdash; processed in seconds.
-              </p>
-            </div>
-            <div className={s.moduleCard}>
-              <h3 className={s.moduleTitle}>Consulting Frameworks</h3>
-              <p className={s.moduleDesc}>
-                15 proprietary NemoClaw frameworks for strategy, due diligence,
-                market entry, stakeholder mapping, and more.
-              </p>
-            </div>
-            <div className={s.moduleCard}>
-              <h3 className={s.moduleTitle}>Academic Suite</h3>
-              <p className={s.moduleDesc}>
-                Viva prep, literature agent, supervisor meeting prep, and thesis
-                progress tracking for postgraduate researchers.
-              </p>
-            </div>
-            <div className={s.moduleCard}>
-              <h3 className={s.moduleTitle}>Chief of Staff</h3>
-              <p className={s.moduleDesc}>
-                Weekly strategic review with workstream RAG. Cross-domain
-                awareness across every active project and commitment.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. How it works ────────────────────────────────────────── */}
-      <section className={s.principles}>
-        <div className={s.principlesInner}>
-          <h2 className={s.sectionTitleLight}>How it works</h2>
-          <div className={s.principleGrid}>
-            <div className={s.principleCard}>
-              <h3 className={s.principleTitle}>Calibrated to you</h3>
-              <p className={s.principleDesc}>
-                CV upload and NemoClaw builds your intelligence profile. Every
-                response is grounded in your actual context, skills, and goals.
-              </p>
-            </div>
-            <div className={s.principleCard}>
-              <h3 className={s.principleTitle}>Cross-domain awareness</h3>
-              <p className={s.principleDesc}>
-                One AI that knows all your contexts simultaneously. Academic
-                deadlines inform professional scheduling. Personal commitments
-                shape workload recommendations.
-              </p>
-            </div>
-            <div className={s.principleCard}>
-              <h3 className={s.principleTitle}>Human-in-the-loop</h3>
-              <p className={s.principleDesc}>
-                AI drafts, you decide. Nothing sends without your approval.
-                Every recommendation is transparent and overridable.
-              </p>
-            </div>
-            <div className={s.principleCard}>
-              <h3 className={s.principleTitle}>Evidence-based</h3>
-              <p className={s.principleDesc}>
-                Every feature grounded in published research. No dark patterns,
-                no engagement tricks, no manufactured urgency.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 6. Research strip ──────────────────────────────────────── */}
-      <section className={s.researchStrip}>
-        <div className={s.researchInner}>
-          <h2 className={s.researchHeadline}>Built on evidence, not hype.</h2>
-          <p className={s.researchSub}>
-            24 peer-reviewed studies. Three user groups. One platform.
-          </p>
-          <Link href="/research" className={s.researchLink}>
-            Read the research foundation
+          <Link href="/auth/signup" className={styles.heroCta}>
+            Choose your path →
           </Link>
         </div>
       </section>
 
-      {/* ── 7. Pricing (client component with annual/monthly toggle) ── */}
-      <PricingSection />
-
-      {/* ── 8. CTA ─────────────────────────────────────────────────── */}
-      <section className={s.cta}>
-        <div className={s.ctaInner}>
-          <h2 className={s.ctaHeadline}>The cognitive overhead stops here.</h2>
-          <Link href="/auth/signup?provider=google&autostart=1" className={s.ctaButton}>
-            Start with Google
-          </Link>
+      <section className={styles.bandDark} id="platform">
+        <div className={styles.bandInner}>
+          <span className={styles.bandLabel}>EXECUTIVE — The leader who runs at full capacity</span>
+          <div className={styles.bandHero}>
+            <span className={styles.bandStat}>60%</span>
+            <span className={styles.bandStatLabel}>of executives experience measurably impaired judgement</span>
+          </div>
+          <p className={styles.bandCopy}>
+            60% of executives experience measurably impaired judgement after sustained decision-making.
+            36% of a founder&apos;s week is lost to admin. Your decisions compound. Your time does not.
+            PIOS consolidates email, decisions, stakeholder intelligence, board communications,
+            and strategic frameworks into one layer.
+          </p>
+          <p className={styles.bandCite}>University of Cambridge 2023 · Agility PR 2025</p>
+          <p className={styles.bandModules}>EOSA™ · Decisions · Stakeholders · Board Pack · Chief of Staff · Email Intelligence · Morning Brief</p>
         </div>
       </section>
 
-      {/* ── 9. Footer ──────────────────────────────────────────────── */}
-      <footer className={s.footer}>
-        <div className={s.footerInner}>
-          <div className={s.footerLinks}>
-            <Link href="/research" className={s.footerLink}>Research</Link>
-            <Link href="/privacy" className={s.footerLink}>Privacy</Link>
-            <Link href="/terms" className={s.footerLink}>Terms</Link>
+      <section className={styles.bandLight}>
+        <div className={styles.bandInner}>
+          <span className={styles.bandLabel}>PRO — The professional doing everything at once</span>
+          <div className={styles.bandHero}>
+            <span className={styles.bandStat}>£52</span>
+            <span className={styles.bandStatLabel}>spent monthly across fragmented AI tools</span>
           </div>
-          <p className={s.footerCopy}>VeritasIQ Technologies Ltd</p>
+          <p className={styles.bandCopy}>
+            Professionals spend £52/mo across 4 fragmented AI tools — and lose 4 hours every week
+            reorienting between them. You are running a practice, completing a doctorate, and managing
+            a business simultaneously. No tool was built for this. PIOS was.
+          </p>
+          <p className={styles.bandCite}>SubChoice 2026 · Harvard Business Review, 2022</p>
+          <p className={styles.bandModules}>Email Intelligence · Consulting Frameworks · Financials · CPD · Academic Suite</p>
+        </div>
+      </section>
+
+      <section className={styles.bandDark}>
+        <div className={styles.bandInner}>
+          <span className={styles.bandLabel}>RESEARCHER — The academic who cannot afford to stop</span>
+          <div className={styles.bandHero}>
+            <span className={styles.bandStat}>43%</span>
+            <span className={styles.bandStatLabel}>of doctoral students never complete their degree</span>
+          </div>
+          <p className={styles.bandCopy}>
+            43% of doctoral students never complete. University removed the structure school provided.
+            PIOS gives it back — thesis tracking, literature intelligence, supervision prep, and a
+            morning brief that knows your submission deadline as clearly as it knows your board meeting.
+          </p>
+          <p className={styles.bandCite}>Council of Graduate Schools · Frontiers in Psychology, 2022</p>
+          <p className={styles.bandModules}>Thesis Tracker · Literature Agent · Supervision Prep · Viva Prep · Academic Brief · Wellness</p>
+        </div>
+      </section>
+
+      <section className={styles.modules}>
+        <div className={styles.modulesInner}>
+          <h2 className={styles.sectionTitle}>The platform</h2>
+          <div className={styles.moduleGrid}>
+            {[
+              { name: 'NemoClaw™ Coaching', desc: '5 modes, calibrated to your CV. Strategic, operational, academic, reflective, and crisis coaching from one adaptive engine.' },
+              { name: 'Morning Brief', desc: 'AI daily intelligence synthesised from your live data. Calendar, deadlines, email signals, and strategic priorities in one view.' },
+              { name: 'Email Intelligence', desc: '6-category classification with draft generation. Urgent, action, FYI, delegate, defer, archive — processed in seconds.' },
+              { name: 'EOSA™ Frameworks', desc: '13 proprietary NemoClaw frameworks for strategy, due diligence, stakeholder mapping, and executive operating architecture.' },
+              { name: 'Academic Suite', desc: 'Viva prep, literature agent, supervisor meeting prep, and thesis progress tracking for postgraduate researchers.' },
+              { name: 'Chief of Staff', desc: 'Weekly strategic review with workstream RAG. Cross-domain awareness across every active project and commitment.' },
+            ].map((module) => (
+              <div key={module.name} className={styles.moduleCard}>
+                <h3 className={styles.moduleTitle}>{module.name}</h3>
+                <p className={styles.moduleDesc}>{module.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.researchStrip}>
+        <div className={styles.researchInner}>
+          <h2 className={styles.researchHeadline}>Built on evidence, not hype.</h2>
+          <p className={styles.researchSub}>24 peer-reviewed studies. Three user groups. One platform.</p>
+          <Link href="/research" className={styles.researchLink}>Read the research foundation</Link>
+        </div>
+      </section>
+
+      <section className={styles.pricing} id="pricing">
+        <div className={styles.pricingInner}>
+          <h2 className={styles.sectionTitle}>Pricing</h2>
+          <div className={styles.pricingGrid}>
+            {[
+              {
+                tier: 'Starter', price: '£12', period: '/mo', billed: '£144/yr',
+                tagline: 'The structure university never gave you.',
+                desc: 'Undergraduate and postgraduate students',
+                features: ['Daily Brief + Tasks', 'Academic Suite (Thesis, Literature, Viva)', 'Coaching + Wellness', '1 email account'],
+                plan: 'starter',
+              },
+              {
+                tier: 'Pro', price: '£28', period: '/mo', billed: '£336/yr', featured: true,
+                tagline: 'One system for everything you do at once.',
+                desc: 'Professionals, consultants, solo founders',
+                features: ['Everything in Starter', 'Email Intelligence + multi-inbox', 'Consulting Frameworks + CPD', 'Financials + Expenses', 'Calendar + AI pre-briefs'],
+                plan: 'pro',
+              },
+              {
+                tier: 'Executive', price: '£36', period: '/mo', billed: '£432/yr',
+                tagline: 'Run the business. Build the legacy.',
+                desc: 'CEOs, founders, directors, senior executives',
+                features: ['Everything in Pro', 'EOSA™ + Decisions', 'Stakeholders + Board Pack', 'Chief of Staff module', 'Time Sovereignty audit'],
+                plan: 'executive',
+              },
+            ].map((plan) => (
+              <div key={plan.tier} className={`${styles.priceCard} ${plan.featured ? styles.priceCardFeatured : ''}`}>
+                <h3 className={styles.priceTier}>{plan.tier}</h3>
+                <div className={styles.priceAmount}>
+                  {plan.price}<span className={styles.pricePeriod}>{plan.period}</span>
+                </div>
+                <p className={styles.priceTagline}>{plan.tagline}</p>
+                <p className={styles.priceDesc}>{plan.desc}</p>
+                <ul className={styles.priceFeatures}>
+                  {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
+                </ul>
+                <Link href={`/auth/signup?plan=${plan.plan}`} className={styles.priceCta}>
+                  Start free trial
+                </Link>
+                <p className={styles.priceBilled}>Billed {plan.billed}</p>
+              </div>
+            ))}
+
+            <div className={styles.priceCard}>
+              <h3 className={styles.priceTier}>Enterprise</h3>
+              <div className={styles.priceAmount}>From £36<span className={styles.pricePeriod}>/seat/mo</span></div>
+              <p className={styles.priceTagline}>Deploy PIOS across your organisation.</p>
+              <p className={styles.priceDesc}>Corporations, universities, white-label partners</p>
+              <ul className={styles.priceFeatures}>
+                <li>All modules + admin dashboard</li>
+                <li>Team management + custom onboarding</li>
+                <li>Data isolation + DPA included</li>
+                <li>White-label option</li>
+              </ul>
+              <a href="mailto:info@veritasiq.io" className={styles.priceCta}>Request a proposal</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.finalCta}>
+        <div className={styles.finalCtaInner}>
+          <h2 className={styles.finalCtaHeadline}>The cognitive overhead stops here.</h2>
+          <Link href="/auth/signup" className={styles.finalCtaBtn}>Request access</Link>
+        </div>
+      </section>
+
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <div className={styles.footerLinks}>
+            <Link href="/research" className={styles.footerLink}>Research</Link>
+            <Link href="/privacy" className={styles.footerLink}>Privacy</Link>
+            <Link href="/terms" className={styles.footerLink}>Terms</Link>
+          </div>
+          <p className={styles.footerCopy}>VeritasIQ Technologies Ltd · info@veritasiq.io</p>
         </div>
       </footer>
-
     </div>
   )
 }

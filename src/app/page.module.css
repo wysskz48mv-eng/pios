@@ -1,0 +1,556 @@
+.page {
+  --bg: #07080D;
+  --surf: #0F1117;
+  --surf2: #1A1B22;
+  --gold: #C8A96E;
+  --gold2: #E8D9B5;
+  --text: #E8E3DC;
+  --muted: #6E7080;
+  --dim: #3A3B44;
+  --border: rgba(200, 169, 110, 0.12);
+  --rborder: rgba(200, 169, 110, 0.25);
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(7, 8, 13, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.navInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  margin-right: auto;
+}
+
+.navLinks {
+  display: flex;
+  gap: 32px;
+  margin-right: 32px;
+}
+
+.navLink {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.navLink:hover { color: var(--gold); }
+
+.navCta {
+  background: transparent;
+  border: 1px solid var(--rborder);
+  color: var(--gold);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 9px 24px;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.navCta:hover { background: rgba(200, 169, 110, 0.08); }
+
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.heroInner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 100px 48px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+}
+
+.heroInner::before {
+  content: '';
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(200, 169, 110, 0.05) 0%, transparent 65%);
+  top: -100px;
+  right: -100px;
+  pointer-events: none;
+}
+
+.heroTag {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--border);
+  padding: 6px 16px;
+  border-radius: 2px;
+  margin-bottom: 44px;
+}
+
+.heroHeadline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(44px, 5.5vw, 76px);
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.12;
+  max-width: 820px;
+  margin: 0 0 24px;
+}
+
+.heroHeadline em {
+  color: var(--gold);
+  font-style: italic;
+}
+
+.heroSub {
+  font-size: 16px;
+  color: var(--muted);
+  max-width: 560px;
+  line-height: 1.85;
+  margin: 0 0 60px;
+  font-weight: 300;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  max-width: 720px;
+  width: 100%;
+  margin: 0 0 56px;
+}
+
+.statBox {
+  background: var(--bg);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.statNum {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 40px;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-weight: 300;
+  margin-bottom: 8px;
+}
+
+.statCite {
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: auto;
+}
+
+.heroCta {
+  background: var(--gold);
+  color: #07080D;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 16px 52px;
+  border-radius: 2px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.heroCta:hover { background: var(--gold2); transform: translateY(-1px); }
+
+.bandDark {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.bandLight {
+  background: var(--surf);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.bandInner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 64px 48px;
+}
+
+.bandLabel {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 28px;
+}
+
+.bandHero {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.bandStat {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 72px;
+  color: var(--gold);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.bandStatLabel {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  color: var(--text);
+  max-width: 440px;
+  line-height: 1.3;
+  font-style: italic;
+}
+
+.bandCopy {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.85;
+  max-width: 720px;
+  font-weight: 300;
+  margin-bottom: 8px;
+}
+
+.bandCite {
+  font-size: 10px;
+  color: var(--dim);
+  margin-bottom: 20px;
+}
+
+.bandModules {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+.modules { padding: 80px 0; }
+
+.modulesInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+.sectionTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 40px;
+}
+
+.moduleGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.moduleCard {
+  background: var(--bg);
+  padding: 28px;
+  transition: background 0.2s;
+}
+
+.moduleCard:hover { background: var(--surf); }
+
+.moduleTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+
+.moduleDesc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.researchStrip {
+  background: var(--surf);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 60px 48px;
+  text-align: center;
+}
+
+.researchInner { max-width: 600px; margin: 0 auto; }
+
+.researchHeadline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.researchSub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 24px;
+  font-weight: 300;
+}
+
+.researchLink {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.pricing { padding: 80px 0; }
+
+.pricingInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+.pricingGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.priceCard {
+  background: var(--bg);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.priceCardFeatured {
+  background: var(--surf);
+  position: relative;
+}
+
+.priceCardFeatured::before {
+  content: 'Most popular';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gold);
+  color: #07080D;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 4px 14px;
+  border-radius: 0 0 4px 4px;
+}
+
+.priceTier {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.priceAmount {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.pricePeriod {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.priceTagline {
+  font-size: 12px;
+  color: var(--text);
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+  margin-bottom: 6px;
+}
+
+.priceDesc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+.priceFeatures {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.priceFeatures li {
+  font-size: 12px;
+  color: var(--muted);
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.5;
+  font-weight: 300;
+}
+
+.priceFeatures li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  opacity: 0.5;
+}
+
+.priceCta {
+  display: block;
+  text-align: center;
+  background: transparent;
+  border: 1px solid var(--rborder);
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 11px;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+}
+
+.priceCta:hover { background: rgba(200, 169, 110, 0.08); }
+
+.priceBilled {
+  font-size: 10px;
+  color: var(--dim);
+  text-align: center;
+}
+
+.finalCta {
+  border-top: 1px solid var(--border);
+  padding: 80px 48px;
+  text-align: center;
+}
+
+.finalCtaInner { max-width: 600px; margin: 0 auto; }
+
+.finalCtaHeadline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 44px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 36px;
+}
+
+.finalCtaBtn {
+  background: var(--gold);
+  color: #07080D;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 16px 52px;
+  border-radius: 2px;
+  text-decoration: none;
+  font-weight: 700;
+  display: inline-block;
+  transition: all 0.2s;
+}
+
+.finalCtaBtn:hover { background: var(--gold2); }
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 48px;
+}
+
+.footerInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footerLinks { display: flex; gap: 28px; }
+
+.footerLink {
+  font-size: 12px;
+  color: var(--dim);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+
+.footerLink:hover { color: var(--muted); }
+
+.footerCopy { font-size: 11px; color: var(--dim); }
+
+@media (max-width: 900px) {
+  .navLinks { display: none; }
+  .heroInner { padding: 60px 24px 60px; }
+  .statGrid { grid-template-columns: 1fr; }
+  .moduleGrid { grid-template-columns: 1fr; }
+  .pricingGrid { grid-template-columns: 1fr 1fr; }
+  .bandInner { padding: 48px 24px; }
+  .footerInner { flex-direction: column; gap: 16px; text-align: center; }
+}
+
+@media (max-width: 600px) {
+  .pricingGrid { grid-template-columns: 1fr; }
+  .heroHeadline { font-size: 36px; }
+}
