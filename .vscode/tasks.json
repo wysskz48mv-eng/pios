@@ -2,9 +2,10 @@
   "version": "2.0.0",
   "options": {
     "shell": {
-      "executable": "bash",
+      "executable": "powershell",
       "args": [
-        "-lc"
+        "-NoProfile",
+        "-Command"
       ]
     }
   },
@@ -16,7 +17,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "command": "bash scripts/copy-impl-files.sh",
+      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/copy-impl-files.sh')) { Write-Error 'Missing scripts/copy-impl-files.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/copy-impl-files.sh",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -39,7 +40,7 @@
       "label": "🚨 P0-3 | TypeScript: confirm 0 errors",
       "type": "shell",
       "group": "build",
-      "command": "npx tsc --noEmit 2>&1 | tee /tmp/pios-ts.log && echo '✅ 0 errors' || (echo '❌ errors:' && cat /tmp/pios-ts.log)",
+      "command": "npx tsc --noEmit",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -63,7 +64,7 @@
       "label": "🚨 P0-ALL | Full P0 sprint runner (copy → patch → TS → build → deploy)",
       "type": "shell",
       "group": "build",
-      "command": "bash scripts/p0-sprint.sh",
+      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/p0-sprint.sh')) { Write-Error 'Missing scripts/p0-sprint.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/p0-sprint.sh",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -118,7 +119,7 @@
       "label": "🔑 ENV-5 | Add Gmail OAuth (3 vars)",
       "type": "shell",
       "group": "build",
-      "command": "vercel env add GMAIL_CLIENT_ID production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U && vercel env add GMAIL_CLIENT_SECRET production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U && vercel env add GMAIL_REDIRECT_URI production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "command": "vercel env add GMAIL_CLIENT_ID production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U; vercel env add GMAIL_CLIENT_SECRET production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U; vercel env add GMAIL_REDIRECT_URI production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -129,7 +130,7 @@
       "label": "🔑 ENV-6 | Set APP_URL = pios.veritasiq.io",
       "type": "shell",
       "group": "build",
-      "command": "echo 'https://pios.veritasiq.io' | vercel env add APP_URL production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "command": "Write-Output 'https://pios.veritasiq.io' | vercel env add APP_URL production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -140,7 +141,7 @@
       "label": "🔑 ENV-7 | Verify all env vars",
       "type": "shell",
       "group": "test",
-      "command": "bash scripts/verify-env-vars.sh",
+      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/verify-env-vars.sh')) { Write-Error 'Missing scripts/verify-env-vars.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/verify-env-vars.sh",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -161,7 +162,7 @@
       "label": "🎨 UX-2 | Git diff after copy",
       "type": "shell",
       "group": "test",
-      "command": "git diff --name-only HEAD && git status --short",
+      "command": "git diff --name-only HEAD; git status --short",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -172,7 +173,7 @@
       "label": "🎨 UX-3 | Commit ONYX sprint",
       "type": "shell",
       "group": "build",
-      "command": "git add -A && git commit -m 'feat(ux): ONYX design system + command centre theme selector + onboarding fix'",
+      "command": "git add -A; git commit -m 'feat(ux): ONYX design system + command centre theme selector + onboarding fix'",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -679,7 +680,7 @@
       "label": "🗄️ DB-3 | Audit seed data",
       "type": "shell",
       "group": "test",
-      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh < scripts/seed-data-audit.sql",
+      "command": "if (-not (Test-Path 'scripts/seed-data-audit.sql')) { Write-Error 'Missing scripts/seed-data-audit.sql in this checkout.'; exit 1 }; Get-Content 'scripts/seed-data-audit.sql' -Raw | npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -690,7 +691,7 @@
       "label": "🗄️ DB-4 | Clear seed data (DESTRUCTIVE)",
       "type": "shell",
       "group": "build",
-      "command": "read -p 'Type CONFIRM: ' c && [ \"$c\" = 'CONFIRM' ] && npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh < scripts/seed-data-clear.sql || echo Cancelled.",
+      "command": "$confirm = Read-Host 'Type CONFIRM'; if ($confirm -ne 'CONFIRM') { Write-Output 'Cancelled.'; exit 0 }; if (-not (Test-Path 'scripts/seed-data-clear.sql')) { Write-Error 'Missing scripts/seed-data-clear.sql in this checkout.'; exit 1 }; Get-Content 'scripts/seed-data-clear.sql' -Raw | npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -726,7 +727,7 @@
         "kind": "test",
         "isDefault": true
       },
-      "command": "bash scripts/uat-smoke-test.sh",
+      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/uat-smoke-test.sh')) { Write-Error 'Missing scripts/uat-smoke-test.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/uat-smoke-test.sh",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -737,7 +738,7 @@
       "label": "🧪 UAT-1 | Landing page",
       "type": "shell",
       "group": "test",
-      "command": "curl -sI https://pios-coral.vercel.app | head -3",
+      "command": "$response = Invoke-WebRequest -Uri 'https://pios-coral.vercel.app' -Method Head -MaximumRedirection 5; 'HTTP/{0} {1}' -f $response.Version, [int]$response.StatusCode; $response.Headers.GetEnumerator() | Select-Object -First 2 | ForEach-Object { '{0}: {1}' -f $_.Key, $_.Value }",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -748,7 +749,7 @@
       "label": "🧪 UAT-2 | Auth page",
       "type": "shell",
       "group": "test",
-      "command": "curl -sI https://pios-coral.vercel.app/auth/signup | head -3",
+      "command": "$response = Invoke-WebRequest -Uri 'https://pios-coral.vercel.app/auth/signup' -Method Head -MaximumRedirection 5; 'HTTP/{0} {1}' -f $response.Version, [int]$response.StatusCode; $response.Headers.GetEnumerator() | Select-Object -First 2 | ForEach-Object { '{0}: {1}' -f $_.Key, $_.Value }",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -759,7 +760,7 @@
       "label": "🧪 UAT-3 | Dashboard protected (expect redirect)",
       "type": "shell",
       "group": "test",
-      "command": "curl -sI -L https://pios-coral.vercel.app/platform/dashboard | grep -E 'HTTP|Location'",
+      "command": "try { $response = Invoke-WebRequest -Uri 'https://pios-coral.vercel.app/platform/dashboard' -MaximumRedirection 0 -ErrorAction Stop; 'STATUS {0}' -f [int]$response.StatusCode } catch { if ($_.Exception.Response) { 'STATUS {0}' -f [int]$_.Exception.Response.StatusCode; if ($_.Exception.Response.Headers.Location) { 'Location: {0}' -f $_.Exception.Response.Headers.Location } } else { throw } }",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -770,7 +771,7 @@
       "label": "🧪 UAT-4 | Cron brief protected (expect 401)",
       "type": "shell",
       "group": "test",
-      "command": "curl -sI https://pios-coral.vercel.app/api/cron/brief | grep HTTP",
+      "command": "try { $response = Invoke-WebRequest -Uri 'https://pios-coral.vercel.app/api/cron/brief' -Method Head -MaximumRedirection 0 -ErrorAction Stop; 'STATUS {0}' -f [int]$response.StatusCode } catch { if ($_.Exception.Response) { 'STATUS {0}' -f [int]$_.Exception.Response.StatusCode } else { throw } }",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -781,7 +782,7 @@
       "label": "🧪 UAT-5 | Cron brief fires (with secret)",
       "type": "shell",
       "group": "test",
-      "command": "curl -s -H \"Authorization: Bearer $CRON_SECRET\" https://pios-coral.vercel.app/api/cron/brief | jq .",
+      "command": "if (-not $env:CRON_SECRET) { Write-Error 'CRON_SECRET is not set.'; exit 1 }; Invoke-RestMethod -Uri 'https://pios-coral.vercel.app/api/cron/brief' -Headers @{ Authorization = \"Bearer $env:CRON_SECRET\" } | ConvertTo-Json -Depth 10",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -792,7 +793,7 @@
       "label": "🧪 UAT-6 | Reporting capture smoke test",
       "type": "shell",
       "group": "test",
-      "command": "curl -s -X POST https://pios-coral.vercel.app/api/reporting/capture -H 'Content-Type: application/json' -d '{\"report_type\":\"user_submitted\",\"title\":\"UAT test\",\"path\":\"/test\",\"severity\":\"low\"}' | jq .",
+      "command": "$body = @{ report_type = 'user_submitted'; title = 'UAT test'; path = '/test'; severity = 'low' } | ConvertTo-Json; Invoke-RestMethod -Uri 'https://pios-coral.vercel.app/api/reporting/capture' -Method Post -ContentType 'application/json' -Body $body | ConvertTo-Json -Depth 10",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -804,7 +805,7 @@
       "label": "🧪 UAT-7 | Health check cron (with secret)",
       "type": "shell",
       "group": "test",
-      "command": "curl -s -H \"Authorization: Bearer $CRON_SECRET\" https://pios-coral.vercel.app/api/cron/health-check | jq .",
+      "command": "if (-not $env:CRON_SECRET) { Write-Error 'CRON_SECRET is not set.'; exit 1 }; Invoke-RestMethod -Uri 'https://pios-coral.vercel.app/api/cron/health-check' -Headers @{ Authorization = \"Bearer $env:CRON_SECRET\" } | ConvertTo-Json -Depth 10",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -815,7 +816,7 @@
       "label": "🧪 UAT-8 | Vercel error log (last 6h)",
       "type": "shell",
       "group": "test",
-      "command": "vercel logs https://pios-coral.vercel.app --since 6h --level error --team wysskz48mv-engs-projects 2>&1 | head -30",
+      "command": "vercel logs https://pios-coral.vercel.app --since 6h --level error --team wysskz48mv-engs-projects 2>&1 | Select-Object -First 30",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -826,7 +827,7 @@
       "label": "🧪 UAT-READY | Full readiness check",
       "type": "shell",
       "group": "test",
-      "command": "bash scripts/uat-smoke-test.sh && bash scripts/verify-env-vars.sh",
+      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/uat-smoke-test.sh')) { Write-Error 'Missing scripts/uat-smoke-test.sh in this checkout.'; exit 1 }; if (-not (Test-Path 'scripts/verify-env-vars.sh')) { Write-Error 'Missing scripts/verify-env-vars.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/uat-smoke-test.sh; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; bash scripts/verify-env-vars.sh",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -859,7 +860,7 @@
       "label": "💳 STRIPE-3 | Set all price IDs",
       "type": "shell",
       "group": "build",
-      "command": "bash scripts/set-stripe-price-ids.sh",
+      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/set-stripe-price-ids.sh')) { Write-Error 'Missing scripts/set-stripe-price-ids.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/set-stripe-price-ids.sh",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -892,7 +893,7 @@
       "label": "🌐 INFRA-2 | Verify DNS",
       "type": "shell",
       "group": "test",
-      "command": "dig pios.veritasiq.io CNAME +short && curl -sI https://pios.veritasiq.io | head -3",
+      "command": "Resolve-DnsName pios.veritasiq.io -Type CNAME | Select-Object Name, Type, NameHost; $response = Invoke-WebRequest -Uri 'https://pios.veritasiq.io' -Method Head -MaximumRedirection 5; 'STATUS {0}' -f [int]$response.StatusCode; $response.Headers.GetEnumerator() | Select-Object -First 2 | ForEach-Object { '{0}: {1}' -f $_.Key, $_.Value }",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -903,7 +904,7 @@
       "label": "🌐 INFRA-3 | Verify Resend DNS (SPF + DKIM)",
       "type": "shell",
       "group": "test",
-      "command": "dig TXT veritasiq.io +short && dig TXT resend._domainkey.veritasiq.io +short",
+      "command": "Resolve-DnsName veritasiq.io -Type TXT | Select-Object Name, Strings; Resolve-DnsName resend._domainkey.veritasiq.io -Type TXT | Select-Object Name, Strings",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -960,7 +961,7 @@
       "label": "🔧 DEV-3 | Local build",
       "type": "shell",
       "group": "build",
-      "command": "npm run build 2>&1 | tee /tmp/pios-build.log && echo '✅ Build OK' || echo '❌ Failed'",
+      "command": "npm run build",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -993,7 +994,7 @@
       "label": "🔧 DEV-6 | Audit cron auth (CRON_SECRET check)",
       "type": "shell",
       "group": "test",
-      "command": "find src/app/api/cron -name 'route.ts' | xargs grep -rL 'CRON_SECRET' 2>/dev/null && echo 'UNPROTECTED!' || echo '✅ All protected'",
+      "command": "$missing = Get-ChildItem 'src/app/api/cron' -Recurse -Filter 'route.ts' | Select-String -Pattern 'CRON_SECRET' -List -NotMatch | Select-Object -ExpandProperty Path -Unique; if ($missing) { Write-Output 'UNPROTECTED!'; $missing } else { Write-Output '✅ All protected' }",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -1014,7 +1015,7 @@
       "label": "📋 STATUS | Print backlog",
       "type": "shell",
       "group": "none",
-      "command": "cat scripts/pios-backlog.md",
+      "command": "if (-not (Test-Path 'scripts/pios-backlog.md')) { Write-Error 'Missing scripts/pios-backlog.md in this checkout.'; exit 1 }; Get-Content 'scripts/pios-backlog.md'",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
