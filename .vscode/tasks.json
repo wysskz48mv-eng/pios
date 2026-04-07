@@ -1,0 +1,1025 @@
+{
+  "version": "2.0.0",
+  "options": {
+    "shell": {
+      "executable": "bash",
+      "args": [
+        "-lc"
+      ]
+    }
+  },
+  "tasks": [
+    {
+      "label": "🚨 P0-1 | Copy 14 ONYX UX files into repo",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "command": "bash scripts/copy-impl-files.sh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Copies all 14 files from pios-impl/ into correct src/ paths."
+    },
+    {
+      "label": "🚨 P0-2 | Patch onboarding/complete to save theme",
+      "type": "shell",
+      "group": "build",
+      "command": "node scripts/patch-onboarding-api.js",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🚨 P0-3 | TypeScript: confirm 0 errors",
+      "type": "shell",
+      "group": "build",
+      "command": "npx tsc --noEmit 2>&1 | tee /tmp/pios-ts.log && echo '✅ 0 errors' || (echo '❌ errors:' && cat /tmp/pios-ts.log)",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [
+        "$tsc"
+      ]
+    },
+    {
+      "label": "🚨 P0-4 | Deploy to Vercel production",
+      "type": "shell",
+      "group": "build",
+      "command": "vercel --prod --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🚨 P0-ALL | Full P0 sprint runner (copy → patch → TS → build → deploy)",
+      "type": "shell",
+      "group": "build",
+      "command": "bash scripts/p0-sprint.sh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔑 ENV-1 | Add STRIPE_SECRET_KEY",
+      "type": "shell",
+      "group": "build",
+      "command": "vercel env add STRIPE_SECRET_KEY production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔑 ENV-2 | Add STRIPE_PUBLISHABLE_KEY",
+      "type": "shell",
+      "group": "build",
+      "command": "vercel env add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔑 ENV-3 | Add STRIPE_WEBHOOK_SECRET",
+      "type": "shell",
+      "group": "build",
+      "command": "vercel env add STRIPE_WEBHOOK_SECRET production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔑 ENV-4 | Add RESEND_API_KEY",
+      "type": "shell",
+      "group": "build",
+      "command": "vercel env add RESEND_API_KEY production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔑 ENV-5 | Add Gmail OAuth (3 vars)",
+      "type": "shell",
+      "group": "build",
+      "command": "vercel env add GMAIL_CLIENT_ID production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U && vercel env add GMAIL_CLIENT_SECRET production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U && vercel env add GMAIL_REDIRECT_URI production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔑 ENV-6 | Set APP_URL = pios.veritasiq.io",
+      "type": "shell",
+      "group": "build",
+      "command": "echo 'https://pios.veritasiq.io' | vercel env add APP_URL production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔑 ENV-7 | Verify all env vars",
+      "type": "shell",
+      "group": "test",
+      "command": "bash scripts/verify-env-vars.sh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🎨 UX-1 | Open implementation guide",
+      "type": "shell",
+      "group": "none",
+      "command": "code pios-impl/IMPLEMENTATION_GUIDE.md",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🎨 UX-2 | Git diff after copy",
+      "type": "shell",
+      "group": "test",
+      "command": "git diff --name-only HEAD && git status --short",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🎨 UX-3 | Commit ONYX sprint",
+      "type": "shell",
+      "group": "build",
+      "command": "git add -A && git commit -m 'feat(ux): ONYX design system + command centre theme selector + onboarding fix'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏗️ FEAT-1 | Build /platform/frameworks",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/frameworks/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "44 VIQ frameworks, persona-filtered, user_framework_preferences, custom_frameworks"
+    },
+    {
+      "label": "🏗️ FEAT-2 | Build email IT disclosure modal",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/components/email/ITDisclosureModal.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "OAuth path OR forward-only path. Saves to email_it_policy_log."
+    },
+    {
+      "label": "🏗️ FEAT-3 | Build inbound email parsing route",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/email/inbound/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Resend inbound webhook → classify → email_triage_queue"
+    },
+    {
+      "label": "🏗️ FEAT-4 | Build conversation thread sidebar",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/components/nemoclaw/ConversationSidebar.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "nemo_conversations list, pin, tag, resume — like Claude sidebar"
+    },
+    {
+      "label": "🏗️ FEAT-5 | Build /platform/cpd",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/cpd/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "CPD dashboard: log hours, 11 CPD bodies, view + purchase AI courses"
+    },
+    {
+      "label": "🏗️ FEAT-6 | Build CPD course generation API",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/cpd/generate-course/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏗️ FEAT-7 | Build filing auto-capture cron",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/cron/filing-agent/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏗️ FEAT-8 | Build adaptive preference cron",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/cron/preference-agent/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏗️ FEAT-9 | Build enterprise provision route",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/enterprise/provision/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏗️ FEAT-10 | Build Stripe webhook handler",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/stripe/webhook/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📚 CREATIVE-1 | Build /platform/content series dashboard",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/content/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "All content_series, episode queue, next to draft, publish status"
+    },
+    {
+      "label": "📚 CREATIVE-2 | Build episode drafting UI",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/content/[series]/draft/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "NemoClaw drafts 1,300–1,450 word episode with cliffhanger. Word count live. Approve → publish."
+    },
+    {
+      "label": "📚 CREATIVE-3 | Build /api/content/draft-episode",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/content/draft-episode/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Reads bible + last 3 eps + creative_characters → NemoClaw → saves draft_text + updates episode_queue"
+    },
+    {
+      "label": "📚 CREATIVE-4 | Build /api/content/consistency-check",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/content/consistency-check/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Checks draft against creative_characters statuses + worldbuilding rules → consistency_score + flags"
+    },
+    {
+      "label": "📚 CREATIVE-5 | Build character manager UI",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/content/[series]/characters/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "creative_characters CRUD. Kaelo Mthembu already seeded."
+    },
+    {
+      "label": "📚 CREATIVE-6 | Build worldbuilding knowledge base UI",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/content/[series]/world/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "creative_worldbuilding browser. Blood Oath mythology + Three Layers + Mfecane seeded."
+    },
+    {
+      "label": "📚 CREATIVE-7 | Build Pocket FM publish panel",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/content/[series]/publish/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Connects platform_credentials. Submits to Pocket FM. Logs content_publish_log."
+    },
+    {
+      "label": "📚 CREATIVE-8 | Build planned series pipeline UI",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/content/planned/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Add/manage planned_series. NemoClaw helps develop series bible for new titles."
+    },
+    {
+      "label": "📚 CREATIVE-DB | Blood Oath Chronicles state",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql \"SELECT title, pen_name, total_episodes, published_episodes, current_episode, is_flagship FROM content_series WHERE slug='blood-oath-chronicles';\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📚 CREATIVE-DB | Episode queue",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql 'SELECT episode_number, stage, scheduled_for FROM episode_queue ORDER BY episode_number;'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📚 CREATIVE-DB | Character roster",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql 'SELECT name, role, status, introduced_episode FROM creative_characters ORDER BY introduced_episode;'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛡️ HEAL-1 | Build ErrorBoundary + report widget",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/components/reporting/ErrorBoundary.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Catches errors → /api/reporting/capture → shows user auto-heal status + report button"
+    },
+    {
+      "label": "🛡️ HEAL-2 | Build /api/reporting/capture",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/reporting/capture/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Saves incident → checks self_heal_rules → if match + auto_execute: heals in same request → returns {heal_attempted, outcome, message}"
+    },
+    {
+      "label": "🛡️ HEAL-3 | Build /api/reporting/self-heal",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/reporting/self-heal/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Core healing engine: retry/recreate_profile/refresh_session/reset_integration/notify_admin/etc. → logs self_heal_actions → updates incident status"
+    },
+    {
+      "label": "🛡️ HEAL-4 | Build /api/cron/health-check",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/cron/health-check/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Runs every 30 min. Checks DB/auth/cron/Stripe/Resend/AI/storage. Writes system_health_checks. Creates escalation if consecutive_failures >= 3."
+    },
+    {
+      "label": "🛡️ HEAL-5 | Build /platform/health admin dashboard",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/platform/health/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "system_health_checks status board, open incidents, escalations, self-heal log, user feedback. Admin only."
+    },
+    {
+      "label": "🛡️ HEAL-6 | Build ReportIssueWidget",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/components/reporting/ReportIssueWidget.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Floating ? button in command centre. bug/feature/confusion/praise. Auto-captures path + module + user_id. Shows heal status after submit."
+    },
+    {
+      "label": "🛡️ HEAL-7 | Add health-check cron to vercel.json",
+      "type": "shell",
+      "group": "none",
+      "command": "code vercel.json",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Add health-check (*/30 * * * *), filing-agent (0 */2 * * *), preference-agent (0 2 * * *)"
+    },
+    {
+      "label": "🛡️ HEAL-8 | Build /api/reporting/feedback",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/reporting/feedback/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Saves to user_feedback. Sends Resend notification for bugs/features."
+    },
+    {
+      "label": "🛡️ HEAL-DB | Open incidents",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql \"SELECT title, severity, status, heal_outcome, api_route, created_at FROM incident_reports WHERE status NOT IN ('resolved','self_healed') ORDER BY created_at DESC LIMIT 20;\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛡️ HEAL-DB | Self-heal action log",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql 'SELECT rule_name, strategy, outcome, attempt_number, duration_ms, started_at FROM self_heal_actions ORDER BY started_at DESC LIMIT 20;'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛡️ HEAL-DB | System health board",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql 'SELECT check_name, check_type, status, response_ms, consecutive_failures, checked_at FROM system_health_checks ORDER BY status, check_type;'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛡️ HEAL-DB | Active self-heal rules",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql 'SELECT rule_name, match_api_route, match_http_status, heal_strategy, auto_execute, priority FROM self_heal_rules WHERE is_active=true ORDER BY priority;'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏢 ENT-1 | Build /enterprise proposal form",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/enterprise/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏢 ENT-2 | Build enterprise onboarding",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/onboarding/enterprise/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏢 ENT-3 | Build /api/enterprise/provision",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/enterprise/provision/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏢 ENT-4 | Build /admin dashboard",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/admin/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏢 ENT-5 | Build seat invitation flow",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/api/enterprise/invite/route.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏢 ENT-6 | Build white-label config editor + logo upload",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/admin/white-label/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "White-label editor for app name, colors, logos, footer control, and support details."
+    },
+    {
+      "label": "🏢 ENT-7 | Build custom domain resolution in middleware",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/middleware.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Resolve custom domains and map tenant white-label config in middleware."
+    },
+    {
+      "label": "🏢 ENT-8 | Build DPA signing page in admin",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/admin/dpa/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Tenant admin DPA review and signing flow backed by dpa_agreements."
+    },
+    {
+      "label": "🏢 ENT-9 | Build audit log viewer for compliance reporting",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/app/admin/audit/page.tsx",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Compliance-facing audit log explorer with tenant/action/outcome filters."
+    },
+    {
+      "label": "🏢 ENT-10 | Build getWhiteLabelConfig() utility + middleware hook",
+      "type": "shell",
+      "group": "none",
+      "command": "code src/lib/enterprise/getWhiteLabelConfig.ts",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Shared white-label config loader used by middleware and tenant-aware layouts."
+    },
+    {
+      "label": "🏢 ENT-DB | Seat usage",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql 'SELECT tenant_name, seats_limit, seats_used, at_capacity FROM tenant_seat_usage;'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🗄️ DB-1 | Migration status (expect M001-M033)",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql 'SELECT version, name FROM supabase_migrations.schema_migrations ORDER BY version;'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🗄️ DB-2 | RLS gap check (expect 0 rows)",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql \"SELECT tablename FROM pg_tables t WHERE schemaname='public' AND (rowsecurity=false OR (SELECT COUNT(*) FROM pg_policies p WHERE p.tablename=t.tablename AND p.schemaname='public')=0) ORDER BY tablename;\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🗄️ DB-3 | Audit seed data",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh < scripts/seed-data-audit.sql",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🗄️ DB-4 | Clear seed data (DESTRUCTIVE)",
+      "type": "shell",
+      "group": "build",
+      "command": "read -p 'Type CONFIRM: ' c && [ \"$c\" = 'CONFIRM' ] && npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh < scripts/seed-data-clear.sql || echo Cancelled.",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🗄️ DB-5 | Orphaned users (expect 0)",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql \"SELECT COUNT(*) AS orphaned FROM auth.users u WHERE NOT EXISTS (SELECT 1 FROM public.user_profiles p WHERE p.id=u.id);\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🗄️ DB-6 | Dimitry master profile",
+      "type": "shell",
+      "group": "test",
+      "command": "npx supabase db execute --project-ref vfvfulbcaurqkygjrrhh --sql \"SELECT display_name, persona_type, command_centre_theme, tenant_role, is_tenant_admin, organisation FROM user_profiles WHERE id='47621611-96bc-465c-913e-0d23a89465f5';\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-ALL | Full smoke test suite",
+      "type": "shell",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "command": "bash scripts/uat-smoke-test.sh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-1 | Landing page",
+      "type": "shell",
+      "group": "test",
+      "command": "curl -sI https://pios-coral.vercel.app | head -3",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-2 | Auth page",
+      "type": "shell",
+      "group": "test",
+      "command": "curl -sI https://pios-coral.vercel.app/auth/signup | head -3",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-3 | Dashboard protected (expect redirect)",
+      "type": "shell",
+      "group": "test",
+      "command": "curl -sI -L https://pios-coral.vercel.app/platform/dashboard | grep -E 'HTTP|Location'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-4 | Cron brief protected (expect 401)",
+      "type": "shell",
+      "group": "test",
+      "command": "curl -sI https://pios-coral.vercel.app/api/cron/brief | grep HTTP",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-5 | Cron brief fires (with secret)",
+      "type": "shell",
+      "group": "test",
+      "command": "curl -s -H \"Authorization: Bearer $CRON_SECRET\" https://pios-coral.vercel.app/api/cron/brief | jq .",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-6 | Reporting capture smoke test",
+      "type": "shell",
+      "group": "test",
+      "command": "curl -s -X POST https://pios-coral.vercel.app/api/reporting/capture -H 'Content-Type: application/json' -d '{\"report_type\":\"user_submitted\",\"title\":\"UAT test\",\"path\":\"/test\",\"severity\":\"low\"}' | jq .",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "After HEAL-2 is built — should return {heal_attempted, outcome}"
+    },
+    {
+      "label": "🧪 UAT-7 | Health check cron (with secret)",
+      "type": "shell",
+      "group": "test",
+      "command": "curl -s -H \"Authorization: Bearer $CRON_SECRET\" https://pios-coral.vercel.app/api/cron/health-check | jq .",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-8 | Vercel error log (last 6h)",
+      "type": "shell",
+      "group": "test",
+      "command": "vercel logs https://pios-coral.vercel.app --since 6h --level error --team wysskz48mv-engs-projects 2>&1 | head -30",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 UAT-READY | Full readiness check",
+      "type": "shell",
+      "group": "test",
+      "command": "bash scripts/uat-smoke-test.sh && bash scripts/verify-env-vars.sh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "💳 STRIPE-1 | Create subscription products",
+      "type": "shell",
+      "group": "none",
+      "command": "echo 'https://dashboard.stripe.com/products/create — Starter £12/15, Pro £28/35, Executive £36/45'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "💳 STRIPE-2 | Create CPD course products",
+      "type": "shell",
+      "group": "none",
+      "command": "echo 'CPD Starter £15, Standard £25, Full £35 — all one-time payments'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "💳 STRIPE-3 | Set all price IDs",
+      "type": "shell",
+      "group": "build",
+      "command": "bash scripts/set-stripe-price-ids.sh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "💳 STRIPE-4 | Register webhook",
+      "type": "shell",
+      "group": "none",
+      "command": "echo 'https://dashboard.stripe.com/webhooks/create → https://pios-coral.vercel.app/api/stripe/webhook → checkout.session.completed, customer.subscription.*, invoice.payment_*'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌐 INFRA-1 | Add pios.veritasiq.io to Vercel",
+      "type": "shell",
+      "group": "none",
+      "command": "echo 'https://vercel.com/wysskz48mv-engs-projects/pios/settings/domains → pios.veritasiq.io → CNAME → cname.vercel-dns.com'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌐 INFRA-2 | Verify DNS",
+      "type": "shell",
+      "group": "test",
+      "command": "dig pios.veritasiq.io CNAME +short && curl -sI https://pios.veritasiq.io | head -3",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌐 INFRA-3 | Verify Resend DNS (SPF + DKIM)",
+      "type": "shell",
+      "group": "test",
+      "command": "dig TXT veritasiq.io +short && dig TXT resend._domainkey.veritasiq.io +short",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🌐 INFRA-4 | ⚠️ PAT expires 16 May — rotate before 9 May",
+      "type": "shell",
+      "group": "none",
+      "command": "node -e \"const d=new Date('2026-05-09');const n=new Date();console.log('Days to rotate: '+(Math.ceil((d-n)/86400000)));console.log('URL: https://github.com/settings/tokens');\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 DEV-1 | Start dev server",
+      "type": "shell",
+      "group": "build",
+      "command": "npm run dev",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": {
+        "owner": "nextjs",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting...",
+          "endsPattern": "Ready in"
+        }
+      }
+    },
+    {
+      "label": "🔧 DEV-2 | ESLint (0 warnings)",
+      "type": "shell",
+      "group": "test",
+      "command": "npx eslint src/ --ext .ts,.tsx --max-warnings 0",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [
+        "$eslint-stylish"
+      ]
+    },
+    {
+      "label": "🔧 DEV-3 | Local build",
+      "type": "shell",
+      "group": "build",
+      "command": "npm run build 2>&1 | tee /tmp/pios-build.log && echo '✅ Build OK' || echo '❌ Failed'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 DEV-4 | Show Vercel env vars",
+      "type": "shell",
+      "group": "none",
+      "command": "vercel env ls production --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 DEV-5 | Pull env to .env.local",
+      "type": "shell",
+      "group": "build",
+      "command": "vercel env pull .env.local --team team_w1nbEmo6pfxJQ9NkYgDGxh3U",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 DEV-6 | Audit cron auth (CRON_SECRET check)",
+      "type": "shell",
+      "group": "test",
+      "command": "find src/app/api/cron -name 'route.ts' | xargs grep -rL 'CRON_SECRET' 2>/dev/null && echo 'UNPROTECTED!' || echo '✅ All protected'",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 DEV-7 | Open vercel.json",
+      "type": "shell",
+      "group": "none",
+      "command": "code vercel.json",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📋 STATUS | Print backlog",
+      "type": "shell",
+      "group": "none",
+      "command": "cat scripts/pios-backlog.md",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
