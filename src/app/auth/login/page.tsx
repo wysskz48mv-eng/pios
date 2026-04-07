@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { buildGoogleOAuthOptions } from '@/lib/auth/google-oauth'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
@@ -76,11 +77,7 @@ export default function LoginPage() {
                   setLoading(true); setError('')
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
-                    options: {
-                      redirectTo: buildCallbackUrl(next),
-                      scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
-                      queryParams: { access_type: 'offline', prompt: 'consent' },
-                    },
+                    options: buildGoogleOAuthOptions(window.location.origin, next, 'auth'),
                   })
                   if (error) { setError(error.message); setLoading(false) }
                 }}
@@ -144,7 +141,7 @@ export default function LoginPage() {
           By continuing you agree to our{' '}
           <Link href="/terms" style={{ color: 'var(--pios-muted)', textDecoration: 'underline' }}>Terms of Service</Link> and{' '}
           <Link href="/privacy" style={{ color: 'var(--pios-muted)', textDecoration: 'underline' }}>Privacy Policy</Link>.
-          Your email will be used to triage your inbox automatically. You can disconnect this at any time in Settings.
+          Gmail, Calendar, and Drive can be connected after sign-in when you reach setup.
         </p>
         <p className="pios-login-foot">
           No account?{' '}

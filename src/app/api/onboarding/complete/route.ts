@@ -53,23 +53,33 @@ export async function POST(req: NextRequest) {
       : typeof integrations?.email_triage === 'boolean'
       ? integrations.email_triage
       : true
+    const now = new Date().toISOString()
+    const fallbackFullName = user.user_metadata?.full_name
+      ?? user.user_metadata?.name
+      ?? user.email?.split('@')[0]
+      ?? 'PIOS User'
 
-    // Update user_profiles
-    const { error: profileErr } = await admin
+    // Persist the onboarding milestone atomically so users do not get trapped in redirect loops.
+    const { data: profileRow, error: profileErr } = await admin
       .from('user_profiles')
-      .update({
+      .upsert({
+        id:              user.id,
+        full_name:       fallbackFullName,
+        plan:            'free',
         persona_type:    normalizedPersona,
         onboarded:       true,
         deployment_mode: deploy_mode ?? 'full',
         active_modules:  active_modules ?? [],
         it_policy_acknowledged: deploy_mode === 'standalone',
-        updated_at:      new Date().toISOString(),
+        updated_at:      now,
+        created_at:      now,
       })
-      .eq('id', user.id)
+      .select('id, onboarded')
+      .single()
 
-    if (profileErr) {
+    if (profileErr || !profileRow?.onboarded) {
       console.error('[onboarding] profile update error:', profileErr)
-      // Non-fatal — continue
+      return NextResponse.json({ error: 'Could not save onboarding state. Please try again.' }, { status: 500 })
     }
 
     // Update exec_intelligence_config with persona context
@@ -78,7 +88,7 @@ export async function POST(req: NextRequest) {
       .upsert({
         user_id:    user.id,
         persona:    normalizedPersona,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       }, { onConflict: 'user_id' })
 
     if (typeof goals === 'string' && goals.trim()) {
@@ -98,8 +108,8 @@ export async function POST(req: NextRequest) {
           category:   'goals',
           source:     'onboarding',
           tags:       ['onboarding', 'goals'],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          created_at: now,
+          updated_at: now,
         })
     }
 
@@ -107,10 +117,15 @@ export async function POST(req: NextRequest) {
       .from('connected_email_accounts')
       .update({
         ai_triage_enabled: triageConsent,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       })
       .eq('user_id', user.id)
       .eq('is_active', true)
+
+    await admin
+      .from('onboarding_drafts')
+      .delete()
+      .eq('user_id', user.id)
 
     // Send welcome email via RESEND if configured
     const resendKey = process.env.RESEND_API_KEY

@@ -13,6 +13,7 @@
  * VeritasIQ Technologies Ltd · PIOS
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { buildGoogleOAuthOptions } from '@/lib/auth/google-oauth'
 import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
@@ -30,20 +31,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: {
-      redirectTo: `${appUrl}/auth/callback?next=/platform/email`,
-      scopes: [
-        'email',
-        'profile',
-        'https://www.googleapis.com/auth/gmail.modify',
-        'https://www.googleapis.com/auth/calendar',
-        'https://www.googleapis.com/auth/drive.readonly',
-      ].join(' '),
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',   // Force consent screen so Google returns refresh_token
-      },
-    },
+    options: buildGoogleOAuthOptions(appUrl, '/platform/email', 'workspace'),
   })
 
   if (error || !data.url) {

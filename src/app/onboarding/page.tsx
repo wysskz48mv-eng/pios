@@ -12,6 +12,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { buildGoogleOAuthOptions } from '@/lib/auth/google-oauth'
 
 type Persona = 'starter' | 'pro' | 'executive' | 'enterprise'
 type DeployMode = 'full' | 'hybrid' | 'standalone'
@@ -20,6 +21,17 @@ type ModuleOption = {
   id: string
   label: string
   description: string
+}
+
+type OnboardingDraft = {
+  step: number
+  persona: Persona | null
+  goals: string
+  selectedModules: string[]
+  deployMode: DeployMode
+  emailTriageConsent: boolean
+  googleConnected: boolean
+  microsoftConnected: boolean
 }
 
 const PERSONAS: { key: Persona; label: string; icon: string; who: string }[] = [
@@ -96,6 +108,59 @@ function mapDbPersonaToPersona(personaType: string | null | undefined): Persona 
   return null
 }
 
+function parseLocalDraft(): Partial<OnboardingDraft> | null {
+  try {
+    const rawDraft = window.localStorage.getItem(DRAFT_KEY)
+    if (!rawDraft) return null
+
+    return JSON.parse(rawDraft) as Partial<OnboardingDraft>
+  } catch {
+    window.localStorage.removeItem(DRAFT_KEY)
+    return null
+  }
+}
+
+function normaliseDraft(input: Record<string, unknown> | null | undefined): Partial<OnboardingDraft> | null {
+  if (!input) return null
+
+  const persona = typeof input.persona === 'string' && ['starter', 'pro', 'executive', 'enterprise'].includes(input.persona)
+    ? input.persona as Persona
+    : null
+  const deployMode = typeof input.deploy_mode === 'string' && ['full', 'hybrid', 'standalone'].includes(input.deploy_mode)
+    ? input.deploy_mode as DeployMode
+    : typeof input.deployMode === 'string' && ['full', 'hybrid', 'standalone'].includes(input.deployMode)
+    ? input.deployMode as DeployMode
+    : undefined
+  const selectedModules = Array.isArray(input.active_modules)
+    ? input.active_modules.filter((item): item is string => typeof item === 'string')
+    : Array.isArray(input.selectedModules)
+    ? input.selectedModules.filter((item): item is string => typeof item === 'string')
+    : undefined
+
+  return {
+    step: typeof input.step === 'number' ? Math.min(Math.max(input.step, 0), 3) : undefined,
+    persona,
+    goals: typeof input.goals === 'string' ? input.goals : undefined,
+    selectedModules,
+    deployMode,
+    emailTriageConsent: typeof input.email_triage_consent === 'boolean'
+      ? input.email_triage_consent
+      : typeof input.emailTriageConsent === 'boolean'
+      ? input.emailTriageConsent
+      : undefined,
+    googleConnected: typeof input.google_connected === 'boolean'
+      ? input.google_connected
+      : typeof input.googleConnected === 'boolean'
+      ? input.googleConnected
+      : undefined,
+    microsoftConnected: typeof input.microsoft_connected === 'boolean'
+      ? input.microsoft_connected
+      : typeof input.microsoftConnected === 'boolean'
+      ? input.microsoftConnected
+      : undefined,
+  }
+}
+
 export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -116,85 +181,129 @@ export default function OnboardingPage() {
   const [integrationErr, setIntegrationErr] = useState('')
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const hydratedDraftRef = useRef(false)
+  const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const moduleOptions = useMemo(
     () => (persona ? PERSONA_DEFAULTS[persona] : []),
     [persona]
   )
 
-  useEffect(() => {
-    try {
-      const rawDraft = window.localStorage.getItem(DRAFT_KEY)
-      if (rawDraft) {
-        const draft = JSON.parse(rawDraft) as {
-          step?: number
-          persona?: Persona | null
-          goals?: string
-          selectedModules?: string[]
-          deployMode?: DeployMode
-          emailTriageConsent?: boolean
-        }
+  const applyDraft = useCallback((draft: Partial<OnboardingDraft>) => {
+    if (typeof draft.step === 'number') setStep(Math.min(Math.max(draft.step, 0), 3))
+    if (draft.persona) setPersona(draft.persona)
+    if (typeof draft.goals === 'string') setGoals(draft.goals)
+    if (Array.isArray(draft.selectedModules)) setSelectedModules(draft.selectedModules)
+    if (draft.deployMode) setDeployMode(draft.deployMode)
+    if (typeof draft.emailTriageConsent === 'boolean') setEmailTriageConsent(draft.emailTriageConsent)
+    if (typeof draft.googleConnected === 'boolean') setGoogleConnected(draft.googleConnected)
+    if (typeof draft.microsoftConnected === 'boolean') setMicrosoftConnected(draft.microsoftConnected)
+  }, [router])
 
-        if (typeof draft.step === 'number') setStep(Math.min(Math.max(draft.step, 0), 3))
-        if (draft.persona) setPersona(draft.persona)
-        if (typeof draft.goals === 'string') setGoals(draft.goals)
-        if (Array.isArray(draft.selectedModules)) setSelectedModules(draft.selectedModules)
-        if (draft.deployMode) setDeployMode(draft.deployMode)
-        if (typeof draft.emailTriageConsent === 'boolean') setEmailTriageConsent(draft.emailTriageConsent)
-      }
-    } catch {
-      window.localStorage.removeItem(DRAFT_KEY)
+  const persistDraft = useCallback(async (draftOverride?: Partial<OnboardingDraft>) => {
+    const payload = {
+      step: draftOverride?.step ?? step,
+      persona: draftOverride?.persona ?? persona,
+      goals: draftOverride?.goals ?? goals,
+      active_modules: draftOverride?.selectedModules ?? selectedModules,
+      deploy_mode: draftOverride?.deployMode ?? deployMode,
+      email_triage_consent: draftOverride?.emailTriageConsent ?? emailTriageConsent,
+      google_connected: draftOverride?.googleConnected ?? googleConnected,
+      microsoft_connected: draftOverride?.microsoftConnected ?? microsoftConnected,
+    }
+
+    if (!payload.persona && !payload.goals && payload.active_modules.length === 0 && payload.step === 0) {
+      return
+    }
+
+    await fetch('/api/onboarding/draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+  }, [deployMode, emailTriageConsent, goals, googleConnected, microsoftConnected, persona, selectedModules, step])
+
+  useEffect(() => {
+    const localDraft = parseLocalDraft()
+    if (localDraft) {
+      applyDraft(localDraft)
     }
 
     async function loadStatus() {
       try {
         const res = await fetch('/api/onboarding/status', { cache: 'no-store' })
         if (!res.ok) {
+          if (res.status === 401) {
+            router.replace('/auth/login?next=%2Fonboarding')
+            return
+          }
           setStatusLoading(false)
           return
         }
 
         const data = await res.json()
+        const serverDraft = normaliseDraft(data.draft)
         const mappedPersona = mapDbPersonaToPersona(data.profile?.persona_type)
-        setGoogleConnected(!!data.integrations?.google_connected)
-        setMicrosoftConnected(!!data.integrations?.microsoft_connected)
         setCvUploaded(data.profile?.cv_processing_status === 'complete')
 
-        setPersona(current => current ?? mappedPersona)
-        setSelectedModules(current => {
-          if (current.length > 0) return current
-          if (Array.isArray(data.profile?.active_modules) && data.profile.active_modules.length > 0) {
-            return data.profile.active_modules
+        if (serverDraft) {
+          applyDraft(serverDraft)
+        } else {
+          setGoogleConnected(!!data.integrations?.google_connected)
+          setMicrosoftConnected(!!data.integrations?.microsoft_connected)
+          setPersona(current => current ?? mappedPersona)
+          setSelectedModules(current => {
+            if (current.length > 0) return current
+            if (Array.isArray(data.profile?.active_modules) && data.profile.active_modules.length > 0) {
+              return data.profile.active_modules
+            }
+            if (mappedPersona) {
+              return PERSONA_DEFAULTS[mappedPersona].map(module => module.id)
+            }
+            return current
+          })
+          if (data.profile?.deployment_mode === 'full' || data.profile?.deployment_mode === 'hybrid' || data.profile?.deployment_mode === 'standalone') {
+            setDeployMode(data.profile.deployment_mode)
           }
-          if (mappedPersona) {
-            return PERSONA_DEFAULTS[mappedPersona].map(module => module.id)
-          }
-          return current
-        })
-        if (data.profile?.deployment_mode === 'full' || data.profile?.deployment_mode === 'hybrid' || data.profile?.deployment_mode === 'standalone') {
-          setDeployMode(data.profile.deployment_mode)
         }
       } catch {
         setIntegrationErr('Could not load integration status right now.')
       } finally {
+        hydratedDraftRef.current = true
         setStatusLoading(false)
       }
     }
 
     void loadStatus()
-  }, [])
+  }, [applyDraft, router])
 
   useEffect(() => {
-    if (!persona) return
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify({
+    if (!hydratedDraftRef.current || !persona) return
+
+    const draft = {
       step,
       persona,
       goals,
       selectedModules,
       deployMode,
       emailTriageConsent,
+      googleConnected,
+      microsoftConnected,
+    }
+
+    window.localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      ...draft,
     }))
-  }, [step, persona, goals, selectedModules, deployMode, emailTriageConsent])
+
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current)
+    draftSaveTimerRef.current = setTimeout(() => {
+      void persistDraft()
+    }, 400)
+
+    return () => {
+      if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current)
+    }
+  }, [deployMode, emailTriageConsent, goals, googleConnected, microsoftConnected, persona, persistDraft, selectedModules, step])
 
   const selectPersona = useCallback((nextPersona: Persona) => {
     setPersona(nextPersona)
@@ -209,6 +318,10 @@ export default function OnboardingPage() {
       fd.append('cv', file)
       const res = await fetch('/api/cv', { method: 'POST', body: fd })
       if (!res.ok) {
+        if (res.status === 401) {
+          router.replace('/auth/login?next=%2Fonboarding')
+          return
+        }
         const data = await res.json()
         throw new Error(data.error || 'Upload failed')
       }
@@ -232,22 +345,22 @@ export default function OnboardingPage() {
     setConnectingGoogle(true)
     setIntegrationErr('')
     try {
-      window.localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      const draft = {
         step: 3,
         persona,
         goals,
         selectedModules,
         deployMode,
         emailTriageConsent,
-      }))
+        googleConnected,
+        microsoftConnected,
+      }
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+      await persistDraft(draft)
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
-          scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
-          queryParams: { access_type: 'offline', prompt: 'consent' },
-        },
+        options: buildGoogleOAuthOptions(window.location.origin, '/onboarding', 'workspace'),
       })
 
       if (oauthError) {
@@ -258,7 +371,7 @@ export default function OnboardingPage() {
       setIntegrationErr('Google connection failed. Please try again.')
       setConnectingGoogle(false)
     }
-  }, [deployMode, emailTriageConsent, goals, persona, selectedModules, supabase])
+  }, [deployMode, emailTriageConsent, goals, googleConnected, microsoftConnected, persona, persistDraft, selectedModules, supabase])
 
   async function complete() {
     if (!persona) return
@@ -288,11 +401,16 @@ export default function OnboardingPage() {
       })
       const data = await res.json()
       if (!res.ok) {
+        if (res.status === 401) {
+          router.replace('/auth/login?next=%2Fonboarding')
+          return
+        }
         setError(data.error ?? 'Setup failed — please try again.')
         setSaving(false)
         return
       }
       window.localStorage.removeItem(DRAFT_KEY)
+      void fetch('/api/onboarding/draft', { method: 'DELETE' })
       router.push('/platform/dashboard')
     } catch {
       setError('Network error — please check your connection and try again.')

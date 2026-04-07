@@ -9,6 +9,12 @@
  */
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { rateLimit } from '@/lib/redis-rate-limit'
+
+const MIDDLEWARE_RATE_LIMIT = {
+  max: 100,
+  windowMs: 15 * 60 * 1000,
+}
 
 const PUBLIC_PATHS = new Set([
   '/auth/login',
@@ -21,7 +27,6 @@ const PUBLIC_PATHS = new Set([
   '/privacy',
   '/terms',
   '/pricing',              // Public marketing page — no auth needed
-  '/onboarding',           // New user signup flow — auth checked inside page
   '/api/stripe/webhook',   // Stripe must bypass auth — verified by signature
   '/api/health',
   '/api/health/smoke',     // Smoke test — auth checked inside route
@@ -56,14 +61,41 @@ const SEC_HEADERS: Record<string, string> = {
   ].join('; '),
 }
 
-// ── Rate limiting — 100 req/15min per IP ────────────────────────────────────
-const ipAttempts = new Map<string, { count: number; resetAt: number }>()
-function rateLimit(ip: string, limit = 500, windowMs = 15 * 60 * 1000): boolean {
-  const now = Date.now()
-  const e = ipAttempts.get(ip)
-  if (!e || e.resetAt < now) { ipAttempts.set(ip, { count: 1, resetAt: now + windowMs }); return true }
-  if (e.count >= limit) return false
-  e.count++; return true
+function normaliseNextPath(next: string | null): string | null {
+  if (!next) return null
+  if (!next.startsWith('/')) return null
+  if (next.startsWith('//')) return null
+  if (next.startsWith('/auth/')) return null
+  return next
+}
+
+function getClientIp(request: NextRequest): string {
+  const forwardedFor = request.headers.get('x-forwarded-for')
+  if (forwardedFor) return forwardedFor.split(',')[0].trim()
+
+  return request.headers.get('x-real-ip')
+    ?? request.headers.get('cf-connecting-ip')
+    ?? 'unknown'
+}
+
+function hasAllowedRequestSource(request: NextRequest): boolean {
+  const origin = request.headers.get('origin') ?? ''
+  const referer = request.headers.get('referer') ?? ''
+  const host = request.headers.get('host') ?? ''
+  const allowed = [
+    host ? `https://${host}` : '',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.NEXT_PUBLIC_APP_URL ?? '',
+  ].filter(Boolean)
+
+  const matchesAllowedSource = (value: string) =>
+    allowed.some(allowedOrigin => value.startsWith(allowedOrigin))
+
+  if (!origin && !referer) return false
+  if (origin && !matchesAllowedSource(origin)) return false
+  if (referer && !matchesAllowedSource(referer)) return false
+  return true
 }
 
 export async function middleware(request: NextRequest) {
@@ -103,16 +135,7 @@ export async function middleware(request: NextRequest) {
       !pathname.startsWith('/api/stripe/webhook') &&
       !pathname.startsWith('/api/admin/') &&
       !pathname.startsWith('/auth/')) {
-    const origin  = request.headers.get('origin')  ?? ''
-    const referer = request.headers.get('referer') ?? ''
-    const host    = request.headers.get('host')    ?? ''
-    const allowed = [
-      `https://${host}`, 'http://localhost:3000', 'http://localhost:3001',
-      process.env.NEXT_PUBLIC_APP_URL ?? '',
-    ].filter(Boolean)
-    const ok = !origin || !referer ||
-      allowed.some(o => origin.startsWith(o) || referer.startsWith(o))
-    if (!ok) {
+    if (!hasAllowedRequestSource(request)) {
       return new NextResponse(
         JSON.stringify({ error: 'CSRF validation failed' }),
         { status: 403, headers: { 'Content-Type': 'application/json', ...SEC_HEADERS } }
@@ -121,11 +144,27 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rate limiting
-  const ip = (request.headers.get('x-forwarded-for') ?? 'unknown').split(',')[0].trim()
-  if (!rateLimit(ip)) {
+  const ip = getClientIp(request)
+  const limit = await rateLimit({
+    key: `middleware:${ip}`,
+    max: MIDDLEWARE_RATE_LIMIT.max,
+    windowMs: MIDDLEWARE_RATE_LIMIT.windowMs,
+  })
+  if (!limit.success) {
+    const retryAfter = Math.max(1, Math.ceil((limit.resetAt - Date.now()) / 1000))
     return new NextResponse(
-      JSON.stringify({ error: 'Too many requests. Please try again later.' }),
-      { status: 429, headers: { 'Content-Type': 'application/json', ...SEC_HEADERS } }
+      JSON.stringify({ error: 'Too many requests. Please try again later.', retryAfter }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(retryAfter),
+          'X-RateLimit-Limit': String(MIDDLEWARE_RATE_LIMIT.max),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(Math.ceil(limit.resetAt / 1000)),
+          ...SEC_HEADERS,
+        },
+      }
     )
   }
 
@@ -174,14 +213,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Onboarding gate — redirect incomplete users to wizard
-  if (user && pathname.startsWith('/platform/') && !pathname.startsWith('/platform/demo')) {
-    const { data: profile } = await supabase
+  let profile: { onboarded: boolean | null } | null = null
+
+  if (user) {
+    const { data } = await supabase
       .from('user_profiles')
       .select('onboarded')
       .eq('id', user.id)
-      .single()
-    if (profile && profile.onboarded === false) {
+      .maybeSingle()
+    profile = data
+  }
+
+  // Onboarding gate — redirect incomplete users to wizard
+  if (user && pathname.startsWith('/platform/') && !pathname.startsWith('/platform/demo')) {
+    if (profile?.onboarded !== true) {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     }
   }
@@ -200,9 +245,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Authenticated user on login/signup — redirect to dashboard
+  // Authenticated user on login/signup — respect onboarding state and intended destination.
   if (pathname === '/auth/login' || pathname === '/auth/signup') {
-    return NextResponse.redirect(new URL('/platform/dashboard', request.url))
+    const next = normaliseNextPath(request.nextUrl.searchParams.get('next'))
+    const destination = profile?.onboarded !== true ? '/onboarding' : (next ?? '/platform/dashboard')
+    return NextResponse.redirect(new URL(destination, request.url))
   }
 
   return response

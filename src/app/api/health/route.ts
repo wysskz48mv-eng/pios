@@ -16,6 +16,8 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+const HEALTH_DETAIL_HEADER = 'x-health-secret'
+
 interface Check {
   name:    string
   status:  'ok' | 'warn' | 'fail'
@@ -142,7 +144,15 @@ function checkEnvVars(): Check[] {
   } as Check))
 }
 
-export async function GET() {
+function canViewDetailedHealth(request: Request): boolean {
+  const secret = request.headers.get(HEALTH_DETAIL_HEADER)
+  const allowedSecrets = [process.env.ADMIN_SECRET, process.env.CRON_SECRET].filter(Boolean)
+
+  if (!secret || allowedSecrets.length === 0) return false
+  return allowedSecrets.includes(secret)
+}
+
+export async function GET(request: Request) {
   const t0 = Date.now()
 
   const [db, execSQL, tables, envChecks] = await Promise.all([
@@ -161,7 +171,8 @@ export async function GET() {
   const overallOk = critFailed.length === 0
 
   return NextResponse.json(
-    {
+    canViewDetailedHealth(request)
+      ? {
       ok:        overallOk,
       status:    overallOk ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
@@ -174,6 +185,12 @@ export async function GET() {
       },
       critical_failures: critFailed.filter(c => c.status === 'fail').map(c => c.name),
       checks: all,
+      }
+      : {
+      ok: overallOk,
+      status: overallOk ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      latency_ms: Date.now() - t0,
     },
     { status: overallOk ? 200 : 503 }
   )

@@ -33,8 +33,8 @@ export default async function Home() {
             <Link href="/research" className={s.navLink}>Research</Link>
             <a href="#pricing" className={s.navLink}>Pricing</a>
           </div>
-          <Link href="/auth/signup" className={s.navCta}>
-            Start free trial
+          <Link href="/auth/signup?provider=google&autostart=1" className={s.navCta}>
+            Start with Google
           </Link>
         </div>
       </nav>
@@ -280,8 +280,8 @@ export default async function Home() {
       <section className={s.cta}>
         <div className={s.ctaInner}>
           <h2 className={s.ctaHeadline}>The cognitive overhead stops here.</h2>
-          <Link href="/auth/signup" className={s.ctaButton}>
-            Start your free trial
+          <Link href="/auth/signup?provider=google&autostart=1" className={s.ctaButton}>
+            Start with Google
           </Link>
         </div>
       </section>

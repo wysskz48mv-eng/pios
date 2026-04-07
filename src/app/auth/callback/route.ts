@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { GOOGLE_OAUTH_INTENT_PARAM, parseGoogleOAuthIntent } from '@/lib/auth/google-oauth'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -41,6 +42,8 @@ export async function GET(request: NextRequest) {
   const code     = searchParams.get('code')
   const next     = normaliseNextPath(searchParams.get('next'))
   const errorMsg = searchParams.get('error_description')
+  const googleIntent = parseGoogleOAuthIntent(searchParams.get(GOOGLE_OAUTH_INTENT_PARAM))
+  const shouldConnectWorkspace = googleIntent === 'workspace'
 
   if (errorMsg) {
     return NextResponse.redirect(
@@ -114,10 +117,10 @@ export async function GET(request: NextRequest) {
       plan:                 'free',
       persona_type:         'executive',
       onboarded:            false,
-      google_access_token:  providerToken,
-      google_refresh_token: providerRefreshToken,
       google_email:         googleEmail,
-      google_token_expiry:  providerToken
+      google_access_token:  shouldConnectWorkspace ? providerToken : null,
+      google_refresh_token: shouldConnectWorkspace ? providerRefreshToken : null,
+      google_token_expiry:  shouldConnectWorkspace && providerToken
         ? new Date(Date.now() + 3600 * 1000).toISOString()
         : null,
       created_at:           new Date().toISOString(),
@@ -138,7 +141,7 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Returning user — update Google tokens if this was a Google OAuth ──────
-  if (providerToken) {
+  if (shouldConnectWorkspace && providerToken) {
     const tokenExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
 
     await admin.from('user_profiles').update({
@@ -165,7 +168,7 @@ export async function GET(request: NextRequest) {
         google_access_token:  providerToken,
         google_refresh_token: providerRefreshToken,
         google_token_expiry:  tokenExpiry,
-        google_scopes:        ['email', 'profile', 'https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/calendar'],
+        google_scopes:        ['email', 'profile', 'https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive.readonly'],
         connected_at:         new Date().toISOString(),
       }, { onConflict: 'user_id,email_address' })
     }

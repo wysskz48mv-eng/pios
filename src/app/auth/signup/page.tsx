@@ -1,7 +1,8 @@
 'use client'
 import React from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { buildGoogleOAuthOptions } from '@/lib/auth/google-oauth'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -43,6 +44,9 @@ export default function SignupPage() {
   const router   = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get('next')
+  const provider = searchParams.get('provider')
+  const autoStart = searchParams.get('autostart') === '1'
+  const autoStartedRef = useRef(false)
 
   function f(k: string, v: string) { setForm(p => ({ ...p, [k]: v })) }
 
@@ -50,14 +54,17 @@ export default function SignupPage() {
     setLoading(true); setError(null)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: buildCallbackUrl(next),
-        scopes: 'email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file',
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
+      options: buildGoogleOAuthOptions(window.location.origin, next, 'auth'),
     })
     if (error) { setError(error.message); setLoading(false) }
   }
+
+  useEffect(() => {
+    if (provider !== 'google' || !autoStart || autoStartedRef.current || loading) return
+
+    autoStartedRef.current = true
+    void signUpWithGoogle()
+  }, [autoStart, loading, provider])
 
   async function signUpWithEmail() {
     if (step === 1) {
@@ -206,7 +213,7 @@ export default function SignupPage() {
                 {loading ? 'Connecting…' : 'Continue with Google'}
               </button>
               <p style={{ fontSize: 11.5, color: 'var(--pios-dim)', textAlign: 'center', marginTop: 12, lineHeight: 1.65 }}>
-                Recommended — grants Gmail, Calendar &amp; Drive access in one step.
+                Recommended — starts with Google account access only. Workspace integrations can be added during setup.
               </p>
             </div>
           )}

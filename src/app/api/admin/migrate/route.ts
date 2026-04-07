@@ -413,6 +413,68 @@ begin
 end $$;
 
 -- ============================================================
+-- AUTH PROFILE BOOTSTRAP
+-- ============================================================
+create or replace function public.bootstrap_user_profile(
+  p_user_id uuid,
+  p_email text default null,
+  p_raw_user_meta_data jsonb default '{}'::jsonb
+)
+returns void language plpgsql security definer set search_path = public, auth, pg_temp as $$
+declare
+  resolved_name text := coalesce(
+    nullif(trim(p_raw_user_meta_data ->> 'full_name'), ''),
+    nullif(trim(p_raw_user_meta_data ->> 'name'), ''),
+    nullif(trim(split_part(coalesce(p_email, ''), '@', 1)), ''),
+    'User'
+  );
+begin
+  insert into public.user_profiles (id, full_name, display_name, google_email)
+  values (
+    p_user_id,
+    resolved_name,
+    resolved_name,
+    coalesce(nullif(trim(p_raw_user_meta_data ->> 'email'), ''), nullif(trim(p_email), ''))
+  )
+  on conflict (id) do nothing;
+end;
+$$;
+
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public, auth, pg_temp as $$
+begin
+  perform public.bootstrap_user_profile(new.id, new.email, coalesce(new.raw_user_meta_data, '{}'::jsonb));
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+insert into public.user_profiles (id, full_name, display_name, google_email)
+select
+  auth_user.id,
+  coalesce(
+    nullif(trim(auth_user.raw_user_meta_data ->> 'full_name'), ''),
+    nullif(trim(auth_user.raw_user_meta_data ->> 'name'), ''),
+    nullif(trim(split_part(coalesce(auth_user.email, ''), '@', 1)), ''),
+    'User'
+  ),
+  coalesce(
+    nullif(trim(auth_user.raw_user_meta_data ->> 'display_name'), ''),
+    nullif(trim(auth_user.raw_user_meta_data ->> 'name'), ''),
+    nullif(trim(split_part(coalesce(auth_user.email, ''), '@', 1)), ''),
+    'User'
+  ),
+  coalesce(nullif(trim(auth_user.raw_user_meta_data ->> 'email'), ''), nullif(trim(auth_user.email), ''))
+from auth.users auth_user
+left join public.user_profiles profile on profile.id = auth_user.id
+where profile.id is null
+on conflict (id) do nothing;
+
+-- ============================================================
 -- SEED: Douglas as Tenant 1 (run after auth user created)
 -- ============================================================
 -- insert into public.tenants (name, slug, plan)

@@ -13,7 +13,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const [{ data: profile }, { data: accounts }] = await Promise.all([
+    const [{ data: profile }, { data: accounts }, { data: draft }] = await Promise.all([
       admin
         .from('user_profiles')
         .select('persona_type, active_modules, deployment_mode, cv_processing_status, google_access_token, onboarded')
@@ -24,6 +24,11 @@ export async function GET() {
         .select('provider, email_address, is_active')
         .eq('user_id', user.id)
         .eq('is_active', true),
+      admin
+        .from('onboarding_drafts')
+        .select('step, persona, goals, active_modules, deploy_mode, email_triage_consent, google_connected, microsoft_connected, updated_at')
+        .eq('user_id', user.id)
+        .maybeSingle(),
     ])
 
     const activeAccounts = accounts ?? []
@@ -43,6 +48,7 @@ export async function GET() {
         microsoft_connected: microsoftConnected,
         connected_accounts: activeAccounts.length,
       },
+      draft: draft ?? null,
     })
   } catch (error) {
     console.error('[onboarding/status]', error)

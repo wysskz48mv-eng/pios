@@ -333,6 +333,7 @@ CREATE TABLE IF NOT EXISTS waitlist (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "waitlist_anon_insert" ON waitlist FOR INSERT TO anon WITH CHECK (true);
 CREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist(email);
 `,
   },
@@ -420,8 +421,82 @@ CREATE POLICY IF NOT EXISTS "publish_log_user_owns" ON content_publish_log FOR A
   },
   {
     id:    'M027',
-    label: 'Sprint J tables (stakeholders, publications, intelligence prefs)',
+    label: 'Sprint J tables + auth/RLS hardening',
     sql: `
+CREATE OR REPLACE FUNCTION public.bootstrap_user_profile(
+  p_user_id UUID,
+  p_email TEXT DEFAULT NULL,
+  p_raw_user_meta_data JSONB DEFAULT '{}'::jsonb
+)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth, pg_temp AS $$
+DECLARE
+  resolved_name TEXT := COALESCE(
+    NULLIF(TRIM(p_raw_user_meta_data ->> 'full_name'), ''),
+    NULLIF(TRIM(p_raw_user_meta_data ->> 'name'), ''),
+    NULLIF(TRIM(split_part(COALESCE(p_email, ''), '@', 1)), ''),
+    'User'
+  );
+BEGIN
+  INSERT INTO public.user_profiles (id, full_name, display_name, google_email)
+  VALUES (
+    p_user_id,
+    resolved_name,
+    resolved_name,
+    COALESCE(NULLIF(TRIM(p_raw_user_meta_data ->> 'email'), ''), NULLIF(TRIM(p_email), ''))
+  )
+  ON CONFLICT (id) DO NOTHING;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth, pg_temp AS $$
+BEGIN
+  PERFORM public.bootstrap_user_profile(new.id, new.email, COALESCE(new.raw_user_meta_data, '{}'::jsonb));
+  RETURN new;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+INSERT INTO public.user_profiles (id, full_name, display_name, google_email)
+SELECT
+  auth_user.id,
+  COALESCE(
+    NULLIF(TRIM(auth_user.raw_user_meta_data ->> 'full_name'), ''),
+    NULLIF(TRIM(auth_user.raw_user_meta_data ->> 'name'), ''),
+    NULLIF(TRIM(split_part(COALESCE(auth_user.email, ''), '@', 1)), ''),
+    'User'
+  ),
+  COALESCE(
+    NULLIF(TRIM(auth_user.raw_user_meta_data ->> 'display_name'), ''),
+    NULLIF(TRIM(auth_user.raw_user_meta_data ->> 'name'), ''),
+    NULLIF(TRIM(split_part(COALESCE(auth_user.email, ''), '@', 1)), ''),
+    'User'
+  ),
+  COALESCE(NULLIF(TRIM(auth_user.raw_user_meta_data ->> 'email'), ''), NULLIF(TRIM(auth_user.email), ''))
+FROM auth.users auth_user
+LEFT JOIN public.user_profiles profile ON profile.id = auth_user.id
+WHERE profile.id IS NULL
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE IF EXISTS behavioural_signals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS connected_email_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS domain_contexts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS meetings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS profile_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "behavioural_signals_user_owns" ON behavioural_signals FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "connected_email_accounts_user_owns" ON connected_email_accounts FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "domain_contexts_user_owns" ON domain_contexts FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "meetings_user_owns" ON meetings FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "profile_events_user_owns" ON profile_events FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
+ALTER TABLE IF EXISTS waitlist ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "waitlist_anon_insert" ON waitlist FOR INSERT TO anon WITH CHECK (true);
+
 CREATE TABLE IF NOT EXISTS stakeholders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -461,6 +536,37 @@ CREATE TABLE IF NOT EXISTS intelligence_prefs (
 );
 ALTER TABLE intelligence_prefs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY IF NOT EXISTS "intel_prefs_user_owns" ON intelligence_prefs FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "pios_files_owner_upload" ON storage.objects;
+DROP POLICY IF EXISTS "pios_files_owner_read" ON storage.objects;
+DROP POLICY IF EXISTS "pios_files_owner_delete" ON storage.objects;
+DROP POLICY IF EXISTS "pios_cv_owner_upload" ON storage.objects;
+DROP POLICY IF EXISTS "pios_cv_owner_read" ON storage.objects;
+DROP POLICY IF EXISTS "pios_cv_owner_delete" ON storage.objects;
+
+CREATE POLICY "pios_files_owner_upload"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'pios-files' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "pios_files_owner_read"
+  ON storage.objects FOR SELECT TO authenticated
+  USING (bucket_id = 'pios-files' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "pios_files_owner_delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'pios-files' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "pios_cv_owner_upload"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'pios-cv' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "pios_cv_owner_read"
+  ON storage.objects FOR SELECT TO authenticated
+  USING (bucket_id = 'pios-cv' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "pios_cv_owner_delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'pios-cv' AND auth.uid()::text = (storage.foldername(name))[1]);
 `,
   },
 ]

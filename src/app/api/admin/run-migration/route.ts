@@ -45,6 +45,11 @@ CREATE TABLE IF NOT EXISTS public.connected_email_accounts (
   is_primary  boolean default false,
   created_at  timestamptz default now()
 );
+ALTER TABLE public.connected_email_accounts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY IF NOT EXISTS "connected_email_accounts_own"
+  ON public.connected_email_accounts FOR ALL
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
 CREATE TABLE IF NOT EXISTS public.meeting_notes (
   id          uuid primary key default uuid_generate_v4(),
   user_id     uuid references auth.users(id) on delete cascade,
