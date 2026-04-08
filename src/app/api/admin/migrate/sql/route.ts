@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireAdminRouteEnabled, requireOwnerEmail } from '@/lib/security/route-guards'
 import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
 
 export const runtime = 'nodejs'
-
-const OWNER_EMAIL = 'info@veritasiq.io'
 
 const FILES: Record<string, string> = {
   '001': 'supabase/migrations/001_initial_schema.sql',
@@ -23,11 +22,16 @@ const FILES: Record<string, string> = {
 
 export async function GET(request: Request) {
   try {
+    const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_MIGRATION_ROUTES')
+    if (blocked) return blocked
+
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user || user.email !== OWNER_EMAIL) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const ownerErr = requireOwnerEmail(user.email)
+    if (ownerErr) return ownerErr
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     if (!id || !FILES[id]) return NextResponse.json({ error: 'Invalid migration ID' }, { status: 400 })

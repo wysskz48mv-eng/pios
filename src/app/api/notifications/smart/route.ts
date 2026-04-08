@@ -11,11 +11,10 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { callClaude }                from '@/lib/ai/client'
 
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 60
-const anthropic = new Anthropic()
 
 const NOTIFICATION_TYPES = {
   urgent:     { icon: '🔴', priority: 1, label: 'Urgent'     },
@@ -134,19 +133,19 @@ export async function POST(req: NextRequest) {
         .map(n => `[${n.type.toUpperCase()}] ${n.title}: ${n.body}`)
         .join('\n')
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 400,
-        messages: [{ role: 'user', content:
-          `PIOS smart notification engine. Rewrite these notifications as concise, actionable PIOS alerts.\n\n` +
-          `Raw signals:\n${stateText}\n\n` +
-          `Return exactly the top 5 most important as JSON array (no markdown):\n` +
-          `[{"title":<15 words max>,"body":<20 words max>,"type":<keep original type>,"action_url":<keep>}]`
-        }],
-      })
-
       let smartNotifs = notifications.slice(0, 5)
       try {
-        const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : '[]'
+        const raw = await callClaude(
+          [{ role: 'user', content:
+            `PIOS smart notification engine. Rewrite these notifications as concise, actionable PIOS alerts.\n\n` +
+            `Raw signals:\n${stateText}\n\n` +
+            `Return exactly the top 5 most important as JSON array (no markdown):\n` +
+            `[{"title":<15 words max>,"body":<20 words max>,"type":<keep original type>,"action_url":<keep>}]`
+          }],
+          'You are a notification summarizer. Output only valid JSON, no markdown.',
+          400,
+          'haiku'
+        )
         const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim())
         if (Array.isArray(parsed) && parsed.length) smartNotifs = parsed.map((n: any, i: number) => ({
           ...n, priority: notifications[i]?.priority ?? 3,
@@ -182,13 +181,14 @@ export async function POST(req: NextRequest) {
         .map((n: any) => `[${n.type?.toUpperCase()}] ${n.title}: ${n.body}`)
         .join('\n')
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 350,
-        messages: [{ role: 'user', content:
+      const digest = await callClaude(
+        [{ role: 'user', content:
           `PIOS Chief of Staff. Write a morning digest (max 5 bullets, each ≤12 words).\n\nAlerts:\n${items || 'No alerts.'}\n\nBe direct. Start with most urgent. Format: bullet list, no headers.`
         }],
-      })
-      const digest = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a notification digest summarizer. Output 5 direct, urgent bullets.',
+        350,
+        'haiku'
+      )
       return NextResponse.json({ ok: true, action: 'digest', digest })
     }
 

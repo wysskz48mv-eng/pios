@@ -25,7 +25,7 @@ export async function POST() {
       .limit(5)
 
     if (!emails?.length) {
-      return NextResponse.json({ detected: false, message: 'No payroll emails found in inbox. Sync Gmail first.' })
+      return NextResponse.json({ detected: false, message: 'No payroll emails found in connected inboxes. Sync your email accounts first.' })
     }
 
     // Get existing staff for matching

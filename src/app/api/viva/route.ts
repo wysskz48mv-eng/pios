@@ -15,12 +15,11 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { callClaude }                from '@/lib/ai/client'
 
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 60
 
-const anthropic = new Anthropic()
 
 // ── Portsmouth DBA context (injected into all examiner simulations) ──────────
 const PORTSMOUTH_DBA_CONTEXT = `
@@ -244,15 +243,16 @@ export async function POST(req: NextRequest) {
       if (builtIn) {
         return NextResponse.json({ ok: true, profile: builtIn, source: 'built_in' })
       }
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 600,
-        messages: [{ role: 'user', content:
+      const profile = await callClaude(
+        [{ role: 'user', content:
           `${PORTSMOUTH_DBA_CONTEXT}\n\nGenerate a viva examiner profile for: ${examinerName}, ${institution}.\n` +
           `Include: research interests, likely question angle for a DBA on AI-enabled FM cost forecasting in GCC, ` +
           `and 3 typical challenge questions they would ask. Be specific and academically grounded.`
         }],
-      })
-      const profile = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a viva examiner profile generator. Output a concise, specific profile.',
+        600,
+        'sonnet'
+      )
       return NextResponse.json({ ok: true, profile, source: 'generated' })
     }
 
@@ -261,16 +261,17 @@ export async function POST(req: NextRequest) {
       const chapterText = body.chapterText ?? ''
       const chapterNum  = body.chapterNum  ?? 1
       if (!chapterText) return NextResponse.json({ error: 'chapterText required' }, { status: 400 })
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 500,
-        messages: [{ role: 'user', content:
+      const summary = await callClaude(
+        [{ role: 'user', content:
           `${PORTSMOUTH_DBA_CONTEXT}\n\nGenerate a one-page viva preparation summary for Chapter ${chapterNum} of this DBA thesis.\n\n` +
           `Include: (1) Core argument in 1 sentence, (2) Key contributions (3 bullets), ` +
           `(3) Likely examiner questions for this chapter (3 questions), (4) Weaknesses to acknowledge proactively.\n\n` +
           `Chapter text:\n${chapterText.slice(0, 4000)}`
         }],
-      })
-      const summary = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a viva summary generator. Output a structured, concise summary.',
+        500,
+        'sonnet'
+      )
       return NextResponse.json({ ok: true, summary, chapterNum })
     }
 
@@ -278,9 +279,8 @@ export async function POST(req: NextRequest) {
     if (mode === 'feedback') {
       if (!question || !answer) return NextResponse.json({ error: 'question and answer required' }, { status: 400 })
       const examinerProfile = examiner ? (EXAMINER_PROFILES[examiner] ?? '') : ''
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 700,
-        messages: [{ role: 'user', content:
+      const feedback = await callClaude(
+        [{ role: 'user', content:
           `${PORTSMOUTH_DBA_CONTEXT}\n${examinerProfile ? `\nExaminer profile:\n${examinerProfile}\n` : ''}` +
           `\nThesis context: ${thesisContext ?? 'DBA on AI-enabled FM cost forecasting in GCC master communities'}\n` +
           `\nViva question: "${question}"\n` +
@@ -293,8 +293,10 @@ export async function POST(req: NextRequest) {
           `5. FOLLOW-UP — one probing follow-up question the examiner would ask next\n` +
           `Be rigorous and honest. Do not soften genuine weaknesses.`
         }],
-      })
-      const feedback = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a viva answer feedback generator. Output a structured, honest critique.',
+        700,
+        'sonnet'
+      )
       return NextResponse.json({ ok: true, feedback, question })
     }
 
@@ -319,17 +321,16 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `${institutionCtx}\n\n${modeInstructions[mode] ?? modeInstructions.standard}\n\nThesis context: ${thesisContext ?? 'Doctoral research thesis (candidate has not specified topic — ask general examination questions)'}`
 
-    const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514', max_tokens: 400,
-      system: systemPrompt,
-      messages: [{ role: 'user', content:
+    const response = await callClaude(
+      [{ role: 'user', content:
         answer
           ? `The candidate answered: "${answer}"\n\nNow provide ONE probing follow-up question. Stay in character. Do not provide the answer. Just ask the follow-up.`
           : `Ask this viva question to the candidate: "${currentQuestion}"\n\nFrame it naturally as an examiner would in a real viva. Do not add preamble. Just ask the question.`
       }],
-    })
-
-    const response = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+      systemPrompt,
+      400,
+      'sonnet'
+    )
 
     return NextResponse.json({
       ok:       true,

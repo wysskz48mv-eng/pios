@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { requireAdminRouteEnabled, requireOwnerEmail } from '@/lib/security/route-guards'
 
 /**
  * POST /api/admin/seed-nemoclaw
@@ -31,9 +32,15 @@ const NEMOCLAW_FRAMEWORKS = [
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_SEED_ROUTES')
+    if (blocked) return blocked
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+    const ownerErr = requireOwnerEmail(user.email)
+    if (ownerErr) return ownerErr
 
     const adminSb = createAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Client } from 'pg'
 import { createClient } from '@/lib/supabase/server'
+import { requireOwnerEmail } from '@/lib/security/route-guards'
 
 // GET /api/live/investiscript
 // Pulls live metrics from the InvestiScript Supabase project via direct pg connection.
@@ -21,6 +22,9 @@ export async function GET(_req: NextRequest) {
   if (authErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const ownerErr = requireOwnerEmail(user.email)
+  if (ownerErr) return ownerErr
 
   if (!IS_KEY && !IS_DB_URL) {
     return NextResponse.json({

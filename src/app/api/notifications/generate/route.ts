@@ -17,16 +17,38 @@
  */
 import { NextResponse } from 'next/server'
 import { createClient }  from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 
 export const runtime    = 'nodejs'
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 30
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const authHeader = req.headers.get('authorization') ?? ''
+    const cronSecret = process.env.CRON_SECRET
+    const isCronCall = !!cronSecret && authHeader === `Bearer ${cronSecret}`
+
+    let userId: string | null = null
+    let supabase: ReturnType<typeof createClient> | ReturnType<typeof createAdminClient>
+
+    if (isCronCall) {
+      const body = await req.json().catch(() => ({} as Record<string, unknown>))
+      userId = typeof body.user_id === 'string' ? body.user_id : null
+      if (!userId) {
+        return NextResponse.json({ error: 'user_id required for cron call' }, { status: 400 })
+      }
+
+      supabase = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+    } else {
+      supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      userId = user.id
+    }
 
     const today     = new Date().toISOString().slice(0, 10)
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
@@ -37,7 +59,7 @@ export async function POST() {
     const { data: existingToday } = await supabase
       .from('notifications')
       .select('title')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .gte('created_at', today + 'T00:00:00Z')
 
     const alreadyNotified = new Set((existingToday ?? []).map(n => n.title))
@@ -49,7 +71,7 @@ export async function POST() {
 
     const addNotif = (title: string, body: string, type: string, domain: string, actionUrl: string) => {
       if (!alreadyNotified.has(title)) {
-        toInsert.push({ user_id: user!.id, title, body, type, domain, action_url: actionUrl, read: false })
+        toInsert.push({ user_id: userId!, title, body, type, domain, action_url: actionUrl, read: false })
         alreadyNotified.add(title) // prevent dupes within same batch
       }
     }
@@ -59,7 +81,7 @@ export async function POST() {
       const { data: ipAssets } = await (supabase as any)
         .from('ip_assets')
         .select('name,asset_type,renewal_date')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('status', 'active')
         .lte('renewal_date', in30d)
         .gte('renewal_date', today)
@@ -84,7 +106,7 @@ export async function POST() {
       const { data: contracts } = await (supabase as any)
         .from('contracts')
         .select('title,contract_type,counterparty,end_date')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('status', 'active')
         .lte('end_date', in30d)
         .gte('end_date', today)
@@ -109,7 +131,7 @@ export async function POST() {
       const { data: streak } = await (supabase as any)
         .from('wellness_streaks')
         .select('current_streak,last_activity_date')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('streak_type', 'daily_checkin')
         .single()
 
@@ -133,7 +155,7 @@ export async function POST() {
       const { count: overdueCount } = await supabase
         .from('tasks')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .not('status', 'in', '("done","cancelled")')
         .lt('due_date', today)
 
@@ -185,6 +207,7 @@ export async function POST() {
 
     return NextResponse.json({
       ok: true,
+      user_id: userId,
       generated: toInsert.length,
       skipped: alreadyNotified.size - toInsert.length,
     })

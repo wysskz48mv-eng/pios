@@ -12,13 +12,13 @@ export const maxDuration = 120
  * The raw DB hostname (db.xxx.supabase.co:5432) does NOT work from
  * Vercel serverless — use the pooler URL instead.
  *
- * Auth: x-admin-secret header = ADMIN_SECRET env var
- *       (or SEED_SECRET for backward compat)
+ * Auth: ADMIN_SECRET or SEED_SECRET via shared admin/seed guard
  *
  * PIOS v3.0.5 | VeritasIQ Technologies Ltd
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdminOrSeedSecret, requireAdminRouteEnabled } from '@/lib/security/route-guards'
 
 const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -127,14 +127,6 @@ async function runSQL(sql: string, label: string): Promise<{
   }
 
   return { ok: false, method: 'exec_sql_rpc', error: rpcResult.error, label }
-}
-
-// ── Auth check ────────────────────────────────────────────────────────────
-function isAuthorised(req: NextRequest): boolean {
-  const provided = req.headers.get('x-admin-secret') ?? req.headers.get('x-seed-secret')
-  const expected = process.env.ADMIN_SECRET ?? process.env.SEED_SECRET
-  if (!expected) return false
-  return provided === expected
 }
 
 // ── Migration registry ────────────────────────────────────────────────────
@@ -573,9 +565,11 @@ CREATE POLICY "pios_cv_owner_delete"
 
 // ── POST handler ──────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  if (!isAuthorised(req)) {
-    return NextResponse.json({ error: 'Unauthorised — set x-admin-secret header' }, { status: 401 })
-  }
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_MIGRATION_ROUTES')
+  if (blocked) return blocked
+
+  const authErr = requireAdminOrSeedSecret(req)
+  if (authErr) return authErr
 
   const body = await req.json()
   const targetId = body.migration_id  // optional — run single migration
@@ -704,9 +698,12 @@ export async function POST(req: NextRequest) {
 
 // ── GET — list available migrations ──────────────────────────────────────
 export async function GET() {
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_MIGRATION_ROUTES')
+  if (blocked) return blocked
+
   return NextResponse.json({
     migrations: MIGRATIONS.map(m => ({ id: m.id, label: m.label })),
     count:      MIGRATIONS.length,
-    note:       'POST with x-admin-secret header to run. POST with { migration_id: "M019" } to run single.',
+    note:       'POST with ADMIN_SECRET or SEED_SECRET to run. POST with { migration_id: "M019" } to run single.',
   })
 }

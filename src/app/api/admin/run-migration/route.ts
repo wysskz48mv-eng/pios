@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { checkRateLimit, LIMITS } from '@/lib/redis-rate-limit'
 import { requireMFA } from '@/lib/mfa'
+import { requireAdminOrSeedSecret, requireAdminRouteEnabled } from '@/lib/security/route-guards'
 
 const OWNER_EMAIL = 'info@veritasiq.io'
 
@@ -1184,6 +1185,12 @@ async function runPg(sql: string): Promise<{ ok: boolean; result?: string; err?:
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_MIGRATION_ROUTES')
+  if (blocked) return blocked
+
+  const authErr = requireAdminOrSeedSecret(req)
+  if (authErr) return authErr
+
   // Migration runner — open during initial setup (idempotent SQL only)
   // Protected by Vercel auth / network boundary in production
   const rawBody = await req.text().catch(() => '{}')
@@ -1208,5 +1215,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_MIGRATION_ROUTES')
+  if (blocked) return blocked
+
   return NextResponse.json({ migrations: Object.keys(MIGRATIONS), usage: 'POST { migration: "012" } or { migration: "all" }' })
 }

@@ -11,10 +11,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { callClaude }                from '@/lib/ai/client'
 
 export const dynamic = 'force-dynamic'
-const anthropic = new Anthropic()
 
 // Hardcoded high-priority deadlines (immovable)
 const PINNED_DEADLINES = [
@@ -115,16 +114,17 @@ export async function POST(req: NextRequest) {
       if (!deadline) return NextResponse.json({ error: 'deadline required' }, { status: 400 })
 
       const daysLeft = daysUntil(deadline.due_date)
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 400,
-        messages: [{ role: 'user', content:
+      const plan = await callClaude(
+        [{ role: 'user', content:
           `PIOS Chief of Staff. ${daysLeft} days to: "${deadline.title}" (${deadline.subtitle ?? ''}).\n` +
           `Priority: ${deadline.priority ?? 'high'}. Category: ${deadline.category ?? 'professional'}.\n\n` +
           `Write a concrete 5-point action plan for the next ${Math.min(daysLeft, 14)} days.\n` +
           `Format: numbered list, each item ≤15 words. Start with most urgent.`
         }],
-      })
-      const plan = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a deadline execution planner. Provide concise, ordered actions with no filler.',
+        400,
+        'haiku'
+      )
       return NextResponse.json({ ok: true, action: 'ai-plan', plan, deadline_title: deadline.title })
     }
 

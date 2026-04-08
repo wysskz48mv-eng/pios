@@ -10,10 +10,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { callClaude }                from '@/lib/ai/client'
 
 export const dynamic = 'force-dynamic'
-const anthropic = new Anthropic()
 
 type SBRow = Record<string, unknown>
 
@@ -181,9 +180,8 @@ export async function POST(req: NextRequest) {
         .map(n => `[${n.type}] ${n.label}`)
         .join('\n')
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 700,
-        messages: [{ role: 'user', content:
+      const synthesis = await callClaude(
+        [{ role: 'user', content:
           `PIOS Chief of Staff. Synthesise the user's knowledge graph — what is the user actually working on and what matters most?\n\n` +
           `Knowledge nodes (last ${stats?.days_window ?? 30} days):\n${nodeList}\n\n` +
           `Graph stats: ${stats?.total_nodes ?? 0} nodes, ${stats?.total_edges ?? 0} connections\n\n` +
@@ -194,16 +192,17 @@ export async function POST(req: NextRequest) {
           `4. RECOMMENDED FOCUS (what single area would create the most leverage this week?)\n\n` +
           `Be direct, specific, and action-oriented. Reference actual node labels.`
         }],
-      })
-      const synthesis = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are the PIOS Chief of Staff. Produce concrete synthesis with explicit cross-domain links and leverage points.',
+        700,
+        'sonnet'
+      )
       return NextResponse.json({ ok: true, action: 'synthesise', synthesis })
     }
 
     if (action === 'gap-analysis') {
       const nodeList = (nodes as SBRow[] ?? []).slice(0, 20).map(n => `[${n.type}] ${n.label}`).join('\n')
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 500,
-        messages: [{ role: 'user', content:
+      const gaps = await callClaude(
+        [{ role: 'user', content:
           `PIOS gap analyst. What is MISSING from this knowledge graph?\n\nNodes:\n${nodeList}\n\n` +
           `Identify:\n1. KNOWLEDGE GAPS (what topics are absent that should be connected?)\n` +
           `2. WEAK LINKS (connections that exist but need strengthening)\n` +
@@ -211,16 +210,17 @@ export async function POST(req: NextRequest) {
           `4. DBA ALIGNMENT (is the academic work connected to the professional practice? What's the bridge?)\n\n` +
           `Reference specific node labels. Be concrete.`
         }],
-      })
-      const gaps = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a graph gap analyst. Identify missing links, blind spots, and concrete integration opportunities.',
+        500,
+        'sonnet'
+      )
       return NextResponse.json({ ok: true, action: 'gap-analysis', gaps })
     }
 
     if (action === 'weekly-brief') {
       const nodeList = (nodes as SBRow[] ?? []).slice(0, 25).map(n => `[${n.type}] ${n.label}`).join('\n')
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 600,
-        messages: [{ role: 'user', content:
+      const brief = await callClaude(
+        [{ role: 'user', content:
           `PIOS Weekly Intelligence Brief. Based on the knowledge graph, generate a structured weekly brief.\n\n` +
           `Graph nodes:\n${nodeList}\n\n` +
           `Write as Chief of Staff. Include:\n` +
@@ -231,8 +231,10 @@ export async function POST(req: NextRequest) {
           `DBA PROGRESS NOTE: (1 sentence on academic progress vs professional work balance)\n\n` +
           `Reference specific items by name. Be direct. No padding.`
         }],
-      })
-      const brief = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are the PIOS Chief of Staff. Write concise, structured weekly intelligence briefings grounded in named items.',
+        600,
+        'sonnet'
+      )
       return NextResponse.json({ ok: true, action: 'weekly-brief', brief })
     }
 

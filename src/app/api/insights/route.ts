@@ -17,6 +17,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { callClaude } from '@/lib/ai/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,17 +98,15 @@ export async function POST(req: NextRequest) {
   // Auto-generate 30-word brief summary via Claude Haiku
   let ai_summary: string | null = null
   try {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk')
-    const anthropic = new Anthropic()
-    const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 80,
-      messages: [{
+    ai_summary = await callClaude(
+      [{
         role: 'user',
         content: `Summarise this insight in one sentence (max 25 words) for a morning brief reminder. Type: ${insight_type}.\n\nTitle: ${title}\n\n${insightBody}`
-      }]
-    })
-    ai_summary = (msg.content[0] as any).text?.trim() ?? null
+      }],
+      'You write concise executive reminder summaries. Return one sentence only.',
+      80,
+      'haiku'
+    )
   } catch { /* non-blocking */ }
 
   const { data, error } = await supabase.from('insights').insert({

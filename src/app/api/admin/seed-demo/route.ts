@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { requireAdminOrSeedSecret, requireAdminRouteEnabled } from '@/lib/security/route-guards'
 
 /**
  * POST /api/admin/seed-demo
@@ -25,11 +26,11 @@ export const dynamic     = 'force-dynamic'
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
-  const secret   = process.env.SEED_SECRET
-  const provided = req.headers.get('x-seed-secret') ?? req.headers.get('Authorization')?.replace('Bearer ', '')
-  if (!secret || provided !== secret) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-  }
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_SEED_ROUTES')
+  if (blocked) return blocked
+
+  const authErr = requireAdminOrSeedSecret(req)
+  if (authErr) return authErr
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

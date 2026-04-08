@@ -6,6 +6,7 @@
  * VeritasIQ Technologies Ltd | Pre-UAT March 2026
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdminRouteEnabled, requireCronSecret } from '@/lib/security/route-guards'
 
 export const dynamic = 'force-dynamic'
 
@@ -132,10 +133,11 @@ function buildEmailHtml(recipient: typeof UAT_RECIPIENTS[0]): string {
 }
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_COMMUNICATION_ROUTES')
+  if (blocked) return blocked
+
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {

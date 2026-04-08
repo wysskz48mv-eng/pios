@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
     if (!profile?.google_access_token) return NextResponse.json({ synced: 0, receipts: 0, message: 'No email accounts connected. Add one in Settings → Email Accounts.' })
     const legacyAcc = { id: 'legacy', provider: 'google', context: 'personal', label: 'Gmail', display_name: 'Gmail', ai_domain_override: null, receipt_scan_enabled: false, receipt_keywords: [], ...profile }
     const token = await getValidToken(supabase, legacyAcc)
-    if (!token) return NextResponse.json({ synced: 0, receipts: 0, error: 'Gmail token expired. Reconnect Google.' })
+    if (!token) return NextResponse.json({ synced: 0, receipts: 0, error: 'Google inbox token expired. Reconnect it in Settings → Email Accounts.' })
     const r = await syncGmail(supabase, user.id, legacyAcc, token, max)
     return NextResponse.json({ ...r, accounts_synced: 1 })
   }

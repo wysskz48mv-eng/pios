@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     const token = await getGoogleToken(supabase, user.id)
     if (!token) {
       return NextResponse.json({
-        error: 'Google not connected. Connect Gmail in Settings to enable email sending.',
+        error: 'Google sending is not connected. Open Settings → Email Accounts to connect or reconnect a Google inbox for email sending.',
         code: 'GOOGLE_NOT_CONNECTED',
       }, { status: 400 })
     }
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
       // Handle insufficient scope error
       if (gmailRes.status === 403 || errMsg.includes('insufficient')) {
         return NextResponse.json({
-          error: 'Gmail send permission not granted. Please reconnect Google in Settings with full Gmail access.',
+          error: 'Google send permission not granted. Reconnect your Google inbox in Settings → Email Accounts with full mail access.',
           code: 'INSUFFICIENT_SCOPE',
         }, { status: 403 })
       }

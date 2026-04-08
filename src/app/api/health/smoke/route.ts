@@ -12,6 +12,8 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
+const HEALTH_DETAIL_HEADER = 'x-health-secret'
+
 interface CheckResult {
   id:         string
   name:       string
@@ -51,8 +53,19 @@ async function runCheck(
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const canViewDetailedChecks = (() => {
+    const secret = request.headers.get(HEALTH_DETAIL_HEADER)
+    const allowedSecrets = [process.env.ADMIN_SECRET, process.env.CRON_SECRET].filter(Boolean)
+    return !!secret && allowedSecrets.includes(secret)
+  })()
+
   const checks: CheckResult[] = []
 
   // ── 1. Database connectivity ───────────────────────────────────────────────
@@ -276,16 +289,28 @@ export async function GET() {
   const failsFinal         = checks.filter(c => c.status === 'fail').length
   const overallOkFinal     = criticalFailsFinal.length === 0
 
-  return NextResponse.json({
-    ok:             overallOkFinal,
-    status:         overallOkFinal ? (warnsFinal > 0 ? 'degraded' : 'healthy') : 'critical',
-    summary:        `${passesFinal} passed · ${warnsFinal} warnings · ${failsFinal} failed`,
-    total_checks:   checks.length,
-    critical_fails: criticalFailsFinal.map(c => c.name),
-    checks,
-    platform:       'PIOS',
-    version:        process.env.npm_package_version ?? '3.0.3',
-    timestamp:      new Date().toISOString(),
-    owner:          'VeritasIQ Technologies Ltd',
-  }, { status: overallOkFinal ? 200 : 503 })
+  return NextResponse.json(
+    canViewDetailedChecks
+      ? {
+          ok:             overallOkFinal,
+          status:         overallOkFinal ? (warnsFinal > 0 ? 'degraded' : 'healthy') : 'critical',
+          summary:        `${passesFinal} passed · ${warnsFinal} warnings · ${failsFinal} failed`,
+          total_checks:   checks.length,
+          critical_fails: criticalFailsFinal.map(c => c.name),
+          checks,
+          platform:       'PIOS',
+          version:        process.env.npm_package_version ?? '3.0.3',
+          timestamp:      new Date().toISOString(),
+          owner:          'VeritasIQ Technologies Ltd',
+        }
+      : {
+          ok:             overallOkFinal,
+          status:         overallOkFinal ? (warnsFinal > 0 ? 'degraded' : 'healthy') : 'critical',
+          summary:        `${passesFinal} passed · ${warnsFinal} warnings · ${failsFinal} failed`,
+          total_checks:   checks.length,
+          critical_fails: criticalFailsFinal.map(c => c.name),
+          timestamp:      new Date().toISOString(),
+        },
+    { status: overallOkFinal ? 200 : 503 }
+  )
 }

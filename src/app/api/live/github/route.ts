@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireOwnerEmail } from '@/lib/security/route-guards'
 
 // GET /api/live/github
 // Pulls recent commits from VeritasEdge™ and InvestiScript repos
@@ -14,6 +15,15 @@ const REPOS = [
 ]
 
 export async function GET() {
+  const supabase = createClient()
+  const { data: { user }, error: authErr } = await supabase.auth.getUser()
+  if (authErr || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const ownerErr = requireOwnerEmail(user.email)
+  if (ownerErr) return ownerErr
+
   const pat = process.env.GITHUB_PAT
   if (!pat) {
     return NextResponse.json({ connected: false, error: 'GITHUB_PAT not configured', repos: {} })

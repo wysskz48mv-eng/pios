@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createExternalClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { requireOwnerEmail } from '@/lib/security/route-guards'
 
 // GET /api/live/veritasedge
 // Pulls live metrics from the VeritasEdge™ Supabase project.
@@ -20,6 +21,9 @@ export async function GET(_req: NextRequest) {
   if (authErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const ownerErr = requireOwnerEmail(user.email)
+  if (ownerErr) return ownerErr
   if (!SE_KEY) {
     return NextResponse.json({
       connected: false,

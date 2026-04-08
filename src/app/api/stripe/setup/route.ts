@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { requireAdminRouteEnabled, requireOwnerEmail } from '@/lib/security/route-guards'
 
 /**
  * POST /api/stripe/setup
@@ -40,7 +42,26 @@ const PLANS = [
   },
 ]
 
+async function authorizeStripeSetupRoute() {
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_BILLING_ROUTES')
+  if (blocked) return { error: blocked }
+
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  }
+
+  const ownerErr = requireOwnerEmail(user.email)
+  if (ownerErr) return { error: ownerErr }
+
+  return { error: null }
+}
+
 export async function POST() {
+  const auth = await authorizeStripeSetupRoute()
+  if (auth.error) return auth.error
+
   const secretKey = process.env.STRIPE_SECRET_KEY
   if (!secretKey) {
     return NextResponse.json(
@@ -133,6 +154,9 @@ export async function POST() {
 
 // GET — check if products already exist
 export async function GET() {
+  const auth = await authorizeStripeSetupRoute()
+  if (auth.error) return auth.error
+
   const secretKey = process.env.STRIPE_SECRET_KEY
   if (!secretKey) {
     return NextResponse.json({ error: 'STRIPE_SECRET_KEY not set' }, { status: 503 })

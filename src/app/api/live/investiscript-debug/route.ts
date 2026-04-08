@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdminOrSeedSecret, requireAdminRouteEnabled } from '@/lib/security/route-guards'
 
 // GET /api/live/investiscript-debug
 // Diagnostic endpoint — tests IS Supabase connectivity
@@ -7,16 +8,15 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Admin-only diagnostic — requires ADMIN_SECRET header
-function checkAdminKey(req: any): boolean {
-  const key = req.headers.get('x-admin-secret') ?? req.headers.get('authorization')?.replace('Bearer ','')
-  return !!process.env.ADMIN_SECRET && key === process.env.ADMIN_SECRET
-}
-
 const IS_URL = 'https://vonnylhyopcbelzoaufj.supabase.co'
 
 export async function GET(req: NextRequest) {
-  if (!checkAdminKey(req)) return NextResponse.json({ error: 'Admin key required' }, { status: 401 })
+  const blocked = requireAdminRouteEnabled('ENABLE_LIVE_DIAGNOSTIC_ROUTES')
+  if (blocked) return blocked
+
+  const authErr = requireAdminOrSeedSecret(req)
+  if (authErr) return authErr
+
   const key = process.env.SUPABASE_IS_SERVICE_KEY ?? ''
   if (!key) return NextResponse.json({ error: 'SUPABASE_IS_SERVICE_KEY not set' })
 

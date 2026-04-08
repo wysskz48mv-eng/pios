@@ -11,11 +11,10 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { callClaude }                from '@/lib/ai/client'
 
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 30
-const anthropic = new Anthropic()
 
 export async function GET(req: NextRequest) {
   try {
@@ -115,9 +114,8 @@ async function generateBrief(supabase: any, userId: string, today: string, tomor
     `ACTIVE AGENTS: ${(agents.data ?? []).length}`,
   ].filter(Boolean).join('\n')
 
-  const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001', max_tokens: 500,
-    messages: [{ role: 'user', content:
+  const brief_text = await callClaude(
+    [{ role: 'user', content:
       `PIOS Chief of Staff. Generate today's morning executive brief for Dimitry Masuku, CEO/Founder VeritasIQ + DBA candidate.\n\n` +
       `STATE:\n${context}\n\n` +
       `Write a structured brief (max 250 words):\n` +
@@ -127,9 +125,10 @@ async function generateBrief(supabase: any, userId: string, today: string, tomor
       `📅 DEADLINE PULSE (Qiddiya + DBA progress in one sentence)\n\n` +
       `Be direct. Use names. No padding. CEO voice.`
     }],
-  })
-
-  const brief_text = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+    'You are the PIOS Chief of Staff. Produce concise executive briefings with clear priorities, actions, and risks.',
+    500,
+    'haiku'
+  )
   const state_snapshot = { overdue: overdue.length, due_today: dueToday.length, ip_alerts: ipAlerts.length, dba_progress: dbaProgress, days_to_qiddiya: daysToQ }
 
   // Cache to DB

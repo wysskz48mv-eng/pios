@@ -9,9 +9,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
@@ -19,7 +20,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('content_episodes')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
@@ -35,9 +36,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
@@ -56,7 +58,7 @@ export async function PATCH(
       const { data: current } = await supabase
         .from('content_episodes')
         .select('published_text')
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
 
       if (current?.published_text) {
@@ -68,7 +70,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('content_episodes')
       .update({ ...body, updated_at: new Date().toISOString() })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .select()
       .single()

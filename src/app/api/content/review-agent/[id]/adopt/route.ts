@@ -10,9 +10,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
@@ -26,7 +27,7 @@ export async function POST(
     const { data: job, error: jobErr } = await supabase
       .from('content_review_jobs')
       .select('findings, adopted_count')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
@@ -49,7 +50,7 @@ export async function POST(
         findings,
         adopted_count: adoptedCount,
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
 
     if (updateErr) {

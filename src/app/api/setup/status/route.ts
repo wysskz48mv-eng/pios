@@ -9,7 +9,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { hasSupabasePublicKey } from '@/lib/supabase/env'
-import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
+import { requireOwnerEmail } from '@/lib/security/route-guards'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -23,6 +23,9 @@ export async function GET() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const ownerErr = requireOwnerEmail(user.email)
+  if (ownerErr) return ownerErr
 
   // §01 Supabase DB connectivity
   let dbOk = false
@@ -78,7 +81,7 @@ export async function GET() {
     supabase_service_key: { ok: serviceRoleOk,   label: 'SUPABASE_SERVICE_ROLE_KEY',         required: true,  section: '01', hint: 'Supabase → Project Settings → API → service_role' },
     // §02 Google
     google_oauth_vars:    { ok: googleVarsOk,    label: 'Google OAuth vars (client ID + secret)', required: true,  section: '02' },
-    google_connected:     { ok: googleTokenOk,   label: 'Google account connected (OAuth flow)', required: false, section: '02', hint: 'Complete Google sign-in from Settings to connect Gmail/Calendar' },
+    google_connected:     { ok: googleTokenOk,   label: 'Google account connected (OAuth flow)', required: false, section: '02', hint: 'Complete Google sign-in from Settings → Email Accounts to connect a Google inbox and calendar' },
     // §03 Resend
     resend_api_key:       { ok: resendOk,        label: 'RESEND_API_KEY',                    required: true,  section: '03', hint: 'resend.com/api-keys → create key with Send access' },
     resend_from_email:    { ok: fromEmailOk,     label: 'RESEND_FROM_EMAIL (FROM_EMAIL)',     required: false, section: '03', hint: 'e.g. noreply@veritasiq.io — must be a Resend-verified domain' },

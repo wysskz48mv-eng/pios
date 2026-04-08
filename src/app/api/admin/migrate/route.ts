@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { Client } from 'pg'
+import { requireAdminOrSeedSecret, requireAdminRouteEnabled } from '@/lib/security/route-guards'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -2045,6 +2046,8 @@ async function runPg(sql: string): Promise<{ ok: boolean; err?: string }> {
 }
 
 export async function GET() {
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_MIGRATION_ROUTES')
+  if (blocked) return blocked
   try {
     const supabase = createServiceClient()
     const status: Record<string, { applied: boolean; name: string }> = {}
@@ -2059,6 +2062,12 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = requireAdminRouteEnabled('ENABLE_ADMIN_MIGRATION_ROUTES')
+  if (blocked) return blocked
+
+  const authErr = requireAdminOrSeedSecret(request)
+  if (authErr) return authErr
+
   try {
     const bodyRaw = await request.text()
     const body = JSON.parse(bodyRaw || '{}')

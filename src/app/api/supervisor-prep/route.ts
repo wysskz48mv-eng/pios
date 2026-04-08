@@ -13,11 +13,10 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { callClaude }                from '@/lib/ai/client'
 
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 60
-const anthropic = new Anthropic()
 
 // Portsmouth DBA supervisors
 const SUPERVISORS = [
@@ -85,9 +84,8 @@ export async function POST(req: NextRequest) {
       const supervisor = SUPERVISORS.find(s => s.id === supervisor_id) ?? SUPERVISORS[0]
       const chapterList = (chapters as any[])?.map((c: any) => `Ch${c.chapter_num} ${c.title}: ${c.status} (${c.word_count ?? 0}/${c.target_words ?? 8000}w)`).join('\n') ?? ''
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 700,
-        messages: [{ role: 'user', content:
+      const agenda = await callClaude(
+        [{ role: 'user', content:
           `Portsmouth DBA candidate preparing for a supervisor meeting.\n\n` +
           `Supervisor: ${supervisor.name} — specialisms: ${supervisor.specialisms.join(', ')}\n` +
           `Meeting type: ${meeting_type ?? 'Progress review'}\n` +
@@ -104,8 +102,10 @@ export async function POST(req: NextRequest) {
           `5. NEXT MILESTONE (what will be submitted/completed by next meeting)\n\n` +
           `Format as a clean meeting agenda. Be specific — reference actual chapter titles and themes.`
         }],
-      })
-      const agenda = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a supervisor meeting agenda generator. Output a structured agenda.',
+        700,
+        'sonnet'
+      )
       return NextResponse.json({ ok: true, action: 'ai-agenda', agenda, supervisor: supervisor.name })
     }
 
@@ -115,9 +115,8 @@ export async function POST(req: NextRequest) {
       const supervisor = SUPERVISORS.find(s => s.id === supervisor_id) ?? SUPERVISORS[0]
       const chapterProgress = (chapters as any[])?.map((c: any) => `Ch${c.chapter_num}: ${c.status}, ${c.word_count ?? 0}w`).join(' | ') ?? ''
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 400,
-        messages: [{ role: 'user', content:
+      const brief = await callClaude(
+        [{ role: 'user', content:
           `DBA candidate. Write a pre-meeting brief (max 150 words) for a session with ${supervisor.name}.\n\n` +
           `Meeting: ${meeting_date ?? 'upcoming'}\n` +
           `Chapter progress: ${chapterProgress}\n` +
@@ -125,8 +124,10 @@ export async function POST(req: NextRequest) {
           `Write: what to lead with, what to avoid, how to frame progress, one key question to ask.\n` +
           `Be specific to this supervisor's specialisms: ${supervisor.specialisms.join(', ')}.`
         }],
-      })
-      const brief = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a supervisor meeting brief generator. Output a concise, actionable brief.',
+        400,
+        'haiku'
+      )
       return NextResponse.json({ ok: true, action: 'ai-brief', brief })
     }
 
@@ -136,9 +137,8 @@ export async function POST(req: NextRequest) {
       if (!raw_notes) return NextResponse.json({ error: 'raw_notes required' }, { status: 400 })
 
       const supervisor = SUPERVISORS.find(s => s.id === supervisor_id) ?? SUPERVISORS[0]
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 700,
-        messages: [{ role: 'user', content:
+      const raw = await callClaude(
+        [{ role: 'user', content:
           `DBA supervisor meeting debrief processor.\n\n` +
           `Supervisor: ${supervisor.name}\n` +
           `Raw meeting notes:\n"""\n${raw_notes.slice(0, 3000)}\n"""\n\n` +
@@ -153,8 +153,10 @@ export async function POST(req: NextRequest) {
           `  "viva_readiness_note": "<any comment on viva progression or readiness>"\n` +
           `}`
         }],
-      })
-      const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : '{}'
+        'You are a supervisor meeting debrief processor. Output only valid JSON, no markdown.',
+        700,
+        'sonnet'
+      )
       try {
         const debrief = JSON.parse(raw.replace(/```json|```/g,'').trim())
         // Save to supervisor_meetings
