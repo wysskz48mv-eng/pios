@@ -2,7 +2,13 @@ import Link from 'next/link'
 
 export const metadata = { title: 'Terms of Service — PIOS' }
 
-const EFFECTIVE = 'March 2026'
+const EFFECTIVE = '8 April 2026'
+
+const COMPANY = [
+  'VeritasIQ Technologies Limited',
+  'Company number 17120203',
+  'Registered office: 2a Connaught Avenue, London, United Kingdom, E4 7AA',
+].join('\n')
 
 export default function TermsPage() {
   return (
@@ -21,7 +27,7 @@ export default function TermsPage() {
             title: '1. Acceptance',
             body: `By creating a PIOS account, you agree to these Terms of Service and our Privacy Policy. If you do not agree, do not use PIOS.
 
-PIOS is operated by VeritasIQ Technologies Ltd ("we", "us", "our"), registered in the UAE Free Zone.`
+PIOS is operated by VeritasIQ Technologies Limited ("we", "us", "our"), a private company limited by shares incorporated in England and Wales under company number 17120203.`
           },
           {
             title: '2. Service description',
@@ -48,6 +54,8 @@ You must be 18 or older to create an account. One person may not maintain multip
 • Use PIOS to harass, defame, or harm others
 • Circumvent any security or access controls
 
+Use of PIOS is also subject to our Acceptable Use Policy at /acceptable-use.
+
 We reserve the right to suspend accounts that violate these terms without refund.`
           },
           {
@@ -58,7 +66,7 @@ We reserve the right to suspend accounts that violate these terms without refund
 • Not professional advice (legal, financial, medical, or otherwise)
 • Subject to your own review and verification before acting on it
 
-You are responsible for verifying any AI-generated output before relying on it for important decisions.`
+AI-generated outputs in PIOS are not a substitute for professional legal, financial, regulatory, investment, or business advice. VeritasIQ Technologies Limited accepts no liability for decisions made solely in reliance on AI-generated content. You are responsible for verifying any AI-generated output before relying on it for important decisions.`
           },
           {
             title: '6. Google integrations',
@@ -68,25 +76,31 @@ PIOS does not send emails, create calendar events, or modify Drive files without
           },
           {
             title: '7. Payments and subscriptions',
-            body: `Paid plans are billed monthly via Stripe. Prices are shown in USD. You may cancel at any time via Settings → Billing — cancellation takes effect at the end of the current billing period. We do not offer refunds for partial months.
+            body: `Paid plans are billed monthly or annually via Stripe. Prices on the public pricing pages are shown in GBP. As at the effective date of these Terms, individual plans are advertised as Starter £12/month, Pro £28/month, and Executive £36/month, with separate annual billing options. Enterprise pricing is quoted separately and may be set out in a written proposal or order form.
+
+You may cancel at any time via Settings → Billing. Cancellation takes effect at the end of the current billing period. We do not offer refunds for partial months unless required by applicable law.
 
 Stripe handles all payment processing. Your card details are never stored on our servers.`
           },
           {
             title: '8. Intellectual property',
-            body: `PIOS, the NemoClaw methodology references, and all platform content are the intellectual property of VeritasIQ Technologies Ltd and its subsidiaries. You retain ownership of content you create within PIOS (your tasks, notes, files, etc.).
+            body: `PIOS, the NemoClaw methodology references, and all platform content are the intellectual property of VeritasIQ Technologies Limited. VeritasIQ Technologies Limited is the sole owner of the PIOS intellectual property, codebase, product materials, proprietary frameworks, trade secrets, and related platform assets unless expressly stated otherwise in writing. You retain ownership of content you create within PIOS (your tasks, notes, files, and similar user content).
 
 You grant us a limited licence to store, process, and display your content solely for the purpose of providing the service.`
           },
           {
             title: '9. Limitation of liability',
-            body: `To the maximum extent permitted by law, VeritasIQ Technologies Ltd shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of PIOS.
+            body: `Nothing in these Terms excludes or limits liability for death or personal injury caused by negligence, fraud or fraudulent misrepresentation, or any other liability which cannot lawfully be excluded or limited under the laws of England and Wales.
 
-Our total liability to you for any claim shall not exceed the amount you paid us in the 12 months prior to the claim.`
+Subject to that, and to the maximum extent permitted by law, VeritasIQ Technologies Limited shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of PIOS.
+
+Our total liability to you for any claim arising out of or in connection with PIOS shall not exceed the amount you paid us in the 12 months prior to the claim.`
           },
           {
             title: '10. Governing law',
-            body: `These terms are governed by the laws of the United Arab Emirates. Any disputes shall be subject to the exclusive jurisdiction of the courts of the UAE, unless otherwise required by applicable law in your jurisdiction.`
+            body: `These Terms and any non-contractual obligations arising out of or in connection with them are governed by the laws of England and Wales.
+
+If you are acting in the course of business, the courts of England and Wales shall have exclusive jurisdiction over any dispute arising out of or in connection with these Terms. If you are a consumer, you may also have mandatory rights to bring proceedings in your home jurisdiction where required by law.`
           },
           {
             title: '11. Changes',
@@ -94,8 +108,7 @@ Our total liability to you for any claim shall not exceed the amount you paid us
           },
           {
             title: '12. Contact',
-            body: `VeritasIQ Technologies Ltd
-Fujairah Creative City Free Zone, UAE
+            body: `${COMPANY}
 Email: info@veritasiq.io`
           },
         ].map(section => (
@@ -106,6 +119,8 @@ Email: info@veritasiq.io`
         ))}
 
         <div style={{ borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:24, marginTop:32, display:'flex', gap:16 }}>
+          <Link href="/acceptable-use" style={{ fontSize:12, color:'#c8a96e', textDecoration:'none' }}>Acceptable Use →</Link>
+          <Link href="/cookies" style={{ fontSize:12, color:'#a78bfa', textDecoration:'none' }}>Cookie Policy</Link>
           <Link href="/privacy" style={{ fontSize:12, color:'#a78bfa', textDecoration:'none' }}>Privacy Policy →</Link>
           <Link href="/auth/login" style={{ fontSize:12, color:'#64748b', textDecoration:'none' }}>Back to PIOS</Link>
         </div>

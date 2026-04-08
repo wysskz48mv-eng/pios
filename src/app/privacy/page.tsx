@@ -2,7 +2,13 @@ import Link from 'next/link'
 
 export const metadata = { title: 'Privacy Policy — PIOS' }
 
-const EFFECTIVE = 'March 2026'
+const EFFECTIVE = '8 April 2026'
+
+const COMPANY = [
+  'VeritasIQ Technologies Limited',
+  'Company number 17120203',
+  'Registered office: 2a Connaught Avenue, London, United Kingdom, E4 7AA',
+].join('\n')
 
 export default function PrivacyPage() {
   return (
@@ -19,14 +25,18 @@ export default function PrivacyPage() {
 
         <div style={{ background:'rgba(167,139,250,0.05)', border:'1px solid rgba(167,139,250,0.15)', borderRadius:12, padding:'16px 20px', marginBottom:32 }}>
           <p style={{ fontSize:13, color:'#94a3b8', lineHeight:1.75, margin:0 }}>
-            <strong style={{ color:'#a78bfa' }}>Summary:</strong> PIOS is a personal productivity platform operated by VeritasIQ Technologies Ltd. Your data is stored in the EU (Ireland), never sold, never used for advertising. You can export or delete your data at any time.
+            <strong style={{ color:'#a78bfa' }}>Summary:</strong> PIOS is a personal productivity platform operated by VeritasIQ Technologies Limited in England and Wales. Your data is never sold and is not used for advertising. You can export your data at any time and request erasure through our privacy contact channel or available in-app privacy controls.
           </p>
         </div>
 
         {[
           {
             title: '1. Who we are',
-            body: `PIOS ("Personal Intelligent Operating System") is operated by VeritasIQ Technologies Ltd, a company registered in the UAE (Free Zone). Our registered address is Fujairah Creative City Free Zone, UAE.
+            body: `PIOS ("Personal Intelligent Operating System") is operated by VeritasIQ Technologies Limited, a private company limited by shares incorporated in England and Wales under company number 17120203.
+
+${COMPANY}
+
+ICO registration application filed on 8 April 2026: reference C1903482.
 
 For data protection enquiries: info@veritasiq.io`
           },
@@ -67,7 +77,7 @@ We apply Row-Level Security (RLS) policies ensuring that each user can only acce
 • Anthropic Claude API (AI responses) — data processed but not stored by Anthropic per their enterprise privacy terms
 • Google APIs (Calendar, Gmail, Drive) — only if you explicitly grant OAuth permission
 • Stripe (payment processing) — your card details are handled entirely by Stripe and never touch our servers
-• Vercel (hosting and deployment) — EU region
+• Vercel (hosting and deployment)
 
 Each provider operates under their own privacy policy and data processing agreements.`
           },
@@ -77,15 +87,15 @@ Each provider operates under their own privacy policy and data processing agreem
 
 • Access: request a copy of all data we hold about you
 • Correction: update inaccurate data via the Settings page
-• Deletion: delete your account and all associated data at any time via Settings → Delete account
-• Export: export your data in JSON format (available on request)
+• Deletion: request erasure of your personal data by contacting info@veritasiq.io or by using available in-app privacy controls
+• Export: export your data in JSON format through the platform privacy controls or on request
 • Withdraw consent: disconnect Google integrations at any time via Settings → Integrations
 
-To exercise any of these rights, contact us at info@veritasiq.io or use the in-app Settings controls.`
+To exercise any of these rights, contact us at info@veritasiq.io or use the in-app privacy controls where available.`
           },
           {
             title: '7. Data retention',
-            body: `We retain your data for as long as your account is active. If you delete your account, all personal data is removed within 30 days. Anonymised aggregate usage statistics (no personal identifiers) may be retained for up to 2 years for platform improvement purposes.`
+            body: `We retain your data for as long as your account is active. If you submit a valid erasure request, we will handle it in line with UK GDPR obligations and ordinarily within 30 days unless we are legally required to retain specific records. Anonymised aggregate usage statistics (with no personal identifiers) may be retained for up to 2 years for service improvement and security analysis.`
           },
           {
             title: '8. Cookies',
@@ -94,7 +104,7 @@ To exercise any of these rights, contact us at info@veritasiq.io or use the in-a
 • Session cookies: maintain your authenticated session (Supabase auth tokens)
 • Security cookies: CSRF protection
 
-We do not use analytics cookies, advertising cookies, or any third-party tracking.`
+We do not currently use analytics cookies, advertising cookies, or third-party behavioural tracking. For more detail, see our Cookie Policy at /cookies.`
           },
           {
             title: '9. Children',
@@ -106,8 +116,7 @@ We do not use analytics cookies, advertising cookies, or any third-party trackin
           },
           {
             title: '11. Contact',
-            body: `VeritasIQ Technologies Ltd
-Fujairah Creative City Free Zone, UAE
+            body: `${COMPANY}
 Email: info@veritasiq.io`
           },
         ].map(section => (
@@ -118,6 +127,7 @@ Email: info@veritasiq.io`
         ))}
 
         <div style={{ borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:24, marginTop:32, display:'flex', gap:16 }}>
+          <Link href="/cookies" style={{ fontSize:12, color:'#c8a96e', textDecoration:'none' }}>Cookie Policy →</Link>
           <Link href="/terms" style={{ fontSize:12, color:'#a78bfa', textDecoration:'none' }}>Terms of Service →</Link>
           <Link href="/auth/login" style={{ fontSize:12, color:'#64748b', textDecoration:'none' }}>Back to PIOS</Link>
         </div>
