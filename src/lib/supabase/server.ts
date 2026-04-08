@@ -3,15 +3,20 @@ import { cookies } from 'next/headers'
 import { getSupabasePublicKey, getSupabaseUrl } from '@/lib/supabase/env'
 
 export function createClient() {
-  const cookieStore = cookies()
   return createServerClient(
     getSupabaseUrl(),
     getSupabasePublicKey(),
     {
       cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll(cs: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          try { cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options as Record<string, unknown>)) } catch {}
+        async getAll() {
+          const cookieStore = await cookies()
+          return cookieStore.getAll()
+        },
+        async setAll(cs: { name: string; value: string; options?: Record<string, unknown> }[]) {
+          try {
+            const cookieStore = await cookies()
+            cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options as Record<string, unknown>))
+          } catch {}
         },
       } as CookieMethodsServer,
     }
