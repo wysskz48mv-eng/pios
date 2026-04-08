@@ -25,7 +25,7 @@ const MAX_SIZE_MB = 25
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
 
     // Save metadata to files table
     const { data: fileRecord, error: dbErr } = await (supabase as any)
-      .from('files').insert({
+      .from('file_items').insert({
         user_id:      user.id,
         tenant_id:    tenantId,
         name:         file.name,

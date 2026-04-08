@@ -120,10 +120,11 @@ export async function POST(req: NextRequest) {
       const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? null
       const ua = req.headers.get('user-agent') ?? null
       for (const consent_type of ['terms_of_service','privacy_policy','ai_processing']) {
-        await admin.from('consent_records').insert({
+        const { error: ce } = await admin.from('consent_records').insert({
           user_id: user.id, consent_type, version: '1.0',
           granted: true, granted_at: now, ip_address: ip, user_agent: ua,
-        }).then(() => {}).catch(() => {})
+        })
+        if (ce) console.error('[onboarding] consent insert:', ce.message)
       }
     } catch (e) { console.error('[onboarding] consent_records (non-fatal):', e) }
 
