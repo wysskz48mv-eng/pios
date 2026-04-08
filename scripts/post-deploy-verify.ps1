@@ -45,8 +45,8 @@ Write-Host "PASS landing page content signal"
 
 Write-Step "Signup page"
 $signupBody = Get-BodyText "$BaseUrl/auth/signup?plan=executive"
-Assert ($signupBody -match 'Magic link|magic link') "Signup page does not show the expected magic-link flow."
-Write-Host "PASS signup page magic-link signal"
+Assert (($signupBody -match 'Create your account') -and (($signupBody -match 'Send secure link') -or ($signupBody -match 'Continue with Google'))) "Signup page does not show the expected passwordless signup flow."
+Write-Host "PASS signup page passwordless flow signal"
 
 Write-Step "Dashboard protection"
 try {
