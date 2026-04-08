@@ -12,10 +12,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { completeWithFailover }      from '@/lib/ai/provider'
 
 export const dynamic = 'force-dynamic'
-const anthropic = new Anthropic()
 
 // ── Available models + capabilities ──────────────────────────────────────────
 const MODELS: Record<string, { label:string; tier:string; speed:string; cost:string; best_for:string; token_limit:number; colour:string }> = {
@@ -142,21 +141,25 @@ export async function POST(req: NextRequest) {
 
       const testPrompt = prompt ?? `You are being tested for the PIOS ${TASK_LABELS[task] ?? task} task. Respond in exactly 2 sentences confirming you are ready and describing your approach.`
       const start = Date.now()
-      const msg = await anthropic.messages.create({
-        model, max_tokens: 150,
+      const result = await completeWithFailover({
+        system: 'You are a PIOS model-routing test harness. Follow the user prompt exactly and keep the reply concise.',
         messages: [{ role: 'user', content: testPrompt }],
+        maxTokens: 150,
+        preferredModel: model,
       })
       const latency  = Date.now() - start
-      const response = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
       return NextResponse.json({
         ok:       true,
         action:   'test',
         model,
         task,
-        response,
+        response: result.content,
         latency_ms: latency,
-        input_tokens:  msg.usage.input_tokens,
-        output_tokens: msg.usage.output_tokens,
+        input_tokens: result.tokens.input,
+        output_tokens: result.tokens.output,
+        provider: result.provider,
+        resolved_model: result.model,
+        failover_occurred: result.failoverOccurred,
       })
     }
 
@@ -167,13 +170,23 @@ export async function POST(req: NextRequest) {
         Object.keys(MODELS as Record<string,any>).map(async (model) => {
           const start = Date.now()
           try {
-            const msg = await anthropic.messages.create({
-              model, max_tokens: 100,
+            const result = await completeWithFailover({
+              system: 'You are a PIOS model benchmark harness. Return a short, direct response to the user prompt.',
               messages: [{ role: 'user', content: testPrompt }],
+              maxTokens: 100,
+              preferredModel: model,
             })
             const latency = Date.now() - start
-            const response = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
-            return { model, response, latency_ms: latency, tokens: msg.usage.output_tokens, ok: true }
+            return {
+              model,
+              response: result.content,
+              latency_ms: latency,
+              tokens: result.tokens.output,
+              provider: result.provider,
+              resolved_model: result.model,
+              failover_occurred: result.failoverOccurred,
+              ok: true,
+            }
           } catch (e: any) {
             return { model, response: '', latency_ms: Date.now() - start, error: e?.message, ok: false }
           }

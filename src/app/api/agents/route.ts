@@ -11,11 +11,10 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { callClaude }                from '@/lib/ai/client'
 
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 60
-const anthropic = new Anthropic()
 type R = Record<string, unknown>
 
 // ── Agent catalogue ───────────────────────────────────────────────────────────
@@ -147,9 +146,8 @@ export async function POST(req: NextRequest) {
       // Fetch relevant PIOS data for the agent
       const contextData = await buildAgentContext(supabase, user.id, agent_id)
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514', max_tokens: 800,
-        messages: [{ role: 'user', content:
+      const output = await callClaude(
+        [{ role: 'user', content:
           `You are the PIOS ${agentDef.name} background agent.\n\n` +
           `Agent description: ${agentDef.description}\n` +
           `Actions: ${agentDef.actions.join(', ')}\n` +
@@ -158,9 +156,10 @@ export async function POST(req: NextRequest) {
           `Format your output clearly with action headings. Be specific and actionable.\n` +
           `End with: AGENT SUMMARY — 2 sentences on the overall status and top recommended action.`
         }],
-      })
-
-      const output = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a disciplined background operations agent for PIOS. Produce structured, specific operational output with no padding.',
+        800,
+        'sonnet'
+      )
       const duration = Date.now() - started
 
       // Log the run

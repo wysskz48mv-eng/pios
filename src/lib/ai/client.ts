@@ -11,9 +11,10 @@
  *  2. Output filter — detects and suppresses system prompt leakage
  *  3. Temperature capped at 0.7
  *  4. Token usage logged for audit and cost monitoring
+ *  5. Provider resilience — Anthropic primary with OpenAI/Gemini failover
  */
 
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages'
+import { completeWithFailover } from '@/lib/ai/provider'
 
 export interface AIMessage { role: 'user' | 'assistant'; content: string }
 
@@ -56,35 +57,25 @@ export async function callClaude(
   maxTokens = 1000,
   model: ModelKey = 'sonnet'
 ): Promise<string> {
-  const res = await fetch(ANTHROPIC_API, {
-    method: 'POST',
-    headers: {
-      'Content-Type':      'application/json',
-      'x-api-key':         process.env.ANTHROPIC_API_KEY!,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model:      MODELS[model],
-      max_tokens: maxTokens,
-      temperature: 0.2,   // deterministic for factual/operational tasks
-      system,             // server-side only
-      messages: sanitise(messages),
-    }),
+  const response = await completeWithFailover({
+    system,
+    messages: sanitise(messages),
+    maxTokens,
+    temperature: 0.2,
+    preferredModel: MODELS[model],
   })
 
-  if (!res.ok) {
-    console.error('[PIOS-AI] Claude API error', res.status)
-    throw new Error(`AI service error: ${res.status}`)
-  }
-
-  const data = await res.json()
-  const raw  = data.content?.[0]?.text ?? ''
-
   // Audit log (IS-POL-015)
-  console.info('[PIOS-AI] tokens in=%d out=%d',
-    data.usage?.input_tokens ?? 0, data.usage?.output_tokens ?? 0)
+  console.info(
+    '[PIOS-AI] provider=%s model=%s failover=%s tokens in=%d out=%d',
+    response.provider,
+    response.model,
+    response.failoverOccurred,
+    response.tokens.input,
+    response.tokens.output,
+  )
 
-  return filterOutput(raw)
+  return filterOutput(response.content)
 }
 
 // PIOS system prompt — INTERNAL classification (IS-POL-004)
