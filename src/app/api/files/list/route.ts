@@ -1,16 +1,15 @@
 /**
  * GET /api/files/list — flat list of file_items for Document Intelligence page
- * PIOS v3.0 | VeritasIQ Technologies Ltd
+ * PIOS v3.1 | VeritasIQ Technologies Ltd
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
 export const runtime = 'nodejs'
 
 export async function GET(request: Request) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()  // ← was missing await
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -54,6 +53,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, files, total: files.length })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
+    console.error('[files/list]', msg)
     return NextResponse.json({ ok: false, error: msg, files: [] }, { status: 500 })
   }
 }
