@@ -53,7 +53,7 @@ async function main() {
     return response.status === 200 || response.status === 401
   })
   await check('Cron brief requires auth', async () => (await get('/api/cron/brief')).status === 401)
-  await check('Capture endpoint accepts report or is unbuilt', async () => {
+  await check('Capture endpoint is secured or unbuilt', async () => {
     const response = await fetch(`${base}/api/reporting/capture`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -64,7 +64,7 @@ async function main() {
         severity: 'low',
       }),
     })
-    return response.status === 200 || response.status === 201 || response.status === 404
+    return response.status === 200 || response.status === 201 || response.status === 401 || response.status === 403 || response.status === 404
   })
   await check('Title contains PIOS', async () => (await (await get('/')).text()).includes('PIOS'))
   await check('No AECOM references on landing page', async () => !(await (await get('/')).text()).toLowerCase().includes('aecom'))

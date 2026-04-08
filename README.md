@@ -46,6 +46,7 @@ See [`/docs/adr/`](docs/adr/README.md) for key decisions.
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY= # Optional fallback for newer Supabase publishable keys
 SUPABASE_SERVICE_ROLE_KEY=
 ANTHROPIC_API_KEY=
 STRIPE_SECRET_KEY=
