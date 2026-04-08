@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/morning-brief",
-      "schedule": "0 6 * * *"
-    },
-    {
       "path": "/api/cron/trial-reminder",
       "schedule": "0 9 * * *"
     },
@@ -49,10 +45,6 @@
       "schedule": "0 5 * * *"
     },
     {
-      "path": "/api/notifications/smart",
-      "schedule": "0 6 * * *"
-    },
-    {
       "path": "/api/cron/wellness-patterns",
       "schedule": "0 7 * * *"
     },
@@ -66,9 +58,6 @@
     }
   ],
   "functions": {
-    "src/app/api/cron/morning-brief/route.ts": {
-      "maxDuration": 300
-    },
     "src/app/api/cron/trial-reminder/route.ts": {
       "maxDuration": 60
     },

@@ -15,7 +15,7 @@ integrates tasks, projects, academic tracking, and email triage in one place.
 | Frontend | Next.js 14.2.35 / TypeScript / Tailwind CSS |
 | Auth | Supabase Auth (magic link / OTP) |
 | Database | Supabase PostgreSQL (EU West) — RLS enabled |
-| AI | Anthropic Claude (claude-sonnet-4-20250514) |
+| AI | Anthropic Claude primary, with OpenAI and Gemini failover |
 | Billing | Stripe (subscriptions: Student / Individual / Professional) |
 | Email | Resend |
 | Deployment | Vercel |
@@ -49,6 +49,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY= # Optional fallback for newer Supabase publishable keys
 SUPABASE_SERVICE_ROLE_KEY=
 ANTHROPIC_API_KEY=
+OPENAI_API_KEY=           # Optional AI failover provider
+GOOGLE_GEMINI_API_KEY=    # Optional AI failover provider
 STRIPE_SECRET_KEY=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_WEBHOOK_SECRET=
@@ -62,6 +64,9 @@ RESEND_FROM_EMAIL=
 CRON_SECRET=
 GOOGLE_CLIENT_ID=         # For Gmail OAuth
 GOOGLE_CLIENT_SECRET=
+AZURE_CLIENT_ID=          # For Microsoft / Outlook OAuth
+AZURE_CLIENT_SECRET=
+OAUTH_STATE_SECRET=       # Recommended when enabling Microsoft OAuth callbacks
 SENTRY_DSN=               # Optional — error tracking
 ```
 
@@ -76,6 +81,32 @@ SENTRY_DSN=               # Optional — error tracking
 - **CVEs:** Next.js 14.2.35 (patches CVE-2024-46982 cache poisoning, CVE-2024-56332 DoS)
 - **MFA:** Available via Supabase Auth TOTP — enable in Supabase Dashboard → Authentication
 - **Backups:** Supabase automated daily backups, 7-day PITR
+
+### Privileged route controls
+
+- Admin migration and seed routes are disabled by default in production.
+- Enable them only when explicitly needed by setting one of:
+	- `ENABLE_ADMIN_ROUTES=true`
+	- `ENABLE_ADMIN_MIGRATION_ROUTES=true`
+	- `ENABLE_ADMIN_SEED_ROUTES=true`
+	- `ENABLE_ADMIN_BILLING_ROUTES=true`
+	- `ENABLE_ADMIN_COMMUNICATION_ROUTES=true`
+	- `ENABLE_LIVE_DIAGNOSTIC_ROUTES=true`
+- Protected routes also require the relevant secret header; the production flags do not replace authentication.
+- Internal operational endpoints such as setup status and live cross-product metrics are owner-scoped and should not be relied on as general user-facing APIs.
+
+### Microsoft OAuth caveat
+
+- Microsoft inbox connection is enabled, but some work, university, or government Microsoft 365 tenants block third-party OAuth consent by policy.
+- If a user hits that restriction, direct them to ask their host organisation IT team to approve the Azure app registration.
+- If approval is not available, guide them to use a personal Outlook or Gmail inbox for email triage, or use IMAP with an app password where their tenant permits it.
+
+### AI resilience
+
+- The shared AI client now uses Anthropic as the primary provider, with OpenAI and Gemini as automatic fallbacks when configured.
+- Add `OPENAI_API_KEY` and `GOOGLE_GEMINI_API_KEY` in Vercel if you want failover beyond Anthropic.
+- CSP now allows `api.openai.com` and `generativelanguage.googleapis.com` for server-side AI failover requests.
+- If the `ai_provider_config` and `ai_provider_health_log` tables exist, provider ordering and health events are recorded there. If they do not exist, the app falls back to the built-in provider order and continues operating.
 
 ---
 
