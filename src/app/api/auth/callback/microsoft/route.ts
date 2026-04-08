@@ -19,6 +19,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
+import { verifySignedOAuthState }    from '@/lib/security/oauth-state'
 
 export const runtime = 'nodejs'
 
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
                              msError === 'access_denied'
 
     const msg = isConsentBlocked
-      ? 'Your organisation has restricted third-party app access. Use IMAP + app password to connect this inbox instead.'
+      ? 'Your organisation has restricted third-party Microsoft app access. Ask your IT team to approve the Azure app, or use a personal Outlook/Gmail inbox for email triage. If your tenant allows IMAP with an app password, that can also be used as a fallback.'
       : `Microsoft sign-in failed: ${msErrorDesc ?? msError}`
 
     return NextResponse.redirect(
@@ -57,14 +58,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${appUrl}/platform/settings?tab=email&error=No+authorisation+code`)
   }
 
-  // ── Decode state ──────────────────────────────────────────────────────────
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.redirect(`${appUrl}/login?error=session_expired`)
+  }
+
+  // ── Verify signed state before token exchange ─────────────────────────────
   let context = 'personal'
   let label   = ''
-  try {
-    const decoded = JSON.parse(Buffer.from(state ?? '', 'base64url').toString())
-    context = decoded.context ?? 'personal'
-    label   = decoded.label   ?? ''
-  } catch { /* use defaults */ }
+  const decodedState = verifySignedOAuthState(state)
+  if (!decodedState || decodedState.userId !== user.id) {
+    return NextResponse.redirect(`${appUrl}/platform/settings?tab=email&error=Invalid+or+expired+Microsoft+OAuth+state.+Restart+the+connection+from+Settings`)
+  }
+  context = decodedState.context ?? 'personal'
+  label = decodedState.label ?? ''
 
   // ── Exchange code for tokens ──────────────────────────────────────────────
   const clientId     = process.env.AZURE_CLIENT_ID!
@@ -91,8 +100,12 @@ export async function GET(req: NextRequest) {
   }
 
   if ((tokenData as any).error) {
+    const tokenError = (tokenData as any).error_description ?? (tokenData as any).error
+    const guidance = String(tokenError).includes('AADSTS65001') || String(tokenError).includes('consent')
+      ? ' Microsoft OAuth was blocked by tenant policy. Ask your IT team to approve the Azure app, or use a personal inbox or IMAP/app-password fallback for email triage.'
+      : ''
     return NextResponse.redirect(
-      `${appUrl}/platform/settings?tab=email&error=${encodeURIComponent((tokenData as any).error_description ?? (tokenData as any).error)}`
+      `${appUrl}/platform/settings?tab=email&error=${encodeURIComponent(`${tokenError}${guidance}`)}`
     )
   }
 
@@ -144,14 +157,6 @@ export async function GET(req: NextRequest) {
     inferredContext === 'work'       ? 'Work Email'         :
     'Outlook / Microsoft'
   )
-
-  // ── Register account in Supabase ──────────────────────────────────────────
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.redirect(`${appUrl}/login?error=session_expired`)
-  }
 
   // Check if first account (make primary)
   const { count } = await supabase

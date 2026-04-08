@@ -29,6 +29,10 @@ export default function LoginPage() {
   async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault()
     if (!email.trim()) return
+    if (!supabase) {
+      setError('PIOS is temporarily unavailable. Please refresh in a moment.')
+      return
+    }
     setLoading(true); setError('')
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
@@ -42,9 +46,17 @@ export default function LoginPage() {
   return (
     <main className="pios-login-wrap">
       <div className="pios-login-box">
+        <div style={{ marginBottom: 18, textAlign: 'center' }}>
+          <Link
+            href="/"
+            style={{ fontSize: 12, color: 'var(--pios-dim)', textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+          >
+            ← Back to home
+          </Link>
+        </div>
 
         <div className="pios-login-logo">
-          <span className="pios-login-p">P</span>
+          <Link href="/" className="pios-login-p" style={{ textDecoration: 'none', color: 'inherit', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>P</Link>
         </div>
         <h1 className="pios-login-h1">Welcome back.</h1>
         <p className="pios-login-sub">Sign in to your PIOS command centre</p>
@@ -74,6 +86,10 @@ export default function LoginPage() {
             <>
               <button
                 onClick={async () => {
+                  if (!supabase) {
+                    setError('PIOS is temporarily unavailable. Please refresh in a moment.')
+                    return
+                  }
                   setLoading(true); setError('')
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',

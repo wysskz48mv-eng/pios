@@ -17,6 +17,7 @@ const PERSONA_LABELS: Record<string, string> = {
 export default function SignupPage() {
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan') ?? 'pro'
+  const betaToken = searchParams.get('beta') ?? ''
   const personaLabel = PERSONA_LABELS[plan] ?? 'PIOS'
 
   const [email, setEmail] = useState('')
@@ -26,17 +27,36 @@ export default function SignupPage() {
 
   const supabase = createClient()
 
+  const onboardingNext = betaToken
+    ? `/onboarding?beta=${encodeURIComponent(betaToken)}`
+    : '/onboarding'
+
+  function buildCallbackUrl() {
+    if (typeof window === 'undefined') return '/auth/callback'
+
+    const callbackUrl = new URL('/auth/callback', window.location.origin)
+    callbackUrl.searchParams.set('next', onboardingNext)
+    return callbackUrl.toString()
+  }
+
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault()
     if (!email.trim()) return
+    if (!supabase) {
+      setError('PIOS is temporarily unavailable. Please refresh in a moment.')
+      return
+    }
     setLoading(true)
     setError('')
 
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
-        data: { plan },
+        emailRedirectTo: buildCallbackUrl(),
+        data: {
+          plan,
+          ...(betaToken ? { beta_token: betaToken } : {}),
+        },
       },
     })
 
@@ -46,12 +66,16 @@ export default function SignupPage() {
   }
 
   async function handleGoogle() {
+    if (!supabase) {
+      setError('PIOS is temporarily unavailable. Please refresh in a moment.')
+      return
+    }
     setLoading(true)
     setError('')
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: buildGoogleOAuthOptions(window.location.origin, '/onboarding', 'auth'),
+      options: buildGoogleOAuthOptions(window.location.origin, onboardingNext, 'auth'),
     })
 
     if (oauthError) {
@@ -84,10 +108,11 @@ export default function SignupPage() {
 
   return (
     <div className={styles.page}>
-      <Link href="/" className={styles.backLink}>← Back</Link>
+      <Link href="/" className={styles.backLink}>← Back to home</Link>
       <div className={styles.box}>
         <div className={styles.logo}>PIOS</div>
         <div className={styles.personaBadge}>{personaLabel}</div>
+        {betaToken && <div className={styles.personaBadge}>Beta access</div>}
 
         <h2 className={styles.title}>Create your account</h2>
         <p className={styles.sub}>
@@ -111,7 +136,7 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={loading || !email}
+            disabled={loading || !email || !supabase}
             className={styles.sendBtn}
           >
             {loading ? 'Sending…' : 'Send secure link →'}
@@ -127,6 +152,7 @@ export default function SignupPage() {
         <button
           type="button"
           onClick={handleGoogle}
+          disabled={!supabase}
           className={styles.googleBtn}
         >
           Continue with Google

@@ -11,11 +11,11 @@ export async function POST() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('google_refresh_token, google_token_expiry')
+    .select('google_refresh_token_enc, google_token_expiry')
     .eq('id', user.id)
     .single()
 
-  if (!profile?.google_refresh_token) {
+  if (!profile?.google_refresh_token_enc) {
     return NextResponse.json({ error: 'No refresh token stored. Please sign in with Google again.' }, { status: 400 })
   }
 
@@ -40,7 +40,7 @@ export async function POST() {
       body: new URLSearchParams({
         client_id: clientId,
         client_secret: clientSecret,
-        refresh_token: profile.google_refresh_token,
+        refresh_token: profile.google_refresh_token_enc,
         grant_type: 'refresh_token',
       }),
     })
@@ -54,10 +54,10 @@ export async function POST() {
     const newExpiry = new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000).toISOString()
 
     await supabase.from('user_profiles').update({
-      google_access_token: tokens.access_token,
+      google_access_token_enc: tokens.access_token,
       google_token_expiry: newExpiry,
       // Google only returns a new refresh_token if rotation is enabled
-      ...(tokens.refresh_token ? { google_refresh_token: tokens.refresh_token } : {}),
+      ...(tokens.refresh_token ? { google_refresh_token_enc: tokens.refresh_token } : {}),
     }).eq('id', user.id)
 
     return NextResponse.json({ refreshed: true, expires_at: newExpiry })

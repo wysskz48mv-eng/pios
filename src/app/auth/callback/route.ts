@@ -114,6 +114,7 @@ export async function GET(request: NextRequest) {
 
     await admin.from('user_profiles').upsert({
       id:                   user.id,
+      user_id:              user.id,
       full_name:            fullName,
       plan:                 'free',
       persona_type:         'executive',
@@ -138,7 +139,7 @@ export async function GET(request: NextRequest) {
     }, { onConflict: 'user_id' })
 
     sendWelcomeEmail(user.email ?? '', fullName).catch(() => {})
-    return NextResponse.redirect(`${origin}/onboarding`)
+    return NextResponse.redirect(`${origin}${next}`)
   }
 
   // ── Returning user — update Google tokens if this was a Google OAuth ──────
