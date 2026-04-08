@@ -236,7 +236,9 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
   }, [])
 
   async function signOut() {
-    await supabase.auth.signOut()
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
     router.push('/auth/login')
   }
 

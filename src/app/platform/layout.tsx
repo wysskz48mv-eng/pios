@@ -4,6 +4,8 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { PlatformShell } from '@/components/layout/PlatformShell'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()

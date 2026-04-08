@@ -50,6 +50,10 @@ function EmailAccountsSection() {
 
   async function connectGoogle() {
     const supabase = createClient()
+    if (!supabase) {
+      setError('PIOS is temporarily unavailable. Please refresh in a moment.')
+      return
+    }
     if (accounts.length === 0) {
       // Primary Google — use Supabase OAuth (sets session)
       await supabase.auth.signInWithOAuth({
@@ -140,6 +144,12 @@ function EmailAccountsSection() {
         </div>
       )}
 
+      <div style={{ fontSize:11, color:'var(--pios-muted)', padding:'10px 12px', background:'rgba(0,120,212,0.05)', borderRadius:8, marginBottom:12, border:'1px solid rgba(0,120,212,0.15)', lineHeight:1.6 }}>
+        <strong style={{ color:'#0078D4' }}>Microsoft 365 caveat:</strong> some work, university, government, NHS, and defence tenants block third-party OAuth apps by policy.
+        If Microsoft connection fails, ask your host organisation IT team to approve the Azure app.
+        If they cannot, use a personal Outlook or Gmail inbox for email triage, or use IMAP with an app password where your tenant permits it.
+      </div>
+
       {/* Add account panel */}
       {showAdd && (
         <div style={{ background:'var(--pios-surface2)', border:'1px solid var(--pios-border)', borderRadius:10, padding:16, marginBottom:16 }}>
@@ -181,11 +191,13 @@ function EmailAccountsSection() {
           {addProvider === 'microsoft' && (
             <div>
               <div style={{ fontSize:11, color:'var(--pios-muted)', marginBottom:10, lineHeight:1.6 }}>
-                Connects via Microsoft Entra ID OAuth. Works for personal Outlook, university M365, and work M365.
-                <span style={{ color:'var(--saas)' }}> If your institution blocks third-party apps, use IMAP + app password instead.</span>
+                Connects via Microsoft Entra ID OAuth for personal Outlook, university M365, and work M365 inboxes.
+                <span style={{ color:'var(--saas)' }}> Some host organisations block third-party consent, so email triage may require IT approval or an IMAP fallback.</span>
               </div>
               <div style={{ fontSize:10, color:'var(--pios-dim)', padding:'8px 10px', background:'rgba(0,120,212,0.06)', borderRadius:6, marginBottom:10, lineHeight:1.5 }}>
-                <strong style={{ color:'#0078D4' }}>Institutional accounts (NHS, Gov, armed forces):</strong> Your IT team may block OAuth consent for external apps. If sign-in fails, use the IMAP option with an app-specific password generated in your M365 settings.
+                <strong style={{ color:'#0078D4' }}>Institutional accounts:</strong> NHS, government, armed forces, university, and enterprise tenants may block OAuth consent for external apps.
+                If sign-in fails, first ask IT to approve the Azure app.
+                If approval is not available, use a personal inbox for triage or switch to IMAP with an app-specific password if your tenant allows it.
               </div>
               <button onClick={connectMicrosoft} className="pios-btn pios-btn-primary" style={{ fontSize:12, width:'100%', background:'#0078D4', borderColor:'#0078D4' }}>
                 Connect Microsoft / Outlook →
@@ -718,7 +730,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <p style={{ fontSize:10, color:'var(--pios-dim)', marginTop:10 }}>
-              Controller: VeritasIQ Technologies Ltd, United Kingdom · DPO: info@veritasiq.io
+              Controller: VeritasIQ Technologies Limited, United Kingdom · ICO application filed 8 April 2026: C1903482 · DPO contact: info@veritasiq.io
             </p>
           </div>
         </Section>
@@ -740,7 +752,7 @@ export default function SettingsPage() {
           <Link href="/platform/setup" style={{ display:'block',fontSize:12,color:'var(--saas)',textDecoration:'none',marginTop:14,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(245,158,11,0.25)',background:'rgba(245,158,11,0.06)',textAlign:'center' as const }}>
             ⚡ Phase 2 Setup Guide →
           </Link>
-          <button onClick={async()=>{const supabase=createClient();await supabase.auth.signOut();window.location.href='/auth/login'}} style={{ fontSize:12,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'var(--dng)',marginTop:8,width:'100%' }}>
+          <button onClick={async()=>{const supabase=createClient();if (supabase) { await supabase.auth.signOut() };window.location.href='/auth/login'}} style={{ fontSize:12,padding:'8px 16px',borderRadius:8,border:'1px solid rgba(239,68,68,0.3)',background:'none',cursor:'pointer',color:'var(--dng)',marginTop:8,width:'100%' }}>
             Sign out
           </button>
         </Section>

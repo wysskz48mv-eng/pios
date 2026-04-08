@@ -83,6 +83,7 @@ export default function PrivacyPage() {
         <div>
           <h1 style={{fontSize:18,fontWeight:500,color:'var(--color-text-primary)',margin:0}}>Privacy & GDPR</h1>
           <p style={{fontSize:12,color:'var(--color-text-tertiary)',marginTop:2}}>Your data rights · GDPR compliance · Smart notifications</p>
+          <p style={{fontSize:11,color:'var(--color-text-tertiary)',marginTop:4}}>ICO registration application filed on 8 April 2026 · reference C1903482</p>
         </div>
       </div>
 

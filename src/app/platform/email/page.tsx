@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { domainColour, formatRelative } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inbox Intelligence — Gmail sync, triage, compose, reply, archive, filing
+// Inbox Intelligence — inbox sync, triage, compose, reply, archive, filing
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DOMAIN_LABELS: Record<string,string> = {
@@ -51,6 +51,11 @@ export default function EmailPage() {
 
   const load = useCallback(async () => {  // eslint-disable-line react-hooks/exhaustive-deps
     setLoading(true)
+    if (!supabase) {
+      setLoading(false)
+      setBanner({ msg: 'Inbox Intelligence is temporarily unavailable. Refresh once configuration is restored.', ok: false })
+      return
+    }
     const { data:{ user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
     const params = new URLSearchParams({ limit: '50' })
@@ -98,7 +103,7 @@ export default function EmailPage() {
         setEmails(prev => prev.map((e: Record<string,unknown>) => e.id === selected.id ? { ...(e as Record<string,unknown>), status: 'actioned' } : e))
         setReplyText('')
       } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
-        setBanner({msg:`⚠ ${d.error}\n\nGo to Settings → Connect Google Account to grant Gmail access.`, ok:false})
+        setBanner({msg:`⚠ ${d.error}\n\nGo to Settings → Email Accounts to connect an inbox with the required mail permissions.`, ok:false})
       } else {
         setBanner({msg:`Send failed: ${d.error ?? 'Unknown error'}`, ok:false})
       }
@@ -148,21 +153,21 @@ export default function EmailPage() {
         <div>
           <h1 style={{ fontSize:22,fontWeight:700,marginBottom:4 }}>Inbox Intelligence</h1>
           <p style={{ fontSize:13,color:'var(--pios-muted)' }}>
-            {accounts.length > 0 ? 'AI-triaged · Gmail connected' : 'Connect Gmail to start triaging your inbox'}
+            {accounts.length > 0 ? `AI-triaged · ${accounts.length} inbox${accounts.length === 1 ? '' : 'es'} connected` : 'Open Settings to connect an inbox for email triage'}
             {unreadCount>0 && <span style={{ marginLeft:10,padding:'2px 8px',borderRadius:10,background:'rgba(239,68,68,0.1)',color:'var(--dng)',fontSize:11,fontWeight:600 }}>{unreadCount} unread</span>}
           </p>
         </div>
         <div style={{ display:'flex',gap:8 }}>
           {accounts.length === 0 ? (
-            <a href="/api/auth/connect-gmail" style={{ fontSize:12, padding:'8px 16px', borderRadius:9, background:'var(--ai)', color:'#fff', textDecoration:'none', fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
+            <a href="/platform/settings" style={{ fontSize:12, padding:'8px 16px', borderRadius:9, background:'var(--ai)', color:'#fff', textDecoration:'none', fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
               <svg width="14" height="14" viewBox="0 0 18 18"><path fill="#fff" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="rgba(255,255,255,0.8)" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="rgba(255,255,255,0.6)" d="M3.964 10.706c-.18-.54-.282-1.117-.282-1.706s.102-1.166.282-1.706V4.962H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.038l3.007-2.332z"/><path fill="rgba(255,255,255,0.9)" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
-              Connect Gmail →
+              Open Email Settings →
             </a>
           ) : (
             <>
               <button className="pios-btn pios-btn-ghost" onClick={()=>setShowCompose(!showCompose)} style={{ fontSize:12 }}>✉ Compose</button>
               <button className="pios-btn pios-btn-primary" onClick={syncGmail} disabled={syncing} style={{ fontSize:12 }}>
-                {syncing?'⟳ Syncing…':'↻ Sync Gmail'}
+                {syncing?'⟳ Syncing…':'↻ Sync inboxes'}
               </button>
             </>
           )}
@@ -191,7 +196,7 @@ export default function EmailPage() {
                 setShowCompose(false)
                 setBanner({msg:'✓ Email sent.', ok:true})
               } else if (d.code === 'GOOGLE_NOT_CONNECTED' || d.code === 'INSUFFICIENT_SCOPE') {
-                setBanner({msg:`⚠ ${d.error}`, ok:false})
+                setBanner({msg:`⚠ ${d.error}\n\nOpen Settings → Email Accounts to reconnect or add a sending inbox.`, ok:false})
               } else {
                 setBanner({msg:`Send failed: ${d.error ?? 'Unknown error'}`, ok:false})
               }
@@ -218,11 +223,18 @@ export default function EmailPage() {
       {!loading && emails.length===0 ? (
         <div className="pios-card" style={{ textAlign:'center' as const,padding:'48px' }}>
           <div style={{ fontSize:32,marginBottom:12 }}>✉</div>
-          <h2 style={{ fontSize:16,fontWeight:600,marginBottom:8 }}>Connect Gmail</h2>
+          <h2 style={{ fontSize:16,fontWeight:600,marginBottom:8 }}>Connect an inbox</h2>
           <p style={{ color:'var(--pios-muted)',fontSize:13,marginBottom:20,maxWidth:400,margin:'0 auto 20px' }}>
-            PIOS will triage your inbox, prioritise emails by domain, extract action items, and draft replies.
+            PIOS can triage Gmail, Microsoft 365, Outlook, and IMAP inboxes, prioritise emails by domain, extract action items, and draft replies.
           </p>
-          <button className="pios-btn pios-btn-primary" onClick={syncGmail} style={{ fontSize:13,padding:'10px 24px' }}>Connect Gmail & Start Triaging</button>
+          <div style={{ fontSize:11, color:'var(--pios-muted)', margin:'0 auto 18px', maxWidth:520, lineHeight:1.6 }}>
+            Some work or university Microsoft tenants block third-party OAuth by policy.
+            If that happens, open Settings to connect a personal inbox or use IMAP with an app password for email triage.
+          </div>
+          <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' as const }}>
+            <a href="/platform/settings" className="pios-btn pios-btn-primary" style={{ textDecoration:'none', fontSize:13,padding:'10px 24px' }}>Open Email Settings</a>
+            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-ghost" style={{ textDecoration:'none', fontSize:13,padding:'10px 24px' }}>Connect Gmail directly</a>
+          </div>
         </div>
       ) : (
         <div style={{ display:'grid',gridTemplateColumns:selected?'1fr 1fr':'1fr',gap:16 }}>
@@ -230,16 +242,20 @@ export default function EmailPage() {
       {accounts.length === 0 && !loading && (
         <div className="pios-card" style={{ textAlign:'center' as const, padding:'48px 24px', marginBottom:16 }}>
           <div style={{ fontSize:40, marginBottom:16 }}>📧</div>
-          <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>Connect your Gmail</div>
+          <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>Connect your inbox</div>
           <p style={{ fontSize:13, color:'var(--pios-muted)', marginBottom:24, maxWidth:400, margin:'0 auto 24px' }}>
             PIOS will triage your inbox, extract action items from emails, auto-capture receipts, and include email context in your daily brief.
+            Gmail, Microsoft 365, Outlook, and IMAP are supported.
           </p>
+          <div style={{ fontSize:11, color:'var(--pios-muted)', margin:'0 auto 18px', maxWidth:520, lineHeight:1.6 }}>
+            If your host organisation blocks Microsoft OAuth, go to Settings and use a personal inbox or an IMAP app-password fallback for email triage.
+          </div>
           <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' as const }}>
-            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-primary" style={{ textDecoration:'none', fontSize:13 }}>
-              🔗 Connect Gmail
+            <a href="/platform/settings" className="pios-btn pios-btn-primary" style={{ textDecoration:'none', fontSize:13 }}>
+              ⚙ Open Email Settings
             </a>
-            <a href="/platform/settings" className="pios-btn pios-btn-ghost" style={{ textDecoration:'none', fontSize:13 }}>
-              ⚙ Settings
+            <a href="/api/auth/connect-gmail" className="pios-btn pios-btn-ghost" style={{ textDecoration:'none', fontSize:13 }}>
+              🔗 Connect Gmail
             </a>
           </div>
         </div>
@@ -329,7 +345,7 @@ export default function EmailPage() {
                     {replying?'⟳ Sending…':'Send reply'}
                   </button>
                   <button className="pios-btn pios-btn-ghost" onClick={()=>setReplyText('')} style={{ fontSize:12 }}>Clear</button>
-                  <span style={{ fontSize:10,color:'var(--pios-dim)' }}>Requires Gmail send scope</span>
+                  <span style={{ fontSize:10,color:'var(--pios-dim)' }}>Requires connected Google send permission</span>
                 </div>
               </div>
             </div>

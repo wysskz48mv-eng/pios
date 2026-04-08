@@ -35,6 +35,10 @@ export function CommandCentre({ profile }: Props) {
     setTheme(newTheme)
     setShowThemePicker(false)
 
+    if (!supabase) {
+      return
+    }
+
     startTransition(() => {
       void supabase
         .from('user_profiles')

@@ -513,6 +513,7 @@ export default function PricingPage() {
         <div style={{ display: 'flex', gap: 24 }}>
           <Link href="/privacy" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>Privacy</Link>
           <Link href="/terms" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>Terms</Link>
+          <Link href="/cookies" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>Cookies</Link>
         </div>
       </div>
     </div>

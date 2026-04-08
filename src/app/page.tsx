@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import styles from './page.module.css'
@@ -21,15 +21,16 @@ export default async function LandingPage() {
     <div className={styles.page}>
       <nav className={styles.nav}>
         <div className={styles.navInner}>
-          <span className={styles.logo}>PIOS</span>
+          <Link href="/" className={styles.logo}>PIOS</Link>
           <div className={styles.navLinks}>
             <a href="#platform" className={styles.navLink}>Platform</a>
             <Link href="/research" className={styles.navLink}>Research</Link>
             <a href="#pricing" className={styles.navLink}>Pricing</a>
           </div>
-          <Link href="/auth/signup" className={styles.navCta}>
-            Request Access
-          </Link>
+          <div className={styles.navActions}>
+            <Link href="/auth/login" className={styles.navLink}>Sign in</Link>
+            <Link href="/auth/signup" className={styles.navCta}>Request Access</Link>
+          </div>
         </div>
       </nav>
 
@@ -53,7 +54,7 @@ export default async function LandingPage() {
             </div>
             <div className={styles.statBox}>
               <span className={styles.statNum}>36%</span>
-              <span className={styles.statLabel}>of a founder's week consumed by administrative work that should not require the founder</span>
+              <span className={styles.statLabel}>of a founder&apos;s week consumed by administrative work that should not require the founder</span>
               <span className={styles.statCite}>Agility PR, 2025</span>
             </div>
             <div className={styles.statBox}>
@@ -62,9 +63,7 @@ export default async function LandingPage() {
               <span className={styles.statCite}>Harvard Business Review, 2022</span>
             </div>
           </div>
-          <Link href="/auth/signup" className={styles.heroCta}>
-            Choose your path →
-          </Link>
+          <Link href="/auth/signup" className={styles.heroCta}>Choose your path →</Link>
         </div>
       </section>
 
@@ -152,60 +151,150 @@ export default async function LandingPage() {
       <section className={styles.pricing} id="pricing">
         <div className={styles.pricingInner}>
           <h2 className={styles.sectionTitle}>Pricing</h2>
+
+          <p className={styles.pricingGroupLabel}>Individual</p>
           <div className={styles.pricingGrid}>
-            {[
-              {
-                tier: 'Starter', price: '£12', period: '/mo', billed: '£144/yr',
-                tagline: 'The structure university never gave you.',
-                desc: 'Undergraduate and postgraduate students',
-                features: ['Daily Brief + Tasks', 'Academic Suite (Thesis, Literature, Viva)', 'Coaching + Wellness', '1 email account'],
-                plan: 'starter',
-              },
-              {
-                tier: 'Pro', price: '£28', period: '/mo', billed: '£336/yr', featured: true,
-                tagline: 'One system for everything you do at once.',
-                desc: 'Professionals, consultants, solo founders',
-                features: ['Everything in Starter', 'Email Intelligence + multi-inbox', 'Consulting Frameworks + CPD', 'Financials + Expenses', 'Calendar + AI pre-briefs'],
-                plan: 'pro',
-              },
-              {
-                tier: 'Executive', price: '£36', period: '/mo', billed: '£432/yr',
-                tagline: 'Run the business. Build the legacy.',
-                desc: 'CEOs, founders, directors, senior executives',
-                features: ['Everything in Pro', 'EOSA™ + Decisions', 'Stakeholders + Board Pack', 'Chief of Staff module', 'Time Sovereignty audit'],
-                plan: 'executive',
-              },
-            ].map((plan) => (
-              <div key={plan.tier} className={`${styles.priceCard} ${plan.featured ? styles.priceCardFeatured : ''}`}>
-                <h3 className={styles.priceTier}>{plan.tier}</h3>
-                <div className={styles.priceAmount}>
-                  {plan.price}<span className={styles.pricePeriod}>{plan.period}</span>
-                </div>
-                <p className={styles.priceTagline}>{plan.tagline}</p>
-                <p className={styles.priceDesc}>{plan.desc}</p>
-                <ul className={styles.priceFeatures}>
-                  {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
-                </ul>
-                <Link href={`/auth/signup?plan=${plan.plan}`} className={styles.priceCta}>
-                  Start free trial
-                </Link>
-                <p className={styles.priceBilled}>Billed {plan.billed}</p>
-              </div>
-            ))}
+            <div className={styles.priceCard}>
+              <h3 className={styles.priceTier}>Starter</h3>
+              <div className={styles.priceAmount}>£12<span className={styles.pricePeriod}>/mo</span></div>
+              <div className={styles.priceAnnual}>or £10/mo billed annually - £120/yr</div>
+              <p className={styles.priceTagline}>The structure university never gave you.</p>
+              <p className={styles.priceDesc}>Undergraduate and postgraduate students</p>
+              <ul className={styles.priceFeatures}>
+                <li>Daily Brief + Tasks</li>
+                <li>Academic Suite (Thesis, Literature, Viva)</li>
+                <li>Coaching + Wellness</li>
+                <li>1 email account</li>
+                <li>Up to 50 NemoClaw sessions/mo</li>
+              </ul>
+              <Link href="/auth/signup?plan=starter" className={styles.priceCta}>Start free trial</Link>
+              <p className={styles.priceBilled}>Billed £120/yr - save £24</p>
+            </div>
+
+            <div className={`${styles.priceCard} ${styles.priceCardFeatured}`}>
+              <div className={styles.featuredBadge}>Most popular</div>
+              <h3 className={styles.priceTier}>Pro</h3>
+              <div className={styles.priceAmount}>£28<span className={styles.pricePeriod}>/mo</span></div>
+              <div className={styles.priceAnnual}>or £23/mo billed annually - £276/yr</div>
+              <p className={styles.priceTagline}>One system for everything you do at once.</p>
+              <p className={styles.priceDesc}>Professionals, consultants, solo founders</p>
+              <ul className={styles.priceFeatures}>
+                <li>Everything in Starter</li>
+                <li>Email Intelligence + multi-inbox</li>
+                <li>Consulting Frameworks (44 VIQ frameworks)</li>
+                <li>CPD tracking + AI-generated courses</li>
+                <li>Financials + Expenses</li>
+                <li>Calendar + AI pre-briefs</li>
+                <li>Up to 200 NemoClaw sessions/mo</li>
+              </ul>
+              <Link href="/auth/signup?plan=pro" className={styles.priceCta}>Start free trial</Link>
+              <p className={styles.priceBilled}>Billed £276/yr - save £60</p>
+            </div>
 
             <div className={styles.priceCard}>
-              <h3 className={styles.priceTier}>Enterprise</h3>
-              <div className={styles.priceAmount}>From £36<span className={styles.pricePeriod}>/seat/mo</span></div>
-              <p className={styles.priceTagline}>Deploy PIOS across your organisation.</p>
-              <p className={styles.priceDesc}>Corporations, universities, white-label partners</p>
+              <h3 className={styles.priceTier}>Executive</h3>
+              <div className={styles.priceAmount}>£36<span className={styles.pricePeriod}>/mo</span></div>
+              <div className={styles.priceAnnual}>or £30/mo billed annually - £360/yr</div>
+              <p className={styles.priceTagline}>Run the business. Build the legacy.</p>
+              <p className={styles.priceDesc}>CEOs, founders, directors, senior executives</p>
               <ul className={styles.priceFeatures}>
-                <li>All modules + admin dashboard</li>
-                <li>Team management + custom onboarding</li>
-                <li>Data isolation + DPA included</li>
-                <li>White-label option</li>
+                <li>Everything in Pro</li>
+                <li>EOSA™ + Strategic Decisions</li>
+                <li>Stakeholders + Board Pack</li>
+                <li>Chief of Staff module</li>
+                <li>Time Sovereignty audit</li>
+                <li>Unlimited NemoClaw sessions</li>
               </ul>
-              <a href="mailto:info@veritasiq.io" className={styles.priceCta}>Request a proposal</a>
+              <Link href="/auth/signup?plan=executive" className={styles.priceCta}>Start free trial</Link>
+              <p className={styles.priceBilled}>Billed £360/yr - save £72</p>
             </div>
+          </div>
+
+          <p className={styles.pricingGroupLabel}>Enterprise</p>
+          <p className={styles.pricingGroupSub}>
+            All enterprise plans include DPA, tenant data isolation, admin dashboard, and invite-based onboarding.
+            White-label branding available on Growth and above at +£8/seat/mo.
+          </p>
+          <div className={styles.pricingGridEnterprise}>
+            <div className={styles.priceCard}>
+              <h3 className={styles.priceTier}>Enterprise Starter</h3>
+              <div className={styles.priceAmount}>£45<span className={styles.pricePeriod}>/seat/mo</span></div>
+              <div className={styles.priceAnnual}>or £38/seat/mo billed annually</div>
+              <p className={styles.priceTagline}>AI-grade professional tools across your team.</p>
+              <p className={styles.priceDesc}>5-24 seats · consultancies, professional services</p>
+              <ul className={styles.priceFeatures}>
+                <li>All Executive modules for every seat</li>
+                <li>DPA included (GDPR / POPIA)</li>
+                <li>Tenant data isolation</li>
+                <li>Admin dashboard + seat management</li>
+                <li>Invite-based onboarding</li>
+                <li>Email IT disclosure + forward-only option</li>
+                <li>Minimum 5 seats</li>
+              </ul>
+              <a className={styles.priceCta} href="mailto:info@veritasiq.io?subject=PIOS Enterprise Starter">Request a proposal</a>
+            </div>
+
+            <div className={`${styles.priceCard} ${styles.priceCardFeatured}`}>
+              <div className={styles.featuredBadge}>Most common</div>
+              <h3 className={styles.priceTier}>Enterprise Growth</h3>
+              <div className={styles.priceAmount}>£40<span className={styles.pricePeriod}>/seat/mo</span></div>
+              <div className={styles.priceAnnual}>or £33/seat/mo billed annually</div>
+              <p className={styles.priceTagline}>Deploy PIOS at team scale with your branding.</p>
+              <p className={styles.priceDesc}>25-99 seats · growing organisations</p>
+              <ul className={styles.priceFeatures}>
+                <li>Everything in Enterprise Starter</li>
+                <li>White-label branding available (+£8/seat/mo)</li>
+                <li>Custom domain (app.yourcompany.com)</li>
+                <li>Dedicated onboarding session</li>
+                <li>Priority support</li>
+                <li>Module enable/disable per tenant</li>
+                <li>Minimum 25 seats</li>
+              </ul>
+              <a className={styles.priceCta} href="mailto:info@veritasiq.io?subject=PIOS Enterprise Growth">Request a proposal</a>
+            </div>
+
+            <div className={styles.priceCard}>
+              <h3 className={styles.priceTier}>Enterprise Scale</h3>
+              <div className={styles.priceAmount}>£32<span className={styles.pricePeriod}>/seat/mo</span></div>
+              <div className={styles.priceAnnual}>or £27/seat/mo billed annually</div>
+              <p className={styles.priceTagline}>Enterprise-grade AI OS with SSO and contractual support options.</p>
+              <p className={styles.priceDesc}>100-499 seats · large organisations</p>
+              <ul className={styles.priceFeatures}>
+                <li>Everything in Enterprise Growth</li>
+                <li>SLA addendum by separate written agreement</li>
+                <li>SSO (SAML / OIDC)</li>
+                <li>Audit log export (CSV)</li>
+                <li>Named account manager</li>
+                <li>Quarterly business review</li>
+                <li>Minimum 100 seats</li>
+              </ul>
+              <a className={styles.priceCta} href="mailto:info@veritasiq.io?subject=PIOS Enterprise Scale">Request a proposal</a>
+            </div>
+
+            <div className={styles.priceCard}>
+              <h3 className={styles.priceTier}>Enterprise Custom</h3>
+              <div className={styles.priceAmount}>Custom</div>
+              <div className={styles.priceAnnual}>negotiated annually</div>
+              <p className={styles.priceTagline}>Bespoke deployment for large organisations.</p>
+              <p className={styles.priceDesc}>500+ seats · multi-year · on-premise option</p>
+              <ul className={styles.priceFeatures}>
+                <li>Everything in Enterprise Scale</li>
+                <li>On-premise or private cloud option</li>
+                <li>Custom AI credit allocation</li>
+                <li>Bespoke module configuration</li>
+                <li>Executive sponsor engagement</li>
+                <li>Negotiated service terms</li>
+                <li>Multi-year pricing</li>
+              </ul>
+              <a className={styles.priceCta} href="mailto:info@veritasiq.io?subject=PIOS Enterprise Custom">Book a call</a>
+            </div>
+          </div>
+
+          <div className={styles.whitelabelNote}>
+            <span className={styles.whitelabelBadge}>White-label</span>
+            Remove all PIOS and VeritasIQ branding, set your own domain and logo.
+            Available on Enterprise Growth and above at <strong>+£8/seat/mo</strong>.{' '}
+            <a href="mailto:info@veritasiq.io?subject=PIOS White-label">Enquire →</a>
           </div>
         </div>
       </section>
@@ -223,6 +312,7 @@ export default async function LandingPage() {
             <Link href="/research" className={styles.footerLink}>Research</Link>
             <Link href="/privacy" className={styles.footerLink}>Privacy</Link>
             <Link href="/terms" className={styles.footerLink}>Terms</Link>
+            <Link href="/cookies" className={styles.footerLink}>Cookies</Link>
           </div>
           <p className={styles.footerCopy}>VeritasIQ Technologies Ltd · info@veritasiq.io</p>
         </div>

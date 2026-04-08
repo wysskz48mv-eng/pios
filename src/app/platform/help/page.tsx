@@ -78,8 +78,8 @@ const FAQ = [
     a: 'Your brief is generated automatically at 7am UTC (8am UK BST) and emailed to you if RESEND_API_KEY is set. You can also generate it on-demand from the Dashboard using the "Generate today\'s brief" button.',
   },
   {
-    q: 'How do I connect Gmail?',
-    a: 'Go to Settings → Integrations → Connect Gmail. You\'ll be prompted for Google OAuth. Once connected, PIOS will triage your inbox, capture receipts, and include email context in your daily brief.',
+    q: 'How do I connect an inbox for email triage?',
+    a: 'Go to Settings → Email Accounts and add a Google, Microsoft, or IMAP inbox. Google and Microsoft use OAuth where allowed by your organisation. If a Microsoft tenant blocks third-party consent, ask your IT team to approve the app or use a personal inbox or IMAP app-password fallback. Once connected, PIOS will triage your inbox, capture receipts, and include email context in your daily brief.',
   },
   {
     q: 'What are NemoClaw™ frameworks?',
