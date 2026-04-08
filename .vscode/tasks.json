@@ -835,6 +835,18 @@
       "problemMatcher": []
     },
     {
+      "label": "🧪 UAT-DEPLOY | Post-deploy verification",
+      "type": "shell",
+      "group": "test",
+      "command": "powershell -ExecutionPolicy Bypass -File scripts/post-deploy-verify.ps1",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Checks production health exposure, auth protection, redesigned UX signals, and runs the automated smoke suite."
+    },
+    {
       "label": "💳 STRIPE-1 | Create subscription products",
       "type": "shell",
       "group": "none",
