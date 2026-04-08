@@ -10,6 +10,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { rateLimit } from '@/lib/redis-rate-limit'
+import { getSupabasePublicKey, getSupabaseUrl } from '@/lib/supabase/env'
 
 const MIDDLEWARE_RATE_LIMIT = {
   max: 100,
@@ -170,8 +171,8 @@ export async function middleware(request: NextRequest) {
 
   // Supabase session check — refresh token if needed
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    getSupabaseUrl(),
+    getSupabasePublicKey(),
     {
       cookies: {
         getAll() { return request.cookies.getAll() },

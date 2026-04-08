@@ -356,6 +356,7 @@ export default function AdminPage() {
           {[
             { key:'NEXT_PUBLIC_SUPABASE_URL',      value:'https://vfvfulbcaurqkygjrrhh.supabase.co', required:true },
             { key:'NEXT_PUBLIC_SUPABASE_ANON_KEY', value:'Your Supabase anon key',                  required:true },
+            { key:'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY', value:'Your Supabase publishable key', required:false },
             { key:'SUPABASE_SERVICE_ROLE_KEY',     value:'Your Supabase service role key',           required:true },
             { key:'ANTHROPIC_API_KEY',             value:'sk-ant-...',                               required:true },
             { key:'NEXT_PUBLIC_APP_URL',           value:'https://pios.veritasiq.io', required:true },

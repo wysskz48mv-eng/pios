@@ -8,6 +8,7 @@
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { hasSupabasePublicKey } from '@/lib/supabase/env'
 import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
 export const runtime = 'nodejs'
@@ -31,6 +32,7 @@ export async function GET() {
   } catch { dbOk = false }
 
   const serviceRoleOk = envSet('SUPABASE_SERVICE_ROLE_KEY')
+  const supabasePublicKeyOk = hasSupabasePublicKey()
 
   // §02 Google OAuth
   const googleVarsOk = envSet('GOOGLE_CLIENT_ID') && envSet('GOOGLE_CLIENT_SECRET')
@@ -72,6 +74,7 @@ export async function GET() {
   const checks: Record<string, { ok: boolean; label: string; required: boolean; section: string; hint?: string }> = {
     // §01 Supabase
     supabase_db:          { ok: dbOk,           label: 'Supabase DB connected',            required: true,  section: '01' },
+    supabase_public_key:  { ok: supabasePublicKeyOk, label: 'Supabase public client key (anon or publishable)', required: true, section: '01', hint: 'Set NEXT_PUBLIC_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY' },
     supabase_service_key: { ok: serviceRoleOk,   label: 'SUPABASE_SERVICE_ROLE_KEY',         required: true,  section: '01', hint: 'Supabase → Project Settings → API → service_role' },
     // §02 Google
     google_oauth_vars:    { ok: googleVarsOk,    label: 'Google OAuth vars (client ID + secret)', required: true,  section: '02' },

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSupabasePublicKey, getSupabaseUrl } from '@/lib/supabase/env'
 
 /**
  * GET /api/health
@@ -122,6 +123,7 @@ function checkEnvVars(): Check[] {
   const vars = [
     { key: 'NEXT_PUBLIC_SUPABASE_URL',   critical: true  },
     { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', critical: true },
+    { key: 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY', critical: false },
     { key: 'SUPABASE_SERVICE_ROLE_KEY',  critical: true  },
     { key: 'ANTHROPIC_API_KEY',          critical: true  },
     { key: 'RESEND_API_KEY',             critical: false },
@@ -137,11 +139,22 @@ function checkEnvVars(): Check[] {
     { key: 'SUPABASE_DB_POOLER_URL',     critical: false },
   ]
 
-  return vars.map(v => ({
-    name:   `env:${v.key}`,
-    status: process.env[v.key] ? 'ok' : (v.critical ? 'fail' : 'warn'),
-    detail: process.env[v.key] ? undefined : v.critical ? 'MISSING — critical' : 'not set — optional',
-  } as Check))
+  const hasPublicKey = !!getSupabasePublicKey()
+
+  return vars.map(v => {
+    const isLegacyAnon = v.key === 'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+    const isPublishable = v.key === 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY'
+    const isSatisfiedByFallback = hasPublicKey && (isLegacyAnon || isPublishable)
+    const isSet = isSatisfiedByFallback || !!process.env[v.key]
+
+    return {
+      name: `env:${v.key}`,
+      status: isSet ? 'ok' : (v.critical ? 'fail' : 'warn'),
+      detail: isSet
+        ? (isLegacyAnon && !process.env[v.key] ? 'using NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY fallback' : undefined)
+        : v.critical ? 'MISSING — critical' : 'not set — optional',
+    } as Check
+  })
 }
 
 function canViewDetailedHealth(request: Request): boolean {

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { GOOGLE_OAUTH_INTENT_PARAM, parseGoogleOAuthIntent } from '@/lib/auth/google-oauth'
+import { getSupabasePublicKey, getSupabaseUrl } from '@/lib/supabase/env'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -57,8 +58,8 @@ export async function GET(request: NextRequest) {
   // Create Supabase client with direct cookie access for reliable session persistence
   const cookieStore = await cookies()
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    getSupabaseUrl(),
+    getSupabasePublicKey(),
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
 
   // Use service client for all DB writes — bypasses RLS reliably
   const admin = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
