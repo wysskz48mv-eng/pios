@@ -17,7 +17,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/copy-impl-files.sh')) { Write-Error 'Missing scripts/copy-impl-files.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/copy-impl-files.sh",
+      "command": "node scripts/copy-impl-files.js",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -64,7 +64,7 @@
       "label": "🚨 P0-ALL | Full P0 sprint runner (copy → patch → TS → build → deploy)",
       "type": "shell",
       "group": "build",
-      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/p0-sprint.sh')) { Write-Error 'Missing scripts/p0-sprint.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/p0-sprint.sh",
+      "command": "node scripts/p0-sprint.js",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -141,7 +141,7 @@
       "label": "🔑 ENV-7 | Verify all env vars",
       "type": "shell",
       "group": "test",
-      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/verify-env-vars.sh')) { Write-Error 'Missing scripts/verify-env-vars.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/verify-env-vars.sh",
+      "command": "node scripts/verify-env-vars.js",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -727,7 +727,7 @@
         "kind": "test",
         "isDefault": true
       },
-      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/uat-smoke-test.sh')) { Write-Error 'Missing scripts/uat-smoke-test.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/uat-smoke-test.sh",
+      "command": "node scripts/uat-smoke-test.js",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -827,7 +827,7 @@
       "label": "🧪 UAT-READY | Full readiness check",
       "type": "shell",
       "group": "test",
-      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/uat-smoke-test.sh')) { Write-Error 'Missing scripts/uat-smoke-test.sh in this checkout.'; exit 1 }; if (-not (Test-Path 'scripts/verify-env-vars.sh')) { Write-Error 'Missing scripts/verify-env-vars.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/uat-smoke-test.sh; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; bash scripts/verify-env-vars.sh",
+      "command": "node scripts/verify-env-vars.js; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node scripts/uat-smoke-test.js",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -860,7 +860,7 @@
       "label": "💳 STRIPE-3 | Set all price IDs",
       "type": "shell",
       "group": "build",
-      "command": "$bash = Get-Command bash -ErrorAction SilentlyContinue; if (-not (Test-Path 'scripts/set-stripe-price-ids.sh')) { Write-Error 'Missing scripts/set-stripe-price-ids.sh in this checkout.'; exit 1 }; if (-not $bash) { Write-Error 'bash is not installed. Install Git Bash or WSL to run this task.'; exit 1 }; bash scripts/set-stripe-price-ids.sh",
+      "command": "node scripts/set-stripe-price-ids.js",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
