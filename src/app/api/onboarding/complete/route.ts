@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { createClient as createAdmin } from '@supabase/supabase-js'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 /**
  * POST /api/onboarding/complete
@@ -38,16 +37,14 @@ export async function POST(req: NextRequest) {
       job_title,
       organisation,
       cv_filename,
+      cv_storage_path,
     } = body
 
     const requestedPersona = typeof persona_type === 'string' ? persona_type : persona
 
     if (!requestedPersona) return NextResponse.json({ error: 'Persona required' }, { status: 400 })
 
-    const admin = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const admin = createServiceClient()
 
     // Map persona to persona_type for user_profiles
     const personaMap: Record<string, string> = {
@@ -78,30 +75,64 @@ export async function POST(req: NextRequest) {
       ? command_centre_theme
       : 'onyx'
 
-    // Persist the onboarding milestone atomically so users do not get trapped in redirect loops.
-    const { data: profileRow, error: profileErr } = await admin
+    const profilePayload = {
+      id:              user.id,
+      user_id:         user.id,
+      full_name:       typeof full_name === 'string' && full_name.trim() ? full_name.trim() : fallbackFullName,
+      plan:            'free',
+      persona_type:    normalizedPersona,
+      onboarded:       true,
+      deployment_mode: deploy_mode ?? 'full',
+      active_modules:  Array.isArray(active_modules) ? active_modules : [],
+      it_policy_acknowledged: deploy_mode === 'standalone',
+      command_centre_theme: normalizedTheme,
+      ...(typeof job_title === 'string' && job_title.trim() ? { job_title: job_title.trim() } : {}),
+      ...(typeof organisation === 'string' && organisation.trim() ? { organisation: organisation.trim() } : {}),
+      ...(typeof cv_filename === 'string' && cv_filename.trim() ? { cv_filename: cv_filename.trim() } : {}),
+      ...(typeof cv_storage_path === 'string' && cv_storage_path.trim() ? { cv_storage_path: cv_storage_path.trim() } : {}),
+      updated_at:      now,
+      created_at:      now,
+    }
+
+    // Ensure new auth users always have a baseline profile row before onboarding writes.
+    const { error: bootstrapErr } = await admin.rpc('bootstrap_user_profile', {
+      p_user_id: user.id,
+      p_email: user.email ?? null,
+      p_raw_user_meta_data: user.user_metadata ?? {},
+    })
+
+    if (bootstrapErr) {
+      console.error('[onboarding] profile bootstrap error:', bootstrapErr)
+    }
+
+    const { data: existingProfile } = await admin
       .from('user_profiles')
-      .upsert({
-        id:              user.id,
-        full_name:       typeof full_name === 'string' && full_name.trim() ? full_name.trim() : fallbackFullName,
-        plan:            'free',
-        persona_type:    normalizedPersona,
-        onboarded:       true,
-        deployment_mode: deploy_mode ?? 'full',
-        active_modules:  Array.isArray(active_modules) ? active_modules : [],
-        it_policy_acknowledged: deploy_mode === 'standalone',
-        command_centre_theme: normalizedTheme,
-        ...(typeof job_title === 'string' && job_title.trim() ? { job_title: job_title.trim() } : {}),
-        ...(typeof organisation === 'string' && organisation.trim() ? { organisation: organisation.trim() } : {}),
-        ...(typeof cv_filename === 'string' && cv_filename.trim() ? { cv_filename: cv_filename.trim() } : {}),
-        updated_at:      now,
-        created_at:      now,
-      })
-      .select('id, onboarded')
-      .single()
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const profileWrite = existingProfile
+      ? await admin
+          .from('user_profiles')
+          .update(profilePayload)
+          .eq('id', user.id)
+          .select('id, onboarded')
+          .single()
+      : await admin
+          .from('user_profiles')
+          .insert(profilePayload)
+          .select('id, onboarded')
+          .single()
+
+    const { data: profileRow, error: profileErr } = profileWrite
 
     if (profileErr || !profileRow?.onboarded) {
-      console.error('[onboarding] profile update error:', profileErr)
+      console.error('[onboarding] profile update error:', {
+        code: profileErr?.code,
+        message: profileErr?.message,
+        details: profileErr?.details,
+        hint: profileErr?.hint,
+      })
       return NextResponse.json({ error: 'Could not save onboarding state. Please try again.' }, { status: 500 })
     }
 
@@ -113,6 +144,32 @@ export async function POST(req: NextRequest) {
         persona:    normalizedPersona,
         updated_at: now,
       }, { onConflict: 'user_id' })
+
+    // Write consent_records (GDPR Art.7 compliance, RISK-006)
+    try {
+      const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? null
+      const ua = req.headers.get('user-agent') ?? null
+      const consentTypes = ['terms_of_service', 'privacy_policy', 'ai_processing']
+      const records = consentTypes.map(type => ({
+        user_id: user.id,
+        consent_type: type,
+        version: '1.0',
+        granted: true,
+        granted_at: now,
+        ip_address: ip,
+        user_agent: ua,
+      }))
+      const { error: consentErr } = await admin
+        .from('consent_records')
+        .upsert(records, { onConflict: 'user_id,consent_type' })
+      if (consentErr) {
+        console.error('[onboarding] consent_records write failed:', consentErr.message)
+        // Non-fatal — log but do not block onboarding completion
+      }
+    } catch (consentCatchErr) {
+      console.error('[onboarding] consent_records write exception:', consentCatchErr)
+      // Non-fatal
+    }
 
     if (normalizedGoals) {
       await admin

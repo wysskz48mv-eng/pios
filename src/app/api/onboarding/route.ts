@@ -9,10 +9,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
-import Anthropic                     from '@anthropic-ai/sdk'
+import { callClaude }                from '@/lib/ai/client'
 
 export const dynamic = 'force-dynamic'
-const anthropic = new Anthropic()
 
 interface Step {
   id:       string
@@ -132,16 +131,17 @@ export async function POST(req: NextRequest) {
         .map((s: any) => `${s.category.toUpperCase()} — ${s.label}: ${s.desc}`)
         .join('\n')
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 400,
-        messages: [{ role: 'user', content:
+      const message = await callClaude(
+        [{ role: 'user', content:
           `PIOS onboarding advisor. Given these pending setup steps for a new user, write a personalised 3-sentence welcome message and priority recommendations.\n\n` +
           `User context: ${user_context ?? 'CEO/Founder, DBA candidate'}\n\n` +
           `Pending steps:\n${pendingList || 'None — platform fully configured!'}\n\n` +
           `Write:\n1. A warm 1-sentence welcome tailored to their context\n2. Top 3 priority actions (be specific, mention the actual step names)\n3. One encouraging closing sentence\n\nBe concise and direct.`
         }],
-      })
-      const message = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+        'You are a PIOS onboarding advisor. Write a concise, actionable welcome and priority list.',
+        400,
+        'haiku'
+      )
       return NextResponse.json({ ok: true, action: 'next-steps', message })
     }
 

@@ -123,6 +123,10 @@ export default function OnboardingPage() {
   }
 
   async function handleComplete() {
+    if (!supabase) {
+      setError('PIOS is temporarily unavailable. Please refresh in a moment.')
+      return
+    }
     setLoading(true)
     setError('')
 
@@ -131,14 +135,21 @@ export default function OnboardingPage() {
       if (!user) throw new Error('Not authenticated')
 
       let cvFilename: string | null = null
+      let cvStoragePath: string | null = null
 
       if (cvFile) {
-        const ext = cvFile.name.split('.').pop()
-        const path = `${user.id}/cv.${ext}`
+        const ext = cvFile.name.split('.').pop()?.toLowerCase() ?? 'bin'
+        const path = `${user.id}/cv-${Date.now()}.${ext}`
         const { error: uploadErr } = await supabase.storage
           .from('pios-cv')
-          .upload(path, cvFile, { upsert: true })
-        if (!uploadErr) cvFilename = cvFile.name
+          .upload(path, cvFile, { upsert: true, contentType: cvFile.type || undefined })
+
+        if (uploadErr) {
+          throw new Error(uploadErr.message || 'Could not save CV. Please try again.')
+        }
+
+        cvFilename = cvFile.name
+        cvStoragePath = path
       }
 
       await fetch('/api/onboarding/draft', {
@@ -164,6 +175,7 @@ export default function OnboardingPage() {
           ...(role && { job_title: role }),
           ...(org && { organisation: org }),
           ...(cvFilename && { cv_filename: cvFilename }),
+          ...(cvStoragePath && { cv_storage_path: cvStoragePath }),
         }),
       })
 
