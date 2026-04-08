@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { requireCronSecret } from '@/lib/security/route-guards'
 
 /**
  * POST /api/cron/trial-reminder
@@ -13,10 +14,8 @@ export const dynamic     = 'force-dynamic'
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('Authorization') !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-  }
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

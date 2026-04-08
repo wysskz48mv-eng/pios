@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { requireCronSecret } from '@/lib/security/route-guards'
 // Uses direct fetch — callClaude doesn't support web_search tool
 
 /**
@@ -34,13 +35,9 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 export const dynamic     = 'force-dynamic'
 export const maxDuration = 120
 
-const CRON_SECRET = process.env.CRON_SECRET
-
 export async function POST(req: NextRequest) {
-  const auth = req.headers.get('Authorization')
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-  }
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

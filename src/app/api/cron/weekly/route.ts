@@ -19,6 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@supabase/supabase-js'
 import { callClaude }                from '@/lib/ai/client'
+import { requireCronSecret }         from '@/lib/security/route-guards'
 import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 import {
   sendEmail,
@@ -33,11 +34,6 @@ export const maxDuration = 300
 
 const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-function authOk(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET
-  return !!secret && req.headers.get('authorization') === `Bearer ${secret}`
-}
 
 /** ISO week window: last 7 days (Mon 00:00 → Sun 23:59 in UTC) */
 function weekWindow(): { from: string; to: string; label: string } {
@@ -67,7 +63,8 @@ function fmtAmount(total: number, currency: string): string {
 }
 
 export async function GET(req: NextRequest) {
-  if (!authOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } })
   const win   = weekWindow()

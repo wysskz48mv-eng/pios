@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { callClaude } from '@/lib/ai/client'
+import { requireCronSecret } from '@/lib/security/route-guards'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 export async function GET(req: NextRequest) {
-  // Verify cron secret
-  const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

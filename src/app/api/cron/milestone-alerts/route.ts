@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@supabase/supabase-js'
 import { Resend }                    from 'resend'
+import { requireCronSecret }         from '@/lib/security/route-guards'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 30
@@ -27,11 +28,8 @@ function fmtDate(d: string) {
 
 export async function GET(req: NextRequest) {
   try {
-  const authHeader = req.headers.get('authorization') ?? ''
-  const cronOk = process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`
-  if (!cronOk && process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const resend = new Resend(process.env.RESEND_API_KEY ?? '')
   const db     = admin()

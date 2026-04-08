@@ -6,13 +6,14 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireCronSecret } from '@/lib/security/route-guards'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 export async function GET(req: NextRequest) {
   try {
-  const secret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  if (secret !== process.env.CRON_SECRET) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   const d90  = new Date(Date.now() - 90  * 86400000).toISOString()
   const d180 = new Date(Date.now() - 180 * 86400000).toISOString()

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { callClaude } from '@/lib/ai/client'
 import { sendEmail } from '@/lib/email/resend'
+import { requireCronSecret } from '@/lib/security/route-guards'
 
 export const runtime     = 'nodejs'
 export const dynamic     = 'force-dynamic'
@@ -15,11 +16,6 @@ export const maxDuration = 300
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-function authOk(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET
-  return !!secret && req.headers.get('authorization') === `Bearer ${secret}`
-}
 
 function healthColor(h: string) {
   return h === 'on_track' ? '#4ade80' : h === 'at_risk' ? '#fbbf24' : '#f87171'
@@ -89,7 +85,8 @@ function buildHtml(name: string, okrs: Record<string,unknown>[], commentary: str
 }
 
 export async function GET(req: NextRequest) {
-  if (!authOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const supabase  = createClient(SUPABASE_URL, SERVICE_KEY)
   const appUrl    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'

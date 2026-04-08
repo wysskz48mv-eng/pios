@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }               from '@/lib/supabase/server'
 import { Resend }                     from 'resend'
+import { requireCronSecret }          from '@/lib/security/route-guards'
 
 export const dynamic     = 'force-dynamic'
 export const maxDuration = 30
@@ -30,11 +31,8 @@ function wrap(body: string): string {
 }
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization') ?? ''
-  const cronOk = process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`
-  if (!cronOk && process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const db     = createClient()
   const resend = new Resend(process.env.RESEND_API_KEY ?? '')

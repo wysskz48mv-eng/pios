@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { callClaude } from '@/lib/ai/client'
 import { sendEmail, morningBriefHtml, morningBriefText } from '@/lib/email/resend'
+import { requireCronSecret } from '@/lib/security/route-guards'
 import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
 // ── Typed Supabase response helpers ──────────────────────────────────────────
@@ -36,13 +37,9 @@ export const maxDuration = 300
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-function authOk(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET
-  return !!secret && req.headers.get('authorization') === `Bearer ${secret}`
-}
-
 export async function GET(req: NextRequest) {
-  if (!authOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
 
   const admin  = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } })
   const today  = new Date().toISOString().slice(0, 10)
@@ -286,7 +283,39 @@ export async function GET(req: NextRequest) {
 
       // Generate smart notifications for this user (idempotent — deduped by title+day)
       const notifUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://pios-wysskz48mv-engs-projects.vercel.app') + '/api/notifications/generate'
-      fetch(notifUrl, { method: 'POST' }) // best-effort, non-blocking
+      const cronSecret = process.env.CRON_SECRET
+      if (cronSecret) {
+        void fetch(notifUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: `Bearer ${cronSecret}`,
+          },
+          body: JSON.stringify({ user_id: uid }),
+        })
+          .then(async (response) => {
+            if (!response.ok) {
+              const detail = await response.text().catch(() => '')
+              console.warn('[cron/brief] notifications generate failed', {
+                userId: uid,
+                status: response.status,
+                detail: detail.slice(0, 200),
+              })
+              return
+            }
+
+            console.log('[cron/brief] notifications generate ok', {
+              userId: uid,
+              status: response.status,
+            })
+          })
+          .catch((error: unknown) => {
+            console.error('[cron/brief] notifications generate error', {
+              userId: uid,
+              error: error instanceof Error ? error.message : String(error),
+            })
+          })
+      }
 
       // Always upsert — refreshes any existing brief for today
       await admin.from('daily_briefs').upsert({
