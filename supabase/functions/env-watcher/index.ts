@@ -16,18 +16,17 @@ interface EnvCheck {
   pattern?: RegExp
 }
 
+// Note: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are auto-injected
+// by Supabase Edge Functions — we don't need to check them.
+// NEXT_PUBLIC_* vars are NOT available in edge functions.
+// We check vars that must be explicitly set as Supabase secrets.
 const REQUIRED_VARS: EnvCheck[] = [
-  { name: 'NEXT_PUBLIC_SUPABASE_URL',            required: true },
-  { name: 'NEXT_PUBLIC_SUPABASE_ANON_KEY',       required: true },
-  { name: 'SUPABASE_SERVICE_ROLE_KEY',            required: true },
   { name: 'ANTHROPIC_API_KEY',                    required: true,  pattern: /^sk-ant-/ },
   { name: 'CRON_SECRET',                          required: true },
-  { name: 'GOOGLE_CLIENT_ID',                     required: true },
-  { name: 'GOOGLE_CLIENT_SECRET',                 required: true },
+  { name: 'GOOGLE_CLIENT_ID',                     required: false },
+  { name: 'GOOGLE_CLIENT_SECRET',                 required: false },
   { name: 'RESEND_API_KEY',                       required: false, pattern: /^re_/ },
-  { name: 'STRIPE_SECRET_KEY',                    required: false, pattern: /^sk_/ },
-  { name: 'STRIPE_WEBHOOK_SECRET',                required: false, pattern: /^whsec_/ },
-  { name: 'NEXT_PUBLIC_APP_URL',                  required: true,  pattern: /^https:\/\// },
+  { name: 'SLACK_WEBHOOK_URL',                    required: false, pattern: /^https:\/\// },
 ]
 
 Deno.serve(async () => {

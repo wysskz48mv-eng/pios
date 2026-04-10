@@ -23,7 +23,7 @@ interface TestResult {
 Deno.serve(async () => {
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
   const runId = crypto.randomUUID()
-  const baseUrl = Deno.env.get('NEXT_PUBLIC_APP_URL') || 'https://pios-wysskz48mv-engs-projects.vercel.app'
+  const baseUrl = Deno.env.get('PIOS_APP_URL') || Deno.env.get('NEXT_PUBLIC_APP_URL') || 'https://pios-wysskz48mv-engs-projects.vercel.app'
   const tests: TestResult[] = []
 
   // TEST 1: App loads
