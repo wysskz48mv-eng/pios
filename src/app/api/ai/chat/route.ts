@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety, auditLog, IP_HEADERS } from '@/lib/security-middleware'
 import { checkRateLimit, LIMITS } from '@/lib/redis-rate-limit'
+import { detectCapabilities, buildCapabilityPrompt } from '@/lib/nemoclaw/capabilities'
 
 // ── Typed Supabase response helpers ──────────────────────────────────────────
 type SBResult<T> = { data: T | null; error: { message: string } | null }
@@ -294,11 +295,19 @@ export async function POST(request: Request) {
     const pTitle = (aiProfile as Record<string,unknown> | null)?.job_title as string ?? 'CEO'
     const pOrg   = (aiProfile as Record<string,unknown> | null)?.organisation as string ?? 'VeritasIQ Technologies Ltd'
 
+    // Detect user capabilities for context-aware responses
+    let capabilitySection = ''
+    try {
+      const caps = await detectCapabilities(supabase, user.id)
+      capabilitySection = '\n\n' + buildCapabilityPrompt(caps)
+    } catch {}
+
     const system = `You are PIOS AI — ${pName}'s personal intelligent operating system companion.
 
 USER PROFILE:
 - Name: ${pName} | Role: ${pTitle} | Organisation: ${pOrg}
 - Persona: ${aiPersona}${trainingSection}
+${capabilitySection}
 
 EXECUTIVE OS AWARENESS (when persona is executive/founder/professional):
 - EOSA™ executive brief · PAA™ OKR tracking · STIA™ stakeholder CRM
