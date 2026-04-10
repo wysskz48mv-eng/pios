@@ -19,33 +19,61 @@ export const runtime = 'nodejs'
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('google_access_token, google_refresh_token, google_token_expiry, google_email')
-    .eq('id', userId)
-    .single()
+  // Try connected_email_accounts first (new path), then user_profiles (legacy)
+  const { data: account } = await supabase
+    .from('connected_email_accounts')
+    .select('google_access_token, google_refresh_token, google_token_expiry')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .eq('provider', 'google')
+    .limit(1)
+    .maybeSingle()
 
-  if (!profile?.google_access_token) return null
+  const token = account?.google_access_token
+  const refresh = account?.google_refresh_token
+  const expiry = account?.google_token_expiry
 
-  // Refresh if within 5 min of expiry
-  if (profile.google_token_expiry) {
-    const expiry = new Date(profile.google_token_expiry)
-    if (expiry <= new Date(Date.now() + 5 * 60 * 1000) && profile.google_refresh_token) {
+  if (!token && !refresh) {
+    // Fall back to user_profiles (legacy)
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('google_access_token, google_refresh_token, google_token_expiry')
+      .eq('id', userId)
+      .single()
+    if (!profile?.google_access_token) return null
+    return profile.google_access_token
+  }
+
+  // Refresh inline if within 5 min of expiry
+  if (refresh && expiry) {
+    const expiryMs = new Date(expiry).getTime()
+    if (expiryMs <= Date.now() + 5 * 60 * 1000) {
       try {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pios-wysskz48mv-engs-projects.vercel.app'
-        await fetch(`${appUrl}/api/auth/refresh-google`, { method: 'POST' })
-        const { data: fresh } = await supabase
-          .from('user_profiles')
-          .select('google_access_token')
-          .eq('id', userId)
-          .single()
-        return fresh?.google_access_token ?? profile.google_access_token
-      } catch {
-        return profile.google_access_token
-      }
+        const res = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: process.env.GOOGLE_CLIENT_ID ?? '',
+            client_secret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+            refresh_token: refresh,
+            grant_type: 'refresh_token',
+          }),
+        })
+        const data = await res.json()
+        if (data.access_token) {
+          const newExpiry = new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString()
+          await supabase.from('connected_email_accounts')
+            .update({ google_access_token: data.access_token, google_token_expiry: newExpiry })
+            .eq('user_id', userId)
+            .eq('provider', 'google')
+            .eq('is_active', true)
+          return data.access_token
+        }
+      } catch {}
     }
   }
-  return profile.google_access_token
+
+  return token
 }
 
 function makeRFC2822(to: string, subject: string, body: string, from: string): string {
@@ -148,6 +176,6 @@ export async function POST(request: Request) {
     })
   } catch (err: unknown) {
     console.error('/api/email/send:', err)
-    return NextResponse.json({ error: (err as Error).message ?? 'Send failed' }, { status: 500 })
+    return apiError(err)
   }
 }

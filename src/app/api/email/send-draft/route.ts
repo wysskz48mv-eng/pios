@@ -59,21 +59,45 @@ export async function POST(req: NextRequest) {
   // Load the account for the CORRECT inbox
   const { data: account } = await admin
     .from('connected_email_accounts')
-    .select('email_address,access_token,refresh_token,provider')
+    .select('email_address,google_access_token,google_refresh_token,google_token_expiry,provider')
     .eq('user_id', user.id)
     .eq('email_address', draft.inbox_address)  // ← MUST match original inbox
+    .eq('is_active', true)
     .single()
 
   if (!account) {
     return NextResponse.json({ error: `Inbox ${draft.inbox_address} not connected` }, { status: 400 })
   }
 
+  // Refresh token if expired
+  let accessToken = account.google_access_token
+  if (account.google_refresh_token) {
+    const expiry = account.google_token_expiry ? new Date(account.google_token_expiry).getTime() : 0
+    if (expiry < Date.now() + 5 * 60 * 1000) {
+      const refreshed = await refreshGoogleTokenInline(account.google_refresh_token)
+      if (refreshed) {
+        accessToken = refreshed.access_token
+        await admin.from('connected_email_accounts')
+          .update({ google_access_token: refreshed.access_token, google_token_expiry: refreshed.expiry })
+          .eq('email_address', draft.inbox_address)
+          .eq('user_id', user.id)
+      }
+    }
+  }
+
+  if (!accessToken) {
+    return NextResponse.json({
+      error: 'Token expired — reconnect your Gmail in Settings.',
+      code: 'TOKEN_EXPIRED',
+    }, { status: 401 })
+  }
+
   const bodyToSend = updatedBody ?? draft.body
 
   // Send via Gmail
   const sent = await sendGmailEmail({
-    accessToken:  account.access_token,
-    refreshToken: account.refresh_token,
+    accessToken,
+    refreshToken: account.google_refresh_token ?? '',
     fromAddress:  account.email_address,  // ← CORRECT inbox
     toAddress:    draft.to_address,
     subject:      draft.subject,
@@ -175,6 +199,28 @@ async function sendGmailEmail({
     console.error('[send-draft]', err)
     return false
   }
+}
+
+/* ── Inline token refresh ──────────────────────────────────── */
+async function refreshGoogleTokenInline(refreshToken: string): Promise<{ access_token: string; expiry: string } | null> {
+  try {
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID ?? '',
+        client_secret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }),
+    })
+    const data = await res.json()
+    if (!data.access_token) return null
+    return {
+      access_token: data.access_token,
+      expiry: new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString(),
+    }
+  } catch { return null }
 }
 
 /* ── Delete Gmail draft ─────────────────────────────────────── */
