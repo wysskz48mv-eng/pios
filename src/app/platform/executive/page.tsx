@@ -112,7 +112,7 @@ export default function ExecutivePage() {
       setDecisions(d.decisions ?? [])
       setPrinciples(d.principles ?? [])
       setSummary(d.summary ?? null)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS exec load]', err) }
     setLoading(false)
   }, [])
 
