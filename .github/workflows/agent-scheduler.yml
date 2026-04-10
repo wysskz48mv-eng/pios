@@ -1,0 +1,118 @@
+name: PIOS Agent Scheduler
+
+on:
+  schedule:
+    # Morning briefing at 8:00 AM UTC (all tiers)
+    - cron: '0 8 * * *'
+    # 12:00 PM UTC (paid tiers only)
+    - cron: '0 12 * * *'
+    # 4:00 PM UTC (paid tiers only)
+    - cron: '0 16 * * *'
+    # 8:00 PM UTC (paid tiers only)
+    - cron: '0 20 * * *'
+    # Free tier check at 6:00 AM (check if 5-day window elapsed)
+    - cron: '0 6 * * *'
+
+  workflow_dispatch: {}
+
+env:
+  SUPABASE_URL: https://vfvfulbcaurqkygjrrhh.supabase.co
+
+jobs:
+  trigger-agents:
+    name: Trigger Intelligence Agents
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine schedule slot
+        id: slot
+        run: |
+          HOUR=$(date -u +%H)
+          CRON="${{ github.event.schedule }}"
+
+          if [[ "$CRON" == "0 8 * * *" ]]; then
+            echo "slot=morning_briefing" >> $GITHUB_OUTPUT
+            echo "tier_filter=all" >> $GITHUB_OUTPUT
+          elif [[ "$CRON" == "0 6 * * *" ]]; then
+            echo "slot=free_tier_check" >> $GITHUB_OUTPUT
+            echo "tier_filter=free_due" >> $GITHUB_OUTPUT
+          else
+            echo "slot=paid_scheduled" >> $GITHUB_OUTPUT
+            echo "tier_filter=paid_only" >> $GITHUB_OUTPUT
+          fi
+
+          # Manual dispatch runs all
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "slot=manual" >> $GITHUB_OUTPUT
+            echo "tier_filter=all" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fetch eligible users
+        id: users
+        run: |
+          FILTER="${{ steps.slot.outputs.tier_filter }}"
+          SB_URL="${{ env.SUPABASE_URL }}"
+          SB_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+
+          if [[ "$FILTER" == "all" ]]; then
+            # All users with agent access
+            USERS=$(curl -sf \
+              -H "Authorization: Bearer $SB_KEY" \
+              -H "apikey: $SB_KEY" \
+              "$SB_URL/rest/v1/user_agent_subscriptions?has_agent_access=eq.true&select=user_id,subscription_tier" \
+              | jq -c '.')
+          elif [[ "$FILTER" == "paid_only" ]]; then
+            # Only paid users
+            USERS=$(curl -sf \
+              -H "Authorization: Bearer $SB_KEY" \
+              -H "apikey: $SB_KEY" \
+              "$SB_URL/rest/v1/user_agent_subscriptions?has_agent_access=eq.true&subscription_tier=neq.free&select=user_id,subscription_tier" \
+              | jq -c '.')
+          elif [[ "$FILTER" == "free_due" ]]; then
+            # Free users whose next_agent_run has passed
+            NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
+            USERS=$(curl -sf \
+              -H "Authorization: Bearer $SB_KEY" \
+              -H "apikey: $SB_KEY" \
+              "$SB_URL/rest/v1/user_agent_subscriptions?subscription_tier=eq.free&next_agent_run=lte.$NOW&select=user_id,subscription_tier" \
+              | jq -c '.')
+          fi
+
+          echo "users=$USERS" >> $GITHUB_OUTPUT
+          COUNT=$(echo "$USERS" | jq length 2>/dev/null || echo 0)
+          echo "::notice::Found $COUNT eligible users for slot ${{ steps.slot.outputs.slot }}"
+
+      - name: Trigger agents for each user
+        run: |
+          USERS='${{ steps.users.outputs.users }}'
+          SB_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          SLOT="${{ steps.slot.outputs.slot }}"
+
+          TRIGGER_TYPE="scheduled"
+          if [[ "$SLOT" == "morning_briefing" ]]; then
+            TRIGGER_TYPE="briefing"
+          fi
+
+          AGENTS=(
+            "pios-legal-academic-intelligence-agent"
+            "pios-market-intelligence-agent"
+            "pios-world-model-agent"
+          )
+
+          echo "$USERS" | jq -c '.[]' 2>/dev/null | while read -r USER; do
+            USER_ID=$(echo "$USER" | jq -r '.user_id')
+            TIER=$(echo "$USER" | jq -r '.subscription_tier')
+
+            echo "Triggering agents for user $USER_ID (tier: $TIER, slot: $SLOT)"
+
+            for AGENT in "${AGENTS[@]}"; do
+              echo "  → $AGENT"
+              curl -sf -X POST \
+                "${{ env.SUPABASE_URL }}/functions/v1/$AGENT" \
+                -H "Authorization: Bearer $SB_KEY" \
+                -H "Content-Type: application/json" \
+                -d "{\"user_id\":\"$USER_ID\",\"trigger_type\":\"$TRIGGER_TYPE\"}" \
+                | jq -c '{status, agent, next_run}' 2>/dev/null || echo "    (no response)"
+            done
+          done
+
+          echo "::notice::Agent scheduler completed for slot $SLOT"
