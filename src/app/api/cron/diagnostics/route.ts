@@ -246,7 +246,7 @@ export async function GET(req: NextRequest) {
   try {
     const { data: accounts } = await supabase
       .from('connected_email_accounts')
-      .select('id, email_address, provider, google_token_expiry, ms_token_expiry, google_refresh_token, ms_refresh_token, is_active, sync_enabled')
+      .select('id, email_address, provider, google_token_expiry, ms_token_expiry, google_refresh_token_enc, ms_refresh_token_enc, is_active, sync_enabled')
       .eq('is_active', true)
 
     for (const acct of accounts ?? []) {
@@ -255,7 +255,7 @@ export async function GET(req: NextRequest) {
 
       if (acct.provider === 'google') {
         const expiry = acct.google_token_expiry ? new Date(acct.google_token_expiry).getTime() : 0
-        if (expiry < now && !acct.google_refresh_token) {
+        if (expiry < now && !acct.google_refresh_token_enc) {
           findings.push({
             check_type: 'token_health',
             check_name: `token_expired_${acct.email_address}`,
@@ -264,7 +264,7 @@ export async function GET(req: NextRequest) {
             detail: 'User must reconnect Gmail. Sync and send will fail until reconnected.',
             evidence: { email: acct.email_address, expiry: acct.google_token_expiry },
           })
-        } else if (expiry < now && acct.google_refresh_token) {
+        } else if (expiry < now && acct.google_refresh_token_enc) {
           findings.push({
             check_type: 'token_health',
             check_name: `token_refreshable_${acct.email_address}`,
@@ -278,7 +278,7 @@ export async function GET(req: NextRequest) {
 
       if (acct.provider === 'microsoft') {
         const expiry = acct.ms_token_expiry ? new Date(acct.ms_token_expiry).getTime() : 0
-        if (expiry < now && !acct.ms_refresh_token) {
+        if (expiry < now && !acct.ms_refresh_token_enc) {
           findings.push({
             check_type: 'token_health',
             check_name: `token_expired_${acct.email_address}`,

@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
     // Pseudonymise profile
     await supabase.from('user_profiles').update({
       full_name: '[Deleted User]', avatar_url: null,
-      google_email: null, google_access_token: null, google_refresh_token: null,
+      google_email: null, google_access_token_enc: null, google_refresh_token_enc: null,
     }).eq('id', user.id)
     results.profile = 'pseudonymised'
 

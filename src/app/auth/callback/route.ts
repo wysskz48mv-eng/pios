@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
   // Check existing profile
   const { data: existingProfile } = await admin
     .from('user_profiles')
-    .select('id, onboarded, full_name, google_refresh_token')
+    .select('id, onboarded, full_name, google_refresh_token_enc')
     .eq('id', user.id)
     .single()
 
@@ -129,8 +129,8 @@ export async function GET(request: NextRequest) {
       persona_type:         'executive',
       onboarded:            false,
       google_email:         googleEmail,
-      google_access_token:  shouldConnectWorkspace ? providerToken : null,
-      google_refresh_token: shouldConnectWorkspace ? providerRefreshToken : null,
+      google_access_token_enc:  shouldConnectWorkspace ? providerToken : null,
+      google_refresh_token_enc: shouldConnectWorkspace ? providerRefreshToken : null,
       google_token_expiry:  shouldConnectWorkspace && providerToken
         ? new Date(Date.now() + 3600 * 1000).toISOString()
         : null,
@@ -156,8 +156,8 @@ export async function GET(request: NextRequest) {
     const tokenExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
 
     await admin.from('user_profiles').update({
-      google_access_token:  providerToken,
-      google_refresh_token: providerRefreshToken ?? null,
+      google_access_token_enc:  providerToken,
+      google_refresh_token_enc: providerRefreshToken ?? null,
       google_email:         googleEmail,
       google_token_expiry:  tokenExpiry,
       updated_at:           new Date().toISOString(),
@@ -176,8 +176,8 @@ export async function GET(request: NextRequest) {
         sync_enabled:         true,
         ai_triage_enabled:    true,
         receipt_scan_enabled: false,
-        google_access_token:  providerToken,
-        google_refresh_token: providerRefreshToken,
+        google_access_token_enc:  providerToken,
+        google_refresh_token_enc: providerRefreshToken,
         google_token_expiry:  tokenExpiry,
         google_scopes:        ['email', 'profile', 'https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive.readonly'],
         connected_at:         new Date().toISOString(),

@@ -13,7 +13,7 @@ export const maxDuration = 60
 
 const DOMAINS = ['academic','fm_consulting','saas','business','personal']
 async function refreshGoogleToken(supabase: any, account: any): Promise<string | null> {
-  if (!account.google_refresh_token) return null
+  if (!account.google_refresh_token_enc) return null
   try {
     const res = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -21,7 +21,7 @@ async function refreshGoogleToken(supabase: any, account: any): Promise<string |
       body: new URLSearchParams({
         client_id:     process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        refresh_token: account.google_refresh_token,
+        refresh_token: account.google_refresh_token_enc,
         grant_type:    'refresh_token',
       }),
     })
@@ -29,13 +29,13 @@ async function refreshGoogleToken(supabase: any, account: any): Promise<string |
     if (!data.access_token) return null
     const expiry = new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString()
     await supabase.from('connected_email_accounts')
-      .update({ google_access_token: data.access_token, google_token_expiry: expiry })
+      .update({ google_access_token_enc: data.access_token, google_token_expiry: expiry })
       .eq('id', account.id)
     return data.access_token
   } catch { return null }
 }
 async function refreshMicrosoftToken(supabase: any, account: any): Promise<string | null> {
-  if (!account.ms_refresh_token) return null
+  if (!account.ms_refresh_token_enc) return null
   try {
     const res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
       method: 'POST',
@@ -43,7 +43,7 @@ async function refreshMicrosoftToken(supabase: any, account: any): Promise<strin
       body: new URLSearchParams({
         client_id:     process.env.AZURE_CLIENT_ID!,
         client_secret: process.env.AZURE_CLIENT_SECRET!,
-        refresh_token: account.ms_refresh_token,
+        refresh_token: account.ms_refresh_token_enc,
         grant_type:    'refresh_token',
         scope:         'Mail.Read Mail.Send Calendars.Read User.Read offline_access',
       }),
@@ -52,7 +52,7 @@ async function refreshMicrosoftToken(supabase: any, account: any): Promise<strin
     if (!data.access_token) return null
     const expiry = new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString()
     await supabase.from('connected_email_accounts')
-      .update({ ms_access_token: data.access_token, ms_token_expiry: expiry })
+      .update({ ms_access_token_enc: data.access_token, ms_token_expiry: expiry })
       .eq('id', account.id)
     return data.access_token
   } catch { return null }
@@ -61,12 +61,12 @@ async function getValidToken(supabase: any, account: any): Promise<string | null
   const buf = 5 * 60 * 1000
   if (account.provider === 'google') {
     const exp = account.google_token_expiry ? new Date(account.google_token_expiry) : null
-    if (exp && exp > new Date(Date.now() + buf)) return account.google_access_token
+    if (exp && exp > new Date(Date.now() + buf)) return account.google_access_token_enc
     return refreshGoogleToken(supabase, account)
   }
   if (account.provider === 'microsoft') {
     const exp = account.ms_token_expiry ? new Date(account.ms_token_expiry) : null
-    if (exp && exp > new Date(Date.now() + buf)) return account.ms_access_token
+    if (exp && exp > new Date(Date.now() + buf)) return account.ms_access_token_enc
     return refreshMicrosoftToken(supabase, account)
   }
   return null
@@ -199,8 +199,8 @@ export async function POST(req: NextRequest) {
   const { data: accounts } = await q
   if (!accounts || accounts.length === 0) {
     const { data: profile } = await supabase.from('user_profiles')
-      .select('google_access_token,google_refresh_token,google_token_expiry').eq('id', user.id).single()
-    if (!profile?.google_access_token) return NextResponse.json({ synced: 0, receipts: 0, message: 'No email accounts connected. Add one in Settings → Email Accounts.' })
+      .select('google_access_token_enc,google_refresh_token_enc,google_token_expiry').eq('id', user.id).single()
+    if (!profile?.google_access_token_enc) return NextResponse.json({ synced: 0, receipts: 0, message: 'No email accounts connected. Add one in Settings → Email Accounts.' })
     const legacyAcc = { id: 'legacy', provider: 'google', context: 'personal', label: 'Gmail', display_name: 'Gmail', ai_domain_override: null, receipt_scan_enabled: false, receipt_keywords: [], ...profile }
     const token = await getValidToken(supabase, legacyAcc)
     if (!token) return NextResponse.json({ synced: 0, receipts: 0, error: 'Google inbox token expired. Reconnect it in Settings → Email Accounts.' })

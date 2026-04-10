@@ -30,11 +30,11 @@ interface ConnectedAccount {
   ai_triage_enabled: boolean
   receipt_scan_enabled: boolean
   ai_domain_override: string | null
-  google_access_token: string | null
-  google_refresh_token: string | null
+  google_access_token_enc: string | null
+  google_refresh_token_enc: string | null
   google_token_expiry: string | null
-  ms_access_token: string | null
-  ms_refresh_token: string | null
+  ms_access_token_enc: string | null
+  ms_refresh_token_enc: string | null
   ms_token_expiry: string | null
 }
 
@@ -190,10 +190,10 @@ export async function GET(req: NextRequest) {
 
 async function ensureGoogleToken(supabase: any, account: ConnectedAccount): Promise<string | null> {
   const expiry = account.google_token_expiry ? new Date(account.google_token_expiry).getTime() : 0
-  if (account.google_access_token && expiry > Date.now() + 5 * 60 * 1000) {
-    return account.google_access_token
+  if (account.google_access_token_enc && expiry > Date.now() + 5 * 60 * 1000) {
+    return account.google_access_token_enc
   }
-  if (!account.google_refresh_token) return null
+  if (!account.google_refresh_token_enc) return null
 
   try {
     const res = await fetch('https://oauth2.googleapis.com/token', {
@@ -202,7 +202,7 @@ async function ensureGoogleToken(supabase: any, account: ConnectedAccount): Prom
       body: new URLSearchParams({
         client_id: process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        refresh_token: account.google_refresh_token,
+        refresh_token: account.google_refresh_token_enc,
         grant_type: 'refresh_token',
       }),
     })
@@ -211,7 +211,7 @@ async function ensureGoogleToken(supabase: any, account: ConnectedAccount): Prom
 
     const newExpiry = new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString()
     await supabase.from('connected_email_accounts')
-      .update({ google_access_token: data.access_token, google_token_expiry: newExpiry })
+      .update({ google_access_token_enc: data.access_token, google_token_expiry: newExpiry })
       .eq('id', account.id)
     return data.access_token
   } catch { return null }
@@ -219,10 +219,10 @@ async function ensureGoogleToken(supabase: any, account: ConnectedAccount): Prom
 
 async function ensureMicrosoftToken(supabase: any, account: ConnectedAccount): Promise<string | null> {
   const expiry = account.ms_token_expiry ? new Date(account.ms_token_expiry).getTime() : 0
-  if (account.ms_access_token && expiry > Date.now() + 5 * 60 * 1000) {
-    return account.ms_access_token
+  if (account.ms_access_token_enc && expiry > Date.now() + 5 * 60 * 1000) {
+    return account.ms_access_token_enc
   }
-  if (!account.ms_refresh_token) return null
+  if (!account.ms_refresh_token_enc) return null
 
   try {
     const res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
@@ -231,7 +231,7 @@ async function ensureMicrosoftToken(supabase: any, account: ConnectedAccount): P
       body: new URLSearchParams({
         client_id: process.env.AZURE_CLIENT_ID!,
         client_secret: process.env.AZURE_CLIENT_SECRET!,
-        refresh_token: account.ms_refresh_token,
+        refresh_token: account.ms_refresh_token_enc,
         grant_type: 'refresh_token',
         scope: 'Mail.Read Mail.Send Calendars.Read User.Read offline_access',
       }),
@@ -241,7 +241,7 @@ async function ensureMicrosoftToken(supabase: any, account: ConnectedAccount): P
 
     const newExpiry = new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString()
     await supabase.from('connected_email_accounts')
-      .update({ ms_access_token: data.access_token, ms_token_expiry: newExpiry })
+      .update({ ms_access_token_enc: data.access_token, ms_token_expiry: newExpiry })
       .eq('id', account.id)
     return data.access_token
   } catch { return null }

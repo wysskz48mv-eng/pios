@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   // Load the account for the CORRECT inbox
   const { data: account } = await admin
     .from('connected_email_accounts')
-    .select('email_address,google_access_token,google_refresh_token,google_token_expiry,provider')
+    .select('email_address,google_access_token_enc,google_refresh_token_enc,google_token_expiry,provider')
     .eq('user_id', user.id)
     .eq('email_address', draft.inbox_address)  // ← MUST match original inbox
     .eq('is_active', true)
@@ -70,15 +70,15 @@ export async function POST(req: NextRequest) {
   }
 
   // Refresh token if expired
-  let accessToken = account.google_access_token
-  if (account.google_refresh_token) {
+  let accessToken = account.google_access_token_enc
+  if (account.google_refresh_token_enc) {
     const expiry = account.google_token_expiry ? new Date(account.google_token_expiry).getTime() : 0
     if (expiry < Date.now() + 5 * 60 * 1000) {
-      const refreshed = await refreshGoogleTokenInline(account.google_refresh_token)
+      const refreshed = await refreshGoogleTokenInline(account.google_refresh_token_enc)
       if (refreshed) {
         accessToken = refreshed.access_token
         await admin.from('connected_email_accounts')
-          .update({ google_access_token: refreshed.access_token, google_token_expiry: refreshed.expiry })
+          .update({ google_access_token_enc: refreshed.access_token, google_token_expiry: refreshed.expiry })
           .eq('email_address', draft.inbox_address)
           .eq('user_id', user.id)
       }
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   // Send via Gmail
   const sent = await sendGmailEmail({
     accessToken,
-    refreshToken: account.google_refresh_token ?? '',
+    refreshToken: account.google_refresh_token_enc ?? '',
     fromAddress:  account.email_address,  // ← CORRECT inbox
     toAddress:    draft.to_address,
     subject:      draft.subject,

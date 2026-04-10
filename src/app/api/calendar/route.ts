@@ -23,20 +23,20 @@ export const maxDuration = 30
 
 async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
   const { data: profile } = await supabase.from('user_profiles')
-    .select('google_access_token, google_refresh_token, google_token_expiry')
+    .select('google_access_token_enc, google_refresh_token_enc, google_token_expiry')
     .eq('id', userId).single()
-  if (!profile?.google_access_token) return null
+  if (!profile?.google_access_token_enc) return null
   if (profile.google_token_expiry) {
     const expiry = new Date(profile.google_token_expiry)
-    if (expiry <= new Date(Date.now() + 5 * 60 * 1000) && profile.google_refresh_token) {
+    if (expiry <= new Date(Date.now() + 5 * 60 * 1000) && profile.google_refresh_token_enc) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pios-wysskz48mv-engs-projects.vercel.app'
       await fetch(`${appUrl}/api/auth/refresh-google`, { method: 'POST' })
       const { data: fresh } = await supabase.from('user_profiles')
-        .select('google_access_token').eq('id', userId).single()
-      return fresh?.google_access_token ?? profile.google_access_token
+        .select('google_access_token_enc').eq('id', userId).single()
+      return fresh?.google_access_token_enc ?? profile.google_access_token_enc
     }
   }
-  return profile.google_access_token
+  return profile.google_access_token_enc
 }
 
 function classifyDomain(title: string, description: string): string {
@@ -82,11 +82,11 @@ export async function GET(request: Request) {
 
     // Also check if Google is connected
     const { data: profile } = await supabase.from('user_profiles')
-      .select('google_email, google_access_token').eq('id', user.id).single()
+      .select('google_email, google_access_token_enc').eq('id', user.id).single()
 
     return NextResponse.json({
       events: data ?? [],
-      google_connected: !!profile?.google_access_token,
+      google_connected: !!profile?.google_access_token_enc,
       google_email: profile?.google_email ?? null,
     })
   } catch (err: unknown) {
@@ -165,13 +165,13 @@ export async function POST(request: Request) {
     if (action === 'sync_microsoft') {
       const { data: account } = await supabase
         .from('connected_email_accounts')
-        .select('ms_access_token, ms_refresh_token, ms_token_expiry')
+        .select('ms_access_token_enc, ms_refresh_token_enc, ms_token_expiry')
         .eq('user_id', user.id)
         .eq('provider', 'microsoft')
         .eq('is_active', true)
         .single()
 
-      if (!account?.ms_access_token) {
+      if (!account?.ms_access_token_enc) {
         return NextResponse.json({ error: 'Microsoft account not connected', synced: 0 })
       }
 
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
           $top:          '100',
           $select:       'id,subject,bodyPreview,start,end,location,attendees,isOnlineMeeting,onlineMeetingUrl',
         }),
-        { headers: { Authorization: `Bearer ${account.ms_access_token}` } }
+        { headers: { Authorization: `Bearer ${account.ms_access_token_enc}` } }
       )
 
       if (!msRes.ok) {

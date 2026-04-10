@@ -55,8 +55,8 @@ interface ConnectedAccount {
   id: string
   email_address: string
   provider: string
-  google_access_token: string
-  google_refresh_token: string
+  google_access_token_enc: string
+  google_refresh_token_enc: string
   context: string             // personal | academic | work | consulting
   ai_triage_enabled: boolean
 }
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
   // Load ALL connected accounts for this user — keyed by email address
   const { data: accounts } = await admin
     .from('connected_email_accounts')
-    .select('id,email_address,provider,google_access_token,google_refresh_token,context,ai_triage_enabled')
+    .select('id,email_address,provider,google_access_token_enc,google_refresh_token_enc,context,ai_triage_enabled')
     .eq('user_id', user.id)
     .eq('ai_triage_enabled', true)
 
@@ -200,10 +200,10 @@ async function triageAndDraft({
     })
 
     // Create Gmail draft from the CORRECT account
-    if (draftBody && account.provider === 'gmail' && account.google_access_token) {
+    if (draftBody && account.provider === 'gmail' && account.google_access_token_enc) {
       draftId = await createGmailDraft({
-        accessToken:  account.google_access_token,
-        refreshToken: account.google_refresh_token,
+        accessToken:  account.google_access_token_enc,
+        refreshToken: account.google_refresh_token_enc,
         fromAddress:  account.email_address,   // ← CORRECT inbox
         toAddress:    email.from_address,
         subject:      replySubject(email.subject ?? ''),

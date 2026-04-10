@@ -52,9 +52,9 @@ export async function GET() {
       ...a,
       // Indicate token presence without exposing value
       has_token: a.provider === 'google'
-        ? !!a.google_access_token
+        ? !!a.google_access_token_enc
         : a.provider === 'microsoft'
-        ? !!a.ms_access_token
+        ? !!a.ms_access_token_enc
         : !!a.imap_password_enc,
     }))
 
@@ -237,21 +237,21 @@ export async function DELETE(req: NextRequest) {
     // Fetch tokens before clearing so we can revoke at provider
     const { data: account } = await supabase
       .from('connected_email_accounts')
-      .select('google_access_token, google_refresh_token, ms_refresh_token, provider')
+      .select('google_access_token_enc, google_refresh_token_enc, ms_refresh_token_enc, provider')
       .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
     // Revoke tokens at provider (best-effort, don't block disconnect)
     if (account) {
-      const revokeToken = account.google_refresh_token ?? account.google_access_token
+      const revokeToken = account.google_refresh_token_enc ?? account.google_access_token_enc
       if (revokeToken) {
         fetch(`https://oauth2.googleapis.com/revoke?token=${revokeToken}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         }).catch(() => {})
       }
-      if (account.ms_refresh_token) {
+      if (account.ms_refresh_token_enc) {
         // Microsoft doesn't have a public revoke endpoint for consumer tokens,
         // but clearing from our DB prevents further use. For org tenants,
         // the admin can revoke via Azure AD.
@@ -266,10 +266,10 @@ export async function DELETE(req: NextRequest) {
         is_primary: false,
         sync_enabled: false,
         disconnected_at: new Date().toISOString(),
-        google_access_token: null,
-        google_refresh_token: null,
-        ms_access_token: null,
-        ms_refresh_token: null,
+        google_access_token_enc: null,
+        google_refresh_token_enc: null,
+        ms_access_token_enc: null,
+        ms_refresh_token_enc: null,
         imap_password_enc: null,
         updated_at: new Date().toISOString(),
       })

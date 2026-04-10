@@ -90,16 +90,16 @@ export async function GET(req: NextRequest) {
     const soonExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString()
     const { data: expiring } = await supabase
       .from('connected_email_accounts')
-      .select('id, email_address, provider, google_refresh_token, ms_refresh_token, google_token_expiry, ms_token_expiry')
+      .select('id, email_address, provider, google_refresh_token_enc, ms_refresh_token_enc, google_token_expiry, ms_token_expiry')
       .eq('is_active', true)
       .eq('sync_enabled', true)
 
     const problemAccounts = (expiring ?? []).filter(a => {
       if (a.provider === 'google') {
-        return a.google_token_expiry && a.google_token_expiry < soonExpiry && !a.google_refresh_token
+        return a.google_token_expiry && a.google_token_expiry < soonExpiry && !a.google_refresh_token_enc
       }
       if (a.provider === 'microsoft') {
-        return a.ms_token_expiry && a.ms_token_expiry < soonExpiry && !a.ms_refresh_token
+        return a.ms_token_expiry && a.ms_token_expiry < soonExpiry && !a.ms_refresh_token_enc
       }
       return false
     })

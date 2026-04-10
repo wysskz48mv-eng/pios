@@ -22,26 +22,26 @@ async function getGoogleToken(supabase: any, userId: string): Promise<string | n
   // Try connected_email_accounts first (new path), then user_profiles (legacy)
   const { data: account } = await supabase
     .from('connected_email_accounts')
-    .select('google_access_token, google_refresh_token, google_token_expiry')
+    .select('google_access_token_enc, google_refresh_token_enc, google_token_expiry')
     .eq('user_id', userId)
     .eq('is_active', true)
     .eq('provider', 'google')
     .limit(1)
     .maybeSingle()
 
-  const token = account?.google_access_token
-  const refresh = account?.google_refresh_token
+  const token = account?.google_access_token_enc
+  const refresh = account?.google_refresh_token_enc
   const expiry = account?.google_token_expiry
 
   if (!token && !refresh) {
     // Fall back to user_profiles (legacy)
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('google_access_token, google_refresh_token, google_token_expiry')
+      .select('google_access_token_enc, google_refresh_token_enc, google_token_expiry')
       .eq('id', userId)
       .single()
-    if (!profile?.google_access_token) return null
-    return profile.google_access_token
+    if (!profile?.google_access_token_enc) return null
+    return profile.google_access_token_enc
   }
 
   // Refresh inline if within 5 min of expiry
@@ -63,7 +63,7 @@ async function getGoogleToken(supabase: any, userId: string): Promise<string | n
         if (data.access_token) {
           const newExpiry = new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString()
           await supabase.from('connected_email_accounts')
-            .update({ google_access_token: data.access_token, google_token_expiry: newExpiry })
+            .update({ google_access_token_enc: data.access_token, google_token_expiry: newExpiry })
             .eq('user_id', userId)
             .eq('provider', 'google')
             .eq('is_active', true)

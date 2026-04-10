@@ -45,8 +45,8 @@ export async function GET() {
   let googleTokenOk  = false
   try {
     const { data: profile } = await supabase
-      .from('user_profiles').select('google_access_token').eq('id', user.id).single()
-    googleTokenOk = !!profile?.google_access_token
+      .from('user_profiles').select('google_access_token_enc').eq('id', user.id).single()
+    googleTokenOk = !!profile?.google_access_token_enc
   } catch { googleTokenOk = false }
 
   // §03 Resend

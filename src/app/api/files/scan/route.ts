@@ -18,23 +18,23 @@ export const maxDuration = 60
 
 async function getGoogleToken(supabase: any, userId: string): Promise<string | null> {
   const { data: profile } = await supabase.from('user_profiles')
-    .select('google_access_token, google_refresh_token, google_token_expiry')
+    .select('google_access_token_enc, google_refresh_token_enc, google_token_expiry')
     .eq('id', userId).single()
 
-  if (!profile?.google_access_token) return null
+  if (!profile?.google_access_token_enc) return null
 
   // Refresh if needed
   if (profile.google_token_expiry) {
     const expiry = new Date(profile.google_token_expiry)
-    if (expiry <= new Date(Date.now() + 5 * 60 * 1000) && profile.google_refresh_token) {
+    if (expiry <= new Date(Date.now() + 5 * 60 * 1000) && profile.google_refresh_token_enc) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pios-wysskz48mv-engs-projects.vercel.app'
       await fetch(`${appUrl}/api/auth/refresh-google`, { method: 'POST' })
       const { data: fresh } = await supabase.from('user_profiles')
-        .select('google_access_token').eq('id', userId).single()
-      return fresh?.google_access_token ?? null
+        .select('google_access_token_enc').eq('id', userId).single()
+      return fresh?.google_access_token_enc ?? null
     }
   }
-  return profile.google_access_token
+  return profile.google_access_token_enc
 }
 
 async function listDriveFiles(token: string, folderId = 'root', maxFiles = 50): Promise<any[]> {
@@ -249,8 +249,8 @@ export async function GET(request: Request) {
     // List Drive folders for folder picker
     if (action === 'folders') {
       const { data: profile } = await supabase.from('user_profiles')
-        .select('google_access_token').eq('id', user.id).single()
-      if (!profile?.google_access_token) return NextResponse.json({ folders: [] })
+        .select('google_access_token_enc').eq('id', user.id).single()
+      if (!profile?.google_access_token_enc) return NextResponse.json({ folders: [] })
       const token = await getGoogleToken(supabase, user.id)
       if (!token) return NextResponse.json({ folders: [] })
       const folders = await listDriveFolders(token, searchParams.get('parent') ?? 'root')

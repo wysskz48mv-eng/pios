@@ -16,7 +16,7 @@ export async function GET() {
     const [{ data: profile }, { data: accounts }, { data: draft }] = await Promise.all([
       admin
         .from('user_profiles')
-        .select('persona_type, active_modules, deployment_mode, cv_processing_status, google_access_token, onboarded')
+        .select('persona_type, active_modules, deployment_mode, cv_processing_status, google_access_token_enc, onboarded')
         .eq('id', user.id)
         .single(),
       admin
@@ -32,7 +32,7 @@ export async function GET() {
     ])
 
     const activeAccounts = accounts ?? []
-    const googleConnected = !!profile?.google_access_token || activeAccounts.some(account => account.provider === 'google')
+    const googleConnected = !!profile?.google_access_token_enc || activeAccounts.some(account => account.provider === 'google')
     const microsoftConnected = activeAccounts.some(account => account.provider === 'microsoft')
 
     return NextResponse.json({
