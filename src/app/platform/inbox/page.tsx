@@ -263,18 +263,55 @@ export default function InboxPage() {
                   </div>
                 </div>
 
-                {/* Expanded: original email + draft review */}
+                {/* Expanded: actions bar + email body + draft review */}
                 {isOpen && (
                   <div style={{ borderTop: '1px solid var(--pios-border)' }}>
 
-                    {/* Original email */}
+                    {/* Quick actions bar */}
+                    <div style={{ padding: '8px 16px', display: 'flex', gap: 6, flexWrap: 'wrap', borderBottom: '1px solid var(--pios-border)', background: 'var(--pios-surface2)' }}>
+                      {[
+                        { label: 'Archive', action: 'archive', icon: '📥' },
+                        { label: 'Delete', action: 'delete', icon: '🗑' },
+                        { label: 'Spam', action: 'spam', icon: '⛔' },
+                        { label: 'Block sender', action: 'block', icon: '🚫' },
+                        { label: (email as any).is_flagged ? 'Unflag' : 'Flag', action: (email as any).is_flagged ? 'unflag' : 'flag', icon: '⚑' },
+                        { label: 'Snooze', action: 'snooze', icon: '⏰' },
+                        { label: (email as any).unsubscribe_url ? 'Unsubscribe' : '', action: 'unsubscribe', icon: '✉' },
+                      ].filter(a => a.label).map(a => (
+                        <button key={a.action} onClick={async (e) => {
+                          e.stopPropagation()
+                          await fetch('/api/email/actions', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email_id: email.id, action: a.action }),
+                          })
+                          await load()
+                        }} style={{ padding: '4px 10px', fontSize: 11, background: 'transparent', border: '1px solid var(--pios-border)', borderRadius: 5, color: 'var(--pios-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span>{a.icon}</span> {a.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Email header + body */}
                     <div style={{ padding: '14px 16px', background: 'rgba(0,0,0,0.02)' }}>
                       <div style={{ fontSize: 11, color: 'var(--pios-dim)', marginBottom: 8 }}>
-                        From: {email.from_address} · To: {email.inbox_address}
+                        From: {email.from_address} · To: {email.inbox_address} · {formatTime(email.received_at)}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--pios-text)', lineHeight: 1.7, whiteSpace: 'pre-wrap', maxHeight: 200, overflowY: 'auto' }}>
+                      <div style={{ fontSize: 13, color: 'var(--pios-text)', lineHeight: 1.7, whiteSpace: 'pre-wrap', maxHeight: 300, overflowY: 'auto' }}>
                         {email.body_preview ?? '(no preview available)'}
                       </div>
+                      <button onClick={async (e) => {
+                        e.stopPropagation()
+                        const res = await fetch(`/api/email/view?id=${email.id}`)
+                        if (res.ok) {
+                          const data = await res.json()
+                          if (data.email?.body_text) {
+                            setEmails(prev => prev.map(em => em.id === email.id ? { ...em, body_preview: data.email.body_text } : em))
+                          }
+                        }
+                      }} style={{ marginTop: 8, fontSize: 11, color: 'var(--ai)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                        View full email →
+                      </button>
                     </div>
 
                     {/* NemoClaw™ draft review */}
