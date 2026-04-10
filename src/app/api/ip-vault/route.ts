@@ -39,14 +39,13 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { data: prof } = await supabase.from('user_profiles').select('tenant_id,full_name,organisation').eq('id', user.id).single()
     const p = prof as any
-    if (!p?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json() as Record<string, unknown>
     const action = body.action as string
 
     if (action === 'create') {
       const { data, error } = await supabase.from('ip_assets').insert({
-        user_id: user.id, tenant_id: p.tenant_id,
+        user_id: user.id, tenant_id: p?.tenant_id ?? user.id,
         name: body.name, asset_type: body.asset_type,
         description: body.description ?? null, status: body.status ?? 'active',
         jurisdiction: body.jurisdiction ?? [], filing_date: body.filing_date ?? null,
@@ -101,7 +100,7 @@ export async function POST(req: NextRequest) {
       const toInsert = frameworks
         .filter(fw => !existingNames.has(fw.name))
         .map(fw => ({
-          user_id: user.id, tenant_id: p.tenant_id,
+          user_id: user.id, tenant_id: p?.tenant_id ?? user.id,
           name: fw.name, asset_type: 'framework',
           description: fw.desc, status: 'active',
           owner_entity: 'VeritasIQ Technologies Ltd',

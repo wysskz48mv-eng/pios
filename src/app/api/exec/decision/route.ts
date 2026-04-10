@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles').select('tenant_id,full_name,job_title').eq('id', user.id).single()
     const prof = profile as Record<string,unknown> | null
-    if (!prof?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json()
   // Prompt injection defence — IS-POL-008
@@ -44,7 +43,7 @@ export async function POST(req: NextRequest) {
         AAM:  'Evaluate through an accountability lens — who should own this decision and what governance model should apply?',
       }
 
-      const prompt = `You are the Decision Architecture Agent™ (DAA™). Structure this decision for ${(prof.full_name as string) ?? 'an executive'}.
+      const prompt = `You are the Decision Architecture Agent™ (DAA™). Structure this decision for ${(prof?.full_name as string) ?? 'an executive'}.
 
 DECISION: ${title}
 CONTEXT: ${context}
@@ -87,7 +86,7 @@ Keep the whole analysis under 500 words. Be direct and actionable.`
       if ((decisionRow as Record<string,unknown> | null)?.id) {
         await supabase.from('exec_decision_analyses').insert({
           decision_id:    (decisionRow as Record<string,unknown>).id,
-          tenant_id:      prof.tenant_id,
+          tenant_id: prof?.tenant_id ?? user.id,
           user_id:        user.id,
           framework_used: framework,
           analysis_text:  analysis,

@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles').select('tenant_id,full_name,job_title,organisation').eq('id', user.id).single()
     const prof = profile as Record<string,unknown> | null
-    if (!prof?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json()
     const { action } = body as { action: string }
@@ -76,7 +75,7 @@ export async function POST(req: NextRequest) {
       const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
       const content = await callClaude(
-        [{ role: 'user', content: `Generate a ${cadence} Strategic Intelligence Brief for ${(prof.full_name as string) ?? 'an executive'} (${(prof.job_title as string) ?? 'CEO'} at ${(prof.organisation as string) ?? 'their organisation'}).
+        [{ role: 'user', content: `Generate a ${cadence} Strategic Intelligence Brief for ${(prof?.full_name as string) ?? 'an executive'} (${(prof?.job_title as string) ?? 'CEO'} at ${(prof?.organisation as string) ?? 'their organisation'}).
 
 Today: ${today}
 
@@ -110,7 +109,7 @@ Be specific, current, and analytically sharp. Avoid generic statements. Each sig
       // Persist to sia_signal_briefs
       const { data: brief } = await supabase.from('sia_signal_briefs').insert({
         user_id:   user.id,
-        tenant_id: prof.tenant_id,
+        tenant_id: prof?.tenant_id ?? user.id,
         title:     `${cadence.charAt(0).toUpperCase() + cadence.slice(1)} Signal Brief — ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`,
         cadence,
         content,

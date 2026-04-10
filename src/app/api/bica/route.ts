@@ -69,7 +69,6 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles').select('tenant_id,full_name,job_title,organisation').eq('id', user.id).single()
     const prof = profile as Record<string,unknown> | null
-    if (!prof?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json()
     const { action } = body as { action: string }
@@ -98,7 +97,7 @@ export async function POST(req: NextRequest) {
         .map(([k, v]) => `${k.replace(/_/g,' ').toUpperCase()}: ${v}`)
         .join('\n\n')
 
-      const systemPrompt = `You are BICA™ — the Board & Investor Comms Agent inside PIOS, writing on behalf of ${(prof.full_name as string) ?? 'the CEO'} (${(prof.job_title as string) ?? 'CEO'} of ${(prof.organisation as string) ?? 'the organisation'}).
+      const systemPrompt = `You are BICA™ — the Board & Investor Comms Agent inside PIOS, writing on behalf of ${(prof?.full_name as string) ?? 'the CEO'} (${(prof?.job_title as string) ?? 'CEO'} of ${(prof?.organisation as string) ?? 'the organisation'}).
 
 You write executive communications that are: clear, confident, and free of jargon. You match the specified tone precisely. You never include AI disclaimers or meta-commentary. You write as the executive, in the first person where appropriate.
 
@@ -108,7 +107,7 @@ TONE GUIDE:
 - balanced: honest about challenges, credible about solutions
 - direct: short sentences, action-oriented, no padding`
 
-      const userPrompt = `Write a ${template.label} for ${(prof.organisation as string) ?? 'the organisation'}.
+      const userPrompt = `Write a ${template.label} for ${(prof?.organisation as string) ?? 'the organisation'}.
 
 AUDIENCE: ${audience || 'Board of Directors'}
 PERIOD: ${period || 'current quarter'}
@@ -138,7 +137,7 @@ Guidelines:
       // Persist
       const { data: saved } = await supabase.from('bica_comms').insert({
         user_id:     user.id,
-        tenant_id:   prof.tenant_id,
+        tenant_id: prof?.tenant_id ?? user.id,
         title:       `${template.label} — ${period || new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`,
         comms_type,
         audience,

@@ -44,7 +44,6 @@ export async function POST(req: NextRequest) {
     const { data: prof } = await (supabase as any)
       .from('user_profiles').select('tenant_id,full_name,organisation,job_title,persona_type').eq('id', user.id).single()
     const p = prof as any
-    if (!p?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json()
   // Prompt injection defence — IS-POL-008
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest) {
 
       const payload = {
         user_id:          user.id,
-        tenant_id:        p.tenant_id,
+        tenant_id: p?.tenant_id ?? user.id,
         persona_context:  body.persona_context,
         company_context:  body.company_context,
         goals_context:    body.goals_context,

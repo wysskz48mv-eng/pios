@@ -77,14 +77,13 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { data: prof } = await supabase.from('user_profiles').select('tenant_id,full_name,organisation').eq('id', user.id).single()
     const p = prof as any
-    if (!p?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json() as Record<string, unknown>
     const action = body.action as string
 
     if (action === 'save_snapshot') {
       const { data, error } = await supabase.from('financial_snapshots').insert({
-        user_id: user.id, tenant_id: p.tenant_id,
+        user_id: user.id, tenant_id: p?.tenant_id ?? user.id,
         period: body.period, period_type: body.period_type ?? 'month',
         entity: body.entity ?? 'group', revenue: body.revenue ?? 0,
         expenses: body.expenses ?? 0, payroll_cost: body.payroll_cost ?? 0,

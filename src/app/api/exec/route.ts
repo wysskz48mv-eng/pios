@@ -85,7 +85,6 @@ export async function POST(req: NextRequest) {
 
     const { data: profile } = await supabase
       .from('user_profiles').select('tenant_id').eq('id', user.id).single()
-    if (!profile?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json()
     const { table, payload } = body as { table: string; payload: Record<string, unknown> }
@@ -96,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabase
       .from(table as Parameters<typeof supabase.from>[0])
-      .insert({ ...payload, user_id: user.id, tenant_id: profile.tenant_id })
+      .insert({ ...payload, user_id: user.id, tenant_id: profile?.tenant_id ?? user.id })
       .select()
       .single()
 

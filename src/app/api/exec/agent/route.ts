@@ -119,7 +119,7 @@ Keep under 200 words.`,
       if ((prof2 as Record<string,unknown> | null)?.tenant_id) {
         await supabase.from('exec_reviews').insert({
           user_id:    user.id,
-          tenant_id:  (prof2 as Record<string,unknown>).tenant_id,
+          tenant_id: (prof2 as Record<string,unknown>)?.tenant_id ?? user.id,
           cadence:    'daily',
           title:      `Executive Brief — ${new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`,
           ai_summary: content,

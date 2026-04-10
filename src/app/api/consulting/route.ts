@@ -225,7 +225,6 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles').select('tenant_id,full_name,job_title,organisation').eq('id', user.id).single()
     const prof = profile as Record<string,unknown> | null
-    if (!prof?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json()
     const { action } = body as { action: string }
@@ -235,7 +234,7 @@ export async function POST(req: NextRequest) {
       const { payload } = body as { payload: Record<string,unknown> }
       const { data, error } = await supabase
         .from('consulting_engagements')
-        .insert({ ...payload, user_id: user.id, tenant_id: prof.tenant_id })
+        .insert({ ...payload, user_id: user.id, tenant_id: prof?.tenant_id ?? user.id })
         .select().single()
       if (error) throw new Error(error.message)
       return NextResponse.json({ data }, { status: 201 })
@@ -252,7 +251,7 @@ export async function POST(req: NextRequest) {
       const fw = FRAMEWORKS[framework_key]
       if (!fw) return NextResponse.json({ error: 'Unknown framework' }, { status: 400 })
 
-      const systemPrompt = `You are the Consulting Strategist Agent™ (CSA™) inside PIOS, serving ${(prof.full_name as string) ?? 'a senior executive'} (${(prof.job_title as string) ?? 'consultant'}).
+      const systemPrompt = `You are the Consulting Strategist Agent™ (CSA™) inside PIOS, serving ${(prof?.full_name as string) ?? 'a senior executive'} (${(prof?.job_title as string) ?? 'consultant'}).
 
 You apply proprietary PIOS consulting frameworks. You are direct, analytical, and senior in your reasoning.
 You never reference BCG, McKinsey, Bain, Kotter, Porter, Ansoff, or any named third-party consulting IP.
@@ -299,7 +298,7 @@ Deliver:
 4. INDICATIVE TIMELINE — high-level phasing
 
 Be professional, industry-specific, and persuasive.` }],
-        `You are the Consulting Strategist Agent™ (CSA™). You draft professional consulting proposals for ${(prof.full_name as string) ?? 'a senior consultant'} at ${(prof.organisation as string) ?? 'a consulting firm'}. Write in a confident, client-facing voice. Never name third-party branded frameworks.`,
+        `You are the Consulting Strategist Agent™ (CSA™). You draft professional consulting proposals for ${(prof?.full_name as string) ?? 'a senior consultant'} at ${(prof?.organisation as string) ?? 'a consulting firm'}. Write in a confident, client-facing voice. Never name third-party branded frameworks.`,
         800
       )
 

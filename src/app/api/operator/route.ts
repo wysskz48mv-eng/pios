@@ -74,7 +74,7 @@ export async function PATCH(req: NextRequest) {
       const { data } = await supabase.from('okr_notification_prefs')
         .upsert({
           user_id: user.id,
-          tenant_id: prof.tenant_id as string,
+          tenant_id: prof?.tenant_id ?? user.id as string,
           weekly_digest, drift_alerts, digest_day,
           email_address: email_address ?? null,
           updated_at: new Date().toISOString(),

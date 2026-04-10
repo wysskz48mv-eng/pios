@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles').select('tenant_id,full_name,job_title').eq('id', user.id).single()
     const prof = profile as Record<string,unknown> | null
-    if (!prof?.tenant_id) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
 
     const body = await req.json()
     const { action } = body as { action: string }
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest) {
       const { payload } = body as { payload: Record<string,unknown> }
       const { data, error } = await supabase
         .from('exec_time_blocks')
-        .insert({ ...payload, user_id: user.id, tenant_id: prof.tenant_id })
+        .insert({ ...payload, user_id: user.id, tenant_id: prof?.tenant_id ?? user.id })
         .select().single()
       if (error) throw new Error(error.message)
       return NextResponse.json({ data }, { status: 201 })
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest) {
       const total = strategic_hours + operational_hours + admin_hours + stakeholder_hours + recovery_hours
 
       const { data, error } = await supabase.from('exec_time_audits').insert({
-        user_id: user.id, tenant_id: prof.tenant_id,
+        user_id: user.id, tenant_id: prof?.tenant_id ?? user.id,
         week_start, strategic_hours, operational_hours, admin_hours,
         stakeholder_hours, recovery_hours, total_hours: total,
       }).select().single()
