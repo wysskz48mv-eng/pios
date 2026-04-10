@@ -116,10 +116,10 @@ function hasAllowedRequestSource(request: NextRequest): boolean {
   const origin = request.headers.get('origin') ?? ''
   const referer = request.headers.get('referer') ?? ''
   const host = request.headers.get('host') ?? ''
+  const isDev = process.env.NODE_ENV !== 'production'
   const allowed = [
     host ? `https://${host}` : '',
-    'http://localhost:3000',
-    'http://localhost:3001',
+    ...(isDev ? ['http://localhost:3000', 'http://localhost:3001'] : []),
     process.env.NEXT_PUBLIC_APP_URL ?? '',
   ].filter(Boolean)
 

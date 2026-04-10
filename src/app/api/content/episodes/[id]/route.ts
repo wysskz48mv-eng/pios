@@ -75,7 +75,7 @@ export async function PATCH(
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     return NextResponse.json(data)
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

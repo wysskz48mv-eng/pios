@@ -45,7 +45,7 @@ export async function GET() {
       .order('is_primary', { ascending: false })
       .order('connected_at', { ascending: true })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
 
     // Mask sensitive fields — never return tokens
     const accounts = (data ?? []).map((a: Record<string, unknown>) => ({
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
         .eq('id', existing.id)
         .select('id, email_address, provider, context, label, is_primary')
         .single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
       return NextResponse.json({ account: data, reconnected: true }, { status: 200 })
     }
 
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
       .select('id, email_address, provider, context, label, is_primary')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     return NextResponse.json({ account: data }, { status: 201 })
 
   } catch (err: unknown) {
@@ -216,7 +216,7 @@ export async function PATCH(req: NextRequest) {
       .select('id, email_address, provider, context, label, is_primary, sync_enabled')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     return NextResponse.json({ account: data })
 
   } catch (err: unknown) {
@@ -276,7 +276,7 @@ export async function DELETE(req: NextRequest) {
       .eq('id', id)
       .eq('user_id', user.id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
 
     // If this was primary, promote the next active account
     const { data: remaining } = await supabase

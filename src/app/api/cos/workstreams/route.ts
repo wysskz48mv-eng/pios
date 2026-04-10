@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ workstream: data })
     }
     const { data, error } = await admin.from('portfolio_workstreams').insert({ user_id: user.id, name: body.name, status: body.status ?? 'active' }).select().single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     return NextResponse.json({ workstream: data })
   
   } catch (err: any) {

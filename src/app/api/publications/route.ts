@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     return NextResponse.json({ publication: data }, { status: 201 })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest) {
       .eq('id', id).eq('user_id', user.id)
       .select().single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     return NextResponse.json({ publication: data })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

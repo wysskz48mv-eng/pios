@@ -135,7 +135,7 @@ export async function PATCH(req: NextRequest) {
           .select()
           .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
 
     // ── NemoClaw™ first-run seed ─────────────────────────────────────────────
     // Fires exactly once: when onboarded transitions false → true for
@@ -144,9 +144,10 @@ export async function PATCH(req: NextRequest) {
     let nemoclawSeeded = false
     if (newOnboarded && !wasOnboarded && isProfessional) {
       try {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL
         const host   = req.headers.get('host') ?? 'localhost:3000'
         const proto  = host.startsWith('localhost') ? 'http' : 'https'
-        const origin = `${proto}://${host}`
+        const origin = appUrl || `${proto}://${host}`
         const seedRes = await fetch(`${origin}/api/ip-vault`, {
           method: 'POST',
           headers: {

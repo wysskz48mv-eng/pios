@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ commitment: data })
     }
     const { data, error } = await admin.from('commitments').insert({ user_id: user.id, title: body.title, due_date: body.due_date, status: 'open' }).select().single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     return NextResponse.json({ commitment: data })
   
   } catch (err: any) {

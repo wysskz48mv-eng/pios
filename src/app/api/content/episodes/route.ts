@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
   
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     return NextResponse.json({ episode: data }, { status: 201 })
   
   } catch (err: any) {

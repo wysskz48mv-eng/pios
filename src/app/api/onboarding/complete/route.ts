@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
               <div style="font-size:20px;font-weight:400;margin-bottom:24px">PIOS</div>
               <h1 style="font-size:22px;font-weight:500;margin:0 0 12px">Your Command Centre is ready.</h1>
               <p style="color:#666;line-height:1.6;margin:0 0 20px">NemoClaw™ has been calibrated for your ${personaLabels[requestedPersona] ?? 'Professional'} profile.</p>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-coral.vercel.app'}/platform/dashboard"
+              <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-wysskz48mv-engs-projects.vercel.app'}/platform/dashboard"
                  style="display:inline-block;padding:12px 24px;background:#7F77DD;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:500">
                 Open Command Centre →
               </a>
