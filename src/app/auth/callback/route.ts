@@ -43,8 +43,18 @@ export async function GET(request: NextRequest) {
   const code     = searchParams.get('code')
   const next     = normaliseNextPath(searchParams.get('next'))
   const errorMsg = searchParams.get('error_description')
-  const googleIntent = parseGoogleOAuthIntent(searchParams.get(GOOGLE_OAUTH_INTENT_PARAM))
+  // Read intent from query param first, then fall back to cookie
+  // (Supabase PKCE flow may strip custom query params during redirect)
+  const cookieStore = await cookies()
+  const intentFromParam  = searchParams.get(GOOGLE_OAUTH_INTENT_PARAM)
+  const intentFromCookie = cookieStore.get('pios_google_intent')?.value ?? null
+  const googleIntent = parseGoogleOAuthIntent(intentFromParam ?? intentFromCookie)
   const shouldConnectWorkspace = googleIntent === 'workspace'
+
+  // Clear the intent cookie now that we've consumed it
+  if (intentFromCookie) {
+    cookieStore.set('pios_google_intent', '', { maxAge: 0, path: '/' })
+  }
 
   if (errorMsg) {
     return NextResponse.redirect(
@@ -56,7 +66,6 @@ export async function GET(request: NextRequest) {
   }
 
   // Create Supabase client with direct cookie access for reliable session persistence
-  const cookieStore = await cookies()
   const supabase = createServerClient(
     getSupabaseUrl(),
     getSupabasePublicKey(),

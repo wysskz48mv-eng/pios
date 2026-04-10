@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createSignedOAuthState } from '@/lib/security/oauth-state'
+import { apiError } from '@/lib/api-error'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -49,6 +50,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(authUrl)
   } catch (err: any) {
     console.error('[PIOS auth/connect-microsoft]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

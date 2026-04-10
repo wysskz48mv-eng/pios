@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { callClaude }                from '@/lib/ai/client'
+import { apiError }                  from '@/lib/api-error'
 
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 60
@@ -107,7 +108,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, agents, catalogue: AGENT_CATALOGUE })
   } catch (err: any) {
     console.error('[PIOS agents GET]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -188,7 +189,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
   } catch (err: any) {
     console.error('[PIOS agents POST]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 

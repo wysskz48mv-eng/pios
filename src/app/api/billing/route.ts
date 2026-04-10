@@ -9,6 +9,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
+import { apiError }                  from '@/lib/api-error'
 
 export const dynamic = 'force-dynamic'
 
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (err: any) {
     console.error('[PIOS billing GET]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -106,6 +107,6 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ ok: true })
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

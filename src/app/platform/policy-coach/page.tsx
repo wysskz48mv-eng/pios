@@ -77,7 +77,7 @@ function LessonContent({ lessonId, role, name, onComplete, completed }: {
               <tr key={i} style={{ borderBottom: '1px solid var(--pios-border)' }}>
                 {row.map((cell, j) => (
                   <td key={j} style={{ padding: '8px 12px', color: 'var(--pios-sub)', verticalAlign: 'top', lineHeight: 1.5 }}
-                    dangerouslySetInnerHTML={{ __html: cell }} />
+                    dangerouslySetInnerHTML={{ __html: cell.replace(/<(?!\/?(?:strong|em|b|i|br)\b)[^>]*>/gi, '') }} />
                 ))}
               </tr>
             ))}

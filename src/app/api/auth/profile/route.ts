@@ -9,6 +9,7 @@ export const runtime = 'nodejs'
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { apiError } from '@/lib/api-error'
 
 export async function GET() {
   try {
@@ -23,7 +24,7 @@ export async function GET() {
       .single()
 
     return NextResponse.json({ profile: profile ?? null })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    return apiError(e)
   }
 }

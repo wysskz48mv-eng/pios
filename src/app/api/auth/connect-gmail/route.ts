@@ -15,33 +15,46 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildGoogleOAuthOptions } from '@/lib/auth/google-oauth'
 import { createClient } from '@/lib/supabase/server'
+import { apiError } from '@/lib/api-error'
+import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
   try {
-  const supabase = createClient()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
+    const supabase = createClient()
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
 
-  // Verify user is already authenticated before initiating OAuth
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.redirect(new URL('/auth/login?error=not_authenticated', req.url))
-  }
+    // Verify user is already authenticated before initiating OAuth
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.redirect(new URL('/auth/login?error=not_authenticated', req.url))
+    }
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: buildGoogleOAuthOptions(appUrl, '/platform/email', 'workspace'),
-  })
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: buildGoogleOAuthOptions(appUrl, '/platform/email', 'workspace'),
+    })
 
-  if (error || !data.url) {
-    console.error('[connect-gmail] OAuth init error:', error?.message)
-    return NextResponse.redirect(new URL('/platform/settings?error=oauth_failed', req.url))
-  }
+    if (error || !data.url) {
+      console.error('[connect-gmail] OAuth init error:', error?.message)
+      return NextResponse.redirect(new URL('/platform/settings?error=oauth_failed', req.url))
+    }
 
-  return NextResponse.redirect(data.url)
-} catch (err: any) {
+    // Persist intent in cookie so the callback knows this is a workspace
+    // connection even if Supabase strips query params during PKCE flow
+    const cookieStore = await cookies()
+    cookieStore.set('pios_google_intent', 'workspace', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 600, // 10 minutes — enough for the OAuth round trip
+    })
+
+    return NextResponse.redirect(data.url)
+  } catch (err: unknown) {
     console.error('[PIOS auth/connect-gmail]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

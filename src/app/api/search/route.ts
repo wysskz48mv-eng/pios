@@ -30,13 +30,14 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const q = req.nextUrl.searchParams.get('q')?.trim() ?? ''
+  const q = req.nextUrl.searchParams.get('q')?.trim()?.slice(0, 200) ?? ''
   if (q.length < 2) return NextResponse.json({ results: [], query: q })
 
+  const VALID_TYPES = ['tasks','projects','meetings','files','knowledge','expenses','contracts','ip_assets']
   const typesParam = req.nextUrl.searchParams.get('types') ?? 'all'
   const types = typesParam === 'all'
-    ? ['tasks','projects','meetings','files','knowledge','expenses','contracts','ip_assets']
-    : typesParam.split(',')
+    ? VALID_TYPES
+    : typesParam.split(',').filter(t => VALID_TYPES.includes(t))
 
   const results: SearchResult[] = []
   const ilike = `%${q}%`
