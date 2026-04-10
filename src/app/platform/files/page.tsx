@@ -199,9 +199,19 @@ function FilesTab({ spaces }: { spaces:any[] }) {
       const d = await res.json()
       if (d.error) { setUploadMsg('Upload failed: ' + String(d.error)) }
       else {
-        setUploadMsg('✓ ' + f.name + ' uploaded')
-        fetch('/api/files').then(rr=>rr.json()).then(dd=>setItems(dd.items??[]))
-        setTimeout(() => setUploadMsg(null), 3000)
+        const intel = d.intelligence
+        const actions = d.module_actions ?? {}
+        const parts = [`✓ ${f.name} uploaded`]
+        if (intel) {
+          parts.push(`— ${intel.type} (${(intel.confidence*100).toFixed(0)}%)`)
+          if (intel.vendor) parts.push(`· ${intel.vendor}`)
+          if (intel.amount) parts.push(`· ${intel.currency??''}${intel.amount}`)
+        }
+        if (actions.tasks) parts.push(`· ${actions.tasks} task${actions.tasks>1?'s':''} created`)
+        if (actions.expenses) parts.push(`· expense logged`)
+        setUploadMsg(parts.join(' '))
+        fetch('/api/files?type=items').then(rr=>rr.json()).then(dd=>setItems(dd.items??[]))
+        setTimeout(() => setUploadMsg(null), 8000)
       }
     } catch (err: unknown) { setUploadMsg((err as Error).message) }
     setUploading(false); ev.target.value = ''
