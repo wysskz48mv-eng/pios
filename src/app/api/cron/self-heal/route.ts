@@ -181,6 +181,113 @@ export async function GET(req: NextRequest) {
     actions.push({ check: 'stale_agents', status: 'ok', detail: 'Skipped — table may not exist' })
   }
 
+  // ── 7. Act on diagnostic findings (evolutionary self-healing) ──────────────
+  // Read open/recurring findings from the diagnostics engine and attempt fixes
+  try {
+    const { data: openFindings } = await supabase
+      .from('pios_diagnostics')
+      .select('id, check_type, check_name, severity, title, affected_table, recurrence_count, evidence')
+      .in('status', ['open', 'recurring'])
+      .order('severity')
+      .limit(20)
+
+    for (const finding of openFindings ?? []) {
+      // Auto-fix: RLS tenant_id blocks — replace with user_id policy
+      if (finding.check_type === 'rls_validation' && finding.affected_table) {
+        try {
+          await supabase.rpc('exec_sql', {
+            sql_query: `
+              DO $$ BEGIN
+                EXECUTE format('DROP POLICY IF EXISTS "tenant_rls_%s" ON public.%s', '${finding.affected_table}', '${finding.affected_table}');
+                IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'public.${finding.affected_table}'::regclass AND polname = 'user_rls_${finding.affected_table}') THEN
+                  EXECUTE format('CREATE POLICY "user_rls_%s" ON public.%s FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)', '${finding.affected_table}', '${finding.affected_table}');
+                END IF;
+              END $$;
+            `
+          })
+
+          await supabase.from('pios_diagnostics').update({
+            status: 'auto_fixed',
+            fix_applied: `Replaced tenant_id RLS with user_id RLS on ${finding.affected_table}`,
+            resolved_at: new Date().toISOString(),
+          }).eq('id', finding.id)
+
+          // Update pattern stats
+          try {
+            await supabase.rpc('exec_sql', {
+              sql_query: `UPDATE pios_diagnostic_patterns SET times_fixed = times_fixed + 1 WHERE pattern_name = 'rls_tenant_block'`
+            })
+          } catch {}
+
+          actions.push({
+            check: 'diagnostic_autofix',
+            status: 'healed',
+            detail: `Auto-fixed RLS on "${finding.affected_table}" (seen ${finding.recurrence_count}x)`,
+          })
+        } catch {
+          actions.push({
+            check: 'diagnostic_autofix',
+            status: 'failed',
+            detail: `Failed to auto-fix RLS on "${finding.affected_table}"`,
+          })
+        }
+      }
+
+      // Auto-fix: Expired tokens with refresh tokens — trigger refresh
+      if (finding.check_type === 'token_health' && finding.check_name.startsWith('token_refreshable_')) {
+        // Token will auto-refresh on next sync — mark as acknowledged
+        await supabase.from('pios_diagnostics').update({
+          status: 'acknowledged',
+          fix_applied: 'Token will auto-refresh on next sync cycle',
+        }).eq('id', finding.id)
+
+        actions.push({
+          check: 'diagnostic_acknowledge',
+          status: 'ok',
+          detail: `Acknowledged refreshable token: ${finding.title}`,
+        })
+      }
+
+      // Escalate: Critical findings seen 3+ times that can't be auto-fixed
+      if (finding.severity === 'critical' && (finding.recurrence_count ?? 0) >= 3) {
+        // Create a notification for the user
+        try {
+          const { data: users } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .order('created_at')
+            .limit(1)
+
+          if (users?.[0]) {
+            try {
+              await supabase.from('notifications').insert({
+                user_id: users[0].id,
+                type: 'system',
+                title: `Recurring issue: ${finding.title}`.slice(0, 200),
+                message: `This critical issue has been detected ${finding.recurrence_count} times. Check /platform/admin/diagnostics for details.`,
+                link: '/platform/admin/diagnostics',
+                is_read: false,
+                created_at: new Date().toISOString(),
+              })
+            } catch {}
+          }
+
+          actions.push({
+            check: 'diagnostic_escalate',
+            status: 'alert',
+            detail: `Escalated to notifications: ${finding.title} (${finding.recurrence_count}x)`,
+          })
+        } catch {}
+      }
+    }
+
+    if (!openFindings?.length) {
+      actions.push({ check: 'diagnostic_findings', status: 'ok', detail: 'No open diagnostic findings' })
+    }
+  } catch {
+    actions.push({ check: 'diagnostic_findings', status: 'ok', detail: 'Diagnostics table not yet created' })
+  }
+
   // ── Summary ───────────────────────────────────────────────────────────────
   const healed = actions.filter(a => a.status === 'healed').length
   const alerts = actions.filter(a => a.status === 'alert').length

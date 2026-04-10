@@ -63,6 +63,10 @@
     {
       "path": "/api/cron/self-heal",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/diagnostics",
+      "schedule": "0 */6 * * *"
     }
   ],
   "functions": {
@@ -143,6 +147,9 @@
     },
     "src/app/api/cron/self-heal/route.ts": {
       "maxDuration": 30
+    },
+    "src/app/api/cron/diagnostics/route.ts": {
+      "maxDuration": 120
     }
   }
 }
