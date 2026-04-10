@@ -57,6 +57,7 @@ const CLASS_CONFIG: Record<string, { colour: string; label: string; icon: string
 export default function InboxPage() {
   const [emails, setEmails]         = useState<EmailItem[]>([])
   const [loading, setLoading]       = useState(true)
+  const [syncing, setSyncing]       = useState(false)
   const [triaging, setTriaging]     = useState(false)
   const [filter, setFilter]         = useState<string>('all')
   const [expanded, setExpanded]     = useState<string | null>(null)
@@ -77,6 +78,16 @@ export default function InboxPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const syncInboxes = async () => {
+    setSyncing(true)
+    try {
+      await fetch('/api/email/sync', { method: 'POST' })
+      await load()
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const runTriage = async () => {
     setTriaging(true)
@@ -154,8 +165,9 @@ export default function InboxPage() {
               {triaging ? 'Triaging...' : `Triage ${untriagedCount} new`}
             </button>
           )}
-          <button onClick={load} style={{ padding: '8px 14px', background: 'transparent', border: '1px solid var(--pios-border)', borderRadius: 7, color: 'var(--pios-muted)', fontSize: 13, cursor: 'pointer' }}>
-            Refresh
+          <button onClick={syncInboxes} disabled={syncing}
+            style={{ padding: '8px 14px', background: 'transparent', border: '1px solid var(--pios-border)', borderRadius: 7, color: syncing ? 'var(--ai)' : 'var(--pios-muted)', fontSize: 13, cursor: syncing ? 'wait' : 'pointer', opacity: syncing ? 0.7 : 1 }}>
+            {syncing ? 'Syncing...' : 'Sync inboxes'}
           </button>
         </div>
       </div>

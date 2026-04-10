@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
             .from('email_items')
             .select('id')
             .eq('user_id', account.user_id)
-            .eq('provider_message_id', email.id)
+            .eq('gmail_message_id', email.id)
             .maybeSingle()
 
           if (exists.data) continue // already synced
@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
           await supabase.from('email_items').insert({
             user_id: account.user_id,
             account_id: account.id,
-            provider_message_id: email.id,
+            gmail_message_id: email.id,
             subject: email.subject,
             sender_name: email.from,
             sender_email: email.fromEmail,
@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
             .from('email_items')
             .select('id')
             .eq('user_id', account.user_id)
-            .eq('provider_message_id', email.id)
+            .eq('gmail_message_id', email.id)
             .maybeSingle()
 
           if (exists.data) continue
@@ -152,7 +152,7 @@ export async function GET(req: NextRequest) {
           await supabase.from('email_items').insert({
             user_id: account.user_id,
             account_id: account.id,
-            provider_message_id: email.id,
+            gmail_message_id: email.id,
             subject: email.subject,
             sender_name: email.from,
             sender_email: email.fromEmail,

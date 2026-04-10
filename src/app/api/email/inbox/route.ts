@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get('limit') ?? '50')
     const admin = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     const { data } = await admin.from('email_items').select('*').eq('user_id', user.id).order('received_at', { ascending: false }).limit(limit)
-    return NextResponse.json({ items: data ?? [], total: data?.length ?? 0 })
+    return NextResponse.json({ emails: data ?? [], total: data?.length ?? 0 })
   
   } catch (err: any) {
     console.error('[PIOS]', err)
