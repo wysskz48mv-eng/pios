@@ -29,11 +29,6 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: prof } = await (supabase as any)
-      .from('user_profiles').select('tenant_id').eq('id', user.id).single()
-    const tenantId = (prof as any)?.tenant_id
-    if (!tenantId) return NextResponse.json({ error: 'No tenant' }, { status: 400 })
-
     const formData = await req.formData()
     const file = formData.get('file') as File | null
     const domain = String(formData.get('domain') ?? 'business')
@@ -86,14 +81,12 @@ export async function POST(req: NextRequest) {
     const { data: fileRecord, error: dbErr } = await (supabase as any)
       .from('file_items').insert({
         user_id:      user.id,
-        tenant_id:    tenantId,
         name:         file.name,
         file_type:    ext,
         mime_type:    file.type,
-        size_kb:      Math.ceil(file.size / 1024),
-        storage_path: path,
-        url:          fileUrl,
-        domain,
+        size_bytes:   file.size,
+        source:       'upload',
+        drive_web_url: fileUrl,
         tags,
         created_at:   new Date().toISOString(),
       }).select().single()
@@ -106,6 +99,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ file: fileRecord, url: fileUrl })
   } catch (e: unknown) {
+    console.error('[PIOS files/upload]', e)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
