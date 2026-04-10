@@ -133,6 +133,14 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
   const blockedEmails = new Set((blockedList ?? []).map((b: any) => b.email?.toLowerCase()))
   const blockedDomains = new Set((blockedList ?? []).map((b: any) => b.domain?.toLowerCase()).filter(Boolean))
 
+  // Load email filters
+  const { data: filterRules } = await supabase
+    .from('email_filters')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('priority')
+
   let synced = 0, receipts = 0, blocked = 0
   for (const msg of messages.slice(0, max)) {
     const dr = await fetch(
@@ -170,6 +178,40 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
     const t = await triageEmail(subject, from, snippet, account.context, account.ai_domain_override, account.receipt_scan_enabled, account.receipt_keywords ?? [])
     if (t.is_receipt) { receipts++; await autoCreateExpense(supabase, userId, t.receipt_data, t.domain, subject) }
 
+    // Apply user email filters
+    let filterStatus = 'triaged'
+    let filterFlagged = false
+    let filterSpam = false
+    for (const rule of filterRules ?? []) {
+      const matchVal = rule.match_value?.toLowerCase() ?? ''
+      let target = ''
+      if (rule.match_field === 'from') target = senderEmail
+      else if (rule.match_field === 'subject') target = subject.toLowerCase()
+      else if (rule.match_field === 'contains') target = `${subject} ${snippet}`.toLowerCase()
+      else if (rule.match_field === 'domain') target = senderDomain
+      else if (rule.match_field === 'to') target = (account.email_address ?? '').toLowerCase()
+
+      let matched = false
+      if (rule.match_mode === 'exact') matched = target === matchVal
+      else if (rule.match_mode === 'starts_with') matched = target.startsWith(matchVal)
+      else if (rule.match_mode === 'ends_with') matched = target.endsWith(matchVal)
+      else matched = target.includes(matchVal)
+
+      if (matched) {
+        if (rule.action === 'archive') filterStatus = 'archived'
+        if (rule.action === 'spam') { filterStatus = 'spam'; filterSpam = true }
+        if (rule.action === 'delete') filterStatus = 'deleted'
+        if (rule.action === 'flag') filterFlagged = true
+        if (rule.action === 'block') {
+          await supabase.from('blocked_senders').upsert({
+            user_id: userId, email: senderEmail, domain: senderDomain, reason: `Filter: ${rule.name}`,
+          }, { onConflict: 'user_id,email' })
+          filterStatus = 'spam'; filterSpam = true
+        }
+        break // first matching rule wins
+      }
+    }
+
     await supabase.from('email_items').upsert({
       user_id: userId, account_id: account.id, inbox_context: account.context,
       inbox_label: account.label ?? account.display_name,
@@ -180,7 +222,8 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
       action_required: t.action_required, ai_draft_reply: t.ai_draft_reply,
       is_receipt: t.is_receipt, receipt_data: t.receipt_data,
       unsubscribe_url: unsubscribeUrl,
-      status: 'triaged',
+      is_flagged: filterFlagged, is_spam: filterSpam,
+      status: filterStatus,
     }, { onConflict: 'gmail_message_id' })
     synced++
   }

@@ -65,6 +65,10 @@ export default function InboxPage() {
   const [sending, setSending]       = useState<string | null>(null)
   const [compose, setCompose]       = useState<{ to: string; subject: string; body: string; threadId?: string; replyTo?: string; mode: 'compose' | 'reply' | 'forward' } | null>(null)
   const [composeSending, setComposeSending] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<EmailItem[] | null>(null)
+  const [selected, setSelected]     = useState<Set<string>>(new Set())
+  const [bulkMode, setBulkMode]     = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -89,6 +93,42 @@ export default function InboxPage() {
     } finally {
       setSyncing(false)
     }
+  }
+
+  const runSearch = async (q: string) => {
+    if (!q.trim()) { setSearchResults(null); return }
+    try {
+      const res = await fetch(`/api/email/search?q=${encodeURIComponent(q)}&limit=50`)
+      if (res.ok) {
+        const data = await res.json()
+        setSearchResults(data.results ?? [])
+      }
+    } catch (err) { console.error('[PIOS search]', err) }
+  }
+
+  const bulkAction = async (action: string) => {
+    if (selected.size === 0) return
+    await fetch('/api/email/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email_ids: Array.from(selected), action }),
+    })
+    setSelected(new Set())
+    setBulkMode(false)
+    await load()
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const selectAll = () => {
+    if (selected.size === displayEmails.length) setSelected(new Set())
+    else setSelected(new Set(displayEmails.map(e => e.id)))
   }
 
   const runTriage = async () => {
@@ -142,6 +182,9 @@ export default function InboxPage() {
     return e.triage_class === filter
   })
 
+  // Display search results if searching, otherwise filtered inbox
+  const displayEmails = searchResults ?? filtered
+
   const draftCount    = emails.filter(e => e.draft?.status === 'draft').length
   const urgentCount   = emails.filter(e => e.triage_class === 'urgent').length
   const untriagedCount= emails.filter(e => !e.triage_class).length
@@ -177,6 +220,61 @@ export default function InboxPage() {
           </button>
         </div>
       </div>
+
+      {/* Search bar */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <input
+            type="text"
+            placeholder="Search emails — from:, subject:, or keywords..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') runSearch(searchQuery) }}
+            style={{ width: '100%', padding: '9px 14px 9px 32px', background: 'var(--pios-surface2)', border: '1px solid var(--pios-border)', borderRadius: 8, color: 'var(--pios-text)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+          />
+          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--pios-dim)', fontSize: 14 }}>&#x1F50D;</span>
+        </div>
+        {searchQuery && (
+          <button onClick={() => { setSearchQuery(''); setSearchResults(null) }}
+            style={{ padding: '8px 14px', background: 'transparent', border: '1px solid var(--pios-border)', borderRadius: 7, color: 'var(--pios-muted)', fontSize: 12, cursor: 'pointer' }}>
+            Clear
+          </button>
+        )}
+        <button onClick={() => setBulkMode(!bulkMode)}
+          style={{ padding: '8px 14px', background: bulkMode ? 'var(--ai)' : 'transparent', border: `1px solid ${bulkMode ? 'var(--ai)' : 'var(--pios-border)'}`, borderRadius: 7, color: bulkMode ? '#fff' : 'var(--pios-muted)', fontSize: 12, cursor: 'pointer' }}>
+          {bulkMode ? `${selected.size} selected` : 'Select'}
+        </button>
+      </div>
+
+      {/* Bulk actions toolbar */}
+      {bulkMode && selected.size > 0 && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12, padding: '8px 12px', background: 'var(--pios-surface2)', borderRadius: 8, alignItems: 'center' }}>
+          <button onClick={selectAll} style={{ padding: '4px 10px', fontSize: 11, background: 'transparent', border: '1px solid var(--pios-border)', borderRadius: 5, color: 'var(--pios-muted)', cursor: 'pointer' }}>
+            {selected.size === displayEmails.length ? 'Deselect all' : 'Select all'}
+          </button>
+          <div style={{ width: 1, height: 20, background: 'var(--pios-border)' }} />
+          {[
+            { label: 'Archive', action: 'archive' },
+            { label: 'Delete', action: 'delete' },
+            { label: 'Spam', action: 'spam' },
+            { label: 'Mark read', action: 'mark_read' },
+            { label: 'Flag', action: 'flag' },
+          ].map(a => (
+            <button key={a.action} onClick={() => bulkAction(a.action)}
+              style={{ padding: '4px 10px', fontSize: 11, background: 'transparent', border: '1px solid var(--pios-border)', borderRadius: 5, color: 'var(--pios-muted)', cursor: 'pointer' }}>
+              {a.label} ({selected.size})
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Search results indicator */}
+      {searchResults && (
+        <div style={{ marginBottom: 12, padding: '8px 14px', background: 'rgba(99,73,255,0.06)', border: '1px solid rgba(99,73,255,0.15)', borderRadius: 8, fontSize: 12, color: 'var(--ai)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"</span>
+          <button onClick={() => { setSearchQuery(''); setSearchResults(null) }} style={{ background: 'none', border: 'none', color: 'var(--ai)', cursor: 'pointer', fontSize: 11 }}>Clear search</button>
+        </div>
+      )}
 
       {/* Stats strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 20 }}>
@@ -214,13 +312,13 @@ export default function InboxPage() {
       {/* Email list */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--pios-muted)', fontSize: 14 }}>Loading...</div>
-      ) : filtered.length === 0 ? (
+      ) : displayEmails.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--pios-dim)', fontSize: 14 }}>
           {filter === 'drafts' ? 'No drafts awaiting review' : 'No emails in this category'}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filtered.map(email => {
+          {displayEmails.map(email => {
             const cls = CLASS_CONFIG[email.triage_class ?? ''] ?? { colour: 'var(--pios-muted)', label: 'New', icon: '·' }
             const isOpen  = expanded === email.id
             const draft   = email.draft
@@ -230,8 +328,14 @@ export default function InboxPage() {
               <div key={email.id} style={{ background: 'var(--pios-card)', border: `1px solid ${hasDraft ? 'rgba(139,124,248,0.3)' : 'var(--pios-border)'}`, borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.15s' }}>
 
                 {/* Email row */}
-                <div onClick={() => setExpanded(isOpen ? null : email.id)}
-                  style={{ padding: '14px 16px', cursor: 'pointer', display: 'grid', gridTemplateColumns: '80px 1fr auto', gap: 12, alignItems: 'center' }}>
+                <div onClick={() => bulkMode ? toggleSelect(email.id) : setExpanded(isOpen ? null : email.id)}
+                  style={{ padding: '14px 16px', cursor: 'pointer', display: 'grid', gridTemplateColumns: bulkMode ? '24px 80px 1fr auto' : '80px 1fr auto', gap: 12, alignItems: 'center', background: selected.has(email.id) ? 'rgba(99,73,255,0.06)' : 'transparent' }}>
+
+                  {/* Checkbox in bulk mode */}
+                  {bulkMode && (
+                    <input type="checkbox" checked={selected.has(email.id)} onChange={() => toggleSelect(email.id)}
+                      style={{ width: 16, height: 16, accentColor: 'var(--ai)', cursor: 'pointer' }} />
+                  )}
 
                   {/* Inbox badge */}
                   <div style={{ fontSize: 10, color: 'var(--pios-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
