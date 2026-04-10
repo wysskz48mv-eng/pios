@@ -5,6 +5,7 @@
  * SRAF D-02: Pilot Customer Score — GA readiness gate (>4.0/5.0)
  * PIOS v2.4.3 | VeritasIQ Technologies Ltd | Sprint 56
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
   
   } catch (err: any) {
     console.error('[PIOS]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -91,6 +92,6 @@ export async function GET() {
   
   } catch (err: any) {
     console.error('[PIOS]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

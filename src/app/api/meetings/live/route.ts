@@ -12,6 +12,7 @@
  *
  * PIOS™ v3.3.0 | Sprint F — Agentic Meetings | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import Anthropic                     from '@anthropic-ai/sdk'
@@ -164,6 +165,6 @@ Format: 5 bullets, max 15 words each. Lead with the most important outcome. Be c
 
   } catch (err: any) {
     console.error('[PIOS meetings/live]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

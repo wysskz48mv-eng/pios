@@ -4,6 +4,7 @@
  * GET  /api/cv — return existing calibration for current user
  * PIOS v3.0 · VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { callClaude as callClaudeAI } from '@/lib/ai/client'

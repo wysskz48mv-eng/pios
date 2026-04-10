@@ -1,3 +1,4 @@
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminOrSeedSecret, requireAdminRouteEnabled } from '@/lib/security/route-guards'
 
@@ -8,17 +9,21 @@ import { requireAdminOrSeedSecret, requireAdminRouteEnabled } from '@/lib/securi
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const IS_URL = 'https://vonnylhyopcbelzoaufj.supabase.co'
-
 export async function GET(req: NextRequest) {
+  // Always disabled in production — diagnostic only
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const blocked = requireAdminRouteEnabled('ENABLE_LIVE_DIAGNOSTIC_ROUTES')
   if (blocked) return blocked
 
   const authErr = requireAdminOrSeedSecret(req)
   if (authErr) return authErr
 
+  const IS_URL = process.env.SUPABASE_IS_URL ?? ''
   const key = process.env.SUPABASE_IS_SERVICE_KEY ?? ''
-  if (!key) return NextResponse.json({ error: 'SUPABASE_IS_SERVICE_KEY not set' })
+  if (!key || !IS_URL) return NextResponse.json({ error: 'IS env vars not set' })
 
   const results: Record<string, unknown> = {}
 

@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic'
+import { apiError } from '@/lib/api-error'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { stripe, PLANS, type PlanKey } from '@/lib/stripe/client'

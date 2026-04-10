@@ -4,6 +4,7 @@
  * Supports single chapter or full thesis export.
  * PIOS v3.0 | Sprint 24
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 
@@ -110,6 +111,6 @@ export async function POST(req: NextRequest) {
     },
   })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? 'Internal error' }, { status: 500 })
+    return apiError(e)
   }
 }

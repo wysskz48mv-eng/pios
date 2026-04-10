@@ -11,6 +11,7 @@
  *
  * PIOS™ v3.6.1 | Sprint N — Supervisor Prep | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { callClaude }                from '@/lib/ai/client'
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (err: any) {
     console.error('[PIOS supervisor-prep GET]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -193,6 +194,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, meeting: data ?? { supervisor_id, meeting_date, status:'scheduled' } })
   } catch (err: any) {
     console.error('[PIOS supervisor-prep POST]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

@@ -13,6 +13,7 @@
  *
  * PIOS™ v3.2.5 | Sprint D | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { callClaude }                from '@/lib/ai/client'
@@ -129,9 +130,9 @@ function pickQuestion(category?: string): { question: string; category: string }
   const cats = Object.keys(QUESTION_BANK)
   const cat  = (category && QUESTION_BANK[category as keyof typeof QUESTION_BANK])
     ? category
-    : cats[Math.floor(Math.random() * cats.length)]
+    : cats[Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * cats.length)]
   const questions = QUESTION_BANK[cat as keyof typeof QUESTION_BANK]
-  return { question: questions[Math.floor(Math.random() * questions.length)], category: cat }
+  return { question: questions[Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * questions.length)], category: cat }
 }
 
 
@@ -343,7 +344,7 @@ export async function POST(req: NextRequest) {
 
   } catch (err: any) {
     console.error('[PIOS viva]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -371,6 +372,6 @@ export async function GET() {
     })
   } catch (err: any) {
     console.error('[PIOS viva GET]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

@@ -91,7 +91,7 @@ async function searchCrossRef(query: string, limit = 8): Promise<Paper[]> {
     if (!res.ok) return []
     const d = await res.json()
     return (d.message?.items ?? []).map((p: any) => ({
-      id:        `cr_${p.DOI?.replace('/', '_') ?? Math.random()}`,
+      id:        `cr_${p.DOI?.replace('/', '_') ?? crypto.randomUUID().slice(0,8)}`,
       title:     Array.isArray(p.title) ? p.title[0] : (p.title ?? 'Untitled'),
       authors:   (p.author ?? []).slice(0, 4).map((a: any) => `${a.given ?? ''} ${a.family ?? ''}`.trim()),
       year:      p.published?.['date-parts']?.[0]?.[0] ?? 0,
@@ -122,7 +122,7 @@ async function searchOpenAlex(query: string, limit = 8): Promise<Paper[]> {
         abstract = words.sort((a, b) => a[1] - b[1]).map(w => w[0]).join(' ').slice(0, 400)
       }
       return {
-        id:        `oa_${p.id?.split('/').pop() ?? Math.random()}`,
+        id:        `oa_${p.id?.split('/').pop() ?? crypto.randomUUID().slice(0,8)}`,
         title:     p.title ?? 'Untitled',
         authors:   (p.authorships ?? []).slice(0, 4).map((a: any) => a.author?.display_name ?? ''),
         year:      p.publication_year ?? 0,

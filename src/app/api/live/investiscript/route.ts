@@ -1,3 +1,4 @@
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { Client } from 'pg'
 import { createClient } from '@/lib/supabase/server'

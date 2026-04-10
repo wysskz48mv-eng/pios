@@ -1,3 +1,4 @@
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ goal: data })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? 'Internal error' }, { status: 500 })
+    return apiError(e)
   }
 }
 
@@ -38,6 +39,6 @@ export async function DELETE(req: NextRequest) {
   await admin.from('insights').delete().eq('id', id).eq('user_id', user.id)
   return NextResponse.json({ ok: true })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? 'Internal error' }, { status: 500 })
+    return apiError(e)
   }
 }

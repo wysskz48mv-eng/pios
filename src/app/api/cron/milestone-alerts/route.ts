@@ -4,6 +4,7 @@
  * Also emails the student for overdue items.
  * PIOS v3.0 | Sprint 21
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@supabase/supabase-js'
 import { Resend }                    from 'resend'
@@ -125,6 +126,6 @@ export async function GET(req: NextRequest) {
   })
 } catch (err: any) {
     console.error('[PIOS cron/milestone-alerts]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

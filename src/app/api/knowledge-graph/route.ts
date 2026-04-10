@@ -8,6 +8,7 @@
  *
  * PIOS™ v3.3.0 | Sprint H — Knowledge Graph | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { callClaude }                from '@/lib/ai/client'
@@ -162,7 +163,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (err: any) {
     console.error('[PIOS knowledge-graph GET]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -241,6 +242,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
   } catch (err: any) {
     console.error('[PIOS knowledge-graph POST]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

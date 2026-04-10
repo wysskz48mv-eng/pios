@@ -62,6 +62,12 @@ export async function POST(req: NextRequest) {
     const bytes  = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
+    // Validate magic bytes match declared MIME type
+    const magicMismatch = checkMagicBytes(buffer, file.type)
+    if (magicMismatch) {
+      return NextResponse.json({ error: magicMismatch }, { status: 400 })
+    }
+
     const { data: upload, error: uploadErr } = await (supabase as any)
       .storage.from('pios-files').upload(path, buffer, {
         contentType: file.type,
@@ -100,6 +106,39 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ file: fileRecord, url: fileUrl })
   } catch (e: unknown) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+// ── Magic byte validation ─────────────────────────────────────────────────
+// Returns error string if mismatch, null if OK
+function checkMagicBytes(buffer: Buffer, declaredType: string): string | null {
+  if (buffer.length < 4) return 'File too small to validate'
+
+  const SIGNATURES: Record<string, number[][]> = {
+    'application/pdf':  [[0x25, 0x50, 0x44, 0x46]],           // %PDF
+    'image/png':        [[0x89, 0x50, 0x4E, 0x47]],           // .PNG
+    'image/jpeg':       [[0xFF, 0xD8, 0xFF]],                  // JFIF/EXIF
+    'image/gif':        [[0x47, 0x49, 0x46, 0x38]],            // GIF8
+    'image/webp':       [[0x52, 0x49, 0x46, 0x46]],            // RIFF
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                        [[0x50, 0x4B, 0x03, 0x04]],            // PK (ZIP)
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                        [[0x50, 0x4B, 0x03, 0x04]],            // PK (ZIP)
+    'application/msword': [[0xD0, 0xCF, 0x11, 0xE0]],         // OLE2
+    'application/vnd.ms-excel': [[0xD0, 0xCF, 0x11, 0xE0]],   // OLE2
+  }
+
+  const expected = SIGNATURES[declaredType]
+  if (!expected) return null // text/plain, text/csv, application/json — no magic bytes
+
+  const matches = expected.some(sig =>
+    sig.every((byte, i) => buffer[i] === byte)
+  )
+
+  if (!matches) {
+    return 'File content does not match declared type. Upload rejected.'
+  }
+
+  return null
 }

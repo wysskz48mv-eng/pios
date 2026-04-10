@@ -1,3 +1,4 @@
+import { apiError } from '@/lib/api-error'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireAdminRouteEnabled, requireOwnerEmail } from '@/lib/security/route-guards'
@@ -40,6 +41,6 @@ export async function GET(request: Request) {
     const sql = readFileSync(filePath, 'utf8')
     return NextResponse.json({ id, sql, length: sql.length })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    return apiError(err)
   }
 }

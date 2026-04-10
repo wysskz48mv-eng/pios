@@ -1,3 +1,4 @@
+import { apiError } from '@/lib/api-error'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
@@ -51,7 +52,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ items: all, stats })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    return apiError(err)
   }
 }
 

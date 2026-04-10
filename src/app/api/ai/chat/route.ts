@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { apiError } from '@/lib/api-error'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'

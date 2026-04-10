@@ -5,6 +5,7 @@
  *
  * VeritasIQ Technologies Ltd | Pre-UAT March 2026
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminRouteEnabled, requireCronSecret } from '@/lib/security/route-guards'
 

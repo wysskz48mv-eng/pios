@@ -1,4 +1,5 @@
 export { GET, POST } from '../ip-vault/route'
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
@@ -14,7 +15,7 @@ export async function PATCH(req: NextRequest) {
   
   } catch (err: any) {
     console.error('[PIOS]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 export async function DELETE(req: NextRequest) {
@@ -30,6 +31,6 @@ export async function DELETE(req: NextRequest) {
   
   } catch (err: any) {
     console.error('[PIOS]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

@@ -15,6 +15,7 @@
  *
  * PIOS v3.0 | Sprint 82 | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextResponse } from 'next/server'
 import { createClient }  from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
@@ -214,6 +215,6 @@ export async function POST(req: Request) {
 
   } catch (err: unknown) {
     console.error('[notifications/generate]', err)
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    return apiError(err)
   }
 }

@@ -1,3 +1,4 @@
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
@@ -17,7 +18,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   
   } catch (err: any) {
     console.error('[PIOS]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -33,6 +34,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   
   } catch (err: any) {
     console.error('[PIOS]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

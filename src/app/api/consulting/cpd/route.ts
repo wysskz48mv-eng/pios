@@ -1,3 +1,4 @@
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
@@ -27,6 +28,6 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ entry: data })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? 'Internal error' }, { status: 500 })
+    return apiError(e)
   }
 }

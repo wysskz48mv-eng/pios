@@ -25,6 +25,7 @@
  *
  * PIOS v3.2.0 | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
@@ -105,6 +106,6 @@ export async function POST(req: NextRequest) {
       frameworks: calibration.recommended_frameworks ?? [],
     })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return apiError(e)
   }
 }

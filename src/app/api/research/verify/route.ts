@@ -8,6 +8,7 @@
  *
  * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { verifyCitations, type CitationInput } from '@/lib/citation-guard'

@@ -4,6 +4,7 @@
  * PATCH /api/learning-journey?id=  — update a milestone
  * VeritasIQ / PIOS v3.0 | Sprint 21
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 

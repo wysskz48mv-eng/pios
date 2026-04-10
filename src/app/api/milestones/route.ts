@@ -7,6 +7,7 @@
  * PIOS v3.0 | Sprint 22 | VeritasIQ Technologies Ltd
  * Table: programme_milestones (M011 — supersedes dba_milestones M010)
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ ok: true, milestones: enriched, summary })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
     return NextResponse.json({ ok: true, milestone: data })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -147,7 +148,7 @@ export async function PATCH(req: NextRequest) {
     if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
     return NextResponse.json({ ok: true, milestone: data })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -169,6 +170,6 @@ export async function DELETE(req: NextRequest) {
     if (error) return NextResponse.json({ error: (error as Error).message }, { status: 500 })
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    return apiError(err)
   }
 }

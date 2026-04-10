@@ -1,3 +1,4 @@
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { Client } from 'pg'
@@ -2057,7 +2058,7 @@ export async function GET() {
     }
     return NextResponse.json({ status, migrations: Object.keys(MIGRATIONS) })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return apiError(e)
   }
 }
 
@@ -2098,6 +2099,6 @@ export async function POST(request: NextRequest) {
     if (!r.ok) return NextResponse.json({ error: r.err, migration }, { status: 500 })
     return NextResponse.json({ success: true, status: 'applied', migration, name: m.name })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return apiError(e)
   }
 }

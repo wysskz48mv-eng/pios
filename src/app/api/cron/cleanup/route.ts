@@ -4,6 +4,7 @@
  * Deletes ai_sessions >90 days, profiling_signals >180 days, read notifications >30 days.
  * PIOS v3.2.0 | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireCronSecret } from '@/lib/security/route-guards'
@@ -26,6 +27,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ ok: true, deleted: { ai_sessions: !s.error, profiling_signals: !p.error, notifications: !n.error } })
 } catch (err: any) {
     console.error('[PIOS cron/cleanup]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

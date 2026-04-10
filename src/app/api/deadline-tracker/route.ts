@@ -9,6 +9,7 @@
  *
  * PIOS™ v3.7.1 | Sprint P — Deadline Tracker | VeritasIQ Technologies Ltd
  */
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { callClaude }                from '@/lib/ai/client'
@@ -95,7 +96,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (err: any) {
     console.error('[PIOS deadline-tracker GET]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -141,7 +142,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, title, due_date })
   } catch (err: any) {
     console.error('[PIOS deadline-tracker POST]', err)
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }
 
@@ -155,6 +156,6 @@ export async function DELETE(req: NextRequest) {
     await supabase.from('deadlines').delete().eq('id', id).eq('user_id', user.id)
     return NextResponse.json({ ok: true })
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 })
+    return apiError(err)
   }
 }

@@ -18,6 +18,7 @@
  * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 // @ts-nocheck
+import { apiError } from '@/lib/api-error'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { callClaude } from '@/lib/ai/client'
