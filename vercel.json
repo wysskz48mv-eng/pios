@@ -55,6 +55,14 @@
     {
       "path": "/api/cron/data-retention",
       "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/cron/email-sync",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/self-heal",
+      "schedule": "*/15 * * * *"
     }
   ],
   "functions": {
@@ -129,6 +137,12 @@
     },
     "src/app/api/cron/data-retention/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/cron/email-sync/route.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/cron/self-heal/route.ts": {
+      "maxDuration": 30
     }
   }
 }

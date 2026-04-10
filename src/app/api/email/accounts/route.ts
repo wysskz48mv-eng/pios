@@ -233,6 +233,30 @@ export async function DELETE(req: NextRequest) {
     const id = req.nextUrl.searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
+    // Fetch tokens before clearing so we can revoke at provider
+    const { data: account } = await supabase
+      .from('connected_email_accounts')
+      .select('google_access_token, google_refresh_token, ms_refresh_token, provider')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    // Revoke tokens at provider (best-effort, don't block disconnect)
+    if (account) {
+      const revokeToken = account.google_refresh_token ?? account.google_access_token
+      if (revokeToken) {
+        fetch(`https://oauth2.googleapis.com/revoke?token=${revokeToken}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }).catch(() => {})
+      }
+      if (account.ms_refresh_token) {
+        // Microsoft doesn't have a public revoke endpoint for consumer tokens,
+        // but clearing from our DB prevents further use. For org tenants,
+        // the admin can revoke via Azure AD.
+      }
+    }
+
     // Soft-delete: mark inactive + clear tokens
     const { error } = await supabase
       .from('connected_email_accounts')
@@ -241,7 +265,6 @@ export async function DELETE(req: NextRequest) {
         is_primary: false,
         sync_enabled: false,
         disconnected_at: new Date().toISOString(),
-        // Clear tokens on disconnect
         google_access_token: null,
         google_refresh_token: null,
         ms_access_token: null,
@@ -272,6 +295,6 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ disconnected: true })
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
