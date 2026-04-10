@@ -82,8 +82,10 @@ async function triageEmail(
   const domainHint = domainOverride
     ? `Force domain to '${domainOverride}'.`
     : `Email from ${context} inbox. Bias domain accordingly.`
+  const TRIAGE_CLASSES = ['urgent','opportunity','file_doc','fyi','personal','junk']
   const system = `PIOS email triage for a senior FM consultant and SaaS founder. ${domainHint}
-Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","priority_score":1-10,"action_required":"string or null","ai_draft_reply":"string or null","is_receipt":true/false,"receipt_data":{"vendor":"","amount":0,"currency":"GBP","date":"","invoice_no":""} or null}`
+Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","triage_class":"${TRIAGE_CLASSES.join('|')}","priority_score":1-10,"action_required":"string or null","ai_draft_reply":"string or null","is_receipt":true/false,"receipt_data":{"vendor":"","amount":0,"currency":"GBP","date":"","invoice_no":""} or null}
+triage_class rules: urgent=needs reply within 24h, opportunity=business/career opportunity, file_doc=document/contract/invoice to file, fyi=informational no action, personal=personal/family, junk=marketing/spam`
   try {
     const raw = await callClaude(
       [{ role: 'user', content: `Subject: ${subject}\nFrom: ${from}\nSnippet: ${snippet}` }],
@@ -92,6 +94,7 @@ Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","prio
     const p = JSON.parse(raw.replace(/```json|```/g, '').trim())
     return {
       domain:         domainOverride ?? (DOMAINS.includes(p.domain) ? p.domain : 'personal'),
+      triage_class:   TRIAGE_CLASSES.includes(p.triage_class) ? p.triage_class : null,
       priority_score: Math.min(10, Math.max(1, parseInt(p.priority_score) || 3)),
       action_required: p.action_required || null,
       ai_draft_reply:  p.ai_draft_reply  || null,
@@ -99,7 +102,7 @@ Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","prio
       receipt_data:    p.receipt_data    || null,
     }
   } catch {
-    return { domain: domainOverride ?? 'personal', priority_score: 3, action_required: null, ai_draft_reply: null, is_receipt: looksLikeReceipt, receipt_data: null }
+    return { domain: domainOverride ?? 'personal', triage_class: null, priority_score: 3, action_required: null, ai_draft_reply: null, is_receipt: looksLikeReceipt, receipt_data: null }
   }
 }
 async function autoCreateExpense(supabase: any, userId: string, rd: any, domain: string, subject: string) {
@@ -218,7 +221,7 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
       gmail_message_id: msg.id, gmail_thread_id: d.threadId,
       subject, sender_name: from.split('<')[0].trim(), sender_email: senderEmail,
       received_at: new Date(parseInt(d.internalDate)).toISOString(), snippet,
-      domain_tag: t.domain, priority_score: t.priority_score,
+      domain_tag: t.domain, triage_class: t.triage_class, priority_score: t.priority_score,
       action_required: t.action_required, ai_draft_reply: t.ai_draft_reply,
       is_receipt: t.is_receipt, receipt_data: t.receipt_data,
       unsubscribe_url: unsubscribeUrl,
@@ -251,7 +254,7 @@ async function syncMicrosoft(supabase: any, userId: string, account: any, token:
       gmail_message_id: `ms:${msg.id}`, gmail_thread_id: msg.conversationId ?? null,
       subject, sender_name: fromName, sender_email: fromEmail,
       received_at: msg.receivedDateTime, snippet,
-      domain_tag: t.domain, priority_score: t.priority_score,
+      domain_tag: t.domain, triage_class: t.triage_class, priority_score: t.priority_score,
       action_required: t.action_required, ai_draft_reply: t.ai_draft_reply,
       is_receipt: t.is_receipt, receipt_data: t.receipt_data, status: 'triaged',
     }, { onConflict: 'gmail_message_id' })
