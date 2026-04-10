@@ -1,0 +1,65 @@
+name: Autonomous Self-Healing Agents
+
+on:
+  schedule:
+    - cron: '0 0,6,12,18 * * *'  # Every 6 hours
+  workflow_dispatch: {}            # Manual trigger from GitHub UI
+
+jobs:
+  diagnostics:
+    name: Deep Diagnostics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run PIOS Diagnostics Engine
+        run: |
+          response=$(curl -sf -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "x-trigger: github_actions" \
+            "${{ secrets.PIOS_APP_URL }}/api/cron/diagnostics")
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+          echo "Status: $http_code"
+          echo "$body" | jq . 2>/dev/null || echo "$body"
+          if [ "$http_code" -ge 400 ]; then exit 1; fi
+
+  self-heal:
+    name: Self-Heal
+    runs-on: ubuntu-latest
+    needs: diagnostics
+    steps:
+      - name: Run PIOS Self-Heal
+        run: |
+          response=$(curl -sf -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PIOS_APP_URL }}/api/cron/self-heal")
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+          echo "Status: $http_code"
+          echo "$body" | jq . 2>/dev/null || echo "$body"
+          echo "::notice::Self-heal completed"
+
+  email-sync:
+    name: Email Sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync connected email inboxes
+        run: |
+          curl -sf \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PIOS_APP_URL }}/api/cron/email-sync" | jq . 2>/dev/null || true
+
+  health-smoke:
+    name: Health Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PIOS health
+        run: |
+          response=$(curl -sf -w "\n%{http_code}" \
+            "${{ secrets.PIOS_APP_URL }}/api/health")
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+          echo "$body" | jq . 2>/dev/null || echo "$body"
+          if [ "$http_code" -ge 500 ]; then
+            echo "::error::PIOS health check failed with status $http_code"
+            exit 1
+          fi
