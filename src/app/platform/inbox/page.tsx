@@ -63,6 +63,8 @@ export default function InboxPage() {
   const [expanded, setExpanded]     = useState<string | null>(null)
   const [editingDraft, setEditingDraft] = useState<Record<string, string>>({})
   const [sending, setSending]       = useState<string | null>(null)
+  const [compose, setCompose]       = useState<{ to: string; subject: string; body: string; threadId?: string; replyTo?: string; mode: 'compose' | 'reply' | 'forward' } | null>(null)
+  const [composeSending, setComposeSending] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -159,9 +161,13 @@ export default function InboxPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setCompose({ to: '', subject: '', body: '', mode: 'compose' })}
+            style={{ padding: '8px 16px', background: 'var(--ai)', border: 'none', borderRadius: 7, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+            Compose
+          </button>
           {untriagedCount > 0 && (
             <button onClick={runTriage} disabled={triaging}
-              style={{ padding: '8px 16px', background: 'var(--ai)', border: 'none', borderRadius: 7, color: '#fff', fontSize: 13, fontWeight: 500, cursor: triaging ? 'wait' : 'pointer', opacity: triaging ? 0.7 : 1 }}>
+              style={{ padding: '8px 16px', background: 'var(--pios-surface3)', border: '1px solid var(--pios-border)', borderRadius: 7, color: 'var(--ai)', fontSize: 13, fontWeight: 500, cursor: triaging ? 'wait' : 'pointer', opacity: triaging ? 0.7 : 1 }}>
               {triaging ? 'Triaging...' : `Triage ${untriagedCount} new`}
             </button>
           )}
@@ -269,6 +275,17 @@ export default function InboxPage() {
 
                     {/* Quick actions bar */}
                     <div style={{ padding: '8px 16px', display: 'flex', gap: 6, flexWrap: 'wrap', borderBottom: '1px solid var(--pios-border)', background: 'var(--pios-surface2)' }}>
+                      {/* Reply / Forward */}
+                      <button onClick={(e) => { e.stopPropagation(); setCompose({ to: email.from_address, subject: `Re: ${email.subject ?? ''}`, body: `\n\n--- Original ---\n${email.body_preview ?? ''}`, threadId: (email as any).gmail_thread_id, replyTo: email.id, mode: 'reply' }) }}
+                        style={{ padding: '4px 10px', fontSize: 11, background: 'var(--ai)', border: 'none', borderRadius: 5, color: '#fff', cursor: 'pointer' }}>
+                        Reply
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); setCompose({ to: '', subject: `Fwd: ${email.subject ?? ''}`, body: `\n\n--- Forwarded ---\nFrom: ${email.from_address}\nSubject: ${email.subject}\n\n${email.body_preview ?? ''}`, mode: 'forward' }) }}
+                        style={{ padding: '4px 10px', fontSize: 11, background: 'transparent', border: '1px solid var(--pios-border)', borderRadius: 5, color: 'var(--pios-muted)', cursor: 'pointer' }}>
+                        Forward
+                      </button>
+                      <div style={{ width: 1, height: 20, background: 'var(--pios-border)', margin: '0 2px' }} />
+                      {/* Actions */}
                       {[
                         { label: 'Archive', action: 'archive', icon: '📥' },
                         { label: 'Delete', action: 'delete', icon: '🗑' },
@@ -276,7 +293,7 @@ export default function InboxPage() {
                         { label: 'Block sender', action: 'block', icon: '🚫' },
                         { label: (email as any).is_flagged ? 'Unflag' : 'Flag', action: (email as any).is_flagged ? 'unflag' : 'flag', icon: '⚑' },
                         { label: 'Snooze', action: 'snooze', icon: '⏰' },
-                        { label: (email as any).unsubscribe_url ? 'Unsubscribe' : '', action: 'unsubscribe', icon: '✉' },
+                        { label: (email as any).unsubscribe_url ? 'Unsubscribe' : 'Unsubscribe', action: 'unsubscribe', icon: '✉' },
                       ].filter(a => a.label).map(a => (
                         <button key={a.action} onClick={async (e) => {
                           e.stopPropagation()
@@ -381,6 +398,69 @@ export default function InboxPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* ── Compose / Reply / Forward modal ────────────────────────── */}
+      {compose && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, width: 480, background: 'var(--pios-surface)', border: '1px solid var(--pios-border2)', borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 1000, overflow: 'hidden' }}>
+          {/* Header */}
+          <div style={{ padding: '12px 16px', background: 'var(--pios-surface2)', borderBottom: '1px solid var(--pios-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--pios-text)' }}>
+              {compose.mode === 'reply' ? 'Reply' : compose.mode === 'forward' ? 'Forward' : 'New email'}
+            </span>
+            <button onClick={() => setCompose(null)} style={{ background: 'none', border: 'none', color: 'var(--pios-muted)', cursor: 'pointer', fontSize: 16 }}>x</button>
+          </div>
+          {/* Form */}
+          <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <input
+              type="email" placeholder="To" value={compose.to}
+              onChange={e => setCompose({ ...compose, to: e.target.value })}
+              style={{ width: '100%', padding: '8px 10px', background: 'var(--pios-bg)', border: '1px solid var(--pios-border)', borderRadius: 6, color: 'var(--pios-text)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+            />
+            <input
+              type="text" placeholder="Subject" value={compose.subject}
+              onChange={e => setCompose({ ...compose, subject: e.target.value })}
+              style={{ width: '100%', padding: '8px 10px', background: 'var(--pios-bg)', border: '1px solid var(--pios-border)', borderRadius: 6, color: 'var(--pios-text)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+            />
+            <textarea
+              placeholder="Write your message..."
+              value={compose.body}
+              onChange={e => setCompose({ ...compose, body: e.target.value })}
+              style={{ width: '100%', minHeight: 180, padding: '10px', background: 'var(--pios-bg)', border: '1px solid var(--pios-border)', borderRadius: 6, color: 'var(--pios-text)', fontSize: 13, lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+            />
+          </div>
+          {/* Actions */}
+          <div style={{ padding: '10px 16px', borderTop: '1px solid var(--pios-border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button onClick={() => setCompose(null)}
+              style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--pios-border)', borderRadius: 7, color: 'var(--pios-muted)', fontSize: 12, cursor: 'pointer' }}>
+              Discard
+            </button>
+            <button
+              disabled={composeSending || !compose.to.trim() || !compose.subject.trim()}
+              onClick={async () => {
+                setComposeSending(true)
+                try {
+                  await fetch('/api/email/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      to: compose.to,
+                      subject: compose.subject,
+                      body: compose.body,
+                      threadId: compose.threadId,
+                      email_item_id: compose.replyTo,
+                    }),
+                  })
+                  setCompose(null)
+                  await load()
+                } catch (err) { console.error('[PIOS compose]', err) }
+                setComposeSending(false)
+              }}
+              style={{ padding: '8px 20px', background: 'var(--ai)', border: 'none', borderRadius: 7, color: '#fff', fontSize: 12, fontWeight: 500, cursor: composeSending ? 'wait' : 'pointer', opacity: composeSending || !compose.to.trim() ? 0.5 : 1 }}>
+              {composeSending ? 'Sending...' : 'Send'}
+            </button>
+          </div>
         </div>
       )}
     </div>

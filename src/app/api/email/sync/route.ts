@@ -122,12 +122,21 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=is:unread+-category:promotions`,
     { headers: { Authorization: `Bearer ${token}` } }
   )
-  if (!res.ok) return { synced: 0, receipts: 0, error: `Gmail ${res.status}` }
+  if (!res.ok) return { synced: 0, receipts: 0, blocked: 0, error: `Gmail ${res.status}` }
   const { messages = [] } = await res.json()
-  let synced = 0, receipts = 0
+
+  // Load blocked senders for this user
+  const { data: blockedList } = await supabase
+    .from('blocked_senders')
+    .select('email, domain')
+    .eq('user_id', userId)
+  const blockedEmails = new Set((blockedList ?? []).map((b: any) => b.email?.toLowerCase()))
+  const blockedDomains = new Set((blockedList ?? []).map((b: any) => b.domain?.toLowerCase()).filter(Boolean))
+
+  let synced = 0, receipts = 0, blocked = 0
   for (const msg of messages.slice(0, max)) {
     const dr = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=List-Unsubscribe`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
     if (!dr.ok) continue
@@ -135,24 +144,49 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
     const h: Record<string, string> = {}
     d.payload?.headers?.forEach((x: Record<string, unknown>) => { h[String(x.name ?? "")] = String(x.value ?? "") })
     const subject = h.Subject ?? '(no subject)', from = h.From ?? '', snippet = d.snippet ?? ''
+    const senderEmail = (from.match(/<(.+)>/)?.[1] ?? from).toLowerCase()
+    const senderDomain = senderEmail.split('@')[1] ?? ''
+
+    // Extract unsubscribe URL from List-Unsubscribe header
+    const unsubHeader = h['List-Unsubscribe'] ?? ''
+    const unsubscribeUrl = unsubHeader.match(/<(https?:\/\/[^>]+)>/)?.[1] ?? null
+
+    // Check if sender is blocked
+    if (blockedEmails.has(senderEmail) || blockedDomains.has(senderDomain)) {
+      // Auto-spam blocked senders
+      await supabase.from('email_items').upsert({
+        user_id: userId, account_id: account.id,
+        gmail_message_id: msg.id, gmail_thread_id: d.threadId,
+        subject, sender_name: from.split('<')[0].trim(), sender_email: senderEmail,
+        received_at: new Date(parseInt(d.internalDate)).toISOString(), snippet,
+        status: 'spam', is_blocked: true, is_spam: true,
+        unsubscribe_url: unsubscribeUrl,
+        inbox_context: account.context, inbox_label: account.label ?? account.display_name,
+      }, { onConflict: 'gmail_message_id' })
+      blocked++
+      continue
+    }
+
     const t = await triageEmail(subject, from, snippet, account.context, account.ai_domain_override, account.receipt_scan_enabled, account.receipt_keywords ?? [])
     if (t.is_receipt) { receipts++; await autoCreateExpense(supabase, userId, t.receipt_data, t.domain, subject) }
+
     await supabase.from('email_items').upsert({
       user_id: userId, account_id: account.id, inbox_context: account.context,
       inbox_label: account.label ?? account.display_name,
       gmail_message_id: msg.id, gmail_thread_id: d.threadId,
-      subject, sender_name: from.split('<')[0].trim(),
-      sender_email: from.match(/<(.+)>/)?.[1] ?? from,
+      subject, sender_name: from.split('<')[0].trim(), sender_email: senderEmail,
       received_at: new Date(parseInt(d.internalDate)).toISOString(), snippet,
       domain_tag: t.domain, priority_score: t.priority_score,
       action_required: t.action_required, ai_draft_reply: t.ai_draft_reply,
-      is_receipt: t.is_receipt, receipt_data: t.receipt_data, status: 'triaged',
+      is_receipt: t.is_receipt, receipt_data: t.receipt_data,
+      unsubscribe_url: unsubscribeUrl,
+      status: 'triaged',
     }, { onConflict: 'gmail_message_id' })
     synced++
   }
   await supabase.from('connected_email_accounts')
     .update({ last_synced_at: new Date().toISOString(), last_sync_error: null }).eq('id', account.id)
-  return { synced, receipts }
+  return { synced, receipts, blocked }
 }
 async function syncMicrosoft(supabase: any, userId: string, account: any, token: string, max: number) {
   const url = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=${max}&$filter=isRead eq false&$select=id,subject,from,receivedDateTime,bodyPreview,conversationId`
