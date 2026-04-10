@@ -39,7 +39,7 @@ export default function BillingPage() {
       const d = await r.json()
       if (d.url) window.location.href = d.url
       else alert(d.error || 'Portal unavailable — configure Stripe live keys first')
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setPortalLoad(false)
   }
 
@@ -50,7 +50,7 @@ export default function BillingPage() {
       const d = await r.json()
       if (d.url) window.location.href = d.url
       else alert(d.error || 'Checkout unavailable — configure Stripe live keys first')
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setCheckLoad('')
   }
 

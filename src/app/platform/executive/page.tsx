@@ -66,14 +66,14 @@ export default function ExecutivePage() {
     try {
       const r = await fetch('/api/contracts')
       if (r.ok) { const d = await r.json(); setContracts(d.contracts ?? []) }
-    } catch { /* silent */ } finally { setCtLoading(false) }
+    } catch (err) { console.error('[PIOS]', err) } finally { setCtLoading(false) }
   }
   const loadFinancial = async () => {
     setFinLoading(true)
     try {
       const r = await fetch('/api/financials')
       if (r.ok) { const d = await r.json(); setFinancial(d) }
-    } catch { /* silent */ } finally { setFinLoading(false) }
+    } catch (err) { console.error('[PIOS]', err) } finally { setFinLoading(false) }
   }
 
   const [activeTab, setActiveTab]   = useState<'overview'|'okrs'|'decisions'|'stakeholders'|'time'|'contracts'|'financial'>('overview')
@@ -128,7 +128,7 @@ export default function ExecutivePage() {
       })
       const d = await r.json()
       setBrief(d.content ?? null)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setBriefLoading(false)
   }
 
@@ -181,7 +181,7 @@ export default function ExecutivePage() {
       })
       const res = await r.json()
       if (res.analysis) setDaaAnalysis(prev => ({...prev, [d.id]: res.analysis}))
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setDaaLoading(null)
   }
 
@@ -210,7 +210,7 @@ export default function ExecutivePage() {
       })
       const d = await r.json()
       setReportPack(d.content ?? null)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setGenReport(false)
   }
 
@@ -234,7 +234,7 @@ export default function ExecutivePage() {
         return { ...o, exec_key_results: updKrs, progress: avgPct }
       }))
       setEditKr(p => { const n = {...p}; delete n[krId]; return n })
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSavingKr(null)
   }
 

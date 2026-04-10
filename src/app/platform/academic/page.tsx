@@ -155,7 +155,7 @@ export default function AcademicPage() {
         const a    = Object.assign(document.createElement('a'), { href: url, download: name })
         a.click(); URL.revokeObjectURL(url)
       }
-    } catch { /* non-fatal */ }
+    } catch (err) { console.error('[PIOS]', err) }
     finally { setExportingThesis(false) }
   }
 
@@ -477,7 +477,7 @@ function MilestonesSection() {
       const r = await fetch('/api/milestones', { credentials: 'include' })
       const d = await r.json()
       if (d.ok) { setMilestones(((d as any).milestones ?? []) as MilestoneRecord[]) }
-    } catch { /* silent — table may not exist until M011 runs */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [])
 
@@ -494,7 +494,7 @@ function MilestonesSection() {
         })
       ))
       await load()
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSeeding(false)
   }
 
@@ -507,7 +507,7 @@ function MilestonesSection() {
         body: JSON.stringify({ id, status }),
       })
       setMilestones(prev => prev.map((m: MilestoneRecord) => m.id === id ? { ...m, status } : m) as MilestoneRecord[])
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(null)
   }
 

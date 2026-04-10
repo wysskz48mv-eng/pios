@@ -44,7 +44,7 @@ export default function OnboardingPage() {
       })
       const d = await r.json()
       setWelcomeMsg(d.message ?? null)
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setMsgLoad(false)
   }
 

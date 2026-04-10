@@ -35,7 +35,7 @@ export default function SupervisorPrepPage() {
       })
       const d = await r.json()
       setAiResult(d.agenda)
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setAiLoad(false)
   }
 
@@ -49,7 +49,7 @@ export default function SupervisorPrepPage() {
       })
       const d = await r.json()
       setAiResult(d.debrief)
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setAiLoad(false)
   }
 

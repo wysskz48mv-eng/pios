@@ -78,7 +78,7 @@ export default function CommsPage() {
       setCommsHistory(histD.comms ?? [])
       setSectors(siaD.sectors ?? [])
       setSiaBriefs(siaD.briefs ?? [])
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [])
 
@@ -104,7 +104,7 @@ export default function CommsPage() {
       })
       const d = await r.json()
       if (d.content) setGeneratedComms({ content: d.content, word_count: d.word_count, id: d.id })
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setGenerating(false)
   }
 
@@ -120,7 +120,7 @@ export default function CommsPage() {
       })
       const d = await r.json()
       if (d.content) { setLatestBrief(d.content); load() }
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setBriefing(false)
   }
 

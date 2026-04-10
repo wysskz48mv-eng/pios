@@ -40,7 +40,7 @@ export default function StudyTimerPage() {
         setSettings(s)
         setTimeLeft(s.focus * 60)
       }
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
   }, [])
 
   const saveSession = useCallback((m: Mode, dur: number) => {
@@ -51,7 +51,7 @@ export default function StudyTimerPage() {
     }
     setSessions(prev => {
       const updated = [sess, ...prev].slice(0, 50)
-      try { localStorage.setItem('pios_study_sessions', JSON.stringify(updated)) } catch { /* silent */ }
+      try { localStorage.setItem('pios_study_sessions', JSON.stringify(updated)) } catch (err) { console.error('[PIOS]', err) }
       return updated
     })
     if (m === 'focus') {
@@ -123,7 +123,7 @@ export default function StudyTimerPage() {
     setSettings(s)
     setTimeLeft(s[mode] * 60)
     setRunning(false)
-    try { localStorage.setItem('pios_study_settings', JSON.stringify(s)) } catch { /* silent */ }
+    try { localStorage.setItem('pios_study_settings', JSON.stringify(s)) } catch (err) { console.error('[PIOS]', err) }
     setShowSettings(false)
   }
 

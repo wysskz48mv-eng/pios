@@ -40,7 +40,7 @@ export default function DocumentsPage() {
         setDocs(prev => prev.map(f => f.id === doc.id ? upd : f))
         setSelected(upd)
       }
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setAnalysing(false)
   }
 

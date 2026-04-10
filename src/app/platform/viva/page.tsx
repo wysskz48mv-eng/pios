@@ -107,7 +107,7 @@ export default function VivaPage() {
       })
       const d = await r.json()
       setExaminerProfile(d.profile ?? null)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [examiner])
 
@@ -121,7 +121,7 @@ export default function VivaPage() {
       })
       const d = await r.json()
       setSaProfile(d.profile ?? null)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaLoading(false)
   }
 

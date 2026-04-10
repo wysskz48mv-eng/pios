@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       const r = await fetch('/api/gdpr', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'export'})})
       const d = await r.json()
       setExportData(d)
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setExportLoad(false)
   }
 
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
       const r = await fetch('/api/gdpr', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'erase_wellness'})})
       const d = await r.json()
       setEraseResult({...d, type:'wellness'})
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setEraseLoad(false)
   }
 
@@ -52,7 +52,7 @@ export default function PrivacyPage() {
       const r = await fetch('/api/gdpr', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'erase',confirm:'ERASE MY DATA'})})
       const d = await r.json()
       setEraseResult({...d, type:'full'})
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setEraseLoad(false)
   }
 
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
         const dd = await dr.json()
         setDigest(dd.digest ?? null)
       }
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setSmartLoad(false)
   }
 

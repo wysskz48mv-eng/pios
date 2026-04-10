@@ -83,7 +83,7 @@ export default function NemoClawTrainPage() {
       if (calRes.status === 'fulfilled') {
         setCalibration(calRes.value?.calibration ?? null)
       }
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setCalLoading(false)
   }, [])
 
@@ -99,7 +99,7 @@ export default function NemoClawTrainPage() {
         body: JSON.stringify({ action: 'save_config', ...config }),
       })
       if (r.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000) }
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 
@@ -119,7 +119,7 @@ export default function NemoClawTrainPage() {
         if (ctxMatch?.[1])   setConfig(p => ({ ...p, persona_context: ctxMatch[1].trim() }))
         if (instrMatch?.[1]) setConfig(p => ({ ...p, custom_instructions: instrMatch[1].trim() }))
       }
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setGenerating(false)
   }
 

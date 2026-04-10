@@ -23,7 +23,7 @@ export default function DailyBriefPage() {
         setGenAt(d.generated_at)
         setCached(d.cached)
       }
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     force ? setRegen(false) : setLoading(false)
   }
 

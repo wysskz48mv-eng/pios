@@ -47,7 +47,7 @@ export default function FinancialsPage() {
       const d = await r.json()
       setSummary(d.summary ?? null)
       setContracts(d.contracts ?? [])
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false); setRefresh(false)
   }, [])
 
@@ -60,7 +60,7 @@ export default function FinancialsPage() {
       const r = await fetch('/api/financials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'ai_commentary', summary }) })
       const d = await r.json()
       setComm(d.commentary ?? null)
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setGen(false)
   }
 
@@ -82,7 +82,7 @@ export default function FinancialsPage() {
         }),
       })
       if (r.ok) { setShowSnap(false); load() }
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 

@@ -98,7 +98,7 @@ export default function TimeSovereigntyPage() {
       setBlocks(d.blocks ?? [])
       setAudits(d.audits ?? [])
       setSummary(d.summary ?? null)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [])
 

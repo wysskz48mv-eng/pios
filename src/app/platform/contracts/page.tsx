@@ -61,7 +61,7 @@ export default function ContractsPage() {
       setContracts(d.contracts ?? [])
       setAlerts(d.renewalAlerts ?? [])
       setTotalValue(d.totalValue ?? 0)
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [])
 
@@ -75,7 +75,7 @@ export default function ContractsPage() {
         : { action: 'create', ...form, value: form.value ? parseFloat(String(form.value)) : null, notice_period_days: form.notice_period_days ? parseInt(String(form.notice_period_days)) : null }
       await fetch('/api/contracts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       setShowModal(false); setEditing(null); setForm({ ...BLANK }); await load()
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 
@@ -91,7 +91,7 @@ export default function ContractsPage() {
       const r = await fetch('/api/contracts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'ai_review' }) })
       const d = await r.json()
       setReview(d.review ?? null)
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setReviewing(false)
   }
 

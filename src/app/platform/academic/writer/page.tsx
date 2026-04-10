@@ -67,7 +67,7 @@ export default function DBAWriterPage() {
       const d = await r.json()
       setChapters(d.chapters ?? [])
       if (d.chapters?.length && !selected) setSelected(d.chapters[0])
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

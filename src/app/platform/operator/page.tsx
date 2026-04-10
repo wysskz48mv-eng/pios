@@ -73,7 +73,7 @@ export default function OperatorPage() {
         setForm({ ...BLANK, ...d.operator })
       }
       setIsAdmin(d.is_super_admin ?? false)
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [])
 
@@ -91,7 +91,7 @@ export default function OperatorPage() {
       if (d.operator) { setConfig(d.operator); setForm({ ...BLANK, ...d.operator }) }
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 

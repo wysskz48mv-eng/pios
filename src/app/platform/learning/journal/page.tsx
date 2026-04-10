@@ -59,7 +59,7 @@ export default function LearningJournalPage() {
         setAiReflection("")
         setView("list")
       }
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 
@@ -74,7 +74,7 @@ export default function LearningJournalPage() {
       })
       const d = await r.json()
       if (d.reflection) setAiReflection(d.reflection)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setReflecting(false)
   }
 

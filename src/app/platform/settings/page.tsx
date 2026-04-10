@@ -338,7 +338,7 @@ function PersonaSection() {
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 

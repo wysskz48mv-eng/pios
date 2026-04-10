@@ -22,7 +22,7 @@ export default function DeadlineTrackerPage() {
       const r = await fetch('/api/deadline-tracker')
       const d = await r.json()
       if (d.ok) setData(d)
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }
 
@@ -36,7 +36,7 @@ export default function DeadlineTrackerPage() {
       setShowForm(false)
       setForm({ title:'', subtitle:'', due_date:'', category:'professional', priority:'high' })
       load()
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 
@@ -54,7 +54,7 @@ export default function DeadlineTrackerPage() {
       })
       const d = await r.json()
       setPlans(prev => ({ ...prev, [deadline.id]: d.plan }))
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setPlanLoad(null)
   }
 

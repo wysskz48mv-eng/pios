@@ -35,7 +35,7 @@ export default function AgentsPage() {
       const r = await fetch('/api/agents')
       const d = await r.json()
       setAgents(d.agents ?? [])
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [])
   useEffect(() => { load() }, [load])
@@ -48,7 +48,7 @@ export default function AgentsPage() {
         body: JSON.stringify({ agent_id: agentId, enabled }),
       })
       setAgents(prev => prev.map(a => a.id===agentId ? {...a,enabled} : a))
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setToggling(null)
   }
 
@@ -67,7 +67,7 @@ export default function AgentsPage() {
           ...a, last_run_at: new Date().toISOString(), last_run_status:'success', last_run_output: d.output
         } : a))
       }
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setRunning(null)
   }
 

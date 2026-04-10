@@ -56,7 +56,7 @@ export default function IPVaultPage() {
       const d = await r.json()
       setAssets(d.assets ?? [])
       setAlerts(d.renewalAlerts ?? [])
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [])
 
@@ -70,7 +70,7 @@ export default function IPVaultPage() {
       await fetch('/api/ip-vault', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       setShowModal(false); setEditing(null); setForm({ ...BLANK })
       await load()
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 
@@ -87,7 +87,7 @@ export default function IPVaultPage() {
       const r = await fetch('/api/ip-vault', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'ai_brief' }) })
       const d = await r.json()
       setBrief(d.brief ?? null)
-    } catch { /**/ }
+    } catch (err) { console.error('[PIOS]', err) }
     setBriefing(false)
   }
 

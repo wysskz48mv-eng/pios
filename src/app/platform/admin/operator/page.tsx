@@ -45,7 +45,7 @@ export default function OperatorPage() {
         const r = await fetch('/api/operator')
         const d = await r.json()
         if (d.operator) setOperator(d.operator)
-      } catch { /* silent */ }
+      } catch (err) { console.error('[PIOS]', err) }
       setLoading(false)
     }
     load()
@@ -61,7 +61,7 @@ export default function OperatorPage() {
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 

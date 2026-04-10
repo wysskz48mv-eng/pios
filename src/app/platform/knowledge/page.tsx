@@ -69,7 +69,7 @@ export default function KnowledgePage() {
       setTotal(data.total ?? 0)
       setByType(data.byType ?? {})
       setByDomain(data.byDomain ?? {})
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setLoading(false)
   }, [])
 
@@ -85,7 +85,7 @@ export default function KnowledgePage() {
       })
       const d = await r.json()
       setAiAnswer(d.answer ?? null)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSearching(false)
   }
 
@@ -105,7 +105,7 @@ export default function KnowledgePage() {
         const summaryLine = lines.find((l: string) => l.startsWith('1.') || l.startsWith('SUMMARY'))
         if (summaryLine) setForm(p => ({ ...p, summary: summaryLine.replace(/^1\.\s*SUMMARY[:\s]*/i,'').trim() }))
       }
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSumm(false)
   }
 
@@ -120,7 +120,7 @@ export default function KnowledgePage() {
       })
       setMode('browse'); setForm({ ...BLANK_FORM }); setAiSummary(null)
       await load(query, domain)
-    } catch { /* silent */ }
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
   }
 

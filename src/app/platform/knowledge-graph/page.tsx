@@ -87,7 +87,7 @@ export default function KnowledgeGraphPage() {
       if (action==='synthesise') setSynthesis(d.synthesis)
       else if (action==='gap-analysis') setGaps(d.gaps)
       else if (action==='weekly-brief') setBrief(d.brief)
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setAiLoading(null)
   }
 

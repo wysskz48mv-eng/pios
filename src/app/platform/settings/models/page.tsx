@@ -49,7 +49,7 @@ export default function ModelRoutingPage() {
         body: JSON.stringify({ action:'save', routes: localRoutes }),
       })
       if (r.ok) setSaved(true)
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setSaving(false)
     setTimeout(() => setSaved(false), 3000)
   }
@@ -64,7 +64,7 @@ export default function ModelRoutingPage() {
       })
       const d = await r.json()
       setTestResult(d)
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setTesting(null)
   }
 
@@ -77,7 +77,7 @@ export default function ModelRoutingPage() {
       })
       const d = await r.json()
       setBenchmark(d.results ?? [])
-    } catch {}
+    } catch (err) { console.error('[PIOS]', err) }
     setBenchmarking(false)
   }
 
