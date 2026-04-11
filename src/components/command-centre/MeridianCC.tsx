@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CCProfile } from './CommandCentre'
 import styles from './cc.module.css'
 
@@ -11,6 +11,11 @@ interface Props {
 
 export function MeridianCC({ profile, onOpenThemePicker }: Props) {
   const [nemoQuery, setNemoQuery] = useState('')
+  const [stats, setStats] = useState<any>(null)
+
+  useEffect(() => {
+    fetch('/api/command-centre').then(r => r.json()).then(setStats).catch(() => {})
+  }, [])
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
@@ -37,10 +42,10 @@ export function MeridianCC({ profile, onOpenThemePicker }: Props) {
         <aside className={styles.mSidebar}>
           {[
             { label: 'Morning Brief', icon: '⌂', active: true },
-            { label: 'Email Triage', icon: '✉', badge: 7 },
+            { label: 'Email Triage', icon: '✉', badge: stats?.email?.unread || undefined },
             { label: 'Tasks', icon: '✓' },
             { label: 'Calendar', icon: '◻', section: 'Professional' },
-            { label: 'Engagements', icon: '◈', badge: 3 },
+            { label: 'Engagements', icon: '◈', badge: stats?.decisions?.pending || undefined },
             { label: 'Frameworks', icon: '⚙' },
             { label: 'Financials', icon: '£', section: 'Academic' },
             { label: 'Thesis', icon: '🎓' },
@@ -60,14 +65,14 @@ export function MeridianCC({ profile, onOpenThemePicker }: Props) {
 
         <main className={styles.mCenter}>
           <h2 className={styles.mSectionTitle}>Morning Brief</h2>
-          <p className={styles.mSectionSub}>{today} · 5 items require attention</p>
+          <p className={styles.mSectionSub}>{today} · {stats?.attention_items ?? 0} items require attention</p>
 
           <div className={styles.mCard}>
             <div className={styles.mCardTitle}>Today's intelligence</div>
             {[
-              { text: 'Two urgent items in your email triage require a response today. NemoClaw™ has drafted replies — review before sending.', chip: 'urgent' },
-              { text: 'Stakeholder follow-ups are overdue for 4 contacts. Chief of Staff weekly review pending.', chip: 'action' },
-              { text: 'OKR progress on track for 3 of 4 objectives. Q2 board pack preparation begins in 4 days.', chip: 'good' },
+              { text: `${stats?.email?.urgent ?? 0} urgent items in your email triage require a response today.${stats?.email?.urgent ? ' NemoClaw™ has drafted replies — review before sending.' : ''}`, chip: stats?.email?.urgent ? 'urgent' : 'good' },
+              { text: `${stats?.stakeholders?.overdue ?? 0} stakeholder follow-ups require attention.${stats?.tasks?.overdue ? ` ${stats.tasks.overdue} overdue tasks.` : ''}`, chip: (stats?.stakeholders?.overdue ?? 0) > 0 ? 'action' : 'good' },
+              { text: `OKR progress: ${stats?.okrs?.on_track ?? 0} of ${stats?.okrs?.total ?? 0} objectives on track (${stats?.okrs?.avg_progress ?? 0}% average).`, chip: (stats?.okrs?.on_track ?? 0) >= (stats?.okrs?.total ?? 1) ? 'good' : 'action' },
             ].map((item, index) => (
               <div key={index} className={styles.mBriefItem}>
                 <span className={styles.mBriefNum}>{index + 1}</span>

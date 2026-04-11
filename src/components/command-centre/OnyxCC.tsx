@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { CCProfile } from './CommandCentre'
 import styles from './cc.module.css'
@@ -23,6 +23,11 @@ const NAV_ITEMS = [
 
 export function OnyxCC({ profile, onOpenThemePicker }: Props) {
   const [nemoQuery, setNemoQuery] = useState('')
+  const [stats, setStats] = useState<any>(null)
+
+  useEffect(() => {
+    fetch('/api/command-centre').then(r => r.json()).then(setStats).catch(() => {})
+  }, [])
 
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -72,8 +77,7 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
                 <span className={styles.onyxBriefNum}>1</span>
                 <div className={styles.onyxBriefBody}>
                   <p className={styles.onyxBriefText}>
-                    Three strategic priorities require your attention today. Your decision queue has
-                    2 open items. Stakeholder follow-ups are overdue for 4 contacts.
+                    {stats?.decisions?.pending ?? 0} decisions pending. {stats?.stakeholders?.overdue ?? 0} stakeholder follow-ups overdue. {stats?.tasks?.overdue ?? 0} overdue tasks.
                   </p>
                   <span className={`${styles.onyxBriefTag} ${styles.tagUrgent}`}>Decision</span>
                 </div>
@@ -82,8 +86,7 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
                 <span className={styles.onyxBriefNum}>2</span>
                 <div className={styles.onyxBriefBody}>
                   <p className={styles.onyxBriefText}>
-                    7 emails classified overnight. 2 marked Urgent. NemoClaw™ has drafted
-                    responses to both — review before sending.
+                    {stats?.email?.unread ?? 0} emails in triage. {stats?.email?.urgent ?? 0} marked urgent.{(stats?.email?.urgent ?? 0) > 0 ? ' NemoClaw™ has drafted responses — review before sending.' : ''}
                   </p>
                   <span className={`${styles.onyxBriefTag} ${styles.tagReview}`}>Review</span>
                 </div>
@@ -92,8 +95,7 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
                 <span className={styles.onyxBriefNum}>3</span>
                 <div className={styles.onyxBriefBody}>
                   <p className={styles.onyxBriefText}>
-                    OKR progress: 3 of 4 objectives on track. Q2 board pack preparation
-                    due within 18 days. Chief of Staff weekly review pending.
+                    OKR progress: {stats?.okrs?.on_track ?? 0} of {stats?.okrs?.total ?? 0} objectives on track ({stats?.okrs?.avg_progress ?? 0}% average).
                   </p>
                   <span className={`${styles.onyxBriefTag} ${styles.tagInfo}`}>Progress</span>
                 </div>
@@ -103,12 +105,12 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
 
           <div className={styles.onyxModuleGrid}>
             {[
-              { icon: '⚖', name: 'Decisions', stat: '2 awaiting review', href: '/platform/decisions' },
-              { icon: '✉', name: 'Email Triage', stat: '7 classified · 2 urgent', href: '/platform/email' },
-              { icon: '▣', name: 'Board Pack', stat: 'Due in 18 days', href: '/platform/board' },
-              { icon: '◈', name: 'EOSA™', stat: '13 frameworks active', href: '/platform/frameworks' },
-              { icon: '⊞', name: 'Chief of Staff', stat: 'Weekly review due', href: '/platform/cos' },
-              { icon: '◉', name: 'Stakeholders', stat: '4 overdue contact', href: '/platform/stakeholders' },
+              { icon: '⚖', name: 'Decisions', stat: `${stats?.decisions?.pending ?? 0} awaiting review`, href: '/platform/decisions' },
+              { icon: '✉', name: 'Email Triage', stat: `${stats?.email?.unread ?? 0} classified · ${stats?.email?.urgent ?? 0} urgent`, href: '/platform/email' },
+              { icon: '▣', name: 'Board Pack', stat: 'Preparation active', href: '/platform/board' },
+              { icon: '◈', name: 'EOSA™', stat: 'Frameworks active', href: '/platform/frameworks' },
+              { icon: '⊞', name: 'Chief of Staff', stat: 'Weekly review', href: '/platform/cos' },
+              { icon: '◉', name: 'Stakeholders', stat: `${stats?.stakeholders?.overdue ?? 0} overdue`, href: '/platform/stakeholders' },
             ].map((module) => (
               <Link key={module.name} href={module.href} className={styles.onyxModCard}>
                 <span className={styles.onyxModIcon}>{module.icon}</span>

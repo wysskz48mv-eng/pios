@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CCProfile } from './CommandCentre'
 import styles from './cc.module.css'
 
@@ -11,6 +11,11 @@ interface Props {
 
 export function SignalCC({ profile, onOpenThemePicker }: Props) {
   const [nemoQuery, setNemoQuery] = useState('')
+  const [stats, setStats] = useState<any>(null)
+
+  useEffect(() => {
+    fetch('/api/command-centre').then(r => r.json()).then(setStats).catch(() => {})
+  }, [])
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
@@ -66,21 +71,24 @@ export function SignalCC({ profile, onOpenThemePicker }: Props) {
             <div className={styles.sTcChapter}>Chapter 3 — Research Methodology</div>
             <p className={styles.sTcSub}>AI-enabled FM cost forecasting in GCC mixed-use developments</p>
             <div className={styles.sProgress}>
-              <div className={styles.sProgressFill} style={{ width: '78%' }}></div>
+              <div className={styles.sProgressFill} style={{ width: `${stats?.thesis?.progress ?? 0}%` }}></div>
             </div>
             <div className={styles.sTcPct}>
-              <span>6,210 / 8,000 words</span><span>78%</span>
+              <span>{(stats?.thesis?.total_words ?? 0).toLocaleString()} / {(stats?.thesis?.target_words ?? 80000).toLocaleString()} words</span><span>{stats?.thesis?.progress ?? 0}%</span>
             </div>
           </div>
 
           <div className={styles.sDeadlineCard}>
             <div className={styles.sDlTitle}>Upcoming Deadlines</div>
-            {[
-              { date: '12 Apr', name: 'Supervision Session', type: 'Dr Ozlem Bak', badge: '5 days', badgeType: 'r' },
-              { date: '14 Apr', name: 'Lit Review Draft', type: 'Chapter 2 final', badge: '7 days', badgeType: 'y' },
-              { date: '30 Apr', name: 'Chapter 3 Draft', type: 'Submit to supervisors', badge: '23 days', badgeType: 'g' },
-              { date: 'Dec 26', name: 'Thesis Submission', type: 'Final DBA thesis', badge: 'On track', badgeType: 'g' },
-            ].map((deadline) => (
+            {(stats?.deadlines?.length ? stats.deadlines.map((d: any) => ({
+              date: new Date(d.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+              name: d.title,
+              type: d.domain ?? '',
+              badge: d.days_until <= 0 ? 'Overdue' : `${d.days_until} days`,
+              badgeType: d.days_until <= 7 ? 'r' : d.days_until <= 14 ? 'y' : 'g',
+            })) : [
+              { date: '—', name: 'No upcoming deadlines', type: 'Add tasks with due dates', badge: '', badgeType: 'g' },
+            ]).map((deadline: any) => (
               <div key={deadline.name} className={styles.sDlItem}>
                 <span className={styles.sDlDate}>{deadline.date}</span>
                 <div>
