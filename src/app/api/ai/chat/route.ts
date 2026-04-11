@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     const tc   = trainCfgR.status === 'fulfilled' ? (trainCfgR.value as any).data : null
     const nemo = nemoCfgR.status  === 'fulfilled' ? ((nemoCfgR.value as any).data?.[0] ?? null) as any : null
 
-    const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR, calendarR] = await Promise.all([
+    const [tasksR, modulesR, projectsR, chaptersR, notifsR, briefR, calendarR] = await Promise.allSettled([
       supabase.from('tasks').select('title,domain,priority,due_date,status')
         .eq('user_id', user.id).not('status', 'in', '("done","cancelled")')
         .order('due_date', { ascending: true }).limit(15),
@@ -105,7 +105,9 @@ export async function POST(request: Request) {
         .order('start_time').limit(8),
     ])
 
-    const tasks    = tasksR.data ?? []
+    const safe = (r: PromiseSettledResult<any>) => r.status === 'fulfilled' ? (r.value?.data ?? []) : []
+    const safeSingle = (r: PromiseSettledResult<any>) => r.status === 'fulfilled' ? (r.value?.data ?? null) : null
+    const tasks    = safe(tasksR)
 
     // Exec persona — fetch live OKR/decision/stakeholder + wellness + IP + knowledge context
     let execCtxStr = ''
@@ -192,10 +194,10 @@ export async function POST(request: Request) {
     const upcoming = tasks.filter(t => !t.due_date || t.due_date > today)
 
     // Thesis velocity
-    const chapters    = chaptersR.data ?? []
+    const chapters    = safe(chaptersR)
     const totalWords  = chapters.reduce((s, c) => s + (c.word_count ?? 0), 0)
     const targetWords = chapters.reduce((s, c) => s + (c.target_words ?? 8000), 0)
-    const nearestDl   = (modulesR.data ?? []).map(m => m.deadline).filter(Boolean).sort()[0]
+    const nearestDl   = (safe(modulesR)).map(m => m.deadline).filter(Boolean).sort()[0]
     const daysLeft    = nearestDl
       ? Math.max(1, Math.round((new Date(nearestDl).getTime() - Date.now()) / 86400000))
       : null
@@ -220,8 +222,8 @@ export async function POST(request: Request) {
         ? `OPEN TASKS: ` + upcoming.slice(0,6).map(t => `${t.title} [${t.priority}/${t.domain}${t.due_date ? ' · ' + fmt(t.due_date) : ''}]`).join('; ')
         : null,
 
-      (modulesR.data ?? []).length > 0
-        ? `MODULES: ` + (modulesR.data ?? []).map(m => `${m.title} [${m.status}${m.deadline ? ' · ' + fmt(m.deadline) : ''}]`).join('; ')
+      (safe(modulesR)).length > 0
+        ? `MODULES: ` + (safe(modulesR)).map(m => `${m.title} [${m.status}${m.deadline ? ' · ' + fmt(m.deadline) : ''}]`).join('; ')
         : null,
 
       chapters.length > 0
@@ -229,16 +231,16 @@ export async function POST(request: Request) {
           (wordsPerDay ? ` · ${wordsPerDay.toLocaleString()} words/day needed` : '')
         : null,
 
-      (projectsR.data ?? []).length > 0
-        ? `PROJECTS: ` + (projectsR.data ?? []).map(p => `${p.title} ${p.progress ?? 0}% [${p.domain}]`).join('; ')
+      (safe(projectsR)).length > 0
+        ? `PROJECTS: ` + (safe(projectsR)).map(p => `${p.title} ${p.progress ?? 0}% [${p.domain}]`).join('; ')
         : null,
 
-      (notifsR.data ?? []).length > 0
-        ? `ALERTS: ` + (notifsR.data ?? []).map(n => `${n.title} [${n.type}]`).join('; ')
+      (safe(notifsR)).length > 0
+        ? `ALERTS: ` + (safe(notifsR)).map(n => `${n.title} [${n.type}]`).join('; ')
         : null,
-      (calendarR as any)?.data?.length > 0
-        ? "TODAY'S SCHEDULE (" + String((calendarR as any)?.data?.length ?? 0) + " events): " +
-          ((calendarR as any)?.data ?? []).map((e: any) =>
+      safe(calendarR).length > 0
+        ? "TODAY'S SCHEDULE (" + String(safe(calendarR).length) + " events): " +
+          safe(calendarR).map((e: any) =>
             String(e.title ?? e.summary ?? '') + " @ " + (e.all_day ? 'all-day' : new Date(e.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}))
           ).join('; ')
         : null,
@@ -246,8 +248,8 @@ export async function POST(request: Request) {
     ].filter(Boolean).join('\n')
 
     // Include today's brief if it exists — it's the richest single-page summary
-    const briefSection = briefR.data?.content
-      ? `\nTODAY'S BRIEF:\n${briefR.data.content}`
+    const briefSection = safeSingle(briefR)?.content
+      ? `\nTODAY'S BRIEF:\n${safeSingle(briefR)?.content}`
       : ''
 
     const domainSection = domainContext
