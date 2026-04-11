@@ -1,2 +1,0 @@
--- M054: Personal Planning Schema Complete
--- [paste the full migration SQL here]
