@@ -75,9 +75,14 @@ export default function ContractsPage() {
       const payload = editing
         ? { action: 'update', id: editing.id, ...form, value: form.value ? parseFloat(String(form.value)) : null, notice_period_days: form.notice_period_days ? parseInt(String(form.notice_period_days)) : null }
         : { action: 'create', ...form, value: form.value ? parseFloat(String(form.value)) : null, notice_period_days: form.notice_period_days ? parseInt(String(form.notice_period_days)) : null }
-      await fetch('/api/contracts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      setShowModal(false); setEditing(null); setForm({ ...BLANK }); await load()
-    } catch (err) { console.error('[PIOS]', err) }
+      const res = await fetch('/api/contracts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        alert(`Save failed: ${data.error ?? 'Unknown error'}`)
+      } else {
+        setShowModal(false); setEditing(null); setForm({ ...BLANK }); setExtraction(null); await load()
+      }
+    } catch (err) { console.error('[PIOS]', err); alert('Save failed') }
     setSaving(false)
   }
 

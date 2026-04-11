@@ -166,8 +166,9 @@ export async function POST(req: NextRequest) {
       module_actions: moduleActions,
     })
   } catch (e: unknown) {
-    console.error('[PIOS files/upload]', e)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[PIOS files/upload]', msg)
+    return NextResponse.json({ error: `Upload failed: ${msg.slice(0, 200)}` }, { status: 500 })
   }
 }
 
