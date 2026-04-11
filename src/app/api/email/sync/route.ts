@@ -82,10 +82,11 @@ async function triageEmail(
   const domainHint = domainOverride
     ? `Force domain to '${domainOverride}'.`
     : `Email from ${context} inbox. Bias domain accordingly.`
-  const TRIAGE_CLASSES = ['urgent','opportunity','file_doc','fyi','personal','junk']
+  const TRIAGE_CLASSES = ['urgent','opportunity','file_doc','meeting','fyi','personal','junk']
   const system = `PIOS email triage for a senior FM consultant and SaaS founder. ${domainHint}
-Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","triage_class":"${TRIAGE_CLASSES.join('|')}","priority_score":1-10,"action_required":"string or null","ai_draft_reply":"string or null","is_receipt":true/false,"receipt_data":{"vendor":"","amount":0,"currency":"GBP","date":"","invoice_no":""} or null}
-triage_class rules: urgent=needs reply within 24h, opportunity=business/career opportunity, file_doc=document/contract/invoice to file, fyi=informational no action, personal=personal/family, junk=marketing/spam`
+Return ONLY valid JSON: {"domain":"${domainOverride ?? DOMAINS.join('|')}","triage_class":"${TRIAGE_CLASSES.join('|')}","priority_score":1-10,"action_required":"string or null","ai_draft_reply":"string or null","is_meeting":true/false,"is_receipt":true/false,"receipt_data":{"vendor":"","amount":0,"currency":"GBP","date":"","invoice_no":""} or null}
+triage_class rules: urgent=needs reply within 24h, opportunity=business/career opportunity, file_doc=document/contract/invoice to file, meeting=calendar invite/meeting request/RSVP, fyi=informational no action, personal=personal/family, junk=marketing/spam
+Set is_meeting=true if the email contains a meeting invite, calendar event, RSVP request, meeting update, or meeting cancellation.`
   try {
     const raw = await callClaude(
       [{ role: 'user', content: `Subject: ${subject}\nFrom: ${from}\nSnippet: ${snippet}` }],
@@ -95,6 +96,7 @@ triage_class rules: urgent=needs reply within 24h, opportunity=business/career o
     return {
       domain:         domainOverride ?? (DOMAINS.includes(p.domain) ? p.domain : 'personal'),
       triage_class:   TRIAGE_CLASSES.includes(p.triage_class) ? p.triage_class : null,
+      is_meeting:     !!p.is_meeting,
       priority_score: Math.min(10, Math.max(1, parseInt(p.priority_score) || 3)),
       action_required: p.action_required || null,
       ai_draft_reply:  p.ai_draft_reply  || null,
@@ -102,7 +104,7 @@ triage_class rules: urgent=needs reply within 24h, opportunity=business/career o
       receipt_data:    p.receipt_data    || null,
     }
   } catch {
-    return { domain: domainOverride ?? 'personal', triage_class: null, priority_score: 3, action_required: null, ai_draft_reply: null, is_receipt: looksLikeReceipt, receipt_data: null }
+    return { domain: domainOverride ?? 'personal', triage_class: null, is_meeting: false, priority_score: 3, action_required: null, ai_draft_reply: null, is_receipt: looksLikeReceipt, receipt_data: null }
   }
 }
 async function autoCreateExpense(supabase: any, userId: string, rd: any, domain: string, subject: string) {

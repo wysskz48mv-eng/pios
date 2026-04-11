@@ -26,9 +26,26 @@ interface EmailItem {
   body_preview?: string
   received_at: string
   triage_class?: string
+  is_meeting?: boolean
   draft_created?: boolean
   gmail_draft_id?: string
   draft?: EmailDraft
+  meeting?: MeetingInfo | null
+}
+
+interface MeetingInfo {
+  title: string
+  organizer: string
+  organizer_email: string
+  start_time: string
+  end_time: string
+  location: string | null
+  zoom_link: string | null
+  attendee_count: number
+  is_update: boolean
+  is_cancellation: boolean
+  uid: string | null
+  conflicts?: { title: string; start: string; end: string }[]
 }
 
 interface EmailDraft {
@@ -50,6 +67,7 @@ const CLASS_CONFIG: Record<string, { colour: string; label: string; icon: string
   file_doc:    { colour: 'var(--fm)',        label: 'File',        icon: '◈' },
   fyi:         { colour: 'var(--pios-muted)', label: 'FYI',       icon: '·' },
   personal:    { colour: 'var(--ai)',        label: 'Personal',    icon: '○' },
+  meeting:     { colour: '#3b82f6',          label: 'Meeting',     icon: '📅' },
   junk:        { colour: 'var(--pios-dim)', label: 'Junk',        icon: '×' },
 }
 
@@ -434,6 +452,91 @@ export default function InboxPage() {
                         View full email →
                       </button>
                     </div>
+
+                    {/* Meeting RSVP card */}
+                    {(email.is_meeting || email.triage_class === 'meeting') && (
+                      <div style={{ padding: '16px', borderTop: '1px solid var(--pios-border)', background: 'rgba(59,130,246,0.04)' }}>
+                        {!email.meeting ? (
+                          <button onClick={async (e) => {
+                            e.stopPropagation()
+                            const res = await fetch('/api/email/meetings', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ action: 'detect', email_id: email.id }),
+                            })
+                            if (res.ok) {
+                              const data = await res.json()
+                              if (data.is_meeting) {
+                                setEmails(prev => prev.map(em => em.id === email.id
+                                  ? { ...em, meeting: { ...data.meeting, conflicts: data.conflicts?.conflicting_events } }
+                                  : em))
+                              }
+                            }
+                          }} style={{ fontSize: 12, color: '#3b82f6', background: 'none', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 6, padding: '6px 14px', cursor: 'pointer' }}>
+                            Detect meeting details
+                          </button>
+                        ) : (
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--pios-text)', marginBottom: 8 }}>
+                              {email.meeting.is_cancellation ? '❌ Meeting Cancelled' : email.meeting.is_update ? '🔄 Meeting Updated' : '📅 Meeting Invite'}
+                            </div>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--pios-text)', marginBottom: 4 }}>{email.meeting.title}</div>
+                            <div style={{ fontSize: 12, color: 'var(--pios-muted)', lineHeight: 1.8 }}>
+                              <div>👤 From: {email.meeting.organizer} ({email.meeting.organizer_email})</div>
+                              <div>⏰ {new Date(email.meeting.start_time).toLocaleString()} — {new Date(email.meeting.end_time).toLocaleTimeString()}</div>
+                              {email.meeting.location && <div>📍 {email.meeting.location}</div>}
+                              {email.meeting.zoom_link && <div>🔗 <a href={email.meeting.zoom_link} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>Join meeting</a></div>}
+                              {email.meeting.attendee_count > 0 && <div>👥 {email.meeting.attendee_count} attendees</div>}
+                            </div>
+
+                            {/* Conflict warning */}
+                            {email.meeting.conflicts && email.meeting.conflicts.length > 0 && (
+                              <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, fontSize: 12, color: '#ef4444' }}>
+                                ⚠️ Conflicts with: {email.meeting.conflicts.map(c => `"${c.title}" ${new Date(c.start).toLocaleTimeString()}-${new Date(c.end).toLocaleTimeString()}`).join(', ')}
+                              </div>
+                            )}
+
+                            {/* RSVP buttons */}
+                            {!email.meeting.is_cancellation && (
+                              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                                {['accepted', 'tentative', 'declined'].map(r => (
+                                  <button key={r} onClick={async (e) => {
+                                    e.stopPropagation()
+                                    await fetch('/api/email/meetings', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ action: 'rsvp', email_id: email.id, response: r, meeting: email.meeting }),
+                                    })
+                                    await load()
+                                  }} style={{
+                                    padding: '8px 16px', fontSize: 12, fontWeight: 500, borderRadius: 6, cursor: 'pointer', border: 'none',
+                                    background: r === 'accepted' ? '#22c55e' : r === 'tentative' ? '#eab308' : '#ef4444',
+                                    color: '#fff',
+                                  }}>
+                                    {r === 'accepted' ? '✅ Yes' : r === 'tentative' ? '❓ Maybe' : '❌ No'}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Cancel — remove from calendar */}
+                            {email.meeting.is_cancellation && email.meeting.uid && (
+                              <button onClick={async (e) => {
+                                e.stopPropagation()
+                                await fetch('/api/email/meetings', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'cancel', meeting_uid: email.meeting?.uid }),
+                                })
+                                await load()
+                              }} style={{ marginTop: 10, padding: '8px 16px', fontSize: 12, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, color: '#ef4444', cursor: 'pointer' }}>
+                                Remove from Calendar
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* NemoClaw™ draft review */}
                     {hasDraft && (
