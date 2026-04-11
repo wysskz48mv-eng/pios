@@ -340,7 +340,19 @@ ${liveCtx}${briefSection}${domainSection}`
     return NextResponse.json({ reply })
 
   } catch (err: unknown) {
-    console.error('AI chat error:', err)
-    return NextResponse.json({ error: (err as Error).message ?? 'AI unavailable. Please try again.' }, { status: 500 })
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    console.error('AI chat error:', msg)
+
+    // Return specific error for debugging
+    if (msg.includes('401') || msg.includes('authentication')) {
+      return NextResponse.json({ reply: 'AI service authentication failed. Check ANTHROPIC_API_KEY in Vercel environment variables.' }, { status: 200 })
+    }
+    if (msg.includes('429') || msg.includes('rate')) {
+      return NextResponse.json({ reply: 'AI service rate limited. Please wait a moment and try again.' }, { status: 200 })
+    }
+    if (msg.includes('timeout') || msg.includes('abort')) {
+      return NextResponse.json({ reply: 'AI response timed out. Try a shorter message or try again.' }, { status: 200 })
+    }
+    return NextResponse.json({ reply: `AI temporarily unavailable: ${msg.slice(0, 100)}. Please try again.` }, { status: 200 })
   }
 }
