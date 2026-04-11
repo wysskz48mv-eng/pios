@@ -761,6 +761,8 @@ function LiteratureSection() {
   const [bibStyle,     setBibStyle]     = useState<'apa'|'chicago'|'harvard'>('apa')
   const [bibOutput,    setBibOutput]    = useState<string|null>(null)
   const [generatingBib,setGeneratingBib]= useState(false)
+  const [ingesting,    setIngesting]    = useState(false)
+  const [ingestMsg,    setIngestMsg]    = useState<string|null>(null)
 
   const loadLibrary = useCallback(async () => {
     setLoadingLib(true)
@@ -895,6 +897,28 @@ function LiteratureSection() {
     } catch { /* silent */ }
   }
 
+  async function ingestToProprietaryDb() {
+    setIngesting(true)
+    setIngestMsg(null)
+    try {
+      const ids = selected.length > 0 ? selected : library.map(p => p.id).filter(Boolean) as string[]
+      const r = await fetch('/api/academic/proprietary-db/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ literature_ids: ids, saved_only: true }),
+      })
+      const d = r.ok ? await r.json() : {}
+      if (d.ok) {
+        setIngestMsg(`Ingested ${d.papers_upserted ?? 0} papers, ${d.authors_upserted ?? 0} authors, ${d.links_upserted ?? 0} links.`)
+      } else {
+        setIngestMsg(d.error ?? 'Ingestion failed.')
+      }
+    } catch {
+      setIngestMsg('Ingestion failed.')
+    }
+    setIngesting(false)
+  }
+
   const ACC = 'var(--academic)'
   const tabStyle = (active: boolean) => ({
     fontSize:11, fontWeight:600, padding:'5px 14px', borderRadius:20, cursor:'pointer', border:'none',
@@ -1001,6 +1025,9 @@ function LiteratureSection() {
               {library.length} papers saved
               {selected.length > 0 && <span style={{ marginLeft:8, color:ACC }}>· {selected.length} selected</span>}
             </div>
+            <button className="pios-btn pios-btn-ghost" onClick={ingestToProprietaryDb} disabled={ingesting || library.length === 0} style={{ fontSize:11 }}>
+              {ingesting ? '⟳ Ingesting…' : '⛁ Build PIOS DB'}
+            </button>
             {selected.length >= 2 && (
               <button className="pios-btn pios-btn-ghost" onClick={compare} disabled={comparing} style={{ fontSize:11 }}>
                 {comparing ? '⟳ Comparing…' : '⇄ Compare Methods'}
@@ -1022,6 +1049,12 @@ function LiteratureSection() {
             </div>
             <button className="pios-btn pios-btn-ghost" onClick={loadLibrary} style={{ fontSize:11 }}>↺</button>
           </div>
+
+          {ingestMsg && (
+            <div style={{ marginBottom:12, padding:'8px 10px', borderRadius:8, background:'rgba(108,142,255,0.08)', borderLeft:'3px solid var(--academic)', fontSize:11, color:'var(--pios-muted)' }}>
+              {ingestMsg}
+            </div>
+          )}
 
           {/* Bibliography output */}
           {bibOutput && (
