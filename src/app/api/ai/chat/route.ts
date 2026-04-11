@@ -35,12 +35,25 @@ export const maxDuration = 60
  * PIOS v3.0 | VeritasIQ Technologies Ltd
  */
 export async function POST(request: Request) {
+  try { return await _handleChat(request) } catch (e: unknown) {
+    console.error('[PIOS AI FATAL]', e)
+    return NextResponse.json({ reply: `Fatal error: ${e instanceof Error ? e.message : String(e)}`.slice(0, 200) }, { status: 200 })
+  }
+}
+
+async function _handleChat(request: Request) {
   try {
     // Rate limiting — ISO 27001 A.12.6
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
-    const rl = await checkRateLimit({ key: `pios:ai:${ip}`, ...LIMITS.ai })
+    let rl: Response | null = null
+    try { rl = await checkRateLimit({ key: `pios:ai:${ip}`, ...LIMITS.ai }) } catch {}
     if (rl) return NextResponse.json({ reply: 'You\'re sending messages too quickly. Please wait a moment.' }, { status: 200 })
-    const supabase = createClient()
+
+    let supabase: any
+    try { supabase = createClient() } catch (e) {
+      return NextResponse.json({ reply: `Supabase client error: ${(e as Error).message?.slice(0, 100)}` }, { status: 200 })
+    }
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ reply: 'Please sign in to use NemoClaw.' }, { status: 200 })
 
