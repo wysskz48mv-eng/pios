@@ -8,3 +8,4 @@ out/
 .env.production
 trade_secret_register*.json
 .env*.local
+pios-backup-*.tar.gz
