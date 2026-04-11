@@ -130,8 +130,13 @@ export default function ContractsPage() {
                 if (d.extraction) {
                   setExtraction(d)
                   const ex = d.extraction
+                  const validTypes = ['client','supplier','employment','nda','licence','partnership','lease','service','other']
+                  const mappedType = validTypes.includes(ex.contract_type) ? ex.contract_type
+                    : ex.contract_type?.includes('consult') ? 'service'
+                    : ex.contract_type?.includes('license') || ex.contract_type?.includes('saas') ? 'licence'
+                    : 'other'
                   setForm({
-                    title: ex.title ?? '', contract_type: ex.contract_type ?? 'other',
+                    title: ex.title ?? '', contract_type: mappedType,
                     counterparty: ex.counterparty ?? '', status: ex.status ?? 'active',
                     value: ex.value?.toString() ?? '', currency: ex.currency ?? 'GBP',
                     start_date: ex.start_date ?? '', end_date: ex.end_date ?? '',

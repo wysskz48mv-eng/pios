@@ -118,10 +118,10 @@ async function extractContractFields(filename: string, text: string) {
 Return ONLY valid JSON:
 {
   "title": "<contract title or descriptive name>",
-  "contract_type": "<client|supplier|employment|nda|licence|partnership|lease|service|consultancy|other>",
+  "contract_type": "<MUST be exactly one of: client|supplier|employment|nda|licence|partnership|lease|service|other>",
   "counterparty": "<other party name>",
-  "value": <number or null>,
-  "currency": "<GBP|USD|EUR|AED|SAR or null>",
+  "value": <number or null — keep in ORIGINAL currency, do NOT convert>,
+  "currency": "<GBP|USD|EUR|AED|SAR — use the currency stated in the contract>",
   "start_date": "<YYYY-MM-DD or null>",
   "end_date": "<YYYY-MM-DD or null>",
   "notice_period_days": <number or null>,
