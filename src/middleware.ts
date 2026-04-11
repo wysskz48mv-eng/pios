@@ -53,15 +53,15 @@ const SEC_HEADERS: Record<string, string> = {
   'X-Robots-Tag':              'noindex, nofollow, noarchive, nosnippet',
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.openai.com https://generativelanguage.googleapis.com https://api.stripe.com https://gmail.googleapis.com https://accounts.google.com https://oauth2.googleapis.com",
-    "frame-src 'none'",
+    "connect-src 'self' https://*.supabase.co https://vfvfulbcaurqkygjrrhh.supabase.co https://api.anthropic.com https://api.openai.com https://generativelanguage.googleapis.com https://api.stripe.com https://gmail.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://vercel.live https://*.vercel.live",
+    "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
-    "upgrade-insecure-requests",
+    "form-action 'self'",
   ].join('; '),
 }
 
