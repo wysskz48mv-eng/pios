@@ -289,8 +289,18 @@ export async function POST(req: NextRequest) {
     if (action === 'search') {
       const query   = String(body.query ?? '').trim()
       const sources = (body.sources as string[]) ?? ['semantic_scholar', 'openalex', 'arxiv', 'crossref']
-      const thesisContext = String(body.thesis_context ?? 'AI-enabled forecasting in FM contexts, GCC, DBA research')
       if (!query) return NextResponse.json({ error: 'query required' }, { status: 400 })
+
+      // Pull thesis context from research_context (M058); fall back to caller-supplied or default
+      let thesisContext = String(body.thesis_context ?? '')
+      if (!thesisContext) {
+        const { data: ctx } = await supabase.from('research_context').select('thesis_synopsis,research_topic,keywords').eq('user_id', user.id).single()
+        if (ctx) {
+          thesisContext = [ctx.thesis_synopsis, ctx.research_topic, (ctx.keywords as string[]).join(', ')].filter(Boolean).join(' | ')
+        } else {
+          thesisContext = 'AI-enabled forecasting in FM contexts, GCC, DBA research'
+        }
+      }
 
       // Run searches in parallel — skip any source not in the requested set
       const [ss, oa, ax, cr] = await Promise.all([

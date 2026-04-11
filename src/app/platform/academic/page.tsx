@@ -219,6 +219,9 @@ export default function AcademicPage() {
         ))}
       </div>
 
+      {/* Research Context (M058 Starter) */}
+      <ResearchContextCard />
+
       {/* Add chapter form */}
       {showAddCh && (
         <div className="pios-card" style={{ marginBottom:16, borderColor:ACCENT+'40' }}>
@@ -438,6 +441,138 @@ export default function AcademicPage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── Research Context Card (M058 Starter Module) ──────────────────────────────
+type ResearchContextData = {
+  programme?: string; institution?: string; supervisor?: string
+  research_title?: string; research_topic?: string; research_question?: string
+  keywords?: string[]; thesis_synopsis?: string; research_philosophy?: string
+  methodology_approach?: string; geographic_focus?: string; industry_focus?: string
+  theoretical_lens?: string; preferred_citation_style?: string
+  setup_complete?: boolean
+}
+
+function ResearchContextCard() {
+  const [ctx,     setCtx]     = useState<ResearchContextData | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [saving,  setSaving]  = useState(false)
+  const [form,    setForm]    = useState<ResearchContextData>({})
+  const ACC = 'var(--academic)'
+
+  useEffect(() => {
+    fetch('/api/academic/research-context')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.context) { setCtx(d.context as ResearchContextData); setForm(d.context as ResearchContextData) } })
+      .catch(() => null)
+  }, [])
+
+  async function save() {
+    setSaving(true)
+    try {
+      const r = await fetch('/api/academic/research-context', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, keywords: typeof form.keywords === 'string' ? (form.keywords as unknown as string).split(',').map((k: string) => k.trim()).filter(Boolean) : form.keywords }),
+      })
+      const d = r.ok ? await r.json() : null
+      if (d?.ok) { setCtx(d.context as ResearchContextData); setForm(d.context as ResearchContextData); setEditing(false) }
+    } catch { /* silent */ }
+    setSaving(false)
+  }
+
+  if (!ctx && !editing) return null
+
+  const inp: React.CSSProperties = { display:'block', width:'100%', padding:'7px 11px', background:'var(--pios-surface2)', border:'1px solid var(--pios-border2)', borderRadius:7, color:'var(--pios-text)', fontSize:12, fontFamily:'inherit', outline:'none', boxSizing:'border-box' }
+  const label: React.CSSProperties = { fontSize:10, fontWeight:600, color:'var(--pios-muted)', letterSpacing:'0.04em', display:'block', marginBottom:3 }
+
+  return (
+    <div className="pios-card" style={{ marginBottom:16, borderLeft:`3px solid ${ACC}` }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: editing ? 14 : 0 }}>
+        <div>
+          <span style={{ fontSize:13, fontWeight:700 }}>Research Context</span>
+          {!editing && ctx?.setup_complete && (
+            <span style={{ marginLeft:8, fontSize:10, padding:'2px 8px', borderRadius:10, background:'rgba(52,211,153,0.15)', color:'#34d399' }}>Configured</span>
+          )}
+          {!editing && !ctx?.setup_complete && (
+            <span style={{ marginLeft:8, fontSize:10, padding:'2px 8px', borderRadius:10, background:'rgba(245,158,11,0.15)', color:'var(--saas)' }}>Using defaults</span>
+          )}
+          {!editing && ctx?.research_topic && (
+            <span style={{ marginLeft:8, fontSize:11, color:'var(--pios-muted)' }}>{ctx.research_topic}</span>
+          )}
+        </div>
+        <button onClick={()=>setEditing(e=>!e)} style={{ fontSize:11, padding:'4px 12px', borderRadius:8, border:`1px solid ${ACC}40`, background:'transparent', color:ACC, cursor:'pointer' }}>
+          {editing ? '✕ Cancel' : '✎ Edit'}
+        </button>
+      </div>
+
+      {editing && (
+        <div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+            <div>
+              <span style={label}>Programme</span>
+              <select style={{ ...inp, width:'auto', minWidth:100 }} value={form.programme ?? 'DBA'} onChange={e=>setForm(p=>({...p,programme:e.target.value}))}>
+                {['DBA','PhD','MRes','MSc','MBA','Other'].map(v=><option key={v} value={v}>{v}</option>)}
+              </select>
+            </div>
+            <div>
+              <span style={label}>Institution</span>
+              <input style={inp} value={form.institution ?? ''} onChange={e=>setForm(p=>({...p,institution:e.target.value}))} placeholder="e.g. University of Portsmouth" />
+            </div>
+            <div>
+              <span style={label}>Research Title</span>
+              <input style={inp} value={form.research_title ?? ''} onChange={e=>setForm(p=>({...p,research_title:e.target.value}))} placeholder="Thesis title…" />
+            </div>
+            <div>
+              <span style={label}>Research Topic (short)</span>
+              <input style={inp} value={form.research_topic ?? ''} onChange={e=>setForm(p=>({...p,research_topic:e.target.value}))} placeholder="e.g. AI forecasting FM GCC" />
+            </div>
+            <div style={{ gridColumn:'1/-1' }}>
+              <span style={label}>Primary Research Question</span>
+              <input style={inp} value={form.research_question ?? ''} onChange={e=>setForm(p=>({...p,research_question:e.target.value}))} placeholder="How can…?" />
+            </div>
+            <div style={{ gridColumn:'1/-1' }}>
+              <span style={label}>Keywords (comma-separated)</span>
+              <input style={inp} value={Array.isArray(form.keywords) ? form.keywords.join(', ') : (form.keywords ?? '')} onChange={e=>setForm(p=>({...p,keywords:e.target.value as unknown as string[]}))} placeholder="AI forecasting, facilities management, GCC…" />
+            </div>
+            <div style={{ gridColumn:'1/-1' }}>
+              <span style={label}>Thesis Synopsis (1–3 paragraphs — used for AI relevance scoring)</span>
+              <textarea style={{ ...inp, resize:'vertical', minHeight:80 }} value={form.thesis_synopsis ?? ''} onChange={e=>setForm(p=>({...p,thesis_synopsis:e.target.value}))} placeholder="Describe your research, methodology, and contribution…" rows={4} />
+            </div>
+            <div>
+              <span style={label}>Research Philosophy</span>
+              <input style={inp} value={form.research_philosophy ?? ''} onChange={e=>setForm(p=>({...p,research_philosophy:e.target.value}))} placeholder="e.g. Pragmatism" />
+            </div>
+            <div>
+              <span style={label}>Methodology Approach</span>
+              <input style={inp} value={form.methodology_approach ?? ''} onChange={e=>setForm(p=>({...p,methodology_approach:e.target.value}))} placeholder="e.g. Mixed methods, case study" />
+            </div>
+            <div>
+              <span style={label}>Geographic Focus</span>
+              <input style={inp} value={form.geographic_focus ?? ''} onChange={e=>setForm(p=>({...p,geographic_focus:e.target.value}))} placeholder="e.g. GCC, MENA" />
+            </div>
+            <div>
+              <span style={label}>Industry Focus</span>
+              <input style={inp} value={form.industry_focus ?? ''} onChange={e=>setForm(p=>({...p,industry_focus:e.target.value}))} placeholder="e.g. Facilities Management" />
+            </div>
+            <div style={{ gridColumn:'1/-1' }}>
+              <span style={label}>Theoretical Lens</span>
+              <input style={inp} value={form.theoretical_lens ?? ''} onChange={e=>setForm(p=>({...p,theoretical_lens:e.target.value}))} placeholder="e.g. Socio-technical systems, TAM…" />
+            </div>
+            <div>
+              <span style={label}>Default Citation Style</span>
+              <select style={{ ...inp, width:'auto' }} value={form.preferred_citation_style ?? 'apa'} onChange={e=>setForm(p=>({...p,preferred_citation_style:e.target.value}))}>
+                {['apa','chicago','harvard'].map(v=><option key={v} value={v}>{v.toUpperCase()}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
+            <button className="pios-btn pios-btn-primary" onClick={save} disabled={saving} style={{ fontSize:12 }}>{saving ? 'Saving…' : 'Save Research Context'}</button>
+            <button className="pios-btn pios-btn-ghost" onClick={()=>setEditing(false)} style={{ fontSize:12 }}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

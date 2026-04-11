@@ -14,10 +14,35 @@ import { callClaude, PIOS_SYSTEM }    from '@/lib/ai/client'
 
 export const runtime = 'nodejs'
 
-const THESIS_CONTEXT = `DBA research at University of Portsmouth.
+const THESIS_CONTEXT_FALLBACK = `DBA research at University of Portsmouth.
 Research topic: AI-enabled forecasting in Facilities Management (FM) contexts in the Gulf Cooperation Council (GCC).
 Focus areas: predictive maintenance, AI adoption barriers, FM digital transformation, GCC construction sector.
 Research philosophy: pragmatism, mixed methods.`
+
+async function getThesisContext(userId: string, supabase: ReturnType<typeof createClient>): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from('research_context')
+      .select('thesis_synopsis,research_topic,research_question,keywords,geographic_focus,industry_focus,research_philosophy,methodology_approach,theoretical_lens')
+      .eq('user_id', userId)
+      .single()
+    if (!data) return THESIS_CONTEXT_FALLBACK
+    const parts = [
+      data.thesis_synopsis,
+      data.research_topic ? `Research topic: ${data.research_topic}` : null,
+      data.research_question ? `Research question: ${data.research_question}` : null,
+      data.geographic_focus ? `Geographic focus: ${data.geographic_focus}` : null,
+      data.industry_focus ? `Industry focus: ${data.industry_focus}` : null,
+      data.research_philosophy ? `Philosophy: ${data.research_philosophy}` : null,
+      data.methodology_approach ? `Methodology: ${data.methodology_approach}` : null,
+      data.theoretical_lens ? `Theoretical lens: ${data.theoretical_lens}` : null,
+      (data.keywords as string[])?.length > 0 ? `Keywords: ${(data.keywords as string[]).join(', ')}` : null,
+    ].filter(Boolean)
+    return parts.join('\n')
+  } catch {
+    return THESIS_CONTEXT_FALLBACK
+  }
+}
 
 // ── Single-paper analysis ─────────────────────────────────────────────────────
 async function analyzePaper(
@@ -26,6 +51,7 @@ async function analyzePaper(
   authors: string[],
   year: number | null,
   journal: string | null,
+  thesisContext: string,
 ): Promise<{
   structured_summary: Record<string, unknown>
   study_quality_score: number
@@ -40,7 +66,7 @@ async function analyzePaper(
   const prompt = `Analyse this academic paper for a DBA researcher.
 
 THESIS CONTEXT:
-${THESIS_CONTEXT}
+${thesisContext}
 
 PAPER:
 Title: ${title}
@@ -135,11 +161,12 @@ Return ONLY the JSON array.`
 
 // ── Methodology comparison (multi-paper) ─────────────────────────────────────
 async function compareMethodologies(
-  papers: { title: string; year: number | null; methodology_used: string; key_findings: string[] }[]
+  papers: { title: string; year: number | null; methodology_used: string; key_findings: string[] }[],
+  thesisContext: string,
 ): Promise<Record<string, unknown>> {
   const prompt = `Compare the research methodologies of these papers.
 
-THESIS CONTEXT: ${THESIS_CONTEXT}
+THESIS CONTEXT: ${thesisContext}
 
 PAPERS:
 ${papers.map((p, i) => `[${i + 1}] "${p.title}" (${p.year ?? 'n.d.'})
@@ -189,6 +216,9 @@ export async function POST(req: NextRequest) {
         .single()
       if (litErr || !lit) return NextResponse.json({ error: 'Paper not found' }, { status: 404 })
 
+      // Pull user's research context for personalised thesis alignment
+      const thesisContext = await getThesisContext(user.id, supabase)
+
       // Run analysis + glossary in parallel
       const [analysis, glossaryItems] = await Promise.all([
         analyzePaper(
@@ -197,6 +227,7 @@ export async function POST(req: NextRequest) {
           (lit.authors as string[]) ?? [],
           lit.year as number | null,
           lit.journal as string | null,
+          thesisContext,
         ),
         extractGlossary(lit.title as string, lit.abstract as string | null),
       ])
@@ -264,7 +295,7 @@ export async function POST(req: NextRequest) {
         key_findings:     (analysisMap.get(p.id as string) as Record<string, unknown>)?.key_findings as string[] ?? [],
       }))
 
-      const comparison = await compareMethodologies(payload)
+      const comparison = await compareMethodologies(payload, await getThesisContext(user.id, supabase))
 
       // Save to a batch record
       const batchName = body.batch_name as string ?? `Comparison — ${new Date().toLocaleDateString()}`
