@@ -114,6 +114,7 @@ export async function GET(req: NextRequest) {
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } })
   const started = Date.now()
+  const cronActorUserId = process.env.CITATION_GRAPH_CRON_ACTOR_USER_ID?.trim()
 
   const fromEnv = (process.env.CITATION_GRAPH_BOOTSTRAP_QUERIES ?? '')
     .split(',')
@@ -126,154 +127,184 @@ export async function GET(req: NextRequest) {
   let totalAuthors = 0
   let totalLinks = 0
 
-  for (const query of queries) {
-    const [crossref, openalex] = await Promise.all([
-      searchCrossref(query, perSourceLimit),
-      searchOpenAlex(query, perSourceLimit),
-    ])
+  try {
+    for (const query of queries) {
+      const [crossref, openalex] = await Promise.all([
+        searchCrossref(query, perSourceLimit),
+        searchOpenAlex(query, perSourceLimit),
+      ])
 
-    const seen = new Set<string>()
-    const merged: PaperSeed[] = []
-    for (const p of [...crossref, ...openalex]) {
-      const key = p.doi ?? normTitle(p.title)
-      if (seen.has(key)) continue
-      seen.add(key)
-      merged.push(p)
-    }
+      const seen = new Set<string>()
+      const merged: PaperSeed[] = []
+      for (const p of [...crossref, ...openalex]) {
+        const key = p.doi ?? normTitle(p.title)
+        if (seen.has(key)) continue
+        seen.add(key)
+        merged.push(p)
+      }
 
-    for (const p of merged) {
-      const field = inferField(p.title, p.journal)
-      const keywords = extractKeywords(p.title)
+      for (const p of merged) {
+        const field = inferField(p.title, p.journal)
+        const keywords = extractKeywords(p.title)
 
-      const { data: paper } = await admin
-        .from('pios_papers')
-        .upsert({
-          doi: p.doi,
-          title: p.title,
-          title_normalized: normTitle(p.title),
-          authors: p.authors,
-          publication_year: p.year,
-          journal: p.journal,
-          abstract_excerpt: p.abstract_excerpt,
-          field_classifications: [field],
-          keywords,
-          open_access: false,
-          citation_count: p.citation_count,
-          sources: p.sources,
-        }, { onConflict: 'title_normalized' })
-        .select('id')
-        .single()
-
-      if (!paper?.id) continue
-      totalIngested += 1
-
-      for (let i = 0; i < p.authors.length; i += 1) {
-        const name = p.authors[i]
-        const normalized = normTitle(name)
-        if (!normalized) continue
-
-        const { data: author } = await admin
-          .from('pios_authors')
-          .upsert({ name, normalized_name: normalized }, { onConflict: 'normalized_name' })
+        const { data: paper } = await admin
+          .from('pios_papers')
+          .upsert({
+            doi: p.doi,
+            title: p.title,
+            title_normalized: normTitle(p.title),
+            authors: p.authors,
+            publication_year: p.year,
+            journal: p.journal,
+            abstract_excerpt: p.abstract_excerpt,
+            field_classifications: [field],
+            keywords,
+            open_access: false,
+            citation_count: p.citation_count,
+            sources: p.sources,
+          }, { onConflict: 'title_normalized' })
           .select('id')
           .single()
 
-        if (!author?.id) continue
-        totalAuthors += 1
+        if (!paper?.id) continue
+        totalIngested += 1
 
-        await admin
-          .from('pios_author_papers')
-          .upsert({ author_id: author.id, paper_id: paper.id, author_position: i + 1 }, { onConflict: 'author_id,paper_id' })
+        for (let i = 0; i < p.authors.length; i += 1) {
+          const name = p.authors[i]
+          const normalized = normTitle(name)
+          if (!normalized) continue
 
-        totalLinks += 1
+          const { data: author } = await admin
+            .from('pios_authors')
+            .upsert({ name, normalized_name: normalized }, { onConflict: 'normalized_name' })
+            .select('id')
+            .single()
+
+          if (!author?.id) continue
+          totalAuthors += 1
+
+          await admin
+            .from('pios_author_papers')
+            .upsert({ author_id: author.id, paper_id: paper.id, author_position: i + 1 }, { onConflict: 'author_id,paper_id' })
+
+          totalLinks += 1
+        }
       }
     }
-  }
 
-  // Recompute influence scores for all papers
-  const { data: papers } = await admin
-    .from('pios_papers')
-    .select('id,publication_year,citation_count')
-    .limit(50000)
+    // Recompute influence scores for all papers
+    const { data: papers } = await admin
+      .from('pios_papers')
+      .select('id,publication_year,citation_count')
+      .limit(50000)
 
-  const nowYear = new Date().getFullYear()
-  let scored = 0
-  for (const p of papers ?? []) {
-    const year = (p.publication_year as number | null) ?? nowYear
-    const age = Math.max(0, nowYear - year)
-    const recency = age <= 1 ? 1.5 : age <= 3 ? 1.35 : age <= 5 ? 1.15 : 1.0
-    const citations = (p.citation_count as number | null) ?? 0
-    const influence = Math.round(citations * recency * 1000) / 1000
-    await admin.from('pios_papers').update({ influence_score: influence }).eq('id', p.id)
-    scored += 1
-  }
-
-  // Refresh __all__ trend rows for standard fields
-  const fields = ['Facility Management', 'AI & Forecasting', 'Engineering', 'Medicine', 'General']
-  let trendRows = 0
-
-  const { data: allPapers } = await admin
-    .from('pios_papers')
-    .select('publication_year,citation_count,field_classifications')
-
-  for (const field of fields) {
-    const filtered = (allPapers ?? []).filter(p => ((p.field_classifications as string[] | null) ?? []).includes(field))
-    const byYear = new Map<number, { papers: number; citations: number }>()
-
-    for (const p of filtered) {
-      const year = (p.publication_year as number | null)
-      if (!year) continue
-      const e = byYear.get(year) ?? { papers: 0, citations: 0 }
-      e.papers += 1
-      e.citations += (p.citation_count as number | null) ?? 0
-      byYear.set(year, e)
+    const nowYear = new Date().getFullYear()
+    let scored = 0
+    for (const p of papers ?? []) {
+      const year = (p.publication_year as number | null) ?? nowYear
+      const age = Math.max(0, nowYear - year)
+      const recency = age <= 1 ? 1.5 : age <= 3 ? 1.35 : age <= 5 ? 1.15 : 1.0
+      const citations = (p.citation_count as number | null) ?? 0
+      const influence = Math.round(citations * recency * 1000) / 1000
+      await admin.from('pios_papers').update({ influence_score: influence }).eq('id', p.id)
+      scored += 1
     }
 
-    const years = [...byYear.keys()].sort((a, b) => a - b)
-    let prev = 0
-    for (const y of years) {
-      const s = byYear.get(y)!
-      const growth = prev > 0 ? ((s.papers - prev) / prev) * 100 : 0
-      prev = s.papers
+    // Refresh __all__ trend rows for standard fields
+    const fields = ['Facility Management', 'AI & Forecasting', 'Engineering', 'Medicine', 'General']
+    let trendRows = 0
 
-      await admin.from('pios_research_trends').upsert({
-        field,
-        keyword: '__all__',
-        year: y,
-        paper_count: s.papers,
-        citation_growth: Number(growth.toFixed(3)),
-        emerging: growth >= 20,
-      }, { onConflict: 'field,keyword,year' })
+    const { data: allPapers } = await admin
+      .from('pios_papers')
+      .select('publication_year,citation_count,field_classifications')
 
-      trendRows += 1
+    for (const field of fields) {
+      const filtered = (allPapers ?? []).filter(p => ((p.field_classifications as string[] | null) ?? []).includes(field))
+      const byYear = new Map<number, { papers: number; citations: number }>()
+
+      for (const p of filtered) {
+        const year = (p.publication_year as number | null)
+        if (!year) continue
+        const e = byYear.get(year) ?? { papers: 0, citations: 0 }
+        e.papers += 1
+        e.citations += (p.citation_count as number | null) ?? 0
+        byYear.set(year, e)
+      }
+
+      const years = [...byYear.keys()].sort((a, b) => a - b)
+      let prev = 0
+      for (const y of years) {
+        const s = byYear.get(y)!
+        const growth = prev > 0 ? ((s.papers - prev) / prev) * 100 : 0
+        prev = s.papers
+
+        await admin.from('pios_research_trends').upsert({
+          field,
+          keyword: '__all__',
+          year: y,
+          paper_count: s.papers,
+          citation_growth: Number(growth.toFixed(3)),
+          emerging: growth >= 20,
+        }, { onConflict: 'field,keyword,year' })
+
+        trendRows += 1
+      }
     }
-  }
 
-  const elapsed = Math.round((Date.now() - started) / 1000)
+    const elapsed = Math.round((Date.now() - started) / 1000)
 
-  const cronActorUserId = process.env.CITATION_GRAPH_CRON_ACTOR_USER_ID?.trim()
-  if (cronActorUserId) {
-    await admin.from('pios_ingestion_events').insert({
-      user_id: cronActorUserId,
-      source: 'cron_citation_graph',
-      papers_considered: queries.length * perSourceLimit * 2,
-      papers_upserted: totalIngested,
+    if (cronActorUserId) {
+      await admin.from('pios_ingestion_events').insert({
+        user_id: cronActorUserId,
+        source: 'cron_citation_graph',
+        papers_considered: queries.length * perSourceLimit * 2,
+        papers_upserted: totalIngested,
+        authors_upserted: totalAuthors,
+        links_upserted: totalLinks,
+        completed_at: new Date().toISOString(),
+        status: 'success',
+        notes: `queries=${queries.join(' | ')}`,
+      }).then(() => null).catch(() => null)
+    }
+
+    return NextResponse.json({
+      ok: true,
+      queries,
+      papers_ingested: totalIngested,
       authors_upserted: totalAuthors,
       links_upserted: totalLinks,
-      completed_at: new Date().toISOString(),
-      status: 'success',
-      notes: `queries=${queries.join(' | ')}`,
-    }).then(() => null).catch(() => null)
-  }
+      papers_scored: scored,
+      trend_rows_refreshed: trendRows,
+      elapsed_s: elapsed,
+      event_logging_enabled: Boolean(cronActorUserId),
+    })
+  } catch (error: unknown) {
+    const elapsed = Math.round((Date.now() - started) / 1000)
+    const message = error instanceof Error ? error.message : 'Citation graph cron failed'
 
-  return NextResponse.json({
-    ok: true,
-    queries,
-    papers_ingested: totalIngested,
-    authors_upserted: totalAuthors,
-    links_upserted: totalLinks,
-    papers_scored: scored,
-    trend_rows_refreshed: trendRows,
-    elapsed_s: elapsed,
-  })
+    if (cronActorUserId) {
+      await admin.from('pios_ingestion_events').insert({
+        user_id: cronActorUserId,
+        source: 'cron_citation_graph',
+        papers_considered: queries.length * perSourceLimit * 2,
+        papers_upserted: totalIngested,
+        authors_upserted: totalAuthors,
+        links_upserted: totalLinks,
+        completed_at: new Date().toISOString(),
+        status: 'failed',
+        notes: `error=${message}; queries=${queries.join(' | ')}`,
+      }).then(() => null).catch(() => null)
+    }
+
+    return NextResponse.json({
+      ok: false,
+      error: message,
+      queries,
+      papers_ingested: totalIngested,
+      authors_upserted: totalAuthors,
+      links_upserted: totalLinks,
+      elapsed_s: elapsed,
+      event_logging_enabled: Boolean(cronActorUserId),
+    }, { status: 500 })
+  }
 }

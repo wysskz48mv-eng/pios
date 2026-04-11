@@ -767,6 +767,7 @@ function LiteratureSection() {
   const [loadingGraph, setLoadingGraph] = useState(false)
   const [cronStatus,   setCronStatus]   = useState<{
     configured: boolean
+    event_logging_enabled?: boolean
     success_count: number
     failure_count: number
     last_run: {
@@ -968,6 +969,7 @@ function LiteratureSection() {
       if (d) {
         setCronStatus({
           configured: Boolean(d.configured),
+          event_logging_enabled: Boolean(d.event_logging_enabled),
           success_count: Number(d.success_count ?? 0),
           failure_count: Number(d.failure_count ?? 0),
           last_run: d.last_run ?? null,
@@ -1146,6 +1148,11 @@ function LiteratureSection() {
               {cronStatus.last_run && (
                 <div style={{ fontSize:10, color:'var(--pios-muted)' }}>
                   {Number(cronStatus.last_run.papers_upserted ?? 0)} papers · {Number(cronStatus.last_run.authors_upserted ?? 0)} authors · {Number(cronStatus.last_run.links_upserted ?? 0)} links
+                </div>
+              )}
+              {cronStatus.event_logging_enabled === false && (
+                <div style={{ marginTop:4, fontSize:10, color:'var(--saas)' }}>
+                  Event history logging is disabled until CITATION_GRAPH_CRON_ACTOR_USER_ID is set.
                 </div>
               )}
             </div>

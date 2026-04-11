@@ -220,6 +220,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'get_cron_status') {
+      const eventLoggingEnabled = Boolean(process.env.CITATION_GRAPH_CRON_ACTOR_USER_ID?.trim())
       const { data: runs } = await supabase
         .from('pios_ingestion_events')
         .select('completed_at,status,papers_upserted,authors_upserted,links_upserted,notes')
@@ -242,6 +243,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         configured: true,
+        event_logging_enabled: eventLoggingEnabled,
         last_run: lastRun,
         recent_runs: items,
         success_count: successCount,
