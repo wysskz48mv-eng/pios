@@ -52,6 +52,8 @@ export default function ContractsPage() {
   const [statusFilter, setStatus]   = useState('all')
   const [deleting, setDeleting]     = useState<string | null>(null)
   const [expanded, setExpanded]     = useState<string | null>(null)
+  const [extracting, setExtracting] = useState(false)
+  const [extraction, setExtraction] = useState<any>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -113,11 +115,65 @@ export default function ContractsPage() {
             {reviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
             AI Review
           </button>
-          <button onClick={() => { setEditing(null); setForm({ ...BLANK }); setShowModal(true) }} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--academic)] text-white text-sm font-medium hover:bg-blue-600">
-            <Plus className="w-3 h-3" /> Add Contract
+          <label className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium cursor-pointer ${extracting ? 'bg-[var(--pios-border)] text-[var(--pios-muted)]' : 'bg-[var(--fm)] text-white hover:bg-emerald-600'}`}>
+            {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileText className="w-3 h-3" />}
+            {extracting ? 'Extracting...' : 'Upload PDF'}
+            <input type="file" accept=".pdf,.docx,.doc" disabled={extracting} className="hidden" onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              setExtracting(true)
+              try {
+                const fd = new FormData()
+                fd.append('file', file)
+                const res = await fetch('/api/contracts/extract', { method: 'POST', body: fd })
+                const d = await res.json()
+                if (d.extraction) {
+                  setExtraction(d)
+                  const ex = d.extraction
+                  setForm({
+                    title: ex.title ?? '', contract_type: ex.contract_type ?? 'other',
+                    counterparty: ex.counterparty ?? '', status: ex.status ?? 'active',
+                    value: ex.value?.toString() ?? '', currency: ex.currency ?? 'GBP',
+                    start_date: ex.start_date ?? '', end_date: ex.end_date ?? '',
+                    auto_renewal: ex.auto_renewal ?? false,
+                    notice_period_days: ex.notice_period_days?.toString() ?? '',
+                    renewal_date: '', key_terms: ex.key_terms ?? '',
+                    obligations: ex.obligations ?? '', domain: ex.domain ?? 'business',
+                    notes: ex.extracted_clauses?.map((c: any) => `[${c.clause_type}] ${c.content}`).join('\n') ?? '',
+                  })
+                  setEditing(null)
+                  setShowModal(true)
+                } else {
+                  alert(d.error ?? 'Extraction failed')
+                }
+              } catch (err) { console.error('[PIOS]', err); alert('Upload failed') }
+              setExtracting(false)
+              e.target.value = ''
+            }} />
+          </label>
+          <button onClick={() => { setEditing(null); setForm({ ...BLANK }); setExtraction(null); setShowModal(true) }} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--academic)] text-white text-sm font-medium hover:bg-blue-600">
+            <Plus className="w-3 h-3" /> Manual Entry
           </button>
         </div>
       </div>
+
+      {/* Extraction confidence badges */}
+      {extraction?.extraction?.confidence_scores && showModal && (
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {Object.entries(extraction.extraction.confidence_scores).map(([field, score]: [string, any]) => (
+            <span key={field} className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+              score > 0.9 ? 'bg-[rgba(34,197,94,0.1)] text-[#22c55e]' :
+              score > 0.75 ? 'bg-[rgba(234,179,8,0.1)] text-[#eab308]' :
+              'bg-[rgba(239,68,68,0.1)] text-[#ef4444]'
+            }`}>
+              {Math.round(score * 100)}% {field}
+            </span>
+          ))}
+          <span className="px-3 py-1 rounded-lg text-xs bg-[rgba(99,73,255,0.1)] text-[var(--ai)]">
+            AI-extracted from {extraction.file_url ? 'uploaded document' : 'text'}
+          </span>
+        </div>
+      )}
 
       {alerts.length > 0 && (
         <div className="bg-[var(--saas)]/10 border border-amber-500/30 rounded-xl p-4">
