@@ -6,6 +6,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { TrendingUp, Zap, Loader2, RefreshCw, Copy, Check, DollarSign, PiggyBank, FileText, BarChart2 } from 'lucide-react'
+import { InvoiceDetailView, type InvoiceDetail } from '@/components/financial/InvoiceDetailView'
 
 type Summary = {
   totalExpensesYTD: number
@@ -115,6 +116,9 @@ export default function FinancialsPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [savingDocument, setSavingDocument] = useState(false)
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+  const [selectedInvoiceDetail, setSelectedInvoiceDetail] = useState<InvoiceDetail | null>(null)
+  const [loadingInvoiceDetail, setLoadingInvoiceDetail] = useState(false)
   const [showSnap, setShowSnap]   = useState(false)
   const [showInvoiceForm, setShowInvoiceForm] = useState(false)
   const [saving, setSaving]       = useState(false)
@@ -337,6 +341,29 @@ export default function FinancialsPage() {
       console.error('[PIOS]', err)
     }
     setSavingDocument(false)
+  }
+
+  async function openInvoiceDetail(invoiceId: string) {
+    setSelectedInvoiceId(invoiceId)
+    setLoadingInvoiceDetail(true)
+    try {
+      const response = await fetch(`/api/financial/invoices/${invoiceId}`)
+      const data = await response.json()
+      if (response.ok) {
+        setSelectedInvoiceDetail(data as InvoiceDetail)
+      } else {
+        setSelectedInvoiceDetail(null)
+      }
+    } catch {
+      setSelectedInvoiceDetail(null)
+    }
+    setLoadingInvoiceDetail(false)
+  }
+
+  async function refreshInvoiceDetail() {
+    await load(true)
+    if (!selectedInvoiceId) return
+    await openInvoiceDetail(selectedInvoiceId)
   }
 
   const now = new Date()
@@ -631,12 +658,46 @@ export default function FinancialsPage() {
                     <div className="text-right">
                       <div className="text-sm font-medium">{invoice.currency ?? 'GBP'} {Number(invoice.total_amount ?? 0).toLocaleString('en-GB', { maximumFractionDigits: 2 })}</div>
                       <div className="text-xs text-[var(--pios-muted)] capitalize">{invoice.status ?? 'pending'} · Due {Number(invoice.amount_due ?? 0).toLocaleString('en-GB', { maximumFractionDigits: 2 })}</div>
+                      <button
+                        onClick={() => openInvoiceDetail(invoice.id)}
+                        className="mt-2 text-xs text-[var(--fm)] hover:underline"
+                      >
+                        View details
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
+
+          {selectedInvoiceId && (
+            <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold">Invoice detail</h3>
+                  <p className="text-xs text-[var(--pios-muted)]">Payment capture and invoice-level tracking</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedInvoiceId(null)
+                    setSelectedInvoiceDetail(null)
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs border border-[var(--pios-border)] text-[var(--pios-muted)] hover:text-[var(--pios-text)]"
+                >
+                  Close
+                </button>
+              </div>
+
+              {loadingInvoiceDetail ? (
+                <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[var(--pios-muted)]" /></div>
+              ) : selectedInvoiceDetail ? (
+                <InvoiceDetailView invoice={selectedInvoiceDetail} onRefresh={refreshInvoiceDetail} />
+              ) : (
+                <p className="text-xs text-[var(--pios-muted)]">Unable to load invoice detail.</p>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[var(--pios-surface)] border border-[var(--pios-border)] rounded-xl p-5">
