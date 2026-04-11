@@ -796,6 +796,12 @@ function LiteratureSection() {
   useEffect(() => { if (tab === 'library') loadLibrary() }, [tab, loadLibrary])
 
   useEffect(() => {
+    if (tab !== 'library') return
+    loadCitationGraphStats()
+    loadCitationGraphCronStatus()
+  }, [tab])
+
+  useEffect(() => {
     fetch('/api/academic/institutional-access')
       .then(r => r.ok ? r.json() : null)
       .then(d => {
@@ -1113,6 +1119,11 @@ function LiteratureSection() {
             <div style={{ fontSize:11, color:'var(--pios-dim)', flex:1 }}>
               {library.length} papers saved
               {selected.length > 0 && <span style={{ marginLeft:8, color:ACC }}>· {selected.length} selected</span>}
+              {cronStatus?.last_run?.completed_at && cronStatus.last_run.status === 'success' && (
+                <span style={{ marginLeft:8, color:'var(--fm)' }}>
+                  · last successful run {formatRelative(cronStatus.last_run.completed_at)}
+                </span>
+              )}
             </div>
             <button className="pios-btn pios-btn-ghost" onClick={ingestToProprietaryDb} disabled={ingesting || library.length === 0} style={{ fontSize:11 }}>
               {ingesting ? '⟳ Ingesting…' : '⛁ Build PIOS DB'}
