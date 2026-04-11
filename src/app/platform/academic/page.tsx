@@ -763,6 +763,8 @@ function LiteratureSection() {
   const [generatingBib,setGeneratingBib]= useState(false)
   const [ingesting,    setIngesting]    = useState(false)
   const [ingestMsg,    setIngestMsg]    = useState<string|null>(null)
+  const [graphStats,   setGraphStats]   = useState<{papers:number;authors:number;citations:number;fields?:string[]}|null>(null)
+  const [loadingGraph, setLoadingGraph] = useState(false)
 
   const loadLibrary = useCallback(async () => {
     setLoadingLib(true)
@@ -919,6 +921,27 @@ function LiteratureSection() {
     setIngesting(false)
   }
 
+  async function loadCitationGraphStats() {
+    setLoadingGraph(true)
+    try {
+      const r = await fetch('/api/citation-graph/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_database_stats' }),
+      })
+      const d = r.ok ? await r.json() : null
+      if (d) {
+        setGraphStats({
+          papers: d.papers ?? 0,
+          authors: d.authors ?? 0,
+          citations: d.citations ?? 0,
+          fields: (d.fields ?? []) as string[],
+        })
+      }
+    } catch { /* silent */ }
+    setLoadingGraph(false)
+  }
+
   const ACC = 'var(--academic)'
   const tabStyle = (active: boolean) => ({
     fontSize:11, fontWeight:600, padding:'5px 14px', borderRadius:20, cursor:'pointer', border:'none',
@@ -1028,6 +1051,9 @@ function LiteratureSection() {
             <button className="pios-btn pios-btn-ghost" onClick={ingestToProprietaryDb} disabled={ingesting || library.length === 0} style={{ fontSize:11 }}>
               {ingesting ? '⟳ Ingesting…' : '⛁ Build PIOS DB'}
             </button>
+            <button className="pios-btn pios-btn-ghost" onClick={loadCitationGraphStats} disabled={loadingGraph} style={{ fontSize:11 }}>
+              {loadingGraph ? '⟳ Loading…' : '◎ Graph Stats'}
+            </button>
             {selected.length >= 2 && (
               <button className="pios-btn pios-btn-ghost" onClick={compare} disabled={comparing} style={{ fontSize:11 }}>
                 {comparing ? '⟳ Comparing…' : '⇄ Compare Methods'}
@@ -1053,6 +1079,17 @@ function LiteratureSection() {
           {ingestMsg && (
             <div style={{ marginBottom:12, padding:'8px 10px', borderRadius:8, background:'rgba(108,142,255,0.08)', borderLeft:'3px solid var(--academic)', fontSize:11, color:'var(--pios-muted)' }}>
               {ingestMsg}
+            </div>
+          )}
+
+          {graphStats && (
+            <div style={{ marginBottom:12, padding:'10px 12px', borderRadius:8, background:'rgba(16,185,129,0.08)', borderLeft:'3px solid #10b981' }}>
+              <div style={{ display:'flex', gap:12, flexWrap:'wrap' as const, fontSize:11 }}>
+                <span><strong>{graphStats.papers}</strong> papers</span>
+                <span><strong>{graphStats.authors}</strong> authors</span>
+                <span><strong>{graphStats.citations}</strong> citations</span>
+                {graphStats.fields && graphStats.fields.length > 0 && <span>{graphStats.fields.slice(0, 4).join(', ')}</span>}
+              </div>
             </div>
           )}
 
