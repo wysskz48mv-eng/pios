@@ -293,7 +293,78 @@ export async function GET(req: NextRequest) {
   } catch {}
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CHECK 5: Environment Completeness
+  // CHECK 5: Column Validation — do tables have the columns code expects?
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const COLUMN_CHECKS: { table: string; columns: string[] }[] = [
+    { table: 'file_items', columns: ['size_bytes', 'source', 'ai_category', 'filing_status', 'drive_web_url'] },
+    { table: 'email_items', columns: ['triage_class', 'is_meeting', 'is_flagged', 'is_snoozed', 'unsubscribe_url'] },
+    { table: 'connected_email_accounts', columns: ['google_access_token_enc', 'google_refresh_token_enc'] },
+    { table: 'exec_intelligence_config', columns: ['persona_context', 'tone_preference', 'response_style'] },
+    { table: 'contracts', columns: ['key_terms', 'obligations', 'auto_renewal', 'extraction_source'] },
+    { table: 'user_profiles', columns: ['google_access_token_enc', 'persona_type', 'onboarded'] },
+  ]
+
+  for (const check of COLUMN_CHECKS) {
+    totalChecks++
+    try {
+      const cols = check.columns.join(',')
+      const { error } = await supabase.from(check.table).select(cols).limit(0)
+      if (error?.message?.includes('does not exist') || error?.message?.includes('could not find')) {
+        const missingCol = error.message.match(/column.*?['"](\w+)['"]/i)?.[1] ?? 'unknown'
+        findings.push({
+          check_type: 'column_validation',
+          check_name: `column_${check.table}_${missingCol}`,
+          severity: 'critical',
+          title: `Missing column "${missingCol}" on table "${check.table}"`,
+          detail: `Code expects this column but it doesn't exist. This will crash any route that queries it. Run: ALTER TABLE public.${check.table} ADD COLUMN IF NOT EXISTS ${missingCol} text;`,
+          affected_table: check.table,
+          evidence: { error: error.message, expected_columns: check.columns },
+        })
+      }
+    } catch {}
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CHECK 5b: AI Chat Smoke Test — does NemoClaw actually respond?
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  totalChecks++
+  if (appUrl) {
+    try {
+      const chatRes = await fetch(`${appUrl}/api/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'ping' }] }),
+      })
+      const chatData = await chatRes.json()
+
+      if (!chatData.reply) {
+        findings.push({
+          check_type: 'endpoint_smoke',
+          check_name: 'ai_chat_no_reply',
+          severity: 'critical',
+          title: 'NemoClaw AI chat returns no reply field',
+          detail: `POST /api/ai/chat returned ${JSON.stringify(Object.keys(chatData))} instead of {reply}. Status: ${chatRes.status}. Error: ${chatData.error ?? 'none'}. Users see "something went wrong".`,
+          affected_route: '/api/ai/chat',
+          evidence: { status: chatRes.status, keys: Object.keys(chatData), error: chatData.error },
+        })
+      } else if (chatData.reply.includes('unavailable') || chatData.reply.includes('authentication') || chatData.reply.includes('sign in')) {
+        findings.push({
+          check_type: 'endpoint_smoke',
+          check_name: 'ai_chat_degraded',
+          severity: 'high',
+          title: `NemoClaw responds but degraded: "${chatData.reply.slice(0, 80)}"`,
+          detail: chatData.reply,
+          affected_route: '/api/ai/chat',
+          evidence: { reply_preview: chatData.reply.slice(0, 200) },
+        })
+      }
+    } catch {}
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CHECK 6: Environment Completeness
   // ═══════════════════════════════════════════════════════════════════════════
 
   const REQUIRED_ENV = [

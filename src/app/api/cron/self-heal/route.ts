@@ -233,6 +233,47 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      // Auto-fix: Missing columns — add them
+      if (finding.check_type === 'column_validation' && finding.affected_table) {
+        try {
+          const colMatch = finding.title.match(/Missing column "(\w+)" on table "(\w+)"/)
+          if (colMatch) {
+            const [, colName, tableName] = colMatch
+            await supabase.rpc('exec_sql', {
+              sql_query: `ALTER TABLE public.${tableName} ADD COLUMN IF NOT EXISTS ${colName} text;`,
+            })
+
+            await supabase.from('pios_diagnostics').update({
+              status: 'auto_fixed',
+              fix_applied: `Added missing column ${colName} to ${tableName}`,
+              resolved_at: new Date().toISOString(),
+            }).eq('id', finding.id)
+
+            actions.push({
+              check: 'diagnostic_autofix',
+              status: 'healed',
+              detail: `Auto-added missing column "${colName}" to "${tableName}" (seen ${finding.recurrence_count}x)`,
+            })
+          }
+        } catch {
+          actions.push({
+            check: 'diagnostic_autofix',
+            status: 'failed',
+            detail: `Failed to auto-add column on "${finding.affected_table}"`,
+          })
+        }
+      }
+
+      // Auto-fix: NemoClaw response format — detected by endpoint smoke test
+      if (finding.check_type === 'endpoint_smoke' && finding.check_name === 'ai_chat_no_reply') {
+        // This is a code-level issue — can't auto-fix, but escalate immediately
+        actions.push({
+          check: 'diagnostic_escalate',
+          status: 'alert',
+          detail: `CRITICAL: NemoClaw chat broken — users see "something went wrong". ${finding.detail}`,
+        })
+      }
+
       // Auto-fix: Expired tokens with refresh tokens — trigger refresh
       if (finding.check_type === 'token_health' && finding.check_name.startsWith('token_refreshable_')) {
         // Token will auto-refresh on next sync — mark as acknowledged
