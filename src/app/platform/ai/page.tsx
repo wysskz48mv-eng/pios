@@ -191,16 +191,28 @@ export default function AiPage() {
           domainContext: mode?.prompt ?? '',
         }),
       })
+      if (res.status === 401) {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Your session has expired. Please refresh the page or sign in again.', timestamp: new Date().toISOString() }])
+        setLoading(false)
+        return
+      }
+      if (res.status === 403) {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Request blocked. Please try rephrasing your message.', timestamp: new Date().toISOString() }])
+        setLoading(false)
+        return
+      }
       const data = await res.json()
+      const replyText = data.reply ?? data.error ?? 'AI temporarily unavailable. Please try again in a moment.'
       const reply: Message = {
         role: 'assistant',
-        content: data.reply ?? 'Sorry — something went wrong. Please try again.',
+        content: replyText,
         timestamp: new Date().toISOString(),
       }
       const final = [...updated, reply]
       setMessages(final)
       if (sessionId) saveMessages(sessionId, final)
-    } catch {
+    } catch (err) {
+      console.error('[PIOS AI]', err)
       setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please try again.', timestamp: new Date().toISOString() }])
     }
     setLoading(false)
