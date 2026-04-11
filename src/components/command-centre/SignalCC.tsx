@@ -57,9 +57,9 @@ export function SignalCC({ profile, onOpenThemePicker }: Props) {
           <div className={styles.sNemoGreeting}>
             <div className={styles.sNemoAv}>N</div>
             <p className={styles.sNemoText}>
-              Good morning. Your thesis Chapter 3 is progressing well — at <strong>78%</strong> completion.
-              Supervision with your supervisor is in <strong>5 days</strong>; I&apos;ve flagged 4 items to prepare.
-              Your literature search returned 3 new papers matching your research keywords.
+              Good morning. Your thesis is at <strong>{stats?.thesis?.progress ?? 0}%</strong> completion.
+              {stats?.deadlines?.[0] ? <> Next deadline: <strong>{stats.deadlines[0].title}</strong> in <strong>{stats.deadlines[0].days_until}</strong> days.</> : ' No upcoming deadlines.'}
+              {stats?.tasks?.overdue ? <> <strong>{stats.tasks.overdue}</strong> overdue tasks need attention.</> : ' All tasks on track.'}
             </p>
           </div>
 
@@ -114,10 +114,10 @@ export function SignalCC({ profile, onOpenThemePicker }: Props) {
         </main>
 
         <aside className={styles.sPanel}>
-          <div className={styles.sPanelTitle}>Supervision Prep — 12 Apr</div>
+          <div className={styles.sPanelTitle}>Supervision Prep</div>
           <div className={styles.sSupCard}>
-            <div className={styles.sSupName}>Dr Ozlem Bak</div>
-            <div className={styles.sSupDate}>Saturday 12 April · 4 items</div>
+            <div className={styles.sSupName}>Supervisor</div>
+            <div className={styles.sSupDate}>{stats?.deadlines?.[0] ? `${stats.deadlines[0].title} · ${stats.deadlines[0].days_until} days` : 'No upcoming sessions'}</div>
             <div className={styles.sSupItems}>
               {[
                 'RQ2 framing — socio-technical theory alignment',

@@ -10,16 +10,18 @@ interface Props {
   onOpenThemePicker: () => void
 }
 
-const NAV_ITEMS = [
-  { icon: '⌂', label: 'Brief', href: '/platform/dashboard', active: true },
-  { icon: '◎', label: 'NemoClaw™', href: '/platform/nemoclaw' },
-  { icon: '✉', label: 'Email', href: '/platform/email', badge: 7 },
-  { icon: '⚖', label: 'Decisions', href: '/platform/decisions', badge: 2 },
-  { icon: '◈', label: 'EOSA™', href: '/platform/frameworks' },
-  { icon: '◉', label: 'Stakeholders', href: '/platform/stakeholders' },
-  { icon: '▣', label: 'Board Pack', href: '/platform/board' },
-  { icon: '⊞', label: 'Chief of Staff', href: '/platform/cos' },
-]
+function getNavItems(stats: any) {
+  return [
+    { icon: '⌂', label: 'Brief', href: '/platform/dashboard', active: true },
+    { icon: '◎', label: 'NemoClaw™', href: '/platform/nemoclaw' },
+    { icon: '✉', label: 'Email', href: '/platform/email', badge: stats?.email?.unread || undefined },
+    { icon: '⚖', label: 'Decisions', href: '/platform/decisions', badge: stats?.decisions?.pending || undefined },
+    { icon: '◈', label: 'EOSA™', href: '/platform/frameworks' },
+    { icon: '◉', label: 'Stakeholders', href: '/platform/stakeholders' },
+    { icon: '▣', label: 'Board Pack', href: '/platform/board' },
+    { icon: '⊞', label: 'Chief of Staff', href: '/platform/cos' },
+  ]
+}
 
 export function OnyxCC({ profile, onOpenThemePicker }: Props) {
   const [nemoQuery, setNemoQuery] = useState('')
@@ -40,7 +42,7 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
     <div className={`${styles.ccRoot} ${styles.onyx}`}>
       <aside className={styles.onyxSidebar}>
         <div className={styles.onyxLogo}>P</div>
-        {NAV_ITEMS.map((item) => (
+        {getNavItems(stats).map((item) => (
           <Link key={item.label} href={item.href} className={`${styles.onyxNavItem} ${item.active ? styles.onyxNavActive : ''}`}>
             <span className={styles.onyxNavIcon}>{item.icon}</span>
             {item.badge && <span className={styles.onyxNavBadge}>{item.badge}</span>}
@@ -137,7 +139,7 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
           <div className={styles.onyxPanelTitle}>Decision Queue</div>
           {[
             { title: 'Strategic initiative — defer or proceed?', sub: 'Awaiting external outcome. Budget implications significant.', urgent: true },
-            { title: 'Vendor contract renewal', sub: 'Renewal date in 14 days. Legal review pending.' },
+            { title: 'Vendor contract renewal', sub: 'Review pending.' },
           ].map((decision, index) => (
             <div key={index} className={styles.onyxPanelCard}>
               <p className={styles.onyxPCTitle}>{decision.title}</p>
