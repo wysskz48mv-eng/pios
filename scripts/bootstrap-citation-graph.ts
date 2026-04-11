@@ -180,6 +180,7 @@ async function main() {
   const seenErrors = new Set<string>()
   const unsupportedPaperColumns = new Set<string>()
   const unsupportedAuthorColumns = new Set<string>()
+  const unsupportedTrendColumns = new Set<string>()
   let paperWriteMode: 'upsert' | 'insert' = 'upsert'
   let authorWriteMode: 'upsert' | 'insert' = 'upsert'
   const logErrorOnce = (prefix: string, message: string) => {
@@ -199,6 +200,18 @@ async function main() {
       let attempt = await admin.from('pios_papers').insert(safePayload).select('id').single()
       let guard = 0
       while (attempt.error && guard < 5) {
+        if (/duplicate key value violates unique constraint/i.test(attempt.error.message)) {
+          if (typeof safePayload.doi === 'string' && safePayload.doi) {
+            const existingByDoi = await admin.from('pios_papers').select('id').eq('doi', safePayload.doi).maybeSingle()
+            if (existingByDoi.data?.id) return { data: existingByDoi.data, error: null }
+          }
+          if (typeof safePayload.title === 'string' && safePayload.title) {
+            const existingByTitle = await admin.from('pios_papers').select('id').eq('title', safePayload.title).limit(1).maybeSingle()
+            if (existingByTitle.data?.id) return { data: existingByTitle.data, error: null }
+          }
+          break
+        }
+
         const m = /Could not find the '([^']+)' column|column "([^"]+)" does not exist/.exec(attempt.error.message)
         const missing = m?.[1] ?? m?.[2]
         if (!missing) break
@@ -220,6 +233,7 @@ async function main() {
 
     if (/title_normalized/.test(firstTry.error.message) && /does not exist|Could not find/.test(firstTry.error.message)) {
       paperWriteMode = 'insert'
+      unsupportedPaperColumns.add('title_normalized')
       delete safePayload.title_normalized
       const retryInsert = await admin.from('pios_papers').insert(safePayload).select('id').single()
       if (!retryInsert.error) logErrorOnce('paper schema fallback', 'Switched to insert mode (missing title_normalized)')
@@ -251,7 +265,13 @@ async function main() {
     }
 
     if (authorWriteMode === 'insert') {
-      return admin.from('pios_authors').insert(safePayload).select('id').single()
+      const insertAttempt = await admin.from('pios_authors').insert(safePayload).select('id').single()
+      if (!insertAttempt.error) return insertAttempt
+      if (/duplicate key value violates unique constraint/i.test(insertAttempt.error.message) && typeof safePayload.name === 'string') {
+        const existing = await admin.from('pios_authors').select('id').eq('name', safePayload.name).limit(1).maybeSingle()
+        if (existing.data?.id) return { data: existing.data, error: null }
+      }
+      return insertAttempt
     }
 
     const firstTry = await admin
@@ -261,6 +281,14 @@ async function main() {
       .single()
 
     if (!firstTry.error) return firstTry
+
+    if (/no unique or exclusion constraint matching the ON CONFLICT specification/i.test(firstTry.error.message)) {
+      authorWriteMode = 'insert'
+      delete safePayload.normalized_name
+      const retryInsert = await admin.from('pios_authors').insert(safePayload).select('id').single()
+      if (!retryInsert.error) logErrorOnce('author schema fallback', 'Switched to insert mode (no normalized_name conflict target)')
+      return retryInsert
+    }
 
     if (/normalized_name/.test(firstTry.error.message) && /does not exist|Could not find/.test(firstTry.error.message)) {
       authorWriteMode = 'insert'
@@ -286,6 +314,45 @@ async function main() {
     if (secondTry.error) return secondTry
     logErrorOnce('author schema fallback', `Removed unsupported column: ${missing}`)
     return secondTry
+  }
+
+  const upsertTrend = async (payload: Record<string, unknown>) => {
+    const safePayload = { ...payload }
+    for (const col of unsupportedTrendColumns) {
+      delete safePayload[col]
+    }
+
+    let attempt = await admin
+      .from('pios_research_trends')
+      .upsert(safePayload, { onConflict: 'field,keyword,year' })
+
+    if (!attempt.error) return attempt
+
+    if (/no unique or exclusion constraint matching the ON CONFLICT specification/i.test(attempt.error.message)) {
+      attempt = await admin.from('pios_research_trends').insert(safePayload)
+      if (!attempt.error) return attempt
+    }
+
+    let guard = 0
+    while (attempt.error && guard < 6) {
+      const m = /Could not find the '([^']+)' column|column "([^"]+)" does not exist/.exec(attempt.error.message)
+      const missing = m?.[1] ?? m?.[2]
+      if (!missing) break
+      unsupportedTrendColumns.add(missing)
+      delete safePayload[missing]
+
+      attempt = await admin
+        .from('pios_research_trends')
+        .upsert(safePayload, { onConflict: 'field,keyword,year' })
+
+      if (attempt.error && /no unique or exclusion constraint matching the ON CONFLICT specification/i.test(attempt.error.message)) {
+        attempt = await admin.from('pios_research_trends').insert(safePayload)
+      }
+
+      guard += 1
+    }
+
+    return attempt
   }
 
   for (const p of merged) {
@@ -354,7 +421,7 @@ async function main() {
     const age = Math.max(0, nowYear - year)
     const recency = age <= 1 ? 1.5 : age <= 3 ? 1.35 : age <= 5 ? 1.15 : 1.0
     const citations = (p.citation_count as number | null) ?? 0
-    const influence = Math.round(citations * recency * 1000) / 1000
+    const influence = Math.min(999999999, Math.round(citations * recency * 1000) / 1000)
 
     const { error } = await admin.from('pios_papers').update({ influence_score: influence }).eq('id', p.id)
     if (!error) {
@@ -394,14 +461,14 @@ async function main() {
       const growth = prev > 0 ? ((s.papers - prev) / prev) * 100 : 0
       prev = s.papers
 
-      const { error } = await admin.from('pios_research_trends').upsert({
+      const { error } = await upsertTrend({
         field,
         keyword: '__all__',
         year: y,
         paper_count: s.papers,
         citation_growth: Number(growth.toFixed(3)),
         emerging: growth >= 20,
-      }, { onConflict: 'field,keyword,year' })
+      })
 
       if (!error) {
         trendRowsRefreshed += 1
@@ -431,6 +498,12 @@ async function main() {
     }
   }
 
+  const [paperCountRes, authorCountRes, trendCountRes] = await Promise.all([
+    admin.from('pios_papers').select('id', { count: 'exact', head: true }),
+    admin.from('pios_authors').select('id', { count: 'exact', head: true }),
+    admin.from('pios_research_trends').select('id', { count: 'exact', head: true }),
+  ])
+
   console.log('[bootstrap] completed')
   console.log(JSON.stringify({
     ok: true,
@@ -446,6 +519,9 @@ async function main() {
     score_errors: scoreErrors,
     trend_rows_refreshed: trendRowsRefreshed,
     trend_errors: trendErrors,
+    total_papers_in_db: paperCountRes.count ?? null,
+    total_authors_in_db: authorCountRes.count ?? null,
+    total_trends_in_db: trendCountRes.count ?? null,
     event_logging_enabled: Boolean(actorId),
   }, null, 2))
 }
