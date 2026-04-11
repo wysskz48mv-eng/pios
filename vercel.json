@@ -67,6 +67,10 @@
     {
       "path": "/api/cron/diagnostics",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/citation-graph",
+      "schedule": "0 4 * * *"
     }
   ],
   "functions": {
@@ -150,6 +154,9 @@
     },
     "src/app/api/cron/diagnostics/route.ts": {
       "maxDuration": 120
+    },
+    "src/app/api/cron/citation-graph/route.ts": {
+      "maxDuration": 300
     }
   }
 }
