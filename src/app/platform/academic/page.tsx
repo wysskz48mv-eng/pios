@@ -383,6 +383,9 @@ export default function AcademicPage() {
       {/* DBA Programme Milestones */}
       <MilestonesSection />
 
+      {/* Literature Discovery & Paper Analysis */}
+      <LiteratureSection />
+
       {/* Modules + Sessions */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
         <div className="pios-card">
@@ -568,6 +571,397 @@ function MilestonesSection() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Literature Discovery & Paper Analysis (M059 + M060) ─────────────────────
+type LitPaper = {
+  id?: string; title: string; authors: string[]; year: number | null
+  abstract: string | null; doi: string | null; arxiv_id: string | null
+  semantic_scholar_id: string | null; openalex_id: string | null
+  journal: string | null; venue: string | null; source_api: string
+  citation_count: number; pdf_url: string | null; relevance_score: number | null
+  is_saved?: boolean; linked_chapter_id?: string | null
+  glossary_count?: number; thesis_alignment_score?: number | null
+  study_quality_score?: number | null
+}
+
+function RelevancePill({ score }: { score: number | null }) {
+  if (score === null) return null
+  const pct  = Math.round(score * 100)
+  const col  = score >= 0.7 ? '#34d399' : score >= 0.4 ? 'var(--saas)' : 'var(--pios-dim)'
+  return <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:col+'20', color:col, fontWeight:700 }}>{pct}% rel.</span>
+}
+
+function ScoreBadge({ value, label, color }: { value: number | null; label: string; color: string }) {
+  if (value === null) return null
+  return (
+    <div style={{ textAlign:'center', minWidth:48 }}>
+      <div style={{ fontSize:15, fontWeight:700, color }}>{Math.round(value)}</div>
+      <div style={{ fontSize:9, color:'var(--pios-dim)' }}>{label}</div>
+    </div>
+  )
+}
+
+function LiteratureSection() {
+  const [tab,          setTab]          = useState<'search'|'library'>('search')
+  const [query,        setQuery]        = useState('')
+  const [searching,    setSearching]    = useState(false)
+  const [results,      setResults]      = useState<LitPaper[]>([])
+  const [library,      setLibrary]      = useState<LitPaper[]>([])
+  const [loadingLib,   setLoadingLib]   = useState(false)
+  const [savingId,     setSavingId]     = useState<string|null>(null)
+  const [analyzingId,  setAnalyzingId]  = useState<string|null>(null)
+  const [selected,     setSelected]     = useState<string[]>([])
+  const [comparing,    setComparing]    = useState(false)
+  const [comparison,   setComparison]   = useState<Record<string,unknown>|null>(null)
+  const [expandedId,   setExpandedId]   = useState<string|null>(null)
+  const [glossary,     setGlossary]     = useState<{term:string;definition:string;context?:string}[]>([])
+  const [showGlossary, setShowGlossary] = useState(false)
+  const [exportingAnki,setExportingAnki]= useState(false)
+  const [bibStyle,     setBibStyle]     = useState<'apa'|'chicago'|'harvard'>('apa')
+  const [bibOutput,    setBibOutput]    = useState<string|null>(null)
+  const [generatingBib,setGeneratingBib]= useState(false)
+
+  const loadLibrary = useCallback(async () => {
+    setLoadingLib(true)
+    try {
+      const r = await fetch('/api/academic/literature?saved=true')
+      const d = r.ok ? await r.json() : {}
+      setLibrary((d.literature ?? []) as LitPaper[])
+    } catch { /* silent */ }
+    setLoadingLib(false)
+  }, [])
+
+  useEffect(() => { if (tab === 'library') loadLibrary() }, [tab, loadLibrary])
+
+  async function runSearch() {
+    if (!query.trim()) return
+    setSearching(true); setResults([])
+    try {
+      const r = await fetch('/api/academic/literature', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'search', query, thesis_context: 'AI forecasting FM GCC DBA research' }),
+      })
+      const d = r.ok ? await r.json() : {}
+      setResults((d.results ?? []) as LitPaper[])
+    } catch { /* silent */ }
+    setSearching(false)
+  }
+
+  async function savePaper(paper: LitPaper) {
+    const key = paper.doi ?? paper.title
+    setSavingId(key)
+    try {
+      await fetch('/api/academic/literature', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', paper }),
+      })
+      setResults(prev => prev.map(p => (p.doi ?? p.title) === key ? { ...p, is_saved: true } : p))
+    } catch { /* silent */ }
+    setSavingId(null)
+  }
+
+  async function analyzePaper(id: string) {
+    setAnalyzingId(id)
+    try {
+      const r = await fetch('/api/academic/literature/analyze', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'analyze', literature_id: id }),
+      })
+      const d = r.ok ? await r.json() : {}
+      if (d.ok) {
+        setLibrary(prev => prev.map(p => p.id === id ? {
+          ...p,
+          thesis_alignment_score: d.analysis?.thesis_alignment_score ?? p.thesis_alignment_score,
+          study_quality_score:    d.analysis?.study_quality_score ?? p.study_quality_score,
+          glossary_count:         d.glossary?.length ?? p.glossary_count,
+        } : p))
+      }
+    } catch { /* silent */ }
+    setAnalyzingId(null)
+  }
+
+  async function compare() {
+    if (selected.length < 2) return
+    setComparing(true); setComparison(null)
+    try {
+      const r = await fetch('/api/academic/literature/analyze', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'compare', literature_ids: selected }),
+      })
+      const d = r.ok ? await r.json() : {}
+      setComparison(d.comparison ?? null)
+    } catch { /* silent */ }
+    setComparing(false)
+  }
+
+  async function exportAnki() {
+    setExportingAnki(true)
+    try {
+      const r = await fetch('/api/academic/literature/analyze', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'anki', literature_ids: selected }),
+      })
+      if (r.ok) {
+        const blob = await r.blob()
+        const url  = URL.createObjectURL(blob)
+        const a    = Object.assign(document.createElement('a'), { href: url, download: `pios_glossary_anki_${Date.now()}.txt` })
+        a.click(); URL.revokeObjectURL(url)
+      }
+    } catch { /* silent */ }
+    setExportingAnki(false)
+  }
+
+  async function generateBibliography() {
+    const ids = library.filter(p => p.id && (selected.length === 0 || selected.includes(p.id!))).map(p => p.id!)
+    if (ids.length === 0) return
+    setGeneratingBib(true); setBibOutput(null)
+    try {
+      const r = await fetch('/api/academic/literature', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'bibliography', literature_ids: ids, style: bibStyle }),
+      })
+      const d = r.ok ? await r.json() : {}
+      setBibOutput(d.formatted ?? null)
+    } catch { /* silent */ }
+    setGeneratingBib(false)
+  }
+
+  async function loadGlossary() {
+    try {
+      const r = await fetch('/api/academic/literature/analyze', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_glossary' }),
+      })
+      const d = r.ok ? await r.json() : {}
+      setGlossary((d.glossary ?? []) as {term:string;definition:string;context?:string}[])
+      setShowGlossary(true)
+    } catch { /* silent */ }
+  }
+
+  const ACC = 'var(--academic)'
+  const tabStyle = (active: boolean) => ({
+    fontSize:11, fontWeight:600, padding:'5px 14px', borderRadius:20, cursor:'pointer', border:'none',
+    background: active ? ACC : 'transparent',
+    color: active ? '#fff' : 'var(--pios-muted)',
+    transition: 'all 0.15s',
+  } as React.CSSProperties)
+
+  return (
+    <div className="pios-card">
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:8 }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:700 }}>Literature Discovery</div>
+          <div style={{ fontSize:11, color:'var(--pios-muted)', marginTop:1 }}>
+            Search Semantic Scholar · OpenAlex · arXiv · Crossref — AI relevance scoring
+          </div>
+        </div>
+        <div style={{ display:'flex', gap:4 }}>
+          <button style={tabStyle(tab==='search')} onClick={()=>setTab('search')}>Search</button>
+          <button style={tabStyle(tab==='library')} onClick={()=>setTab('library')}>My Library</button>
+        </div>
+      </div>
+
+      {/* ── Search tab ─────────────────────────────────────────────────────── */}
+      {tab === 'search' && (
+        <div>
+          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+            <input
+              className="pios-input" style={{ flex:1, fontSize:13 }}
+              value={query} onChange={e=>setQuery(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&runSearch()}
+              placeholder="e.g. AI forecasting facilities management GCC…"
+            />
+            <button className="pios-btn pios-btn-primary" onClick={runSearch} disabled={searching||!query.trim()} style={{ fontSize:12, whiteSpace:'nowrap' as const }}>
+              {searching ? '⟳ Searching…' : '⌕ Search'}
+            </button>
+          </div>
+
+          {results.length > 0 && (
+            <div style={{ fontSize:11, color:'var(--pios-dim)', marginBottom:10 }}>
+              {results.length} papers found · sorted by AI relevance
+            </div>
+          )}
+
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {results.map((p, i) => {
+              const key     = p.doi ?? p.title
+              const saving  = savingId === key
+              const saved   = p.is_saved
+              const expanded= expandedId === key
+              return (
+                <div key={i} style={{ padding:'12px 14px', borderRadius:8, background:'var(--pios-surface2)', border:`1px solid ${p.relevance_score && p.relevance_score >= 0.7 ? 'rgba(52,211,153,0.25)' : 'transparent'}` }}>
+                  <div style={{ display:'flex', alignItems:'flex-start', gap:10 }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap', marginBottom:2 }}>
+                        <span style={{ fontSize:12, fontWeight:600, lineHeight:1.4 }}>{p.title}</span>
+                        <RelevancePill score={p.relevance_score} />
+                      </div>
+                      <div style={{ fontSize:10, color:'var(--pios-dim)', marginBottom:4 }}>
+                        {p.authors.slice(0,3).join(', ')}{p.authors.length>3?' et al.':''} · {p.year ?? 'n.d.'} · {p.journal ?? p.venue ?? p.source_api}
+                        {p.citation_count > 0 && <span> · {p.citation_count} citations</span>}
+                      </div>
+                      {expanded && p.abstract && (
+                        <p style={{ fontSize:11, color:'var(--pios-muted)', lineHeight:1.5, marginBottom:6 }}>{p.abstract.slice(0,400)}…</p>
+                      )}
+                      <div style={{ display:'flex', gap:8, flexWrap:'wrap' as const }}>
+                        <button onClick={()=>setExpandedId(expanded ? null : key)} style={{ fontSize:10, color:ACC, background:'none', border:'none', cursor:'pointer', padding:0 }}>{expanded?'▲ Hide':'▼ Abstract'}</button>
+                        {p.pdf_url && <a href={p.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'var(--pios-muted)' }}>↗ PDF</a>}
+                        {p.doi && <a href={`https://doi.org/${p.doi}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'var(--pios-muted)' }}>↗ DOI</a>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={()=>savePaper(p)} disabled={saving||saved}
+                      style={{ fontSize:11, padding:'4px 12px', borderRadius:8, border:`1px solid ${ACC}40`, background:saved?ACC+'20':'transparent', color:saved?ACC:'var(--pios-muted)', cursor:saved?'default':'pointer', whiteSpace:'nowrap' as const, flexShrink:0 }}>
+                      {saving ? '⟳' : saved ? '✓ Saved' : '+ Save'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Library tab ─────────────────────────────────────────────────────── */}
+      {tab === 'library' && (
+        <div>
+          {/* Toolbar */}
+          <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' as const, alignItems:'center' }}>
+            <div style={{ fontSize:11, color:'var(--pios-dim)', flex:1 }}>
+              {library.length} papers saved
+              {selected.length > 0 && <span style={{ marginLeft:8, color:ACC }}>· {selected.length} selected</span>}
+            </div>
+            {selected.length >= 2 && (
+              <button className="pios-btn pios-btn-ghost" onClick={compare} disabled={comparing} style={{ fontSize:11 }}>
+                {comparing ? '⟳ Comparing…' : '⇄ Compare Methods'}
+              </button>
+            )}
+            <button className="pios-btn pios-btn-ghost" onClick={exportAnki} disabled={exportingAnki} style={{ fontSize:11 }}>
+              {exportingAnki ? '⟳' : '↓ Anki'}
+            </button>
+            <button className="pios-btn pios-btn-ghost" onClick={loadGlossary} style={{ fontSize:11 }}>📖 Glossary</button>
+            <div style={{ display:'flex', gap:4, alignItems:'center' }}>
+              <select value={bibStyle} onChange={e=>setBibStyle(e.target.value as 'apa'|'chicago'|'harvard')} style={{ fontSize:11, padding:'4px 8px', borderRadius:6, border:'1px solid var(--pios-border)', background:'var(--pios-surface2)', color:'var(--pios-text)', cursor:'pointer' }}>
+                <option value="apa">APA</option>
+                <option value="chicago">Chicago</option>
+                <option value="harvard">Harvard</option>
+              </select>
+              <button className="pios-btn pios-btn-ghost" onClick={generateBibliography} disabled={generatingBib} style={{ fontSize:11 }}>
+                {generatingBib ? '⟳' : '¶ Bibliography'}
+              </button>
+            </div>
+            <button className="pios-btn pios-btn-ghost" onClick={loadLibrary} style={{ fontSize:11 }}>↺</button>
+          </div>
+
+          {/* Bibliography output */}
+          {bibOutput && (
+            <div style={{ marginBottom:12, padding:'12px 14px', borderRadius:8, background:'rgba(108,142,255,0.06)', borderLeft:'3px solid var(--academic)', position:'relative' as const }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                <span style={{ fontSize:11, fontWeight:600, color:ACC }}>Bibliography ({bibStyle.toUpperCase()})</span>
+                <div style={{ display:'flex', gap:6 }}>
+                  <button onClick={()=>navigator.clipboard.writeText(bibOutput)} style={{ fontSize:10, color:'var(--pios-dim)', background:'none', border:'none', cursor:'pointer' }}>Copy</button>
+                  <button onClick={()=>setBibOutput(null)} style={{ fontSize:10, color:'var(--pios-dim)', background:'none', border:'none', cursor:'pointer' }}>✕</button>
+                </div>
+              </div>
+              <pre style={{ fontSize:10, color:'var(--pios-muted)', lineHeight:1.6, whiteSpace:'pre-wrap' as const, margin:0 }}>{bibOutput}</pre>
+            </div>
+          )}
+
+          {/* Glossary panel */}
+          {showGlossary && (
+            <div style={{ marginBottom:12, padding:'12px 14px', borderRadius:8, background:'var(--pios-surface2)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                <span style={{ fontSize:11, fontWeight:600 }}>Glossary ({glossary.length} terms)</span>
+                <button onClick={()=>setShowGlossary(false)} style={{ fontSize:10, color:'var(--pios-dim)', background:'none', border:'none', cursor:'pointer' }}>✕</button>
+              </div>
+              <div style={{ maxHeight:200, overflowY:'auto' as const, display:'flex', flexDirection:'column', gap:6 }}>
+                {glossary.map((g, i) => (
+                  <div key={i} style={{ fontSize:11 }}>
+                    <span style={{ fontWeight:600, color:ACC }}>{g.term}</span>
+                    <span style={{ color:'var(--pios-muted)', marginLeft:6 }}>— {g.definition}</span>
+                  </div>
+                ))}
+                {glossary.length === 0 && <span style={{ fontSize:11, color:'var(--pios-dim)' }}>No glossary terms yet. Analyse some papers first.</span>}
+              </div>
+            </div>
+          )}
+
+          {/* Comparison result */}
+          {comparison && (
+            <div style={{ marginBottom:12, padding:'12px 14px', borderRadius:8, background:'rgba(108,142,255,0.06)', borderLeft:'3px solid var(--academic)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                <span style={{ fontSize:11, fontWeight:600, color:ACC }}>Methodology Comparison</span>
+                <button onClick={()=>setComparison(null)} style={{ fontSize:10, color:'var(--pios-dim)', background:'none', border:'none', cursor:'pointer' }}>✕</button>
+              </div>
+              {(comparison.common_themes as string[])?.length > 0 && (
+                <div style={{ marginBottom:6 }}>
+                  <div style={{ fontSize:10, fontWeight:600, color:'var(--pios-muted)', marginBottom:3 }}>COMMON THEMES</div>
+                  <div style={{ display:'flex', gap:4, flexWrap:'wrap' as const }}>
+                    {(comparison.common_themes as string[]).map((t, i) => (
+                      <span key={i} style={{ fontSize:10, padding:'2px 8px', borderRadius:10, background:ACC+'15', color:ACC }}>{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {comparison.recommended_approach && (
+                <p style={{ fontSize:11, color:'var(--pios-muted)', lineHeight:1.5, marginTop:8 }}>{String(comparison.recommended_approach)}</p>
+              )}
+            </div>
+          )}
+
+          {/* Library list */}
+          {loadingLib ? (
+            <div style={{ textAlign:'center', padding:'24px 0', color:'var(--pios-dim)', fontSize:12 }}>Loading…</div>
+          ) : library.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'32px 0', color:'var(--pios-dim)', fontSize:12 }}>
+              No papers saved yet. Use Search to find and save papers.
+            </div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {library.map(p => {
+                const isSelected = p.id ? selected.includes(p.id) : false
+                const analyzing  = analyzingId === p.id
+                return (
+                  <div key={p.id} style={{ padding:'12px 14px', borderRadius:8, background:'var(--pios-surface2)', border:`1px solid ${isSelected ? ACC+'50' : 'transparent'}` }}>
+                    <div style={{ display:'flex', alignItems:'flex-start', gap:10 }}>
+                      {p.id && (
+                        <input type="checkbox" checked={isSelected}
+                          onChange={e => setSelected(prev => e.target.checked ? [...prev, p.id!] : prev.filter(id => id !== p.id))}
+                          style={{ marginTop:3, accentColor:ACC, flexShrink:0 }} />
+                      )}
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12, fontWeight:600, marginBottom:2, lineHeight:1.4 }}>{p.title}</div>
+                        <div style={{ fontSize:10, color:'var(--pios-dim)', marginBottom:6 }}>
+                          {p.authors?.slice(0,3).join(', ')}{(p.authors?.length??0)>3?' et al.':''} · {p.year ?? 'n.d.'} · {p.journal ?? p.venue ?? p.source_api}
+                        </div>
+                        <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+                          <ScoreBadge value={p.thesis_alignment_score??null} label="Thesis %" color={ACC} />
+                          <ScoreBadge value={p.study_quality_score??null} label="Quality" color="#34d399" />
+                          {(p.glossary_count ?? 0) > 0 && (
+                            <span style={{ fontSize:10, color:'var(--pios-dim)' }}>{p.glossary_count} terms</span>
+                          )}
+                          {p.pdf_url && <a href={p.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize:10, color:'var(--pios-muted)' }}>↗ PDF</a>}
+                        </div>
+                      </div>
+                      {p.id && (
+                        <button
+                          onClick={()=>analyzePaper(p.id!)} disabled={analyzing}
+                          style={{ fontSize:11, padding:'4px 12px', borderRadius:8, border:`1px dashed rgba(167,139,250,0.4)`, background:'rgba(167,139,250,0.06)', color:'var(--ai)', cursor:'pointer', whiteSpace:'nowrap' as const }}>
+                          {analyzing ? '⟳ Analysing…' : '✦ Analyse'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
