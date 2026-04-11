@@ -9,7 +9,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { requireCronSecret } from '@/lib/security/route-guards'
+import { requireAdminOrSeedSecret, requireCronSecret } from '@/lib/security/route-guards'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -108,10 +108,7 @@ async function searchOpenAlex(query: string, limit: number): Promise<PaperSeed[]
   } catch { return [] }
 }
 
-export async function GET(req: NextRequest) {
-  const authErr = requireCronSecret(req)
-  if (authErr) return authErr
-
+async function executeCitationGraphCron() {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } })
   const started = Date.now()
   const cronActorUserId = process.env.CITATION_GRAPH_CRON_ACTOR_USER_ID?.trim()
@@ -307,4 +304,16 @@ export async function GET(req: NextRequest) {
       event_logging_enabled: Boolean(cronActorUserId),
     }, { status: 500 })
   }
+}
+
+export async function GET(req: NextRequest) {
+  const authErr = requireCronSecret(req)
+  if (authErr) return authErr
+  return executeCitationGraphCron()
+}
+
+export async function POST(req: NextRequest) {
+  const authErr = requireAdminOrSeedSecret(req)
+  if (authErr) return authErr
+  return executeCitationGraphCron()
 }
