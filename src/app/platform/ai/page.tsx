@@ -66,13 +66,26 @@ export default function AiPage() {
       .catch(() => setNemo(null))
   }, [])
 
-  // Load session list
+  // Load session list + auto-resume last conversation
   const loadSessions = useCallback(async () => {
     const res = await fetch('/api/ai/sessions')
     const d = await res.json()
-    setSessions(d.sessions ?? [])
+    const allSessions = d.sessions ?? []
+    setSessions(allSessions)
     setLoadingSess(false)
-  }, [])
+
+    // Auto-load the most recent session if none active
+    if (!activeId && allSessions.length > 0) {
+      const latest = allSessions[0] // sorted by updated_at desc
+      const sessionRes = await fetch(`/api/ai/sessions?id=${(latest as any).id}`)
+      const sessionData = await sessionRes.json()
+      if (sessionData.session?.messages?.length > 0) {
+        setActiveId((latest as any).id)
+        setDomainMode(sessionData.session.domain ?? 'general')
+        setMessages(sessionData.session.messages)
+      }
+    }
+  }, [activeId])
 
   useEffect(() => { loadSessions() }, [loadSessions])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
