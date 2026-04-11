@@ -51,19 +51,7 @@ const SEC_HEADERS: Record<string, string> = {
   'Permissions-Policy':        'camera=(), microphone=(), geolocation=(), payment=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'X-Robots-Tag':              'noindex, nofollow, noarchive, nosnippet',
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co https://vfvfulbcaurqkygjrrhh.supabase.co https://api.anthropic.com https://api.openai.com https://generativelanguage.googleapis.com https://api.stripe.com https://gmail.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://vercel.live https://*.vercel.live",
-    "frame-src https://vercel.live https://*.vercel.live",
-    "frame-ancestors 'none'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; '),
+  // CSP defined in next.config.js headers() to avoid conflicts
 }
 
 function normaliseNextPath(next: string | null): string | null {
@@ -139,17 +127,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // Build base response and apply security headers to everything
-  // ── CSP Nonce (A.14.2) — per-request nonce eliminates unsafe-inline risk
-  const nonce = btoa(globalThis.crypto.randomUUID())
-  const noncedCSP = SEC_HEADERS['Content-Security-Policy']
-    .replace("script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-             `script-src 'self' 'unsafe-eval' 'nonce-${nonce}'`)
-  // Note: style-src keeps 'unsafe-inline' — Next.js inline styles need it
-
+  // CSP is set in next.config.js headers(). Middleware only adds non-CSP security headers.
   let response = NextResponse.next({ request })
   for (const [k, v] of Object.entries(SEC_HEADERS)) response.headers.set(k, v)
-  response.headers.set('Content-Security-Policy', noncedCSP)
-  response.headers.set('x-nonce', nonce)
 
   // Static assets — headers only, skip auth
   if (pathname.startsWith('/_next') || pathname.startsWith('/favicon') ||
