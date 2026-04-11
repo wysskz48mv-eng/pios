@@ -39,13 +39,15 @@ export async function POST(request: Request) {
     // Rate limiting — ISO 27001 A.12.6
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
     const rl = await checkRateLimit({ key: `pios:ai:${ip}`, ...LIMITS.ai })
-    if (rl) return rl
+    if (rl) return NextResponse.json({ reply: 'You\'re sending messages too quickly. Please wait a moment.' }, { status: 200 })
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user) return NextResponse.json({ reply: 'Please sign in to use NemoClaw.' }, { status: 200 })
 
-    const { messages, domainContext } = await request.json()
-    if (!messages?.length) return NextResponse.json({ error: 'No messages' }, { status: 400 })
+    let body: any = {}
+    try { body = await request.json() } catch { return NextResponse.json({ reply: 'Invalid request.' }, { status: 200 }) }
+    const { messages, domainContext } = body
+    if (!messages?.length) return NextResponse.json({ reply: 'Please type a message.' }, { status: 200 })
 
     // IS-POL-008 SSDLC — Prompt injection defence
     const lastMsg = [...messages].reverse().find((m: {role:string}) => m.role === 'user')
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
     if (userText) {
       const safety = checkPromptSafety(userText)
       if (!safety.safe) {
-        return NextResponse.json({ error: 'Request blocked by security policy.' }, { status: 400, headers: IP_HEADERS })
+        return NextResponse.json({ reply: 'I can\'t process that request. Please rephrase your question.' }, { status: 200 })
       }
     }
 
