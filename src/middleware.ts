@@ -58,6 +58,7 @@ const SEC_HEADERS: Record<string, string> = {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com",
     "connect-src 'self' https://*.supabase.co https://vfvfulbcaurqkygjrrhh.supabase.co https://api.anthropic.com https://api.openai.com https://generativelanguage.googleapis.com https://api.stripe.com https://gmail.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://vercel.live https://*.vercel.live",
+    "frame-src https://vercel.live https://*.vercel.live",
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
