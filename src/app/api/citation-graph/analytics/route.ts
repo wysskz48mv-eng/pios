@@ -219,6 +219,36 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    if (action === 'get_cron_status') {
+      const { data: runs } = await supabase
+        .from('pios_ingestion_events')
+        .select('completed_at,status,papers_upserted,authors_upserted,links_upserted,notes')
+        .eq('source', 'cron_citation_graph')
+        .order('completed_at', { ascending: false })
+        .limit(10)
+
+      const items = (runs ?? []).map(r => ({
+        completed_at: r.completed_at,
+        status: r.status,
+        papers_upserted: r.papers_upserted ?? 0,
+        authors_upserted: r.authors_upserted ?? 0,
+        links_upserted: r.links_upserted ?? 0,
+        notes: r.notes,
+      }))
+
+      const lastRun = items[0] ?? null
+      const successCount = items.filter(r => String(r.status) === 'success').length
+      const failureCount = items.filter(r => String(r.status) !== 'success').length
+
+      return NextResponse.json({
+        configured: true,
+        last_run: lastRun,
+        recent_runs: items,
+        success_count: successCount,
+        failure_count: failureCount,
+      })
+    }
+
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message ?? 'Internal error' }, { status: 500 })

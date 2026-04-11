@@ -765,6 +765,20 @@ function LiteratureSection() {
   const [ingestMsg,    setIngestMsg]    = useState<string|null>(null)
   const [graphStats,   setGraphStats]   = useState<{papers:number;authors:number;citations:number;fields?:string[]}|null>(null)
   const [loadingGraph, setLoadingGraph] = useState(false)
+  const [cronStatus,   setCronStatus]   = useState<{
+    configured: boolean
+    success_count: number
+    failure_count: number
+    last_run: {
+      completed_at?: string | null
+      status?: string | null
+      papers_upserted?: number | null
+      authors_upserted?: number | null
+      links_upserted?: number | null
+      notes?: string | null
+    } | null
+  }|null>(null)
+  const [loadingCron,  setLoadingCron]  = useState(false)
 
   const loadLibrary = useCallback(async () => {
     setLoadingLib(true)
@@ -942,6 +956,27 @@ function LiteratureSection() {
     setLoadingGraph(false)
   }
 
+  async function loadCitationGraphCronStatus() {
+    setLoadingCron(true)
+    try {
+      const r = await fetch('/api/citation-graph/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_cron_status' }),
+      })
+      const d = r.ok ? await r.json() : null
+      if (d) {
+        setCronStatus({
+          configured: Boolean(d.configured),
+          success_count: Number(d.success_count ?? 0),
+          failure_count: Number(d.failure_count ?? 0),
+          last_run: d.last_run ?? null,
+        })
+      }
+    } catch { /* silent */ }
+    setLoadingCron(false)
+  }
+
   const ACC = 'var(--academic)'
   const tabStyle = (active: boolean) => ({
     fontSize:11, fontWeight:600, padding:'5px 14px', borderRadius:20, cursor:'pointer', border:'none',
@@ -1054,6 +1089,9 @@ function LiteratureSection() {
             <button className="pios-btn pios-btn-ghost" onClick={loadCitationGraphStats} disabled={loadingGraph} style={{ fontSize:11 }}>
               {loadingGraph ? '⟳ Loading…' : '◎ Graph Stats'}
             </button>
+            <button className="pios-btn pios-btn-ghost" onClick={loadCitationGraphCronStatus} disabled={loadingCron} style={{ fontSize:11 }}>
+              {loadingCron ? '⟳ Loading…' : '⌚ Cron Status'}
+            </button>
             {selected.length >= 2 && (
               <button className="pios-btn pios-btn-ghost" onClick={compare} disabled={comparing} style={{ fontSize:11 }}>
                 {comparing ? '⟳ Comparing…' : '⇄ Compare Methods'}
@@ -1090,6 +1128,26 @@ function LiteratureSection() {
                 <span><strong>{graphStats.citations}</strong> citations</span>
                 {graphStats.fields && graphStats.fields.length > 0 && <span>{graphStats.fields.slice(0, 4).join(', ')}</span>}
               </div>
+            </div>
+          )}
+
+          {cronStatus && (
+            <div style={{ marginBottom:12, padding:'10px 12px', borderRadius:8, background:'rgba(245,158,11,0.08)', borderLeft:'3px solid var(--saas)' }}>
+              <div style={{ display:'flex', gap:12, flexWrap:'wrap' as const, fontSize:11, marginBottom:4 }}>
+                <span><strong>{cronStatus.success_count}</strong> recent successes</span>
+                <span><strong>{cronStatus.failure_count}</strong> recent failures</span>
+                {cronStatus.last_run?.completed_at && <span>last run {formatRelative(cronStatus.last_run.completed_at)}</span>}
+                {cronStatus.last_run?.status && (
+                  <span style={{ color: cronStatus.last_run.status === 'success' ? 'var(--fm)' : 'var(--dng)' }}>
+                    {String(cronStatus.last_run.status)}
+                  </span>
+                )}
+              </div>
+              {cronStatus.last_run && (
+                <div style={{ fontSize:10, color:'var(--pios-muted)' }}>
+                  {Number(cronStatus.last_run.papers_upserted ?? 0)} papers · {Number(cronStatus.last_run.authors_upserted ?? 0)} authors · {Number(cronStatus.last_run.links_upserted ?? 0)} links
+                </div>
+              )}
             </div>
           )}
 
