@@ -765,6 +765,8 @@ function LiteratureSection() {
   const [ingestMsg,    setIngestMsg]    = useState<string|null>(null)
   const [graphStats,   setGraphStats]   = useState<{papers:number;authors:number;citations:number;fields?:string[]}|null>(null)
   const [loadingGraph, setLoadingGraph] = useState(false)
+  const [runningCronNow, setRunningCronNow] = useState(false)
+  const [runNowMsg,      setRunNowMsg]      = useState<string|null>(null)
   const [cronStatus,   setCronStatus]   = useState<{
     configured: boolean
     event_logging_enabled?: boolean
@@ -979,6 +981,33 @@ function LiteratureSection() {
     setLoadingCron(false)
   }
 
+  async function runCitationGraphNow() {
+    setRunningCronNow(true)
+    setRunNowMsg(null)
+    try {
+      const r = await fetch('/api/citation-graph/run-now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const d = r.ok ? await r.json() : await r.json().catch(() => null)
+
+      if (!r.ok || !d?.ok) {
+        setRunNowMsg(`Run failed: ${d?.error ?? 'Unknown error'}`)
+      } else {
+        const result = d.result ?? {}
+        setRunNowMsg(
+          `Run complete: ${Number(result.papers_ingested ?? 0)} papers, ` +
+          `${Number(result.authors_upserted ?? 0)} authors, ` +
+          `${Number(result.links_upserted ?? 0)} links.`
+        )
+        await Promise.all([loadCitationGraphStats(), loadCitationGraphCronStatus()])
+      }
+    } catch {
+      setRunNowMsg('Run failed: request error.')
+    }
+    setRunningCronNow(false)
+  }
+
   const ACC = 'var(--academic)'
   const tabStyle = (active: boolean) => ({
     fontSize:11, fontWeight:600, padding:'5px 14px', borderRadius:20, cursor:'pointer', border:'none',
@@ -1094,6 +1123,9 @@ function LiteratureSection() {
             <button className="pios-btn pios-btn-ghost" onClick={loadCitationGraphCronStatus} disabled={loadingCron} style={{ fontSize:11 }}>
               {loadingCron ? '⟳ Loading…' : '⌚ Cron Status'}
             </button>
+            <button className="pios-btn pios-btn-ghost" onClick={runCitationGraphNow} disabled={runningCronNow} style={{ fontSize:11 }}>
+              {runningCronNow ? '⟳ Running…' : '▶ Run Now'}
+            </button>
             {selected.length >= 2 && (
               <button className="pios-btn pios-btn-ghost" onClick={compare} disabled={comparing} style={{ fontSize:11 }}>
                 {comparing ? '⟳ Comparing…' : '⇄ Compare Methods'}
@@ -1119,6 +1151,12 @@ function LiteratureSection() {
           {ingestMsg && (
             <div style={{ marginBottom:12, padding:'8px 10px', borderRadius:8, background:'rgba(108,142,255,0.08)', borderLeft:'3px solid var(--academic)', fontSize:11, color:'var(--pios-muted)' }}>
               {ingestMsg}
+            </div>
+          )}
+
+          {runNowMsg && (
+            <div style={{ marginBottom:12, padding:'8px 10px', borderRadius:8, background:'rgba(108,142,255,0.08)', borderLeft:'3px solid var(--academic)', fontSize:11, color:'var(--pios-muted)' }}>
+              {runNowMsg}
             </div>
           )}
 

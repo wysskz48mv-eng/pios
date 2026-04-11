@@ -60,6 +60,12 @@ Response includes counters:
 - `elapsed_s`
 - `event_logging_enabled`
 
+Owner-safe browser flow:
+
+- Endpoint: `POST /api/citation-graph/run-now`
+- Auth mode: signed-in owner account (`info@veritasiq.io`)
+- This endpoint performs a server-side call to `/api/cron/citation-graph` using `ADMIN_SECRET` or `SEED_SECRET`.
+
 ## 4) Monitoring
 
 UI surface:
@@ -68,6 +74,7 @@ UI surface:
 - Buttons:
   - `Graph Stats`
   - `Cron Status`
+  - `Run Now`
 
 `Cron Status` reads from `/api/citation-graph/analytics` action `get_cron_status`.
 
