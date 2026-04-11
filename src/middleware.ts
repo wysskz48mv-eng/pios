@@ -53,9 +53,7 @@ const SEC_HEADERS: Record<string, string> = {
   'X-Robots-Tag':              'noindex, nofollow, noarchive, nosnippet',
   'Content-Security-Policy': [
     "default-src 'self'",
-    process.env.NODE_ENV === 'production'
-      ? "script-src 'self' 'unsafe-inline'"
-      : "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com",
