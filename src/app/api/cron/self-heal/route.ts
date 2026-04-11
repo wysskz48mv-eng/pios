@@ -186,7 +186,7 @@ export async function GET(req: NextRequest) {
   try {
     const { data: openFindings } = await supabase
       .from('pios_diagnostics')
-      .select('id, check_type, check_name, severity, title, affected_table, recurrence_count, evidence')
+      .select('id, check_type, check_name, severity, title, detail, affected_table, recurrence_count, evidence')
       .in('status', ['open', 'recurring'])
       .order('severity')
       .limit(20)
