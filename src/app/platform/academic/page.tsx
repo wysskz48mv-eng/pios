@@ -743,6 +743,7 @@ function ScoreBadge({ value, label, color }: { value: number | null; label: stri
 
 function LiteratureSection() {
   const [tab,          setTab]          = useState<'search'|'library'>('search')
+  const [scopusInfo,   setScopusInfo]   = useState<{has_access:boolean;institution?:string;method?:string;redirect_url?:string|null;api_enabled?:boolean}|null>(null)
   const [query,        setQuery]        = useState('')
   const [searching,    setSearching]    = useState(false)
   const [results,      setResults]      = useState<LitPaper[]>([])
@@ -773,13 +774,29 @@ function LiteratureSection() {
 
   useEffect(() => { if (tab === 'library') loadLibrary() }, [tab, loadLibrary])
 
+  useEffect(() => {
+    fetch('/api/academic/institutional-access')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.access) setScopusInfo({
+          has_access:   d.access.scopus_access ?? false,
+          institution:  d.access.institution_name ?? null,
+          method:       d.access.api_access_enabled ? 'api' : 'redirect',
+          redirect_url: d.access.web_access_url ?? null,
+          api_enabled:  d.access.api_access_enabled ?? false,
+        })
+      })
+      .catch(() => null)
+  }, [])
+
   async function runSearch() {
     if (!query.trim()) return
     setSearching(true); setResults([])
     try {
+      const searchSources = ['semantic_scholar', 'openalex', 'arxiv', 'crossref', ...(scopusInfo?.api_enabled ? ['scopus'] : [])]
       const r = await fetch('/api/academic/literature', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'search', query, thesis_context: 'AI forecasting FM GCC DBA research' }),
+        body: JSON.stringify({ action: 'search', query, sources: searchSources, log_scopus_redirect: scopusInfo?.method === 'redirect' }),
       })
       const d = r.ok ? await r.json() : {}
       setResults((d.results ?? []) as LitPaper[])
@@ -896,6 +913,18 @@ function LiteratureSection() {
             Search Semantic Scholar · OpenAlex · arXiv · Crossref — AI relevance scoring
           </div>
         </div>
+        {scopusInfo?.has_access && (
+          <div style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 12px', borderRadius:20, background:'rgba(108,142,255,0.1)', border:'1px solid rgba(108,142,255,0.25)', fontSize:11 }}>
+            <span style={{ fontWeight:600, color:'var(--academic)' }}>🎓 {scopusInfo.institution}</span>
+            {scopusInfo.api_enabled
+              ? <span style={{ padding:'1px 8px', borderRadius:10, background:'rgba(52,211,153,0.2)', color:'#34d399', fontSize:10, fontWeight:600 }}>Scopus API Active</span>
+              : <a href={scopusInfo.redirect_url ?? 'https://www.scopus.com'} target="_blank" rel="noopener noreferrer"
+                   style={{ padding:'1px 10px', borderRadius:10, background:'rgba(108,142,255,0.2)', color:'var(--academic)', fontSize:10, fontWeight:600, textDecoration:'none' }}>
+                   Open Scopus ↗
+                 </a>
+            }
+          </div>
+        )}
         <div style={{ display:'flex', gap:4 }}>
           <button style={tabStyle(tab==='search')} onClick={()=>setTab('search')}>Search</button>
           <button style={tabStyle(tab==='library')} onClick={()=>setTab('library')}>My Library</button>

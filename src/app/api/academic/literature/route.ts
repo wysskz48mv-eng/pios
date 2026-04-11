@@ -164,6 +164,57 @@ async function searchCrossref(query: string, limit = 10): Promise<LitResult[]> {
   } catch { return [] }
 }
 
+// ── Scopus API search (Phase 2 — only when institutional API key is set) ──────
+interface ScopusEntry {
+  'dc:title'?: string
+  'dc:creator'?: string
+  'prism:coverDate'?: string
+  'prism:publicationName'?: string
+  'citedby-count'?: string
+  'prism:doi'?: string
+  eid?: string
+  'dc:description'?: string
+  openaccess?: string
+  link?: { '@ref': string; '@href': string }[]
+}
+
+async function searchScopusAPI(
+  query: string,
+  apiKey: string,
+  endpoint: string,
+  limit = 15
+): Promise<LitResult[]> {
+  try {
+    const url = new URL(`${endpoint}`)
+    url.searchParams.set('query', query)
+    url.searchParams.set('count', String(limit))
+    url.searchParams.set('sort', 'relevance')
+    const r = await fetch(url.toString(), {
+      headers: { 'X-ELS-APIKey': apiKey, 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!r.ok) return []
+    const data = await r.json() as { 'search-results'?: { entry?: ScopusEntry[] } }
+    const entries = data['search-results']?.entry ?? []
+    return entries.map(e => ({
+      title:               e['dc:title'] ?? '',
+      authors:             e['dc:creator'] ? [e['dc:creator']] : [],
+      year:                e['prism:coverDate'] ? parseInt(e['prism:coverDate'].split('-')[0]) : null,
+      abstract:            e['dc:description'] ?? null,
+      doi:                 e['prism:doi'] ?? null,
+      arxiv_id:            null,
+      semantic_scholar_id: null,
+      openalex_id:         null,
+      journal:             e['prism:publicationName'] ?? null,
+      venue:               null,
+      source_api:          'scopus',
+      citation_count:      e['citedby-count'] ? parseInt(e['citedby-count']) : 0,
+      pdf_url:             e.link?.find(l => l['@ref'] === 'scopus')?.['@href'] ?? null,
+      relevance_score:     null,
+    }))
+  } catch { return [] }
+}
+
 // ── Unpaywall PDF lookup ───────────────────────────────────────────────────────
 async function fetchUnpaywall(doi: string): Promise<string | null> {
   try {
@@ -302,6 +353,23 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      // Check institutional Scopus access
+      const { data: instAccess } = await supabase
+        .from('user_institutional_access')
+        .select('*, institution:institutional_scopus_config(*)')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      const hasScopusAPI = instAccess?.api_access_enabled && (instAccess?.institution as Record<string, unknown>)?.scopus_api_key_enc
+      const hasScopusRedirect = instAccess?.scopus_access && !hasScopusAPI          // Phase 1
+      const scopusInfo = instAccess?.scopus_access ? {
+        has_access:         true,
+        institution:        instAccess.institution_name,
+        method:             hasScopusAPI ? 'api' : 'redirect',
+        redirect_url:       instAccess.web_access_url,
+        api_enabled:        hasScopusAPI ?? false,
+      } : { has_access: false }
+
       // Run searches in parallel — skip any source not in the requested set
       const [ss, oa, ax, cr] = await Promise.all([
         sources.includes('semantic_scholar') ? searchSemanticScholar(query) : Promise.resolve([]),
@@ -310,10 +378,37 @@ export async function POST(req: NextRequest) {
         sources.includes('crossref')         ? searchCrossref(query)        : Promise.resolve([]),
       ])
 
+      // Phase 2: direct Scopus API if institutional key available
+      let scopusResults: LitResult[] = []
+      if (hasScopusAPI && sources.includes('scopus')) {
+        const inst = instAccess!.institution as Record<string, unknown>
+        scopusResults = await searchScopusAPI(
+          query,
+          String(inst.scopus_api_key_enc ?? ''),    // decryption would happen here in production
+          String(inst.scopus_api_endpoint ?? 'https://api.elsevier.com/content/search/scopus'),
+        )
+        // Audit log
+        await supabase.from('scopus_search_log').insert({
+          user_id:        user.id,
+          institution_id: instAccess?.institution_id,
+          query,
+          results_count:  scopusResults.length,
+          method:         'api',
+        })
+      } else if (hasScopusRedirect && body.log_scopus_redirect) {
+        await supabase.from('scopus_search_log').insert({
+          user_id:        user.id,
+          institution_id: instAccess?.institution_id,
+          query,
+          results_count:  0,
+          method:         'redirect',
+        })
+      }
+
       // Deduplicate by DOI, then by title prefix
       const seen = new Set<string>()
       const combined: LitResult[] = []
-      for (const p of [...ss, ...oa, ...ax, ...cr]) {
+      for (const p of [...ss, ...oa, ...ax, ...cr, ...scopusResults]) {
         const key = p.doi ?? p.title.toLowerCase().slice(0, 40)
         if (!seen.has(key)) { seen.add(key); combined.push(p) }
       }
@@ -323,15 +418,21 @@ export async function POST(req: NextRequest) {
       scored.sort((a, b) => (b.relevance_score ?? 0) - (a.relevance_score ?? 0))
 
       // Log search
+      const sourcesUsed = [...sources, ...(scopusResults.length > 0 ? ['scopus'] : [])]
       await supabase.from('literature_search_history').insert({
         user_id:          user.id,
         query,
-        filters:          { sources, thesis_context: thesisContext },
+        filters:          { sources: sourcesUsed, thesis_context: thesisContext },
         result_count:     scored.length,
-        sources_searched: sources,
+        sources_searched: sourcesUsed,
       })
 
-      return NextResponse.json({ results: scored, total: scored.length, sources_used: sources })
+      return NextResponse.json({
+        results:      scored,
+        total:        scored.length,
+        sources_used: sourcesUsed,
+        scopus:       scopusInfo,
+      })
     }
 
     // ─── action: save ─────────────────────────────────────────────────────────
