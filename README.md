@@ -172,6 +172,8 @@ Notes:
 - Set `BASE_URL` to target non-local environments, for example `BASE_URL=https://pios.veritasiq.io npm run api:test`.
 - The script first verifies the app is reachable, then runs unauthenticated checks, then authenticated create/read/step/archive checks if auth cookie input is provided.
 - Authenticated mode accepts cookie, bearer token, or email/password exchange (requires Supabase public URL and anon key envs).
+- If auth env values are stale/invalid, the script logs a warning and skips authenticated checks by default.
+- Set `WORKBENCH_REQUIRE_AUTH=1` to fail fast when authenticated checks cannot run (recommended in CI).
 - In restricted networks/CI where reachability checks are blocked, set `WORKBENCH_SKIP_PREFLIGHT=1`.
 - The script auto-loads `.env.local` and `.env` (without overriding already-set shell variables).
 

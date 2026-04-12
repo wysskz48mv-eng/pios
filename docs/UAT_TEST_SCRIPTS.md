@@ -379,6 +379,16 @@
 
 ---
 
+## 19. Workbench API Smoke (strict mode)
+
+### 19.1 Enforce authenticated checks
+- [ ] Set one auth mode (`WORKBENCH_AUTH_COOKIE` or `WORKBENCH_AUTH_BEARER` or `WORKBENCH_AUTH_EMAIL` + `WORKBENCH_AUTH_PASSWORD`)
+- [ ] Set `WORKBENCH_REQUIRE_AUTH=1`
+- [ ] Run `npm run api:test`
+- [ ] Verify suite fails if authenticated path cannot execute
+
+---
+
 ## Sign-off
 
 | Tester | Date | Result | Notes |

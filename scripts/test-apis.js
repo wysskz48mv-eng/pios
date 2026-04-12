@@ -16,6 +16,7 @@ const path = require('path')
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const SKIP_PREFLIGHT = process.env.WORKBENCH_SKIP_PREFLIGHT === '1'
+const REQUIRE_AUTH = process.env.WORKBENCH_REQUIRE_AUTH === '1'
 
 function loadEnvFiles() {
   const files = ['.env.local', '.env']
@@ -112,8 +113,16 @@ async function resolveAuth() {
   const bearer = getAuthBearer()
   if (bearer) return { cookie: '', bearer, source: 'bearer' }
 
-  const passwordBearer = await exchangePasswordForBearer()
-  if (passwordBearer) return { cookie: '', bearer: passwordBearer, source: 'password' }
+  try {
+    const passwordBearer = await exchangePasswordForBearer()
+    if (passwordBearer) return { cookie: '', bearer: passwordBearer, source: 'password' }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (REQUIRE_AUTH) {
+      throw new Error(`Authenticated suite required but auth setup failed: ${message}`)
+    }
+    console.log(`[workbench] WARN auth exchange skipped: ${message}`)
+  }
 
   return { cookie: '', bearer: '', source: 'none' }
 }
@@ -231,6 +240,9 @@ async function main() {
   }
 
   if (!auth.cookie && !auth.bearer) {
+    if (REQUIRE_AUTH) {
+      throw new Error('Authenticated suite required but no valid auth credentials were resolved')
+    }
     console.log(
       '\n[workbench] Skipping authenticated suite: set cookie, bearer token, or WORKBENCH_AUTH_EMAIL/WORKBENCH_AUTH_PASSWORD.'
     )
