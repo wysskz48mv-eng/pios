@@ -43,9 +43,12 @@ alter table public.user_profiles
 
 update public.user_profiles
 set active_modules = case persona_type
-  when 'executive' then array['VIQ-ST-01', 'VIQ-ST-02', 'VIQ-ST-03', 'VIQ-SC-01', 'VIQ-SC-02', 'VIQ-OD-01', 'VIQ-RK-01']
-  when 'consultant' then array['VIQ-PS-01', 'VIQ-PS-02', 'VIQ-ST-01', 'VIQ-SC-01', 'VIQ-FA-01', 'VIQ-EV-01']
-  when 'academic' then array['VIQ-PS-04', 'VIQ-EV-01', 'VIQ-EV-02', 'VIQ-ST-07']
+  when 'CEO'            then array['VIQ-ST-01', 'VIQ-ST-02', 'VIQ-ST-03', 'VIQ-SC-01', 'VIQ-SC-02', 'VIQ-OD-01', 'VIQ-RK-01']
+  when 'EXECUTIVE'      then array['VIQ-ST-01', 'VIQ-ST-02', 'VIQ-ST-03', 'VIQ-SC-01', 'VIQ-SC-02', 'VIQ-OD-01', 'VIQ-RK-01']
+  when 'CHIEF_OF_STAFF' then array['VIQ-ST-01', 'VIQ-ST-02', 'VIQ-ST-03', 'VIQ-SC-01', 'VIQ-SC-02', 'VIQ-OD-01', 'VIQ-RK-01']
+  when 'WHOLE_LIFE'     then array['VIQ-ST-01', 'VIQ-ST-02', 'VIQ-ST-03', 'VIQ-SC-01', 'VIQ-SC-02', 'VIQ-OD-01', 'VIQ-RK-01']
+  when 'CONSULTANT'     then array['VIQ-PS-01', 'VIQ-PS-02', 'VIQ-ST-01', 'VIQ-SC-01', 'VIQ-FA-01', 'VIQ-EV-01']
+  when 'ACADEMIC'       then array['VIQ-PS-04', 'VIQ-EV-01', 'VIQ-EV-02', 'VIQ-ST-07']
   else active_modules
 end,
 updated_at = now()
@@ -53,7 +56,7 @@ where coalesce(array_length(active_modules, 1), 0) = 0
    or not public.validate_framework_codes(active_modules);
 
 update public.user_profiles
-set persona_type = 'executive',
+set persona_type = 'CEO',
     active_modules = array['VIQ-ST-01', 'VIQ-ST-02', 'VIQ-ST-03', 'VIQ-SC-01', 'VIQ-SC-02', 'VIQ-OD-01', 'VIQ-RK-01'],
     updated_at = now()
 where id = 'bc8b18d0-8e0d-4eb5-bd15-bbf9c374dbce';

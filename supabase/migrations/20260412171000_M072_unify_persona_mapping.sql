@@ -1,91 +1,125 @@
-begin;
+-- M072: Unify persona mapping, add enum constraint, backfill invalid personas
+-- PIOS™ v3.5.0 | Critical Issue: INC-001 Persona Corruption Fix
+-- Generated: 2026-04-12
 
-create or replace function public.normalize_persona_type(input text)
-returns text
-language sql
-immutable
-as $$
-  select case lower(coalesce(input, ''))
-    when 'ceo' then 'executive'
-    when 'founder' then 'executive'
-    when 'chief_of_staff' then 'executive'
-    when 'whole_life' then 'executive'
-    when 'executive' then 'executive'
-    when 'consultant' then 'consultant'
-    when 'professional' then 'consultant'
-    when 'pro' then 'consultant'
-    when 'academic' then 'academic'
-    when 'starter' then 'academic'
-    else 'executive'
-  end;
-$$;
+-- ─────────────────────────────────────────────────────────────────────────
+-- 1. Create enum type for personas (if not exists)
+-- ─────────────────────────────────────────────────────────────────────────
 
-create table if not exists public.persona_change_audit (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  old_persona text,
-  new_persona text not null,
-  changed_at timestamptz not null default now()
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'persona_enum') THEN
+    CREATE TYPE persona_enum AS ENUM (
+      'CEO',
+      'CONSULTANT',
+      'ACADEMIC',
+      'CHIEF_OF_STAFF',
+      'EXECUTIVE',
+      'WHOLE_LIFE'
+    );
+  END IF;
+END $$;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- 2. Backfill invalid personas to valid equivalents
+-- ─────────────────────────────────────────────────────────────────────────
+
+-- Map: 'professional' → 'CONSULTANT'
+UPDATE user_profiles
+SET persona_type = 'CONSULTANT'
+WHERE persona_type = 'professional'
+  AND persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- Map: 'founder' → 'CEO'
+UPDATE user_profiles
+SET persona_type = 'CEO'
+WHERE persona_type = 'founder'
+  AND persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- Map: 'starter' → 'ACADEMIC'
+UPDATE user_profiles
+SET persona_type = 'ACADEMIC'
+WHERE persona_type = 'starter'
+  AND persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- Map: 'pro' → 'CONSULTANT'
+UPDATE user_profiles
+SET persona_type = 'CONSULTANT'
+WHERE persona_type = 'pro'
+  AND persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- Map: 'enterprise' → 'EXECUTIVE'
+UPDATE user_profiles
+SET persona_type = 'EXECUTIVE'
+WHERE persona_type = 'enterprise'
+  AND persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- Map: 'executive' (lowercase) → 'EXECUTIVE'
+UPDATE user_profiles
+SET persona_type = 'EXECUTIVE'
+WHERE persona_type = 'executive'
+  AND persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- Map: 'consultant' (lowercase) → 'CONSULTANT'
+UPDATE user_profiles
+SET persona_type = 'CONSULTANT'
+WHERE persona_type = 'consultant'
+  AND persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- Map: 'academic' (lowercase) → 'ACADEMIC'
+UPDATE user_profiles
+SET persona_type = 'ACADEMIC'
+WHERE persona_type = 'academic'
+  AND persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- Any remaining unknown → default to 'CONSULTANT'
+UPDATE user_profiles
+SET persona_type = 'CONSULTANT'
+WHERE persona_type NOT IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE');
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- 3. Add CHECK constraint (PostgreSQL, not enum cast for compatibility)
+-- ─────────────────────────────────────────────────────────────────────────
+
+ALTER TABLE user_profiles
+DROP CONSTRAINT IF EXISTS persona_type_valid;
+
+ALTER TABLE user_profiles
+ADD CONSTRAINT persona_type_valid CHECK (
+  persona_type IN ('CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE')
 );
 
-alter table public.persona_change_audit enable row level security;
+-- ─────────────────────────────────────────────────────────────────────────
+-- 4. Set default for new users
+-- ─────────────────────────────────────────────────────────────────────────
 
-drop policy if exists persona_change_audit_own on public.persona_change_audit;
-create policy persona_change_audit_own
-  on public.persona_change_audit
-  for select
-  to authenticated
-  using (user_id = auth.uid());
+ALTER TABLE user_profiles
+ALTER COLUMN persona_type SET DEFAULT 'CONSULTANT';
 
-create or replace function public.audit_persona_change()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if new.persona_type is distinct from old.persona_type then
-    insert into public.persona_change_audit(user_id, old_persona, new_persona, changed_at)
-    values (new.id, old.persona_type, new.persona_type, now());
-  end if;
-  return new;
-end;
-$$;
+-- ─────────────────────────────────────────────────────────────────────────
+-- 5. Create audit log for persona changes (future use)
+-- ─────────────────────────────────────────────────────────────────────────
 
-drop trigger if exists trg_audit_persona_change on public.user_profiles;
-create trigger trg_audit_persona_change
-before update of persona_type on public.user_profiles
-for each row
-execute function public.audit_persona_change();
+CREATE TABLE IF NOT EXISTS persona_change_audit (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  old_persona TEXT NOT NULL,
+  new_persona TEXT NOT NULL,
+  changed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  changed_by TEXT DEFAULT 'system',
+  reason TEXT
+);
 
-update public.user_profiles
-set persona_type = public.normalize_persona_type(persona_type),
-    updated_at = now()
-where persona_type is distinct from public.normalize_persona_type(persona_type);
+COMMENT ON TABLE persona_change_audit IS 'Audit trail for persona type changes during M072 migration';
 
-alter table public.user_profiles
-  drop constraint if exists persona_type_valid;
+-- ─────────────────────────────────────────────────────────────────────────
+-- 6. Rollback function (if needed)
+-- ─────────────────────────────────────────────────────────────────────────
 
-alter table public.user_profiles
-  add constraint persona_type_valid
-  check (persona_type in ('executive', 'consultant', 'academic'));
-
-create or replace function public.rollback_persona_migration()
-returns text
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  alter table public.user_profiles
-    drop constraint if exists persona_type_valid;
-
-  drop trigger if exists trg_audit_persona_change on public.user_profiles;
-  drop function if exists public.audit_persona_change();
-  drop function if exists public.normalize_persona_type(text);
-
-  return 'rollback_persona_migration complete';
-end;
-$$;
-
-commit;
+CREATE OR REPLACE FUNCTION rollback_persona_migration()
+RETURNS TEXT AS $$
+BEGIN
+  ALTER TABLE user_profiles DROP CONSTRAINT IF EXISTS persona_type_valid;
+  ALTER TABLE user_profiles ALTER COLUMN persona_type DROP DEFAULT;
+  RETURN 'Persona constraint removed. Manual backfill may be needed.';
+END;
+$$ LANGUAGE plpgsql;

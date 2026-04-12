@@ -44,7 +44,6 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
     const personaPackaging = getPersonaPackaging(canonicalPersona)
-    const normalizedPersona = personaPackaging.routePersona
 
     let personaDefaultModules = personaPackaging.fallbackFrameworkCodes
     try {
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest) {
       id:              user.id,
       full_name:       typeof full_name === 'string' && full_name.trim() ? full_name.trim() : fallbackFullName,
       plan:            'free',
-      persona_type:    normalizedPersona,
+      persona_type:    canonicalPersona,
       onboarded:       true,
       onboarding_step: 9,
       onboarding_completed_at: now,
@@ -197,7 +196,7 @@ export async function POST(req: NextRequest) {
     // exec_intelligence_config
     try {
       await admin.from('exec_intelligence_config').upsert(
-        { user_id: user.id, persona: normalizedPersona, updated_at: now },
+        { user_id: user.id, persona: canonicalPersona, updated_at: now },
         { onConflict: 'user_id' }
       )
     } catch (e) { console.error('[onboarding] exec_intelligence_config (non-fatal):', e) }
@@ -278,7 +277,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      ok: true, persona: normalizedPersona,
+      ok: true, persona: canonicalPersona,
       modules: resolvedModules.length,
       deploy: deploy_mode, theme: normalizedTheme,
     })

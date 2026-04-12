@@ -43,13 +43,8 @@ create policy onboarding_progress_own
 insert into public.user_personas (user_id, primary_persona, secondary_persona, tier, created_at, updated_at)
 select
   up.id as user_id,
-  case up.persona_type
-    when 'executive' then 'CEO'
-    when 'consultant' then 'CONSULTANT'
-    when 'academic' then 'ACADEMIC'
-    else 'EXECUTIVE'
-  end as primary_persona,
-  case when up.persona_type = 'executive' then 'CHIEF_OF_STAFF' else null end as secondary_persona,
+  up.persona_type as primary_persona,
+  case when up.persona_type = 'CEO' then 'CHIEF_OF_STAFF' else null end as secondary_persona,
   'standard' as tier,
   now(),
   now()
