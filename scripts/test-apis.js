@@ -12,6 +12,7 @@ const fs = require('fs')
 const path = require('path')
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
+const SKIP_PREFLIGHT = process.env.WORKBENCH_SKIP_PREFLIGHT === '1'
 
 function getAuthCookie() {
   const direct = process.env.WORKBENCH_AUTH_COOKIE || ''
@@ -37,8 +38,10 @@ async function ensureServerReachable() {
       throw new Error(`Server returned ${res.status}`)
     }
   } catch (error) {
+    const detail = error instanceof Error ? ` (${error.message})` : ''
     throw new Error(
-      `Cannot reach app at ${BASE_URL}. Start the app with "npm run dev" (or set BASE_URL).`
+      `Cannot reach app at ${BASE_URL}${detail}. Start the app with "npm run dev" (or set BASE_URL). ` +
+      'If this is a restricted network/CI environment, set WORKBENCH_SKIP_PREFLIGHT=1.'
     )
   }
 }
@@ -123,7 +126,11 @@ async function runAuthenticatedSuite() {
 
 async function main() {
   console.log(`[workbench] BASE_URL=${BASE_URL}`)
-  await ensureServerReachable()
+  if (!SKIP_PREFLIGHT) {
+    await ensureServerReachable()
+  } else {
+    console.log('[workbench] Skipping reachability preflight (WORKBENCH_SKIP_PREFLIGHT=1).')
+  }
 
   await runUnauthenticatedSuite()
 

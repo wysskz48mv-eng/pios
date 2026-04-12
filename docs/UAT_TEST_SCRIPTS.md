@@ -282,6 +282,7 @@
 - [ ] Set `BASE_URL=https://pios.veritasiq.io`
 - [ ] Run `npm run api:test`
 - [ ] Verify expected route protection behavior on hosted environment
+- [ ] If network restrictions block preflight, set `WORKBENCH_SKIP_PREFLIGHT=1`
 
 ---
 

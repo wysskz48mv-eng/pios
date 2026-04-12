@@ -159,6 +159,7 @@ WORKBENCH_AUTH_COOKIE_FILE=.secrets/workbench-cookie.txt npm run api:test
 Notes:
 - Set `BASE_URL` to target non-local environments, for example `BASE_URL=https://pios.veritasiq.io npm run api:test`.
 - The script first verifies the app is reachable, then runs unauthenticated checks, then authenticated create/read/step/archive checks if auth cookie input is provided.
+- In restricted networks/CI where reachability checks are blocked, set `WORKBENCH_SKIP_PREFLIGHT=1`.
 
 ---
 
