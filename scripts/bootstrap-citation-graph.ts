@@ -119,6 +119,11 @@ async function main() {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
   }
 
+  const supabaseHost = (() => {
+    try { return new URL(supabaseUrl).host } catch { return supabaseUrl }
+  })()
+  console.log(`[bootstrap] target_supabase=${supabaseHost}`)
+
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
 
   const defaultQueries = [
@@ -386,7 +391,11 @@ async function main() {
       const normalized = norm(name)
       if (!normalized) continue
 
-      const { data: author, error: authorErr } = await upsertAuthor({ name, normalized_name: normalized })
+      const { data: author, error: authorErr } = await upsertAuthor({
+        name,
+        display_name: name,
+        normalized_name: normalized,
+      })
 
       if (authorErr || !author?.id) {
         authorErrors += 1
@@ -421,7 +430,7 @@ async function main() {
     const age = Math.max(0, nowYear - year)
     const recency = age <= 1 ? 1.5 : age <= 3 ? 1.35 : age <= 5 ? 1.15 : 1.0
     const citations = (p.citation_count as number | null) ?? 0
-    const influence = Math.min(999999999, Math.round(citations * recency * 1000) / 1000)
+    const influence = Math.min(9999.99, Math.round(citations * recency * 100) / 100)
 
     const { error } = await admin.from('pios_papers').update({ influence_score: influence }).eq('id', p.id)
     if (!error) {

@@ -7,7 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:push": "supabase db push",
+    "db:seed": "npx ts-node --skip-project scripts/seed-m064-m068.ts",
+    "db:reset": "supabase db reset",
+    "api:test": "npx ts-node scripts/test-apis.ts",
+    "deploy:staging": "vercel",
+    "deploy:production": "vercel --prod",
+    "logs:vercel": "vercel logs",
+    "clean": "rm -rf .next out",
+    "setup": "npm install && npm run db:push && npm run db:seed"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",

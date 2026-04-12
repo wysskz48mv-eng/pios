@@ -1,10 +1,25 @@
 'use client'
 import { useState } from 'react'
 const DOMAINS = ['Career','Finance','Health','Relationships','Personal Development','Spirituality','Recreation','Community','Family','Education']
-export function DomainModal({ domain, onClose, onCreated }) {
+
+type Domain = {
+  id: string
+  domain_name: string
+  description?: string
+  color_code?: string
+  priority_rank?: number
+}
+
+type DomainModalProps = {
+  domain?: Domain
+  onClose: () => void
+  onCreated: () => void
+}
+
+export function DomainModal({ domain, onClose, onCreated }: DomainModalProps) {
   const [formData, setFormData] = useState({domain_name: domain?.domain_name || '', description: domain?.description || '', color_code: domain?.color_code || '#FF6B6B', priority_rank: domain?.priority_rank || 5})
   const [loading, setLoading] = useState(false)
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     try {

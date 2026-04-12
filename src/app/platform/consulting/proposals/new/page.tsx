@@ -87,7 +87,8 @@ export default function NewProposalPage() {
         }),
       })
       const data = await res.json()
-      if (data.id) router.push(`/platform/consulting/proposals/${data.id}`)
+      const proposalId = data?.id ?? data?.proposal?.id
+      if (proposalId) router.push(`/platform/consulting/proposals/${proposalId}`)
     } catch {
       setSaving(false)
     }

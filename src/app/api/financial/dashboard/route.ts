@@ -93,7 +93,8 @@ export async function GET() {
       const paid = toAmount(invoice.amount_paid)
       const due = invoice.amount_due == null ? Math.max(total - paid, 0) : toAmount(invoice.amount_due)
       const invoiceType = invoice.invoice_type ?? 'receivable'
-      const dueDate = invoice.due_date ? new Date(invoice.due_date) : null
+      const dueDateStr = invoice.due_date
+      const dueDate = dueDateStr ? new Date(dueDateStr) : null
       const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date) : null
       const paidDate = invoice.paid_date ? new Date(invoice.paid_date) : null
       const isReceivable = invoiceType !== 'payable' && invoiceType !== 'expense'
@@ -124,7 +125,7 @@ export async function GET() {
         }
       }
 
-      if (dueDate && due > 0 && invoice.status !== 'cancelled' && invoice.due_date >= monthStart && invoice.due_date <= next30Str) {
+      if (dueDate && dueDateStr && due > 0 && invoice.status !== 'cancelled' && dueDateStr >= monthStart && dueDateStr <= next30Str) {
         cashFlow30day += isReceivable ? due : -due
       }
     }

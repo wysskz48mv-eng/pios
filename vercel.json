@@ -157,6 +157,15 @@
     },
     "src/app/api/cron/citation-graph/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/postdoc/career-planner/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/postdoc/industry/cv-translator/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/academic/journal-finder/route.ts": {
+      "maxDuration": 15
     }
   }
 }

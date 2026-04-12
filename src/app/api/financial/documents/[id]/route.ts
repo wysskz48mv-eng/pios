@@ -16,7 +16,9 @@ import {
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-async function loadDocumentBundle(supabase: ReturnType<typeof getUserTenantProfile> extends Promise<infer T> ? T['supabase'] : never, tenantId: string, id: string) {
+type UserTenantProfile = Awaited<ReturnType<typeof getUserTenantProfile>>
+
+async function loadDocumentBundle(supabase: UserTenantProfile['supabase'], tenantId: string, id: string) {
   const { data: document, error: documentError } = await supabase
     .from('documents')
     .select('*')

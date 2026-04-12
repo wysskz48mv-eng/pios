@@ -251,17 +251,21 @@ async function executeCitationGraphCron() {
     const elapsed = Math.round((Date.now() - started) / 1000)
 
     if (cronActorUserId) {
-      await admin.from('pios_ingestion_events').insert({
-        user_id: cronActorUserId,
-        source: 'cron_citation_graph',
-        papers_considered: queries.length * perSourceLimit * 2,
-        papers_upserted: totalIngested,
-        authors_upserted: totalAuthors,
-        links_upserted: totalLinks,
-        completed_at: new Date().toISOString(),
-        status: 'success',
-        notes: `queries=${queries.join(' | ')}`,
-      }).then(() => null).catch(() => null)
+      try {
+        await admin.from('pios_ingestion_events').insert({
+          user_id: cronActorUserId,
+          source: 'cron_citation_graph',
+          papers_considered: queries.length * perSourceLimit * 2,
+          papers_upserted: totalIngested,
+          authors_upserted: totalAuthors,
+          links_upserted: totalLinks,
+          completed_at: new Date().toISOString(),
+          status: 'success',
+          notes: `queries=${queries.join(' | ')}`,
+        })
+      } catch {
+        // Avoid failing the cron response when logging cannot be persisted.
+      }
     }
 
     return NextResponse.json({
@@ -280,17 +284,21 @@ async function executeCitationGraphCron() {
     const message = error instanceof Error ? error.message : 'Citation graph cron failed'
 
     if (cronActorUserId) {
-      await admin.from('pios_ingestion_events').insert({
-        user_id: cronActorUserId,
-        source: 'cron_citation_graph',
-        papers_considered: queries.length * perSourceLimit * 2,
-        papers_upserted: totalIngested,
-        authors_upserted: totalAuthors,
-        links_upserted: totalLinks,
-        completed_at: new Date().toISOString(),
-        status: 'failed',
-        notes: `error=${message}; queries=${queries.join(' | ')}`,
-      }).then(() => null).catch(() => null)
+      try {
+        await admin.from('pios_ingestion_events').insert({
+          user_id: cronActorUserId,
+          source: 'cron_citation_graph',
+          papers_considered: queries.length * perSourceLimit * 2,
+          papers_upserted: totalIngested,
+          authors_upserted: totalAuthors,
+          links_upserted: totalLinks,
+          completed_at: new Date().toISOString(),
+          status: 'failed',
+          notes: `error=${message}; queries=${queries.join(' | ')}`,
+        })
+      } catch {
+        // Intentionally no-op.
+      }
     }
 
     return NextResponse.json({

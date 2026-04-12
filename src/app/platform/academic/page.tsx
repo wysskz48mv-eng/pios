@@ -1257,7 +1257,7 @@ function LiteratureSection() {
                   </div>
                 </div>
               )}
-              {comparison.recommended_approach && (
+              {Boolean(comparison.recommended_approach) && (
                 <p style={{ fontSize:11, color:'var(--pios-muted)', lineHeight:1.5, marginTop:8 }}>{String(comparison.recommended_approach)}</p>
               )}
             </div>
