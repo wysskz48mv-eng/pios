@@ -4,14 +4,15 @@ import { requireAdminRouteEnabled, requireOwnerEmail } from '@/lib/security/rout
 
 /**
  * POST /api/stripe/setup
- * Creates the 3 PIOS subscription products + prices in Stripe.
+ * Creates the adopted PIOS subscription products + prices in Stripe.
  * Run ONCE after adding STRIPE_SECRET_KEY to Vercel.
  * Returns the price IDs — paste them into Vercel env vars.
  *
  * Products created:
- *   PIOS Starter   — £29/month
- *   PIOS Pro       — £79/month
- *   PIOS Enterprise — £199/month
+ *   PIOS Spark      — £16/month
+ *   PIOS Pro        — £35/month
+ *   PIOS Executive  — £65/month
+ *   PIOS Enterprise — £75/seat/month
  *
  * VeritasIQ Technologies Ltd
  */
@@ -20,24 +21,31 @@ export const dynamic = 'force-dynamic'
 
 const PLANS = [
   {
-    envKey:      'NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID',
-    name:        'PIOS Starter',
-    description: 'Personal Intelligence OS — Starter tier. NemoClaw™ AI, core platform modules, 100 AI credits/month.',
-    amount:      2900,   // £29.00 in pence
-    tier:        'starter',
+    envKey:      'STRIPE_PRICE_SPARK',
+    name:        'PIOS Spark',
+    description: 'PIOS Spark — entry tier for students and early-career professionals.',
+    amount:      1600,
+    tier:        'spark',
   },
   {
-    envKey:      'NEXT_PUBLIC_STRIPE_PRO_PRICE_ID',
+    envKey:      'STRIPE_PRICE_PRO',
     name:        'PIOS Pro',
-    description: 'PIOS Pro — full platform access. 500 AI credits/month, all 13 NemoClaw™ frameworks, content pipeline.',
-    amount:      7900,
+    description: 'PIOS Pro — consultant tier with full framework-led professional workspace.',
+    amount:      3500,
     tier:        'pro',
   },
   {
-    envKey:      'NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID',
+    envKey:      'STRIPE_PRICE_EXECUTIVE',
+    name:        'PIOS Executive',
+    description: 'PIOS Executive — premium decision-support and operating system for leaders.',
+    amount:      6500,
+    tier:        'executive',
+  },
+  {
+    envKey:      'STRIPE_PRICE_ENTERPRISE',
     name:        'PIOS Enterprise',
-    description: 'PIOS Enterprise — unlimited AI credits, white-label options, priority support.',
-    amount:      19900,
+    description: 'PIOS Enterprise — team-grade controls, compliance, and enterprise support.',
+    amount:      7500,
     tier:        'enterprise',
   },
 ]
@@ -163,18 +171,20 @@ export async function GET() {
   }
 
   const existing = [
-    process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID,
-    process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
-    process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID,
+    process.env.STRIPE_PRICE_SPARK ?? process.env.STRIPE_PRICE_STUDENT,
+    process.env.STRIPE_PRICE_PRO,
+    process.env.STRIPE_PRICE_EXECUTIVE ?? process.env.STRIPE_PRICE_PROFESSIONAL,
+    process.env.STRIPE_PRICE_ENTERPRISE ?? process.env.STRIPE_PRICE_TEAM,
   ].filter(Boolean)
 
   return NextResponse.json({
     price_ids_configured: existing.length,
-    starter:    process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID    ?? 'NOT SET',
-    pro:        process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID         ?? 'NOT SET',
-    enterprise: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID ?? 'NOT SET',
-    ready:      existing.length === 3,
-    instructions: existing.length < 3
+    spark:      process.env.STRIPE_PRICE_SPARK      ?? process.env.STRIPE_PRICE_STUDENT      ?? 'NOT SET',
+    pro:        process.env.STRIPE_PRICE_PRO        ?? 'NOT SET',
+    executive:  process.env.STRIPE_PRICE_EXECUTIVE  ?? process.env.STRIPE_PRICE_PROFESSIONAL ?? 'NOT SET',
+    enterprise: process.env.STRIPE_PRICE_ENTERPRISE ?? process.env.STRIPE_PRICE_TEAM         ?? 'NOT SET',
+    ready:      existing.length === 4,
+    instructions: existing.length < 4
       ? 'POST to /api/stripe/setup to create products and get price IDs'
       : 'All price IDs configured',
   })

@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { Loader2, CheckCircle2, AlertCircle, ExternalLink, CreditCard } from 'lucide-react'
 
-const PLAN_COL = { student:'#60a5fa', professional:'#a78bfa', executive:'#C9A84C', enterprise:'#4ade80' }
+const PLAN_COL = { spark:'#60a5fa', pro:'#a78bfa', executive:'#C9A84C', enterprise:'#4ade80' }
 const STATUS_STYLE = {
   active:    { bg:'#f0fdf4', text:'#15803d', label:'Active'    },
   trialing:  { bg:'#eff6ff', text:'#1d4ed8', label:'Trial'     },
@@ -14,10 +14,10 @@ const STATUS_STYLE = {
 }
 
 const PLANS = [
-  { id:'student',      name:'Student',      price:9,   credits:2000,   features:['Academic Hub','CPD Tracker','Supervisor logs','2,000 AI credits/mo'] },
-  { id:'professional', name:'Professional', price:29,  credits:10000,  features:['All Student','Professional workspace','NemoClaw™ AI','10,000 AI credits/mo','Viva prep module'] },
-  { id:'executive',    name:'Executive',    price:79,  credits:50000,  features:['All Professional','Chief of Staff daily brief','Knowledge graph','Background agents','50,000 AI credits/mo'] },
-  { id:'enterprise',   name:'Enterprise',   price:199, credits:200000, features:['All Executive','Custom AI model routing','White-glove onboarding','SLA','200,000 AI credits/mo'] },
+  { id:'spark',      name:'Spark',      price:16, credits:2000,   features:['Academic Hub','CPD Tracker','Supervisor logs','2,000 AI credits/mo'] },
+  { id:'pro',        name:'Pro',        price:35, credits:10000,  features:['All Spark','Professional workspace','NemoClaw™ AI','10,000 AI credits/mo','Viva prep module'] },
+  { id:'executive',  name:'Executive',  price:65, credits:50000,  features:['All Pro','Chief of Staff daily brief','Knowledge graph','Background agents','50,000 AI credits/mo'] },
+  { id:'enterprise', name:'Enterprise', price:75, credits:200000, features:['All Executive','Team controls + compliance','White-glove onboarding','SLA support','200,000 AI credits/mo'] },
 ]
 
 export default function BillingPage() {
@@ -46,10 +46,7 @@ export default function BillingPage() {
   async function startCheckout(planId) {
     setCheckLoad(planId)
     try {
-      const r = await fetch('/api/stripe/checkout?plan=' + planId)
-      const d = await r.json()
-      if (d.url) window.location.href = d.url
-      else alert(d.error || 'Checkout unavailable — configure Stripe live keys first')
+      window.location.href = '/api/stripe/checkout?plan=' + planId
     } catch (err) { console.error('[PIOS]', err) }
     setCheckLoad('')
   }
@@ -182,7 +179,7 @@ export default function BillingPage() {
           <div style={{fontSize:12,color:'var(--color-text-secondary)',lineHeight:2}}>
             <div>1. Add <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_SECRET_KEY</code> (sk_live_…) to Vercel environment variables</div>
             <div>2. Add <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_WEBHOOK_SECRET</code> for subscription event handling</div>
-            <div>3. Set Stripe price IDs: <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_PROFESSIONAL_PRICE_ID</code>, etc.</div>
+            <div>3. Set Stripe price IDs: <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_PRICE_SPARK</code>, <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_PRICE_PRO</code>, <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_PRICE_EXECUTIVE</code>, <code style={{background:'var(--color-background-secondary)',padding:'1px 6px',borderRadius:4,fontFamily:'var(--font-mono,monospace)'}}>STRIPE_PRICE_ENTERPRISE</code></div>
             <div>4. Redeploy Vercel to pick up new env vars</div>
           </div>
         </div>

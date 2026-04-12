@@ -76,7 +76,7 @@ PIOS does not send emails, create calendar events, or modify Drive files without
           },
           {
             title: '7. Payments and subscriptions',
-            body: `Paid plans are billed monthly or annually via Stripe. Prices on the public pricing pages are shown in GBP. As at the effective date of these Terms, individual plans are advertised as Starter £12/month, Pro £28/month, and Executive £36/month, with separate annual billing options. Enterprise pricing is quoted separately and may be set out in a written proposal or order form.
+            body: `Paid plans are billed monthly or annually via Stripe. Prices on the public pricing pages are shown in GBP. As at the effective date of these Terms, individual plans are advertised as Spark £16/month, Pro £35/month, and Executive £65/month. Enterprise pricing is quoted separately by seat band (from £55/seat/month) and may be set out in a written proposal or order form.
 
 You may cancel at any time via Settings → Billing. Cancellation takes effect at the end of the current billing period. We do not offer refunds for partial months unless required by applicable law.
 

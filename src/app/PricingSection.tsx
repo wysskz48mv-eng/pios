@@ -6,9 +6,9 @@ import s from './landing.module.css'
 
 const PLANS = [
   {
-    name: 'Starter',
-    monthly: 15,
-    annual: 12,
+    name: 'Spark',
+    monthly: 16,
+    annual: 16,
     credits: '2,000 AI credits',
     tagline: 'The structure university never gave you.',
     who: 'Undergraduate and postgraduate students',
@@ -19,7 +19,7 @@ const PLANS = [
       '1 email account connected',
     ],
     cta: 'Start free trial',
-    href: '/auth/signup?plan=starter',
+    href: '/auth/signup?plan=spark',
     featured: false,
   },
   {
@@ -42,8 +42,8 @@ const PLANS = [
   },
   {
     name: 'Executive',
-    monthly: 45,
-    annual: 36,
+    monthly: 65,
+    annual: 65,
     credits: '10,000 AI credits',
     tagline: 'Run the business. Build the legacy.',
     who: 'CEOs, founders, directors, senior executives',
@@ -141,7 +141,7 @@ export function PricingSection() {
                 </div>
               ) : (
                 <div className={s.priceAmount}>
-                  From &pound;36<span className={s.pricePeriod}>/seat/mo</span>
+                  From &pound;55<span className={s.pricePeriod}>/seat/mo</span>
                 </div>
               )}
               <p className={s.priceCredits}>{plan.credits}</p>

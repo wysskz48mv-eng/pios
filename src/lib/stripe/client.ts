@@ -1,18 +1,27 @@
 import Stripe from 'stripe'
+import { ADOPTED_PRICING_PLANS } from '@/lib/pricing/strategy'
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
 })
 
+function envFirst(...keys: string[]): string {
+  for (const key of keys) {
+    const value = process.env[key]
+    if (value && value.trim().length > 0) return value
+  }
+  return ''
+}
+
 export const PLANS = {
-  starter: {
-    name: 'Starter',
-    price: 9,
-    priceId: process.env.STRIPE_PRICE_STUDENT!,
+  spark: {
+    name: ADOPTED_PRICING_PLANS.spark.name,
+    price: ADOPTED_PRICING_PLANS.spark.monthlyGbp,
+    priceId: envFirst('STRIPE_PRICE_SPARK', 'STRIPE_PRICE_STUDENT'),
     maxUsers: 1,
     maxInvestigations: null,
-    credits: 2000,
-    description: 'Academic lifecycle, CPD tracking, research tools',
+    credits: ADOPTED_PRICING_PLANS.spark.credits,
+    description: 'Entry tier for students and early-career professionals',
     features: [
       'Academic Hub — thesis, chapters, milestones',
       'CPD Tracker — 12 bodies supported',
@@ -23,12 +32,12 @@ export const PLANS = {
     ],
   },
   pro: {
-    name: 'Pro',
-    price: 19,
+    name: ADOPTED_PRICING_PLANS.pro.name,
+    price: ADOPTED_PRICING_PLANS.pro.monthlyGbp,
     priceId: process.env.STRIPE_PRICE_PRO!,
     maxUsers: 1,
     maxInvestigations: null,
-    credits: 5000,
+    credits: ADOPTED_PRICING_PLANS.pro.credits,
     description: 'For postgraduates and independent professionals',
     features: [
       'Everything in Starter',
@@ -41,12 +50,12 @@ export const PLANS = {
     ],
   },
   executive: {
-    name: 'Executive',
-    price: 24,
-    priceId: process.env.STRIPE_PRICE_PROFESSIONAL!,
+    name: ADOPTED_PRICING_PLANS.executive.name,
+    price: ADOPTED_PRICING_PLANS.executive.monthlyGbp,
+    priceId: envFirst('STRIPE_PRICE_EXECUTIVE', 'STRIPE_PRICE_PROFESSIONAL'),
     maxUsers: 1,
     maxInvestigations: null,
-    credits: 10000,
+    credits: ADOPTED_PRICING_PLANS.executive.credits,
     description: 'Full CEO/Founder OS — all 41 modules, 15 frameworks',
     features: [
       'Everything in Pro',
@@ -62,13 +71,13 @@ export const PLANS = {
       '3 guest collaborators',
     ],
   },
-  team: {
-    name: 'Team',
-    price: 0, // custom — contact sales
-    priceId: process.env.STRIPE_PRICE_TEAM ?? '',
+  enterprise: {
+    name: ADOPTED_PRICING_PLANS.enterprise.name,
+    price: ADOPTED_PRICING_PLANS.enterprise.monthlyGbp,
+    priceId: envFirst('STRIPE_PRICE_ENTERPRISE', 'STRIPE_PRICE_TEAM'),
     maxUsers: null,
     maxInvestigations: null,
-    credits: -1, // unlimited
+    credits: ADOPTED_PRICING_PLANS.enterprise.credits,
     description: 'Institution / team — shared workspaces, SSO, dept admin',
     features: [
       'Everything in Executive',
@@ -80,6 +89,57 @@ export const PLANS = {
       'Unlimited AI credits',
       'Dedicated support',
     ],
+  },
+  // Legacy aliases for backward-compatible links
+  starter: {
+    name: ADOPTED_PRICING_PLANS.spark.name,
+    price: ADOPTED_PRICING_PLANS.spark.monthlyGbp,
+    priceId: envFirst('STRIPE_PRICE_SPARK', 'STRIPE_PRICE_STUDENT'),
+    maxUsers: 1,
+    maxInvestigations: null,
+    credits: ADOPTED_PRICING_PLANS.spark.credits,
+    description: 'Legacy alias of Spark',
+    features: ['Legacy alias'],
+  },
+  student: {
+    name: ADOPTED_PRICING_PLANS.spark.name,
+    price: ADOPTED_PRICING_PLANS.spark.monthlyGbp,
+    priceId: envFirst('STRIPE_PRICE_SPARK', 'STRIPE_PRICE_STUDENT'),
+    maxUsers: 1,
+    maxInvestigations: null,
+    credits: ADOPTED_PRICING_PLANS.spark.credits,
+    description: 'Legacy alias of Spark',
+    features: ['Legacy alias'],
+  },
+  professional: {
+    name: ADOPTED_PRICING_PLANS.executive.name,
+    price: ADOPTED_PRICING_PLANS.executive.monthlyGbp,
+    priceId: envFirst('STRIPE_PRICE_EXECUTIVE', 'STRIPE_PRICE_PROFESSIONAL'),
+    maxUsers: 1,
+    maxInvestigations: null,
+    credits: ADOPTED_PRICING_PLANS.executive.credits,
+    description: 'Legacy alias of Executive',
+    features: ['Legacy alias'],
+  },
+  individual: {
+    name: ADOPTED_PRICING_PLANS.pro.name,
+    price: ADOPTED_PRICING_PLANS.pro.monthlyGbp,
+    priceId: process.env.STRIPE_PRICE_PRO!,
+    maxUsers: 1,
+    maxInvestigations: null,
+    credits: ADOPTED_PRICING_PLANS.pro.credits,
+    description: 'Legacy alias of Pro',
+    features: ['Legacy alias'],
+  },
+  team: {
+    name: ADOPTED_PRICING_PLANS.enterprise.name,
+    price: ADOPTED_PRICING_PLANS.enterprise.monthlyGbp,
+    priceId: envFirst('STRIPE_PRICE_ENTERPRISE', 'STRIPE_PRICE_TEAM'),
+    maxUsers: null,
+    maxInvestigations: null,
+    credits: ADOPTED_PRICING_PLANS.enterprise.credits,
+    description: 'Legacy alias of Enterprise',
+    features: ['Legacy alias'],
   },
 } as const
 

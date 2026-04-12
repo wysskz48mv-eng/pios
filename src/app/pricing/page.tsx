@@ -8,9 +8,9 @@ import { useState } from 'react'
 
 const PLANS = [
   {
-    name: 'Starter',
-    price: '£15',
-    annual: '£12',
+    name: 'Spark',
+    price: '£16',
+    annual: '£16',
     period: '/mo',
     savings: 'Save £36/year',
     colour: '#26aee8',
@@ -27,7 +27,7 @@ const PLANS = [
       'Email support',
     ],
     cta: 'Start free trial',
-    ctaHref: '/auth/signup?plan=starter',
+    ctaHref: '/auth/signup?plan=spark',
   },
   {
     name: 'Pro',
@@ -54,8 +54,8 @@ const PLANS = [
   },
   {
     name: 'Executive',
-    price: '£45',
-    annual: '£36',
+    price: '£65',
+    annual: '£65',
     period: '/mo',
     savings: 'Save £108/year',
     colour: '#9b87f5',
@@ -79,15 +79,15 @@ const PLANS = [
     ctaHref: '/auth/signup?plan=executive',
   },
   {
-    name: 'Team',
-    price: '£12–15',
+    name: 'Enterprise',
+    price: '£55–75',
     annual: 'Custom',
-    period: '/person/mo',
+    period: '/seat/mo',
     colour: '#26c99a',
     highlight: false,
     badge: 'Organization',
     headline: 'One intelligence layer across your entire team or department.',
-    description: 'Shared knowledge, team admin, SSO, compliance, and a dedicated onboarding partner. Starting at £12/person for 5–25 people, scaling to £15/person for 100–500 people.',
+    description: 'Shared knowledge, admin controls, SSO, and compliance support. Volume pricing ranges from £55–75/seat/month by seat band.',
     features: [
       'Everything in Executive (all features unlocked)',
       'Shared knowledge base and research libraries',
@@ -101,11 +101,11 @@ const PLANS = [
       'Unlimited AI interactions',
     ],
     cta: 'Request Demo',
-    ctaHref: 'mailto:sales@veritasiq.io?subject=PIOS Team Plan — [Company Name]',
+    ctaHref: 'mailto:sales@veritasiq.io?subject=PIOS Enterprise Plan — [Company Name]',
   },
   {
     name: 'Enterprise',
-    price: '£15–20',
+    price: 'Custom',
     annual: 'Custom',
     period: '/person/mo',
     colour: '#ec4899',
@@ -204,7 +204,7 @@ export default function PricingPage() {
           <em style={{ fontStyle: 'italic', color: 'rgba(155,135,245,0.9)' }}>who'd rather be building.</em>
         </h1>
         <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, marginBottom: 14 }}>
-          Everything you need to run the business — payroll, contracts, strategy, knowledge — without the chaos. One OS. From £15/month.
+          Everything you need to run the business — payroll, contracts, strategy, knowledge — without the chaos. One OS. From £16/month.
         </p>
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.02em' }}>
           14-day free trial · No credit card · Cancel anytime
@@ -404,10 +404,10 @@ export default function PricingPage() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
           {[
-            { name: 'Department', size: '5–25 people', price: '£10/person', annual: '£8.50/person (annual)', features: ['Team admin', 'Shared knowledge', 'Basic SSO', 'Email support'] },
-            { name: 'Team', size: '25–100 people', price: '£12/person', annual: '£10/person (annual)', features: ['Everything in Department', 'Advanced analytics', 'Priority support', 'Integrations'] },
-            { name: 'Organization', size: '100–500 people', price: '£15/person', annual: '£12/person (annual)', features: ['Everything in Team', 'White-label options', 'DPA included', 'Compliance features'] },
-            { name: 'Enterprise', size: '500+ people', price: '£15–20/person', annual: 'Custom (3-year)', features: ['Custom deployment', '99.99% SLA', '24/7 support', 'Dedicated team'] },
+            { name: 'Starter Enterprise', size: '5–10 seats', price: '£75/seat', annual: 'Custom annual', features: ['Team admin', 'Shared knowledge', 'SSO baseline', 'Email support'] },
+            { name: 'Growth Enterprise', size: '11–25 seats', price: '£65/seat', annual: 'Custom annual', features: ['Everything in Starter Enterprise', 'Advanced analytics', 'Priority support', 'Integrations'] },
+            { name: 'Scale Enterprise', size: '26–50 seats', price: '£55/seat', annual: 'Custom annual', features: ['Everything in Growth Enterprise', 'White-label options', 'DPA included', 'Compliance features'] },
+            { name: 'Enterprise+', size: '50+ seats', price: 'Custom', annual: 'Multi-year custom', features: ['Custom deployment', '99.99% SLA', '24/7 support', 'Dedicated team'] },
           ].map((tier, i) => (
             <div key={i} style={{ background: 'rgba(99,73,255,0.05)', border: '1px solid rgba(99,73,255,0.15)', borderRadius: 12, padding: '24px', display: 'flex', flexDirection: 'column' }}>
               <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{tier.name}</h3>
@@ -469,7 +469,7 @@ export default function PricingPage() {
             The bottom line
           </h2>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: 12 }}>
-            Individual plans start at £15/month. Organization pricing from £8/person. Enterprise custom.
+            Individual plans start at £16/month. Enterprise seat pricing starts at £55/seat/month.
           </p>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>
             Every plan includes AI interactions, hosting, backups, and monitoring. No hidden costs.

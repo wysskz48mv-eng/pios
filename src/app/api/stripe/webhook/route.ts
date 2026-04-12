@@ -15,9 +15,16 @@ const FROM    = process.env.FROM_EMAIL ?? 'noreply@veritasiq.io'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios.veritasiq.io'
 
 const PLAN_LIMITS: Record<string, { credits: number; seats: number }> = {
-  student:      { credits: 2_000,  seats: 1 },
-  individual:   { credits: 5_000,  seats: 1 },
-  professional: { credits: 15_000, seats: 3 },
+  spark:        { credits: 2_000,   seats: 1 },
+  pro:          { credits: 10_000,  seats: 1 },
+  executive:    { credits: 50_000,  seats: 3 },
+  enterprise:   { credits: 200_000, seats: 25 },
+  // Legacy alias support
+  student:      { credits: 2_000,   seats: 1 },
+  starter:      { credits: 2_000,   seats: 1 },
+  individual:   { credits: 10_000,  seats: 1 },
+  professional: { credits: 50_000,  seats: 3 },
+  team:         { credits: 200_000, seats: 25 },
 }
 
 export async function POST(request: Request) {
@@ -37,7 +44,7 @@ export async function POST(request: Request) {
   if ((event as any).type === 'checkout.session.completed') {
     const session = (event as any).data.object
     const { user_id, plan } = session.metadata ?? {}
-    const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.student
+    const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.spark
 
     const { data: profile } = await supabase
       .from('user_profiles').select('tenant_id,full_name').eq('id', user_id).single()
@@ -85,7 +92,7 @@ export async function POST(request: Request) {
       .update({
         subscription_status: 'canceled',
         plan: 'student',
-        ai_credits_limit: PLAN_LIMITS.student.credits,
+        ai_credits_limit: PLAN_LIMITS.spark.credits,
         updated_at: new Date().toISOString(),
       })
       .eq('stripe_subscription_id', sub.id)

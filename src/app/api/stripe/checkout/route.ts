@@ -9,6 +9,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const plan = searchParams.get('plan') as PlanKey
     if (!plan || !PLANS[plan]) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
+    if (!PLANS[plan].priceId) {
+      return NextResponse.json({ error: 'Plan is not configured in Stripe yet' }, { status: 503 })
+    }
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()

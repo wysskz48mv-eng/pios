@@ -10,14 +10,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { apiError }                  from '@/lib/api-error'
+import { ADOPTED_PRICING_PLANS, resolvePricingPlanId } from '@/lib/pricing/strategy'
 
 export const dynamic = 'force-dynamic'
 
-const PLANS = {
-  student:      { name:'Student',      price:9,    credits:2000  },
-  professional: { name:'Professional', price:29,   credits:10000 },
-  executive:    { name:'Executive',    price:79,   credits:50000 },
-  enterprise:   { name:'Enterprise',   price:199,  credits:200000 },
+const PLAN_VIEW = {
+  spark:      { name: ADOPTED_PRICING_PLANS.spark.name,      price: ADOPTED_PRICING_PLANS.spark.monthlyGbp,      credits: ADOPTED_PRICING_PLANS.spark.credits },
+  pro:        { name: ADOPTED_PRICING_PLANS.pro.name,        price: ADOPTED_PRICING_PLANS.pro.monthlyGbp,        credits: ADOPTED_PRICING_PLANS.pro.credits },
+  executive:  { name: ADOPTED_PRICING_PLANS.executive.name,  price: ADOPTED_PRICING_PLANS.executive.monthlyGbp,  credits: ADOPTED_PRICING_PLANS.executive.credits },
+  enterprise: { name: ADOPTED_PRICING_PLANS.enterprise.name, price: ADOPTED_PRICING_PLANS.enterprise.monthlyGbp, credits: ADOPTED_PRICING_PLANS.enterprise.credits },
 }
 
 export async function GET(req: NextRequest) {
@@ -44,8 +45,8 @@ export async function GET(req: NextRequest) {
     const tenant  = tenantR.data  as any
     const usage   = usageR.data   as any[] ?? []
 
-    const plan      = tenant?.plan ?? 'executive'
-    const planInfo  = PLANS[plan as keyof typeof PLANS] ?? PLANS.executive
+    const plan      = resolvePricingPlanId(tenant?.plan)
+    const planInfo  = PLAN_VIEW[plan]
     const credLimit = tenant?.ai_credits_limit ?? planInfo.credits
     const credUsed  = usage.reduce((s, r) => s + (Number(r.tokens_used) || 0), 0)
     const credPct   = credLimit > 0 ? Math.round(credUsed / credLimit * 100) : 0
