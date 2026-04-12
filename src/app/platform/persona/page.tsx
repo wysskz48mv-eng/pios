@@ -70,6 +70,7 @@ export default function PersonaPage() {
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [applyingDefaults, setApplyingDefaults] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [testReply, setTestReply] = useState<string>('')
@@ -206,6 +207,43 @@ export default function PersonaPage() {
     }
   }
 
+  async function applyPersonaDefaults() {
+    setApplyingDefaults(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const res = await fetch('/api/persona', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'apply_defaults',
+          persona_type: form.persona_type,
+          company_context: form.company_context,
+        }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error ?? 'Failed to apply defaults')
+
+      const defaults = (data?.defaults ?? {}) as Record<string, string>
+      setForm((prev) => ({
+        ...prev,
+        tone_preference: defaults.tone_preference ?? prev.tone_preference,
+        response_style: defaults.response_style ?? prev.response_style,
+        persona_context: defaults.persona_context ?? prev.persona_context,
+        goals_context: defaults.goals_context ?? prev.goals_context,
+        custom_instructions: defaults.custom_instructions ?? prev.custom_instructions,
+      }))
+
+      setSuccess('Persona defaults applied and saved for your selected profile.')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to apply defaults')
+    } finally {
+      setApplyingDefaults(false)
+    }
+  }
+
   async function testPersona() {
     setTesting(true)
     setError(null)
@@ -306,6 +344,16 @@ export default function PersonaPage() {
               Organisation
               <input value={form.organisation} onChange={(e) => updateField('organisation', e.target.value)} style={inputStyle} />
             </label>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={applyPersonaDefaults}
+                disabled={applyingDefaults || saving || testing || generating}
+                className="pios-btn"
+                style={{ minWidth: 220 }}
+              >
+                {applyingDefaults ? 'Applying Defaults...' : 'Apply Persona Defaults'}
+              </button>
+            </div>
           </div>
         </section>
 
@@ -374,7 +422,7 @@ export default function PersonaPage() {
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
           <button
             onClick={generateContext}
-            disabled={generating || saving || testing}
+            disabled={generating || saving || testing || applyingDefaults}
             className="pios-btn"
             style={{ minWidth: 200 }}
           >
@@ -406,7 +454,7 @@ export default function PersonaPage() {
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
         <button
           onClick={testPersona}
-          disabled={testing || saving || generating}
+          disabled={testing || saving || generating || applyingDefaults}
           className="pios-btn"
           style={{ minWidth: 180 }}
         >
@@ -414,7 +462,7 @@ export default function PersonaPage() {
         </button>
         <button
           onClick={save}
-          disabled={saving || testing || generating}
+          disabled={saving || testing || generating || applyingDefaults}
           className="pios-btn pios-btn-primary"
           style={{ minWidth: 180 }}
         >
