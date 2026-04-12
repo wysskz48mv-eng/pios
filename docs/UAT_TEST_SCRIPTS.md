@@ -290,6 +290,10 @@
 - [ ] Verify expected route protection behavior on hosted environment
 - [ ] If network restrictions block preflight, set `WORKBENCH_SKIP_PREFLIGHT=1`
 
+### 14.6 Environment loading behavior
+- [ ] Confirm script can read `.env.local` / `.env` for Supabase public variables
+- [ ] If shell vars are set, verify they take precedence
+
 ---
 
 ## 14. Billing

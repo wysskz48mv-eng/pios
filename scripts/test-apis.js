@@ -17,6 +17,39 @@ const path = require('path')
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const SKIP_PREFLIGHT = process.env.WORKBENCH_SKIP_PREFLIGHT === '1'
 
+function loadEnvFiles() {
+  const files = ['.env.local', '.env']
+
+  for (const rel of files) {
+    const full = path.join(process.cwd(), rel)
+    if (!fs.existsSync(full)) continue
+
+    const raw = fs.readFileSync(full, 'utf8')
+    const lines = raw.split(/\r?\n/)
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+
+      const normalized = trimmed.startsWith('export ') ? trimmed.slice(7).trim() : trimmed
+      const eq = normalized.indexOf('=')
+      if (eq <= 0) continue
+
+      const key = normalized.slice(0, eq).trim()
+      if (!key || process.env[key]) continue
+
+      let value = normalized.slice(eq + 1).trim()
+      const quote = value[0]
+      if ((quote === '"' || quote === "'") && value[value.length - 1] === quote) {
+        value = value.slice(1, -1)
+      }
+
+      process.env[key] = value
+    }
+  }
+}
+
+loadEnvFiles()
+
 function readOptionalFile(filePath) {
   if (!filePath || !filePath.trim()) return ''
 
