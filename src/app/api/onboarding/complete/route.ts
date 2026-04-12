@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { getPersonaPackaging, toCanonicalPersona } from '@/lib/persona-packaging'
 
 /**
  * POST /api/onboarding/complete
@@ -7,31 +8,6 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
  */
 
 export const dynamic = 'force-dynamic'
-
-const REQUEST_PERSONA_MAP: Record<string, 'executive' | 'consultant' | 'academic'> = {
-  executive: 'executive',
-  ceo: 'executive',
-  founder: 'executive',
-  chief_of_staff: 'executive',
-  whole_life: 'executive',
-  pro: 'consultant',
-  professional: 'consultant',
-  consultant: 'consultant',
-  starter: 'academic',
-  academic: 'academic',
-}
-
-const PERSONA_CONFIG_CODE: Record<'executive' | 'consultant' | 'academic', string> = {
-  executive: 'CEO',
-  consultant: 'CONSULTANT',
-  academic: 'ACADEMIC',
-}
-
-const PERSONA_FALLBACK_MODULES: Record<'executive' | 'consultant' | 'academic', string[]> = {
-  executive: ['VIQ-ST-01', 'VIQ-ST-02', 'VIQ-ST-03', 'VIQ-SC-01', 'VIQ-SC-02', 'VIQ-OD-01', 'VIQ-RK-01'],
-  consultant: ['VIQ-PS-01', 'VIQ-PS-02', 'VIQ-ST-01', 'VIQ-SC-01', 'VIQ-FA-01', 'VIQ-EV-01'],
-  academic: ['VIQ-PS-04', 'VIQ-EV-01', 'VIQ-EV-02', 'VIQ-ST-07'],
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -61,19 +37,21 @@ export async function POST(req: NextRequest) {
 
     const admin = createServiceClient()
 
-    const normalizedPersona = REQUEST_PERSONA_MAP[String(requestedPersona).trim().toLowerCase()]
-    if (!normalizedPersona) {
+    const canonicalPersona = toCanonicalPersona(requestedPersona)
+    if (!canonicalPersona) {
       return NextResponse.json({
         error: 'Invalid persona. Valid values: CEO, CONSULTANT, ACADEMIC, EXECUTIVE, founder, pro, starter, consultant, academic',
       }, { status: 400 })
     }
+    const personaPackaging = getPersonaPackaging(canonicalPersona)
+    const normalizedPersona = personaPackaging.routePersona
 
-    let personaDefaultModules = PERSONA_FALLBACK_MODULES[normalizedPersona]
+    let personaDefaultModules = personaPackaging.fallbackFrameworkCodes
     try {
       const { data: personaConfig } = await admin
         .from('persona_configs')
         .select('framework_priority_ids')
-        .eq('code', PERSONA_CONFIG_CODE[normalizedPersona])
+        .eq('code', personaPackaging.configCode)
         .maybeSingle()
 
       if (Array.isArray(personaConfig?.framework_priority_ids) && personaConfig.framework_priority_ids.length > 0) {

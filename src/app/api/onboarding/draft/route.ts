@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { toCanonicalPersona } from '@/lib/persona-packaging'
 
 export const dynamic = 'force-dynamic'
 
-const PERSONAS = new Set([
-  'starter', 'pro', 'executive', 'enterprise',
-  'CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE',
-])
 const DEPLOY_MODES = new Set(['full', 'hybrid', 'standalone'])
 
 function normaliseDraft(body: Record<string, unknown>) {
   const step = typeof body.step === 'number' ? Math.min(Math.max(body.step, 0), 3) : 0
-  const persona = typeof body.persona === 'string' && PERSONAS.has(body.persona) ? body.persona : null
+  const persona = toCanonicalPersona(body.persona)
   const goals = typeof body.goals === 'string' ? body.goals.slice(0, 8000) : ''
   const activeModules = Array.isArray(body.active_modules)
     ? body.active_modules.filter((item): item is string => typeof item === 'string').slice(0, 32)

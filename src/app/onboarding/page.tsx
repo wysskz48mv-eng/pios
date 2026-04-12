@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { CCTheme } from '@/lib/themes'
+import { PERSONA_PACKAGING, type CanonicalPersona } from '@/lib/persona-packaging'
 import styles from './onboarding.module.css'
 
-type Persona = 'CEO' | 'CONSULTANT' | 'ACADEMIC' | 'EXECUTIVE'
+type Persona = CanonicalPersona
 
 interface PersonaOption {
   id: Persona
@@ -31,38 +32,14 @@ interface ThemeOption {
 }
 
 const PERSONAS: PersonaOption[] = [
-  {
-    id: 'CEO',
-    label: 'CEO / Founder',
-    tagline: 'Build · Lead · Scale',
-    desc: 'You run a business, lead a team, and need a sovereign intelligence layer — decisions, stakeholders, board intelligence, and strategic frameworks in one surface.',
-    modules: ['EOSA™', 'Decisions', 'Stakeholders', 'Board Pack', 'Chief of Staff', 'Email Intelligence'],
-    price: '£36/mo · Executive',
-  },
-  {
-    id: 'CONSULTANT',
-    label: 'Consultant / Advisor',
-    tagline: 'Advise · Deliver · Influence',
-    desc: 'You manage engagements, produce strategic deliverables, and need a system that tracks multiple workstreams without losing context.',
-    modules: ['Email Intelligence', 'Consulting Frameworks', 'Financials', 'CPD', 'Academic Suite'],
-    price: '£28/mo · Pro',
-  },
-  {
-    id: 'ACADEMIC',
-    label: 'Academic / Researcher',
-    tagline: 'Research · Publish · Supervise',
-    desc: 'You are completing a doctorate alongside professional commitments. PIOS tracks your thesis, prepares supervision, surfaces literature, and holds both worlds.',
-    modules: ['Thesis Tracker', 'Literature Agent', 'Supervision Prep', 'Viva Prep', 'Academic Brief'],
-    price: '£12/mo · Starter',
-  },
-  {
-    id: 'EXECUTIVE',
-    label: 'Executive / Director',
-    tagline: 'Operate · Delegate · Deliver',
-    desc: 'You lead a division or function and need operational clarity across priorities, people, and reporting lines.',
-    modules: ['Chief of Staff', 'Decision Queue', 'Stakeholder Notes', 'Briefing Hub', 'Delivery Tracking'],
-    price: '£36/mo · Executive',
-  },
+  ...PERSONA_PACKAGING.map((persona) => ({
+    id: persona.id,
+    label: persona.label,
+    tagline: persona.tagline,
+    desc: persona.description,
+    modules: persona.modules,
+    price: persona.priceLabel,
+  })),
 ]
 
 const THEMES: ThemeOption[] = [
