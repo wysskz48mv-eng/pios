@@ -11,7 +11,7 @@
     "db:push": "supabase db push",
     "db:seed": "npx ts-node --skip-project scripts/seed-m064-m068.ts",
     "db:reset": "supabase db reset",
-    "api:test": "npx ts-node scripts/test-apis.ts",
+    "api:test": "node scripts/test-apis.js",
     "deploy:staging": "vercel",
     "deploy:production": "vercel --prod",
     "logs:vercel": "vercel logs",
