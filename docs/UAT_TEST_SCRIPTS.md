@@ -260,6 +260,31 @@
 
 ---
 
+## 14. Workbench API smoke validation
+
+### 14.1 Unauthenticated smoke suite
+- [ ] Start app (`npm run dev`)
+- [ ] Run `npm run api:test`
+- [ ] Verify output shows 401 for protected workbench routes
+
+### 14.2 Authenticated smoke suite (cookie string)
+- [ ] Export auth cookie string to `WORKBENCH_AUTH_COOKIE`
+- [ ] Run `npm run api:test`
+- [ ] Verify flow passes: create project → read project → run step 1 → archive project
+
+### 14.3 Authenticated smoke suite (cookie file)
+- [ ] Save cookie string to a local file (example: `.secrets/workbench-cookie.txt`)
+- [ ] Set `WORKBENCH_AUTH_COOKIE_FILE=.secrets/workbench-cookie.txt`
+- [ ] Run `npm run api:test`
+- [ ] Verify authenticated suite passes
+
+### 14.4 Hosted target validation
+- [ ] Set `BASE_URL=https://pios.veritasiq.io`
+- [ ] Run `npm run api:test`
+- [ ] Verify expected route protection behavior on hosted environment
+
+---
+
 ## 14. Billing
 
 ### 14.1 Plan Display

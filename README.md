@@ -135,4 +135,31 @@ Supabase project: `vfvfulbcaurqkygjrrhh` (EU West)
 
 ---
 
+## Workbench API smoke tests
+
+Run local unauthenticated route checks (expects 401 on protected endpoints):
+
+```bash
+npm run dev
+npm run api:test
+```
+
+Run authenticated checks with a raw cookie string:
+
+```bash
+WORKBENCH_AUTH_COOKIE="sb-access-token=...; sb-refresh-token=..." npm run api:test
+```
+
+Run authenticated checks with a cookie file (recommended):
+
+```bash
+WORKBENCH_AUTH_COOKIE_FILE=.secrets/workbench-cookie.txt npm run api:test
+```
+
+Notes:
+- Set `BASE_URL` to target non-local environments, for example `BASE_URL=https://pios.veritasiq.io npm run api:test`.
+- The script first verifies the app is reachable, then runs unauthenticated checks, then authenticated create/read/step/archive checks if auth cookie input is provided.
+
+---
+
 *PIOS v1.0 · VeritasIQ Technologies Ltd · VeritasIQ Technologies Ltd*
