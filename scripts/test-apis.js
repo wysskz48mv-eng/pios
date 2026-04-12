@@ -4,12 +4,44 @@
  *
  * Modes:
  * - Unauthenticated (default): expects 401 on protected routes.
- * - Authenticated (optional): set WORKBENCH_AUTH_COOKIE to a valid auth cookie string,
+ * - Authenticated (optional): set WORKBENCH_AUTH_COOKIE or WORKBENCH_AUTH_COOKIE_FILE,
  *   then it will attempt create -> read -> step write flow.
  */
 
+const fs = require('fs')
+const path = require('path')
+
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
-const AUTH_COOKIE = process.env.WORKBENCH_AUTH_COOKIE || ''
+
+function getAuthCookie() {
+  const direct = process.env.WORKBENCH_AUTH_COOKIE || ''
+  if (direct.trim()) return direct.trim()
+
+  const cookieFile = process.env.WORKBENCH_AUTH_COOKIE_FILE || ''
+  if (!cookieFile.trim()) return ''
+
+  try {
+    const full = path.isAbsolute(cookieFile) ? cookieFile : path.join(process.cwd(), cookieFile)
+    return fs.readFileSync(full, 'utf8').trim()
+  } catch {
+    return ''
+  }
+}
+
+const AUTH_COOKIE = getAuthCookie()
+
+async function ensureServerReachable() {
+  try {
+    const res = await fetch(`${BASE_URL}/`, { method: 'GET' })
+    if (!res.ok && res.status >= 500) {
+      throw new Error(`Server returned ${res.status}`)
+    }
+  } catch (error) {
+    throw new Error(
+      `Cannot reach app at ${BASE_URL}. Start the app with "npm run dev" (or set BASE_URL).`
+    )
+  }
+}
 
 async function http(method, path, body) {
   const headers = { 'Content-Type': 'application/json' }
@@ -91,11 +123,12 @@ async function runAuthenticatedSuite() {
 
 async function main() {
   console.log(`[workbench] BASE_URL=${BASE_URL}`)
+  await ensureServerReachable()
 
   await runUnauthenticatedSuite()
 
   if (!AUTH_COOKIE) {
-    console.log('\n[workbench] Skipping authenticated suite: set WORKBENCH_AUTH_COOKIE to enable it.')
+    console.log('\n[workbench] Skipping authenticated suite: set WORKBENCH_AUTH_COOKIE or WORKBENCH_AUTH_COOKIE_FILE to enable it.')
     return
   }
 
