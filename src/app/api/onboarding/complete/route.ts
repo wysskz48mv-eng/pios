@@ -128,6 +128,70 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not save onboarding state. Please try again.' }, { status: 500 })
     }
 
+    const secondaryPersona = canonicalPersona === 'CEO' ? 'CHIEF_OF_STAFF' : null
+
+    try {
+      await admin.from('user_personas').upsert({
+        user_id: user.id,
+        primary_persona: canonicalPersona,
+        secondary_persona: secondaryPersona,
+        tier: 'standard',
+        updated_at: now,
+        created_at: now,
+      }, { onConflict: 'user_id' })
+    } catch (e) {
+      console.error('[onboarding] user_personas upsert (non-fatal):', e)
+    }
+
+    try {
+      const completedSteps = {
+        profile: Boolean(profilePayload.full_name && profilePayload.organisation),
+        nemoclaw: Boolean(profilePayload.cv_storage_path) || profilePayload.cv_processing_status === 'complete' || profilePayload.cv_processing_status === 'completed',
+        google_oauth: Boolean(user.email),
+      }
+      const completedCount = Object.values(completedSteps).filter(Boolean).length
+
+      await admin.from('onboarding_progress').upsert({
+        user_id: user.id,
+        completed_steps: completedSteps,
+        readiness_pct: Math.round((completedCount / 3) * 100),
+        updated_at: now,
+        created_at: now,
+      }, { onConflict: 'user_id' })
+    } catch (e) {
+      console.error('[onboarding] onboarding_progress upsert (non-fatal):', e)
+    }
+
+    if (typeof profilePayload.cv_storage_path === 'string' && profilePayload.cv_storage_path.trim()) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const serviceKey = process.env.SUPABASE_SERVICE_KEY
+
+      if (supabaseUrl && serviceKey) {
+        try {
+          const res = await fetch(`${supabaseUrl}/functions/v1/cv-ingestion-pipeline`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${serviceKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: user.id,
+              cv_storage_path: profilePayload.cv_storage_path,
+              cv_filename: profilePayload.cv_filename ?? null,
+              persona_code: canonicalPersona,
+            }),
+          })
+
+          if (!res.ok) {
+            const detail = await res.text().catch(() => '')
+            console.error('[onboarding] cv-ingestion-pipeline non-fatal:', detail || res.statusText)
+          }
+        } catch (e) {
+          console.error('[onboarding] cv-ingestion-pipeline trigger failed (non-fatal):', e)
+        }
+      }
+    }
+
     // ── All operations below are NON-FATAL ──────────────────────────
 
     // exec_intelligence_config
@@ -190,6 +254,7 @@ export async function POST(req: NextRequest) {
           academic:'Academic', professional:'Professional', other:'Professional',
           ceo:'CEO / Founder', pro:'Consultant / Advisor', starter:'Academic / Researcher',
         }
+        const requestedPersonaKey = String(requestedPersona).trim().toLowerCase()
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
@@ -200,7 +265,7 @@ export async function POST(req: NextRequest) {
             html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px">
               <div style="font-size:20px;font-weight:400;margin-bottom:24px">PIOS</div>
               <h1 style="font-size:22px;font-weight:500;margin:0 0 12px">Your Command Centre is ready.</h1>
-              <p style="color:#666;line-height:1.6;margin:0 0 20px">NemoClaw™ has been calibrated for your ${personaLabels[requestedPersona] ?? 'Professional'} profile.</p>
+              <p style="color:#666;line-height:1.6;margin:0 0 20px">NemoClaw™ has been calibrated for your ${personaLabels[requestedPersonaKey] ?? 'Professional'} profile.</p>
               <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://pios-wysskz48mv-engs-projects.vercel.app'}/platform/dashboard"
                  style="display:inline-block;padding:12px 24px;background:#7F77DD;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:500">
                 Open Command Centre →
