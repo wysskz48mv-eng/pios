@@ -11,6 +11,7 @@ type PersonaProfile = {
 
 type PersonaConfig = {
   persona_context: string | null
+  company_context: string | null
   goals_context: string | null
   tone_preference: string | null
   response_style: string | null
@@ -22,6 +23,7 @@ type FormState = {
   job_title: string
   organisation: string
   persona_context: string
+  company_context: string
   goals_context: string
   tone_preference: string
   response_style: string
@@ -55,6 +57,7 @@ function toForm(profile: PersonaProfile | null, config: PersonaConfig | null): F
     job_title: profile?.job_title ?? '',
     organisation: profile?.organisation ?? '',
     persona_context: config?.persona_context ?? '',
+    company_context: config?.company_context ?? '',
     goals_context: config?.goals_context ?? '',
     tone_preference: config?.tone_preference ?? 'professional',
     response_style: config?.response_style ?? 'structured',
@@ -65,8 +68,10 @@ function toForm(profile: PersonaProfile | null, config: PersonaConfig | null): F
 export default function PersonaPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [testReply, setTestReply] = useState<string>('')
   const [name, setName] = useState('')
   const [form, setForm] = useState<FormState>(() => toForm(null, null))
 
@@ -120,6 +125,41 @@ export default function PersonaPage() {
       setError(e instanceof Error ? e.message : 'Failed to save persona settings')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function testPersona() {
+    setTesting(true)
+    setError(null)
+    setSuccess(null)
+    setTestReply('')
+
+    try {
+      const res = await fetch('/api/ai/train', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'test_persona',
+          config: {
+            persona_context: form.persona_context,
+            company_context: form.company_context,
+            goals_context: form.goals_context,
+            custom_instructions: form.custom_instructions,
+            tone_preference: form.tone_preference,
+            response_style: form.response_style,
+          },
+        }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error ?? 'Persona test failed')
+
+      setTestReply(String(data?.response ?? 'No response generated.'))
+      setSuccess('Persona test response generated.')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Persona test failed')
+    } finally {
+      setTesting(false)
     }
   }
 
@@ -218,6 +258,10 @@ export default function PersonaPage() {
             <textarea rows={4} value={form.persona_context} onChange={(e) => updateField('persona_context', e.target.value)} style={inputStyle} />
           </label>
           <label style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
+            Company Context
+            <textarea rows={4} value={form.company_context} onChange={(e) => updateField('company_context', e.target.value)} style={inputStyle} />
+          </label>
+          <label style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
             Current Goals
             <textarea rows={4} value={form.goals_context} onChange={(e) => updateField('goals_context', e.target.value)} style={inputStyle} />
           </label>
@@ -228,10 +272,27 @@ export default function PersonaPage() {
         </div>
       </section>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      {testReply && (
+        <section style={{ background: 'var(--pios-surface)', border: '1px solid var(--pios-border)', borderRadius: 14, padding: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 16 }}>Persona Test Output</h2>
+          <div style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6, color: 'var(--pios-text)', whiteSpace: 'pre-wrap' }}>
+            {testReply}
+          </div>
+        </section>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <button
+          onClick={testPersona}
+          disabled={testing || saving}
+          className="pios-btn"
+          style={{ minWidth: 180 }}
+        >
+          {testing ? 'Testing...' : 'Test Persona'}
+        </button>
         <button
           onClick={save}
-          disabled={saving}
+          disabled={saving || testing}
           className="pios-btn pios-btn-primary"
           style={{ minWidth: 180 }}
         >

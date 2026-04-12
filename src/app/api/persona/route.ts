@@ -30,7 +30,7 @@ export async function GET() {
 
     const { data: config } = await (supabase as any)
       .from('exec_intelligence_config')
-      .select('persona_context,goals_context,tone_preference,response_style,custom_instructions')
+      .select('persona_context,company_context,goals_context,tone_preference,response_style,custom_instructions')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -81,6 +81,7 @@ export async function PATCH(req: NextRequest) {
       user_id: user.id,
       tenant_id: baseProfile?.tenant_id ?? user.id,
       persona_context: normalizeOptionalText(body.persona_context),
+      company_context: normalizeOptionalText(body.company_context),
       goals_context: normalizeOptionalText(body.goals_context),
       tone_preference: normalizeOptionalText(body.tone_preference, 80) ?? 'professional',
       response_style: normalizeOptionalText(body.response_style, 80) ?? 'structured',
