@@ -136,6 +136,7 @@ const NAV_GROUPS = [
     label: 'AI', color: C.violet,
     items: [
       { href: '/platform/ai',      icon: 'ai',      label: 'NemoClaw™ AI',          accent: C.violet, isAI: true },
+      { href: '/platform/persona', icon: 'ai',      label: 'Persona Studio',        accent: C.pro },
       { href: '/platform/wellness',icon: 'wellness', label: 'Wellness Intelligence', accent: C.fm },
     ],
   },
@@ -163,14 +164,14 @@ const PERSONA_VISIBLE_HREFS: Record<string, Set<string>> = {
     '/platform/ip-vault','/platform/intelligence','/platform/stakeholders','/platform/time-sovereignty',
     '/platform/daily-brief','/platform/deadline-tracker','/platform/payroll',
     '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/wellness','/platform/coaching',
+    '/platform/ai','/platform/persona','/platform/wellness','/platform/coaching',
   ]),
   consultant: new Set([
     '/platform/consulting','/platform/projects','/platform/tasks','/platform/contracts',
     '/platform/financials','/platform/expenses','/platform/stakeholders',
     '/platform/daily-brief','/platform/deadline-tracker',
     '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/wellness','/platform/coaching',
+    '/platform/ai','/platform/persona','/platform/wellness','/platform/coaching',
   ]),
   executive: new Set([
     '/platform/executive','/platform/projects','/platform/tasks','/platform/contracts',
@@ -178,21 +179,21 @@ const PERSONA_VISIBLE_HREFS: Record<string, Set<string>> = {
     '/platform/intelligence','/platform/stakeholders','/platform/time-sovereignty',
     '/platform/daily-brief','/platform/deadline-tracker',
     '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/wellness','/platform/coaching',
+    '/platform/ai','/platform/persona','/platform/wellness','/platform/coaching',
   ]),
   academic: new Set([
     '/platform/academic','/platform/literature','/platform/viva','/platform/research',
     '/platform/learning','/platform/study','/platform/knowledge','/platform/supervisor-prep',
     '/platform/tasks','/platform/daily-brief','/platform/deadline-tracker',
     '/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/wellness','/platform/policy-coach',
+    '/platform/ai','/platform/persona','/platform/wellness','/platform/policy-coach',
   ]),
   cos: new Set([
     '/platform/executive','/platform/projects','/platform/tasks',
     '/platform/stakeholders','/platform/time-sovereignty',
     '/platform/daily-brief','/platform/deadline-tracker',
     '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/wellness','/platform/coaching',
+    '/platform/ai','/platform/persona','/platform/wellness','/platform/coaching',
   ]),
 }
 
