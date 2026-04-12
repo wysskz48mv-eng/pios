@@ -69,9 +69,14 @@ export default function PersonaPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [testReply, setTestReply] = useState<string>('')
+  const [generatedPreview, setGeneratedPreview] = useState<string>('')
+  const [genCompanyDesc, setGenCompanyDesc] = useState('')
+  const [genGoals, setGenGoals] = useState('')
+  const [genWorkingStyle, setGenWorkingStyle] = useState('')
   const [name, setName] = useState('')
   const [form, setForm] = useState<FormState>(() => toForm(null, null))
 
@@ -88,6 +93,9 @@ export default function PersonaPage() {
         const profile = (data.profile ?? null) as PersonaProfile | null
         const config = (data.config ?? null) as PersonaConfig | null
         setForm(toForm(profile, config))
+        setGenCompanyDesc(config?.company_context ?? profile?.organisation ?? '')
+        setGenGoals(config?.goals_context ?? '')
+        setGenWorkingStyle(config?.custom_instructions ?? '')
         setName(profile?.full_name ?? '')
       } catch (e: unknown) {
         if (active) setError(e instanceof Error ? e.message : 'Failed to load persona settings')
@@ -125,6 +133,76 @@ export default function PersonaPage() {
       setError(e instanceof Error ? e.message : 'Failed to save persona settings')
     } finally {
       setSaving(false)
+    }
+  }
+
+  function parseGeneratedContext(text: string) {
+    const lines = text.split(/\r?\n/)
+    const contextLines: string[] = []
+    const instructionLines: string[] = []
+    let section: 'none' | 'context' | 'instructions' = 'none'
+
+    for (const raw of lines) {
+      const line = raw.trim()
+      if (!line) continue
+      if (/^context\s*:/i.test(line)) {
+        section = 'context'
+        continue
+      }
+      if (/^custom\s+instructions\s*:/i.test(line)) {
+        section = 'instructions'
+        continue
+      }
+
+      if (section === 'context') {
+        contextLines.push(line)
+      } else if (section === 'instructions') {
+        instructionLines.push(line.replace(/^\d+\.\s*/, ''))
+      }
+    }
+
+    const contextBlock = contextLines.join(' ')
+    const instructionsBlock = instructionLines.join('\n')
+    return { contextBlock, instructionsBlock }
+  }
+
+  async function generateContext() {
+    setGenerating(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const res = await fetch('/api/ai/train', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate_context',
+          company_desc: genCompanyDesc,
+          goals: genGoals,
+          working_style: genWorkingStyle,
+        }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error ?? 'Failed to generate context')
+
+      const generated = String(data?.generated ?? '')
+      setGeneratedPreview(generated)
+
+      const parsed = parseGeneratedContext(generated)
+      setForm((prev) => ({
+        ...prev,
+        persona_context: parsed.contextBlock || prev.persona_context,
+        company_context: genCompanyDesc || prev.company_context,
+        goals_context: genGoals || prev.goals_context,
+        custom_instructions: parsed.instructionsBlock || prev.custom_instructions,
+      }))
+
+      setSuccess('AI draft generated. Review and save your persona settings.')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to generate context')
+    } finally {
+      setGenerating(false)
     }
   }
 
@@ -272,6 +350,50 @@ export default function PersonaPage() {
         </div>
       </section>
 
+      <section style={{ background: 'var(--pios-surface)', border: '1px solid var(--pios-border)', borderRadius: 14, padding: 16 }}>
+        <h2 style={{ margin: 0, fontSize: 16 }}>AI Draft Builder</h2>
+        <p style={{ margin: '8px 0 0', color: 'var(--pios-muted)', fontSize: 12 }}>
+          Generate a first draft for persona context and custom instructions, then refine before saving.
+        </p>
+
+        <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+          <label style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
+            Company / Business Description
+            <textarea rows={3} value={genCompanyDesc} onChange={(e) => setGenCompanyDesc(e.target.value)} style={inputStyle} />
+          </label>
+          <label style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
+            Current Goals
+            <textarea rows={3} value={genGoals} onChange={(e) => setGenGoals(e.target.value)} style={inputStyle} />
+          </label>
+          <label style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
+            Working Style
+            <textarea rows={3} value={genWorkingStyle} onChange={(e) => setGenWorkingStyle(e.target.value)} style={inputStyle} />
+          </label>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+          <button
+            onClick={generateContext}
+            disabled={generating || saving || testing}
+            className="pios-btn"
+            style={{ minWidth: 200 }}
+          >
+            {generating ? 'Generating...' : 'Generate Context Draft'}
+          </button>
+        </div>
+
+        {generatedPreview && (
+          <div style={{ marginTop: 12, border: '1px solid var(--pios-border)', borderRadius: 12, padding: 12, background: 'rgba(15,23,42,0.45)' }}>
+            <div style={{ fontSize: 11, color: 'var(--pios-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              Draft Preview
+            </div>
+            <div style={{ fontSize: 12, whiteSpace: 'pre-wrap', color: 'var(--pios-text)', lineHeight: 1.6 }}>
+              {generatedPreview}
+            </div>
+          </div>
+        )}
+      </section>
+
       {testReply && (
         <section style={{ background: 'var(--pios-surface)', border: '1px solid var(--pios-border)', borderRadius: 14, padding: 16 }}>
           <h2 style={{ margin: 0, fontSize: 16 }}>Persona Test Output</h2>
@@ -284,7 +406,7 @@ export default function PersonaPage() {
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
         <button
           onClick={testPersona}
-          disabled={testing || saving}
+          disabled={testing || saving || generating}
           className="pios-btn"
           style={{ minWidth: 180 }}
         >
@@ -292,7 +414,7 @@ export default function PersonaPage() {
         </button>
         <button
           onClick={save}
-          disabled={saving || testing}
+          disabled={saving || testing || generating}
           className="pios-btn pios-btn-primary"
           style={{ minWidth: 180 }}
         >
