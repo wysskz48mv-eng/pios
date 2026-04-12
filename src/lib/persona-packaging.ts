@@ -84,3 +84,40 @@ export function toCanonicalPersona(input: unknown): CanonicalPersona | null {
 export function getPersonaPackaging(id: CanonicalPersona): PersonaPackaging {
   return PERSONA_PACKAGING.find((p) => p.id === id) ?? PERSONA_PACKAGING[0]
 }
+
+export const PERSONA_NAV_HREFS: Record<CanonicalPersona, string[]> = {
+  CEO: [
+    '/platform/executive', '/platform/consulting', '/platform/projects', '/platform/tasks',
+    '/platform/contracts', '/platform/financials', '/platform/board-pack', '/platform/expenses',
+    '/platform/payroll', '/platform/ip-vault', '/platform/intelligence', '/platform/stakeholders',
+    '/platform/time-sovereignty', '/platform/daily-brief', '/platform/deadline-tracker',
+    '/platform/agents', '/platform/onboarding', '/platform/knowledge-graph',
+    '/platform/comms', '/platform/email', '/platform/calendar', '/platform/meetings', '/platform/meetings-live',
+    '/platform/ai', '/platform/persona', '/platform/wellness',
+  ],
+  CONSULTANT: [
+    '/platform/consulting', '/platform/projects', '/platform/tasks', '/platform/contracts',
+    '/platform/financials', '/platform/expenses', '/platform/stakeholders',
+    '/platform/daily-brief', '/platform/deadline-tracker',
+    '/platform/agents', '/platform/onboarding', '/platform/knowledge-graph',
+    '/platform/comms', '/platform/email', '/platform/calendar', '/platform/meetings', '/platform/meetings-live',
+    '/platform/ai', '/platform/persona', '/platform/wellness',
+  ],
+  EXECUTIVE: [
+    '/platform/executive', '/platform/projects', '/platform/tasks', '/platform/contracts',
+    '/platform/financials', '/platform/board-pack', '/platform/expenses',
+    '/platform/intelligence', '/platform/stakeholders', '/platform/time-sovereignty',
+    '/platform/daily-brief', '/platform/deadline-tracker',
+    '/platform/agents', '/platform/onboarding', '/platform/knowledge-graph',
+    '/platform/comms', '/platform/email', '/platform/calendar', '/platform/meetings', '/platform/meetings-live',
+    '/platform/ai', '/platform/persona', '/platform/wellness',
+  ],
+  ACADEMIC: [
+    '/platform/academic', '/platform/literature', '/platform/viva', '/platform/research',
+    '/platform/learning', '/platform/study', '/platform/knowledge', '/platform/supervisor-prep', '/platform/policy-coach',
+    '/platform/tasks', '/platform/daily-brief', '/platform/deadline-tracker',
+    '/platform/agents', '/platform/onboarding', '/platform/knowledge-graph',
+    '/platform/email', '/platform/calendar', '/platform/meetings', '/platform/meetings-live',
+    '/platform/ai', '/platform/persona', '/platform/wellness',
+  ],
+}

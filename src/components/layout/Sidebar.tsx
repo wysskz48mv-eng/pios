@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { PERSONA_NAV_HREFS, toCanonicalPersona } from '@/lib/persona-packaging'
 
 // ── Obsidian Command — Sidebar v4.0 ──────────────────────────────────────────
 // True black (#080808) · Instrument Serif · DM Mono · SVG icons
@@ -156,46 +157,7 @@ const NAV_GROUPS = [
 ]
 
 // ── Persona-based nav filtering ─────────────────────────────────────────────
-// Only show modules relevant to the user's persona. Core items are always shown.
-const PERSONA_VISIBLE_HREFS: Record<string, Set<string>> = {
-  ceo: new Set([
-    '/platform/executive','/platform/consulting','/platform/projects','/platform/tasks',
-    '/platform/contracts','/platform/financials','/platform/board-pack','/platform/expenses',
-    '/platform/ip-vault','/platform/intelligence','/platform/stakeholders','/platform/time-sovereignty',
-    '/platform/daily-brief','/platform/deadline-tracker','/platform/payroll',
-    '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/persona','/platform/wellness','/platform/coaching',
-  ]),
-  consultant: new Set([
-    '/platform/consulting','/platform/projects','/platform/tasks','/platform/contracts',
-    '/platform/financials','/platform/expenses','/platform/stakeholders',
-    '/platform/daily-brief','/platform/deadline-tracker',
-    '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/persona','/platform/wellness','/platform/coaching',
-  ]),
-  executive: new Set([
-    '/platform/executive','/platform/projects','/platform/tasks','/platform/contracts',
-    '/platform/financials','/platform/board-pack','/platform/expenses',
-    '/platform/intelligence','/platform/stakeholders','/platform/time-sovereignty',
-    '/platform/daily-brief','/platform/deadline-tracker',
-    '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/persona','/platform/wellness','/platform/coaching',
-  ]),
-  academic: new Set([
-    '/platform/academic','/platform/literature','/platform/viva','/platform/research',
-    '/platform/learning','/platform/study','/platform/knowledge','/platform/supervisor-prep',
-    '/platform/tasks','/platform/daily-brief','/platform/deadline-tracker',
-    '/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/persona','/platform/wellness','/platform/policy-coach',
-  ]),
-  cos: new Set([
-    '/platform/executive','/platform/projects','/platform/tasks',
-    '/platform/stakeholders','/platform/time-sovereignty',
-    '/platform/daily-brief','/platform/deadline-tracker',
-    '/platform/comms','/platform/email','/platform/calendar','/platform/meetings','/platform/meetings-live',
-    '/platform/ai','/platform/persona','/platform/wellness','/platform/coaching',
-  ]),
-}
+// Only show modules relevant to the user's canonical persona. Core items are always shown.
 
 // Items that are always visible regardless of persona
 const ALWAYS_VISIBLE = new Set([
@@ -208,7 +170,8 @@ const ALWAYS_VISIBLE = new Set([
 
 function isItemVisible(href: string, persona: string | undefined): boolean {
   if (ALWAYS_VISIBLE.has(href)) return true
-  const personaSet = PERSONA_VISIBLE_HREFS[persona ?? ''] ?? PERSONA_VISIBLE_HREFS['ceo']
+  const canonicalPersona = toCanonicalPersona(persona) ?? 'CEO'
+  const personaSet = new Set(PERSONA_NAV_HREFS[canonicalPersona])
   return personaSet.has(href)
 }
 
@@ -220,7 +183,7 @@ interface SidebarProps {
 export function Sidebar({ userProfile, tenant }: SidebarProps) {
   const pathname = usePathname()
   const router   = useRouter()
-  const persona  = userProfile?.persona_type ?? 'ceo'
+  const persona  = userProfile?.persona_type ?? 'CEO'
   const supabase = createClient()
   const [collapsed, setCollapsed] = useState(false)
   const [unread,    setUnread]    = useState(0)
