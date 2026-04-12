@@ -23,7 +23,50 @@ function getAdmin() {
 
 function parseJsonObject(text: string): Record<string, unknown> {
   const clean = text.replace(/```json\n?|```\n?/g, '').trim()
-  return JSON.parse(clean) as Record<string, unknown>
+
+  try {
+    return JSON.parse(clean) as Record<string, unknown>
+  } catch {
+    // Some model outputs include extra narrative text before/after JSON.
+    // Extract the first balanced JSON object as a fallback.
+    const start = clean.indexOf('{')
+    if (start === -1) throw new Error('AI response did not contain JSON')
+
+    let depth = 0
+    let inString = false
+    let escaped = false
+
+    for (let i = start; i < clean.length; i += 1) {
+      const ch = clean[i]
+
+      if (inString) {
+        if (escaped) {
+          escaped = false
+        } else if (ch === '\\') {
+          escaped = true
+        } else if (ch === '"') {
+          inString = false
+        }
+        continue
+      }
+
+      if (ch === '"') {
+        inString = true
+        continue
+      }
+
+      if (ch === '{') depth += 1
+      if (ch === '}') {
+        depth -= 1
+        if (depth === 0) {
+          const candidate = clean.slice(start, i + 1)
+          return JSON.parse(candidate) as Record<string, unknown>
+        }
+      }
+    }
+  }
+
+  throw new Error('Failed to parse JSON from AI response')
 }
 
 async function requireProjectOwner(req: NextRequest, projectId: string) {
