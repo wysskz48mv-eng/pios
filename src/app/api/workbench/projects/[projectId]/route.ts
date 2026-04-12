@@ -1,28 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { apiError } from '@/lib/api-error'
+import { requireWorkbenchUser } from '@/app/api/workbench/_auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 type RouteParams = { projectId: string }
 
-function getAdmin() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
-
-async function requireOwnedProject(projectId: string) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: NextResponse.json({ error: 'Unauthorised' }, { status: 401 }) }
+async function requireOwnedProject(req: NextRequest, projectId: string) {
+  const auth = await requireWorkbenchUser(req)
+  if ('error' in auth) {
+    return { error: auth.error }
   }
 
-  const admin = getAdmin()
+  const { user, admin } = auth
   const { data: project, error } = await admin
     .from('consulting_projects')
     .select('*')
@@ -41,7 +32,7 @@ async function requireOwnedProject(projectId: string) {
 export async function GET(_req: NextRequest, context: { params: Promise<RouteParams> }) {
   try {
     const { projectId } = await context.params
-    const auth = await requireOwnedProject(projectId)
+    const auth = await requireOwnedProject(_req, projectId)
     if ('error' in auth) return auth.error
 
     const { admin, project } = auth
@@ -66,7 +57,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<RoutePar
 export async function PATCH(req: NextRequest, context: { params: Promise<RouteParams> }) {
   try {
     const { projectId } = await context.params
-    const auth = await requireOwnedProject(projectId)
+    const auth = await requireOwnedProject(req, projectId)
     if ('error' in auth) return auth.error
 
     const { admin } = auth
@@ -136,7 +127,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<RoutePa
 export async function DELETE(_req: NextRequest, context: { params: Promise<RouteParams> }) {
   try {
     const { projectId } = await context.params
-    const auth = await requireOwnedProject(projectId)
+    const auth = await requireOwnedProject(_req, projectId)
     if ('error' in auth) return auth.error
 
     const { admin } = auth

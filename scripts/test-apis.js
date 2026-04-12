@@ -4,7 +4,10 @@
  *
  * Modes:
  * - Unauthenticated (default): expects 401 on protected routes.
- * - Authenticated (optional): set WORKBENCH_AUTH_COOKIE or WORKBENCH_AUTH_COOKIE_FILE,
+ * - Authenticated (optional): provide one of:
+ *   - WORKBENCH_AUTH_COOKIE / WORKBENCH_AUTH_COOKIE_FILE
+ *   - WORKBENCH_AUTH_BEARER / WORKBENCH_AUTH_BEARER_FILE
+ *   - WORKBENCH_AUTH_EMAIL + WORKBENCH_AUTH_PASSWORD (token exchange)
  *   then it will attempt create -> read -> step write flow.
  */
 
@@ -14,22 +17,73 @@ const path = require('path')
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const SKIP_PREFLIGHT = process.env.WORKBENCH_SKIP_PREFLIGHT === '1'
 
-function getAuthCookie() {
-  const direct = process.env.WORKBENCH_AUTH_COOKIE || ''
-  if (direct.trim()) return direct.trim()
-
-  const cookieFile = process.env.WORKBENCH_AUTH_COOKIE_FILE || ''
-  if (!cookieFile.trim()) return ''
+function readOptionalFile(filePath) {
+  if (!filePath || !filePath.trim()) return ''
 
   try {
-    const full = path.isAbsolute(cookieFile) ? cookieFile : path.join(process.cwd(), cookieFile)
+    const full = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath)
     return fs.readFileSync(full, 'utf8').trim()
   } catch {
     return ''
   }
 }
 
-const AUTH_COOKIE = getAuthCookie()
+function getAuthCookie() {
+  const direct = process.env.WORKBENCH_AUTH_COOKIE || ''
+  if (direct.trim()) return direct.trim()
+  return readOptionalFile(process.env.WORKBENCH_AUTH_COOKIE_FILE || '')
+}
+
+function getAuthBearer() {
+  const direct = process.env.WORKBENCH_AUTH_BEARER || ''
+  if (direct.trim()) return direct.trim()
+  return readOptionalFile(process.env.WORKBENCH_AUTH_BEARER_FILE || '')
+}
+
+async function exchangePasswordForBearer() {
+  const email = (process.env.WORKBENCH_AUTH_EMAIL || '').trim()
+  const password = process.env.WORKBENCH_AUTH_PASSWORD || ''
+  if (!email || !password) return ''
+
+  const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '').trim()
+  const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '').trim()
+  if (!supabaseUrl || !anonKey) return ''
+
+  const endpoint = `${supabaseUrl.replace(/\/$/, '')}/auth/v1/token?grant_type=password`
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      apikey: anonKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  })
+
+  if (!res.ok) {
+    let detail = ''
+    try {
+      const body = await res.json()
+      detail = body?.error_description || body?.msg || body?.error || ''
+    } catch {}
+    throw new Error(`Password auth exchange failed (${res.status})${detail ? `: ${detail}` : ''}`)
+  }
+
+  const payload = await res.json()
+  return String(payload?.access_token || '').trim()
+}
+
+async function resolveAuth() {
+  const cookie = getAuthCookie()
+  if (cookie) return { cookie, bearer: '', source: 'cookie' }
+
+  const bearer = getAuthBearer()
+  if (bearer) return { cookie: '', bearer, source: 'bearer' }
+
+  const passwordBearer = await exchangePasswordForBearer()
+  if (passwordBearer) return { cookie: '', bearer: passwordBearer, source: 'password' }
+
+  return { cookie: '', bearer: '', source: 'none' }
+}
 
 async function ensureServerReachable() {
   try {
@@ -46,9 +100,12 @@ async function ensureServerReachable() {
   }
 }
 
-async function http(method, path, body) {
+async function http(method, path, body, auth, useAuth = true) {
   const headers = { 'Content-Type': 'application/json' }
-  if (AUTH_COOKIE) headers.Cookie = AUTH_COOKIE
+  if (useAuth) {
+    if (auth.cookie) headers.Cookie = auth.cookie
+    if (auth.bearer) headers.Authorization = `Bearer ${auth.bearer}`
+  }
 
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
@@ -81,7 +138,7 @@ async function runUnauthenticatedSuite() {
   ]
 
   for (const path of endpoints) {
-    const res = await http('GET', path)
+    const res = await http('GET', path, undefined, { cookie: '', bearer: '' }, false)
     console.log(`  GET ${path} -> ${res.status}`)
     ok(res.status === 401 || (path === '/api/workbench' && res.status === 200), `Unexpected status for ${path}: ${res.status}`)
   }
@@ -89,20 +146,20 @@ async function runUnauthenticatedSuite() {
   console.log('[workbench] Unauthenticated suite passed.')
 }
 
-async function runAuthenticatedSuite() {
+async function runAuthenticatedSuite(auth) {
   console.log('\n[workbench] Running authenticated smoke suite...')
 
   const create = await http('POST', '/api/workbench/projects', {
     project_name: `Smoke Test ${new Date().toISOString()}`,
     client_name: 'Internal QA',
-  })
+  }, auth)
   console.log(`  POST /api/workbench/projects -> ${create.status}`)
   ok(create.status === 201, `Project creation failed: ${create.status} ${JSON.stringify(create.json)}`)
 
   const projectId = create.json?.project?.id
   ok(Boolean(projectId), 'Project ID missing from create response')
 
-  const detail = await http('GET', `/api/workbench/projects/${projectId}`)
+  const detail = await http('GET', `/api/workbench/projects/${projectId}`, undefined, auth)
   console.log(`  GET /api/workbench/projects/${projectId} -> ${detail.status}`)
   ok(detail.status === 200, `Project detail failed: ${detail.status}`)
 
@@ -113,11 +170,11 @@ async function runAuthenticatedSuite() {
       stakeholders: [{ name: 'CEO', role: 'sponsor' }],
       constraints: [{ constraint: 'budget', severity: 'medium' }],
     },
-  })
+  }, auth)
   console.log(`  POST /api/workbench/${projectId}/1 -> ${step1.status}`)
   ok(step1.status === 200, `Step validation failed: ${step1.status} ${JSON.stringify(step1.json)}`)
 
-  const archive = await http('DELETE', `/api/workbench/projects/${projectId}`)
+  const archive = await http('DELETE', `/api/workbench/projects/${projectId}`, undefined, auth)
   console.log(`  DELETE /api/workbench/projects/${projectId} -> ${archive.status}`)
   ok(archive.status === 200, `Archive failed: ${archive.status}`)
 
@@ -134,12 +191,19 @@ async function main() {
 
   await runUnauthenticatedSuite()
 
-  if (!AUTH_COOKIE) {
-    console.log('\n[workbench] Skipping authenticated suite: set WORKBENCH_AUTH_COOKIE or WORKBENCH_AUTH_COOKIE_FILE to enable it.')
+  const auth = await resolveAuth()
+  if (auth.source !== 'none') {
+    console.log(`[workbench] Auth mode: ${auth.source}`)
+  }
+
+  if (!auth.cookie && !auth.bearer) {
+    console.log(
+      '\n[workbench] Skipping authenticated suite: set cookie, bearer token, or WORKBENCH_AUTH_EMAIL/WORKBENCH_AUTH_PASSWORD.'
+    )
     return
   }
 
-  await runAuthenticatedSuite()
+  await runAuthenticatedSuite(auth)
 }
 
 main().catch((err) => {

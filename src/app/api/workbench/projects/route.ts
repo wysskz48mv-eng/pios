@@ -1,31 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { apiError } from '@/lib/api-error'
+import { requireWorkbenchUser } from '@/app/api/workbench/_auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-function getAdmin() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
-
-async function requireUser() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: NextResponse.json({ error: 'Unauthorised' }, { status: 401 }) }
-  }
-
-  return { user, admin: getAdmin() }
-}
-
 export async function GET(req: NextRequest) {
   try {
-    const auth = await requireUser()
+    const auth = await requireWorkbenchUser(req)
     if ('error' in auth) return auth.error
 
     const { user, admin } = auth
@@ -52,7 +34,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await requireUser()
+    const auth = await requireWorkbenchUser(req)
     if ('error' in auth) return auth.error
 
     const { user, admin } = auth

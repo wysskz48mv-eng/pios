@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { apiError } from '@/lib/api-error'
 import { callClaude } from '@/lib/ai/client'
+import { requireWorkbenchUser } from '@/app/api/workbench/_auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -26,12 +26,11 @@ function parseJsonObject(text: string): Record<string, unknown> {
   return JSON.parse(clean) as Record<string, unknown>
 }
 
-async function requireProjectOwner(projectId: string) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: NextResponse.json({ error: 'Unauthorised' }, { status: 401 }) }
+async function requireProjectOwner(req: NextRequest, projectId: string) {
+  const auth = await requireWorkbenchUser(req)
+  if ('error' in auth) return { error: auth.error }
 
-  const admin = getAdmin()
+  const { user, admin } = auth
   const { data: project, error } = await admin
     .from('consulting_projects')
     .select('id,user_id,status,current_step')
@@ -523,7 +522,7 @@ Return JSON only:
 export async function POST(req: NextRequest, context: { params: Promise<RouteParams> }) {
   try {
     const { projectId, stepNumber } = await context.params
-    const { error, admin } = await requireProjectOwner(projectId)
+    const { error, admin } = await requireProjectOwner(req, projectId)
     if (error) return error
 
     const body = await req.json() as WorkbenchBody
@@ -550,7 +549,7 @@ export async function POST(req: NextRequest, context: { params: Promise<RoutePar
 export async function GET(req: NextRequest, context: { params: Promise<RouteParams> }) {
   try {
     const { projectId } = await context.params
-    const { error, admin } = await requireProjectOwner(projectId)
+    const { error, admin } = await requireProjectOwner(req, projectId)
     if (error) return error
 
     const action = req.nextUrl.searchParams.get('action')

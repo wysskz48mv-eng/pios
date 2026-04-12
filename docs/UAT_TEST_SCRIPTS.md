@@ -278,7 +278,13 @@
 - [ ] Run `npm run api:test`
 - [ ] Verify authenticated suite passes
 
-### 14.4 Hosted target validation
+### 14.4 Authenticated smoke suite (bearer or credentials)
+- [ ] Option A: Set `WORKBENCH_AUTH_BEARER=<supabase_access_token>`
+- [ ] Option B: Set `WORKBENCH_AUTH_EMAIL` and `WORKBENCH_AUTH_PASSWORD`
+- [ ] Run `npm run api:test`
+- [ ] Verify create/read/step/archive flow passes
+
+### 14.5 Hosted target validation
 - [ ] Set `BASE_URL=https://pios.veritasiq.io`
 - [ ] Run `npm run api:test`
 - [ ] Verify expected route protection behavior on hosted environment
