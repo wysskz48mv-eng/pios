@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
 
     // Check completion state per step
     const [profile, tasks, insights, chapters, litItems, userAgents, prefs] = await Promise.all([
-      supabase.from('user_profiles').select('full_name,organisation,nemoclaw_calibrated,google_email').eq('id', user.id).single(),
+      supabase.from('user_profiles').select('full_name,organisation,nemoclaw_calibrated,cv_processing_status,google_email').eq('id', user.id).single(),
       supabase.from('tasks').select('id').eq('user_id', user.id).limit(1),
       supabase.from('insights').select('id').eq('user_id', user.id).limit(1),
       supabase.from('thesis_chapters').select('id').eq('user_id', user.id).limit(1),
@@ -70,7 +70,9 @@ export async function GET(req: NextRequest) {
 
     // Check each step
     if (p.full_name && p.organisation)        completedIds.add('profile')
-    if (p.nemoclaw_calibrated)                completedIds.add('nemoclaw')
+    if (p.nemoclaw_calibrated || p.cv_processing_status === 'complete' || p.cv_processing_status === 'completed') {
+      completedIds.add('nemoclaw')
+    }
     if (p.google_email)                       completedIds.add('google_oauth')
     if ((tasks.data ?? []).length > 0)        completedIds.add('task')
     if ((insights.data ?? []).length > 0)     completedIds.add('insight')

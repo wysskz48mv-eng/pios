@@ -425,6 +425,12 @@
   font-weight: 300;
 }
 
+.themeRecommended {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+}
+
 .themePersona {
   font-size: 10px;
   letter-spacing: 0.06em;

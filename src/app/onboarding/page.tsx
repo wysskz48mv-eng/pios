@@ -1,12 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { CCTheme } from '@/lib/themes'
 import styles from './onboarding.module.css'
 
-type Persona = 'executive' | 'pro' | 'starter' | 'enterprise'
+type Persona = 'CEO' | 'CONSULTANT' | 'ACADEMIC' | 'EXECUTIVE'
 
 interface PersonaOption {
   id: Persona
@@ -22,6 +22,7 @@ interface ThemeOption {
   name: string
   tagline: string
   persona: string
+  recommendedFor: Persona[]
   bg: string
   surf: string
   accent: string
@@ -31,36 +32,36 @@ interface ThemeOption {
 
 const PERSONAS: PersonaOption[] = [
   {
-    id: 'executive',
-    label: 'Executive',
-    tagline: 'Founder · CEO · Director',
+    id: 'CEO',
+    label: 'CEO / Founder',
+    tagline: 'Build · Lead · Scale',
     desc: 'You run a business, lead a team, and need a sovereign intelligence layer — decisions, stakeholders, board intelligence, and strategic frameworks in one surface.',
     modules: ['EOSA™', 'Decisions', 'Stakeholders', 'Board Pack', 'Chief of Staff', 'Email Intelligence'],
     price: '£36/mo · Executive',
   },
   {
-    id: 'pro',
-    label: 'Professional',
-    tagline: 'Consultant · Director · Practitioner',
+    id: 'CONSULTANT',
+    label: 'Consultant / Advisor',
+    tagline: 'Advise · Deliver · Influence',
     desc: 'You manage engagements, produce strategic deliverables, and need a system that tracks multiple workstreams without losing context.',
     modules: ['Email Intelligence', 'Consulting Frameworks', 'Financials', 'CPD', 'Academic Suite'],
     price: '£28/mo · Pro',
   },
   {
-    id: 'starter',
-    label: 'Researcher',
-    tagline: 'DBA · PhD · Postgraduate',
+    id: 'ACADEMIC',
+    label: 'Academic / Researcher',
+    tagline: 'Research · Publish · Supervise',
     desc: 'You are completing a doctorate alongside professional commitments. PIOS tracks your thesis, prepares supervision, surfaces literature, and holds both worlds.',
     modules: ['Thesis Tracker', 'Literature Agent', 'Supervision Prep', 'Viva Prep', 'Academic Brief'],
     price: '£12/mo · Starter',
   },
   {
-    id: 'enterprise',
-    label: 'Enterprise',
-    tagline: 'Organisation · White-label Partner',
-    desc: 'Deploy PIOS across your organisation as a sanctioned personal intelligence layer with data isolation, admin dashboard, and white-label option.',
-    modules: ['All modules', 'Admin Dashboard', 'Team Management', 'White-label', 'DPA'],
-    price: 'From £36/seat',
+    id: 'EXECUTIVE',
+    label: 'Executive / Director',
+    tagline: 'Operate · Delegate · Deliver',
+    desc: 'You lead a division or function and need operational clarity across priorities, people, and reporting lines.',
+    modules: ['Chief of Staff', 'Decision Queue', 'Stakeholder Notes', 'Briefing Hub', 'Delivery Tracking'],
+    price: '£36/mo · Executive',
   },
 ]
 
@@ -70,6 +71,7 @@ const THEMES: ThemeOption[] = [
     name: 'Onyx',
     tagline: 'Executive intelligence',
     persona: 'Dark · Gold · Editorial',
+    recommendedFor: ['CEO', 'EXECUTIVE'],
     bg: '#07080D',
     surf: '#0F1117',
     accent: '#C8A96E',
@@ -81,6 +83,7 @@ const THEMES: ThemeOption[] = [
     name: 'Meridian',
     tagline: 'Professional precision',
     persona: 'Light · Navy · Minimal',
+    recommendedFor: ['CONSULTANT'],
     bg: '#FAFAF8',
     surf: '#FFFFFF',
     accent: '#2563EB',
@@ -92,6 +95,7 @@ const THEMES: ThemeOption[] = [
     name: 'Signal',
     tagline: 'Academic clarity',
     persona: 'Warm Dark · Amber · Organic',
+    recommendedFor: ['ACADEMIC'],
     bg: '#0F1311',
     surf: '#161C19',
     accent: '#E8A030',
@@ -105,7 +109,7 @@ export default function OnboardingPage() {
   const supabase = createClient()
 
   const [step, setStep] = useState(1)
-  const [persona, setPersona] = useState<Persona>('executive')
+  const [persona, setPersona] = useState<Persona>('CEO')
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
   const [org, setOrg] = useState('')
@@ -115,11 +119,21 @@ export default function OnboardingPage() {
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const savedTheme = window.sessionStorage.getItem('pios_onboarding_theme')
+    if (savedTheme === 'onyx' || savedTheme === 'meridian' || savedTheme === 'signal') {
+      setTheme(savedTheme)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.sessionStorage.setItem('pios_onboarding_theme', theme)
+  }, [theme])
+
   function handlePersonaSelect(nextPersona: Persona) {
     setPersona(nextPersona)
-    if (nextPersona === 'executive') setTheme('onyx')
-    else if (nextPersona === 'pro') setTheme('meridian')
-    else if (nextPersona === 'starter') setTheme('signal')
   }
 
   async function handleComplete() {
@@ -364,6 +378,9 @@ export default function OnboardingPage() {
                     {theme === option.id && <span className={styles.themeSelected}>Selected</span>}
                   </div>
                   <span className={styles.themeTagline}>{option.tagline}</span>
+                  {option.recommendedFor.includes(persona) && (
+                    <span className={styles.themeRecommended}>Recommended for {PERSONAS.find((p) => p.id === persona)?.label}</span>
+                  )}
                   <span className={styles.themePersona}>{option.persona}</span>
                 </div>
               </button>

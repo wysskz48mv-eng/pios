@@ -8,6 +8,31 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
+const REQUEST_PERSONA_MAP: Record<string, 'executive' | 'consultant' | 'academic'> = {
+  executive: 'executive',
+  ceo: 'executive',
+  founder: 'executive',
+  chief_of_staff: 'executive',
+  whole_life: 'executive',
+  pro: 'consultant',
+  professional: 'consultant',
+  consultant: 'consultant',
+  starter: 'academic',
+  academic: 'academic',
+}
+
+const PERSONA_CONFIG_CODE: Record<'executive' | 'consultant' | 'academic', string> = {
+  executive: 'CEO',
+  consultant: 'CONSULTANT',
+  academic: 'ACADEMIC',
+}
+
+const PERSONA_FALLBACK_MODULES: Record<'executive' | 'consultant' | 'academic', string[]> = {
+  executive: ['VIQ-ST-01', 'VIQ-ST-02', 'VIQ-ST-03', 'VIQ-SC-01', 'VIQ-SC-02', 'VIQ-OD-01', 'VIQ-RK-01'],
+  consultant: ['VIQ-PS-01', 'VIQ-PS-02', 'VIQ-ST-01', 'VIQ-SC-01', 'VIQ-FA-01', 'VIQ-EV-01'],
+  academic: ['VIQ-PS-04', 'VIQ-EV-01', 'VIQ-EV-02', 'VIQ-ST-07'],
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -36,12 +61,32 @@ export async function POST(req: NextRequest) {
 
     const admin = createServiceClient()
 
-    const personaMap: Record<string, string> = {
-      starter: 'academic', pro: 'consultant', enterprise: 'executive',
-      founder: 'executive', consultant: 'consultant', executive: 'executive',
-      academic: 'academic', professional: 'consultant', other: 'executive',
+    const normalizedPersona = REQUEST_PERSONA_MAP[String(requestedPersona).trim().toLowerCase()]
+    if (!normalizedPersona) {
+      return NextResponse.json({
+        error: 'Invalid persona. Valid values: CEO, CONSULTANT, ACADEMIC, EXECUTIVE, founder, pro, starter, consultant, academic',
+      }, { status: 400 })
     }
-    const normalizedPersona = personaMap[requestedPersona] ?? 'executive'
+
+    let personaDefaultModules = PERSONA_FALLBACK_MODULES[normalizedPersona]
+    try {
+      const { data: personaConfig } = await admin
+        .from('persona_configs')
+        .select('framework_priority_ids')
+        .eq('code', PERSONA_CONFIG_CODE[normalizedPersona])
+        .maybeSingle()
+
+      if (Array.isArray(personaConfig?.framework_priority_ids) && personaConfig.framework_priority_ids.length > 0) {
+        personaDefaultModules = personaConfig.framework_priority_ids.filter((item): item is string => typeof item === 'string')
+      }
+    } catch (e) {
+      console.error('[onboarding] persona_configs fetch failed, using fallback modules:', e)
+    }
+
+    const incomingModules = Array.isArray(active_modules)
+      ? active_modules.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).slice(0, 44)
+      : []
+    const resolvedModules = incomingModules.length > 0 ? incomingModules : personaDefaultModules
     const triageConsent = typeof email_triage_consent === 'boolean'
       ? email_triage_consent
       : typeof integrations?.email_triage === 'boolean'
@@ -64,14 +109,14 @@ export async function POST(req: NextRequest) {
       onboarding_step: 9,
       onboarding_completed_at: now,
       deployment_mode: deploy_mode ?? 'full',
-      active_modules:  Array.isArray(active_modules) ? active_modules : [],
+      active_modules:  resolvedModules,
       it_policy_acknowledged: deploy_mode === 'standalone',
       command_centre_theme:   normalizedTheme,
       email_triage_consent:   triageConsent,
       ...(typeof job_title === 'string'       && job_title.trim()       ? { job_title:       job_title.trim()       } : {}),
       ...(typeof organisation === 'string'    && organisation.trim()    ? { organisation:    organisation.trim()    } : {}),
       ...(typeof cv_filename === 'string'     && cv_filename.trim()     ? { cv_filename:     cv_filename.trim(),
-                                                                            cv_processing_status: 'pending',
+                                                                            cv_processing_status: 'processing',
                                                                             cv_uploaded_at:       now } : {}),
       ...(typeof cv_storage_path === 'string' && cv_storage_path.trim() ? { cv_storage_path: cv_storage_path.trim() } : {}),
       updated_at: now,
@@ -165,6 +210,7 @@ export async function POST(req: NextRequest) {
         const personaLabels: Record<string,string> = {
           founder:'Founder / CEO', consultant:'Consultant', executive:'Executive',
           academic:'Academic', professional:'Professional', other:'Professional',
+          ceo:'CEO / Founder', pro:'Consultant / Advisor', starter:'Academic / Researcher',
         }
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -190,7 +236,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true, persona: normalizedPersona,
-      modules: Array.isArray(active_modules) ? active_modules.length : 0,
+      modules: resolvedModules.length,
       deploy: deploy_mode, theme: normalizedTheme,
     })
 

@@ -3,7 +3,10 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-const PERSONAS = new Set(['starter', 'pro', 'executive', 'enterprise'])
+const PERSONAS = new Set([
+  'starter', 'pro', 'executive', 'enterprise',
+  'CEO', 'CONSULTANT', 'ACADEMIC', 'CHIEF_OF_STAFF', 'EXECUTIVE', 'WHOLE_LIFE',
+])
 const DEPLOY_MODES = new Set(['full', 'hybrid', 'standalone'])
 
 function normaliseDraft(body: Record<string, unknown>) {
