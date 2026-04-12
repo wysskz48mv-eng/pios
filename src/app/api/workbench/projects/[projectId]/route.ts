@@ -7,6 +7,38 @@ export const dynamic = 'force-dynamic'
 
 type RouteParams = { projectId: string }
 
+async function updateProjectWithSchemaFallback(
+  admin: any,
+  projectId: string,
+  updates: Record<string, unknown>
+) {
+  const baseQuery = admin
+    .from('consulting_projects')
+    .update(updates)
+    .eq('id', projectId)
+    .select()
+    .single()
+
+  const primary = await baseQuery
+  if (!primary.error) return primary
+
+  // Backward compatibility for environments that do not have archived_at yet.
+  const errorCode = (primary.error as { code?: string } | null)?.code
+  if (Object.prototype.hasOwnProperty.call(updates, 'archived_at') && errorCode === '42703') {
+    const reducedUpdates = { ...updates }
+    delete (reducedUpdates as { archived_at?: unknown }).archived_at
+
+    return admin
+      .from('consulting_projects')
+      .update(reducedUpdates)
+      .eq('id', projectId)
+      .select()
+      .single()
+  }
+
+  return primary
+}
+
 async function requireOwnedProject(req: NextRequest, projectId: string) {
   const auth = await requireWorkbenchUser(req)
   if ('error' in auth) {
@@ -109,12 +141,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<RoutePa
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
     }
 
-    const { data, error } = await admin
-      .from('consulting_projects')
-      .update(updates)
-      .eq('id', projectId)
-      .select()
-      .single()
+    const { data, error } = await updateProjectWithSchemaFallback(admin, projectId, updates)
 
     if (error) throw error
 
@@ -132,14 +159,22 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<Route
 
     const { admin } = auth
 
-    const { data, error } = await admin
-      .from('consulting_projects')
-      .update({ status: 'archived', archived_at: new Date().toISOString() })
-      .eq('id', projectId)
-      .select()
-      .single()
+    const { data, error } = await updateProjectWithSchemaFallback(admin, projectId, {
+      status: 'archived',
+      archived_at: new Date().toISOString(),
+    })
 
-    if (error) throw error
+    if (error) {
+      // Legacy compatibility: fall back to hard-delete when soft archive fails.
+      // This keeps cleanup behavior reliable across partially migrated schemas.
+      const hardDelete = await admin
+        .from('consulting_projects')
+        .delete()
+        .eq('id', projectId)
+
+      if (hardDelete.error) throw hardDelete.error
+      return NextResponse.json({ deleted: true, id: projectId, archive_fallback: true })
+    }
 
     return NextResponse.json({ project: data })
   } catch (err: unknown) {
