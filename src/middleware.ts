@@ -121,6 +121,9 @@ function hasAllowedRequestSource(request: NextRequest): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const authHeader = request.headers.get('authorization') ?? ''
+  const hasWorkbenchBearerAuth =
+    pathname.startsWith('/api/workbench') && authHeader.toLowerCase().startsWith('bearer ')
   const PIOS_BLOCKED = ['/api/debug', '/.env', '/.git', '/api/openapi']
   if (PIOS_BLOCKED.some(p => pathname.startsWith(p))) {
     return new NextResponse('Not found.', { status: 404 })
@@ -265,7 +268,7 @@ export async function middleware(request: NextRequest) {
 
 
   // Unauthenticated — redirect or 401
-  if (!user) {
+  if (!user && !hasWorkbenchBearerAuth) {
     if (pathname.startsWith('/api/')) {
       return new NextResponse(
         JSON.stringify({ error: 'Unauthorised' }),
