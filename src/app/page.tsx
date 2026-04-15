@@ -2,6 +2,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import styles from './page.module.css'
+export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic'
 
 export default async function LandingPage() {
   const supabase = createClient()
