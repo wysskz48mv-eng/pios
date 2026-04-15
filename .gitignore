@@ -9,3 +9,5 @@ out/
 trade_secret_register*.json
 .env*.local
 pios-backup-*.tar.gz
+.env.sentry-build-plugin
+.env.local.backup
