@@ -15,8 +15,11 @@
     "deploy:staging": "vercel",
     "deploy:production": "vercel --prod",
     "logs:vercel": "vercel logs",
-    "clean": "rm -rf .next out",
-    "setup": "npm install && npm run db:push && npm run db:seed"
+    "clean": "node -e \"const fs=require('fs');for (const dir of ['.next','out']) fs.rmSync(dir,{ recursive:true, force:true })\"",
+    "setup": "npm install && npm run db:push && npm run db:seed",
+    "validate:deployment": "node scripts/validate-deployment.js",
+    "test:smoke": "node scripts/run-smoke.js",
+    "health": "node scripts/health-check.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
