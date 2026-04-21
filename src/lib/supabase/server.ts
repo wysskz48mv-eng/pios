@@ -24,9 +24,14 @@ export function createClient() {
 }
 
 export function createServiceClient() {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY
+  if (!serviceKey) {
+    throw new Error('Missing Supabase service role key (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY)')
+  }
+
   return createServerClient(
     getSupabaseUrl(),
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    serviceKey,
     { cookies: { getAll: () => [], setAll: () => {} } }
   )
 }

@@ -231,16 +231,17 @@ async function deleteGmailDraft(
   try {
     const { data: account } = await admin
       .from('connected_email_accounts')
-      .select('access_token')
+      .select('google_access_token_enc')
       .eq('user_id', userId)
       .eq('email_address', inboxAddress)
       .single()
 
-    if (!account?.access_token as unknown as string) return
+    const accessToken = account?.google_access_token_enc as string | undefined
+    if (!accessToken) return
 
     await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(inboxAddress)}/drafts/${draftId}`,
-      { method: 'DELETE', headers: { 'Authorization': `Bearer ${account.access_token}` } }
+      { method: 'DELETE', headers: { 'Authorization': `Bearer ${accessToken}` } }
     )
   } catch { /* non-fatal */ }
 }

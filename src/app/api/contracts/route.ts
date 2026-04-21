@@ -75,7 +75,12 @@ export async function POST(req: NextRequest) {
     if (action === 'ai_review') {
       const { data: contracts } = await supabase.from('contracts').select('title,contract_type,counterparty,status,value,currency,end_date,auto_renewal,notice_period_days,key_terms,obligations').eq('user_id', user.id).eq('status', 'active')
       const list = (contracts ?? []).map((c: any) => `- ${c.title} (${c.contract_type}) with ${c.counterparty} — ${c.currency} ${c.value ?? 'TBC'} | Ends: ${c.end_date ?? 'open'} | Auto-renewal: ${c.auto_renewal ? 'Yes' : 'No'}`).join('\n')
-      const review = await callClaude([{ role: 'user', content: `You are reviewing the active contract register for ${p.full_name ?? 'a founder'}.\n\nActive contracts:\n${list}\n\nProvide a contract portfolio review:\n1. CONCENTRATION RISK — any over-reliance on a single counterparty or contract type?\n2. EXPIRY PIPELINE — contracts expiring in the next 90 days that need action\n3. RENEWAL RISKS — auto-renewals that may lock in unfavourable terms without review\n4. OBLIGATION GAPS — any obligations that appear under-resourced or at risk of breach\n5. RECOMMENDED ACTIONS — top 5 contract management actions for the next 30 days\n\nBe specific. Reference contract titles and counterparty names.` }], 'claude-sonnet-4-20250514', 0.3)
+      const review = await callClaude(
+        [{ role: 'user', content: `You are reviewing the active contract register for ${p.full_name ?? 'a founder'}.\n\nActive contracts:\n${list}\n\nProvide a contract portfolio review:\n1. CONCENTRATION RISK — any over-reliance on a single counterparty or contract type?\n2. EXPIRY PIPELINE — contracts expiring in the next 90 days that need action\n3. RENEWAL RISKS — auto-renewals that may lock in unfavourable terms without review\n4. OBLIGATION GAPS — any obligations that appear under-resourced or at risk of breach\n5. RECOMMENDED ACTIONS — top 5 contract management actions for the next 30 days\n\nBe specific. Reference contract titles and counterparty names.` }],
+        'You are a senior contracts and risk advisor. Provide concise, practical output in plain English.',
+        1200,
+        'sonnet'
+      )
       return NextResponse.json({ review })
     }
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

@@ -69,7 +69,12 @@ export async function POST(req: NextRequest) {
     if (action === 'ai_brief') {
       const { data: assets } = await supabase.from('ip_assets').select('name,asset_type,status,jurisdiction,renewal_date,owner_entity').eq('user_id', user.id)
       const assetList = (assets ?? []).map((a: any) => `- ${a.name} (${a.asset_type}) — ${a.status} | ${(a.jurisdiction ?? []).join(', ') || 'Jurisdiction TBD'}`).join('\n')
-      const brief = await callClaude([{ role: 'user', content: `You are a senior IP strategist advising ${p.full_name ?? 'a founder'} at ${p.organisation ?? 'a technology company'}.\n\nIP portfolio:\n${assetList}\n\nProvide a concise IP brief:\n1. PORTFOLIO STRENGTH — assess breadth and quality of protection\n2. GAPS & VULNERABILITIES — what is unprotected that competitors could exploit?\n3. RENEWAL PRIORITIES — urgent filings or renewals needed\n4. STRATEGIC RECOMMENDATIONS — 3 specific actions to strengthen IP in the next 90 days\n5. MONETISATION — any IP with licensing potential not yet exploited\n\nBe specific. Cite asset names. No generic advice.` }], 'claude-sonnet-4-20250514', 0.3)
+      const brief = await callClaude(
+        [{ role: 'user', content: `You are a senior IP strategist advising ${p.full_name ?? 'a founder'} at ${p.organisation ?? 'a technology company'}.\n\nIP portfolio:\n${assetList}\n\nProvide a concise IP brief:\n1. PORTFOLIO STRENGTH — assess breadth and quality of protection\n2. GAPS & VULNERABILITIES — what is unprotected that competitors could exploit?\n3. RENEWAL PRIORITIES — urgent filings or renewals needed\n4. STRATEGIC RECOMMENDATIONS — 3 specific actions to strengthen IP in the next 90 days\n5. MONETISATION — any IP with licensing potential not yet exploited\n\nBe specific. Cite asset names. No generic advice.` }],
+        'You are a senior IP portfolio advisor. Give commercially pragmatic recommendations with specific next actions.',
+        1200,
+        'sonnet'
+      )
       return NextResponse.json({ brief })
     }
 

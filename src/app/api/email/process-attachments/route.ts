@@ -390,16 +390,17 @@ async function downloadGmailAttachment({
   try {
     const { data: account } = await admin
       .from('connected_email_accounts')
-      .select('access_token')
+      .select('google_access_token_enc')
       .eq('user_id', userId)
       .eq('email_address', inboxAddress)
       .single()
 
-    if (!account?.access_token as unknown as string) return null
+    const accessToken = account?.google_access_token_enc as string | undefined
+    if (!accessToken) return null
 
     const res = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(inboxAddress)}/messages/${gmailMsgId}/attachments/${gmailAttachId}`,
-      { headers: { 'Authorization': `Bearer ${account.access_token}` } }
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
     )
 
     if (!res.ok) return null

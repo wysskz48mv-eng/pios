@@ -1,5 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient as createServiceClient, type EmailOtpType } from '@supabase/supabase-js'
 import { GOOGLE_OAUTH_INTENT_PARAM, parseGoogleOAuthIntent } from '@/lib/auth/google-oauth'
 import { getSupabasePublicKey, getSupabaseUrl } from '@/lib/supabase/env'
 import { cookies } from 'next/headers'
@@ -61,9 +61,8 @@ export async function GET(request: NextRequest) {
       `${origin}/auth/login?error=${encodeURIComponent(errorMsg)}`
     )
   }
-  if (!code) {
-    return NextResponse.redirect(`${origin}/auth/login?error=missing_code`)
-  }
+  const tokenHash = searchParams.get('token_hash')
+  const otpType = searchParams.get('type') as EmailOtpType | null
 
   // Create Supabase client with direct cookie access for reliable session persistence
   const supabase = createServerClient(
@@ -81,13 +80,29 @@ export async function GET(request: NextRequest) {
     }
   )
 
-  // Exchange code for session — this MUST set cookies successfully
-  const { data: sessionData, error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code)
-  if (exchangeErr) {
-    console.error('[auth/callback] exchange error:', exchangeErr.message)
-    return NextResponse.redirect(
-      `${origin}/auth/login?error=${encodeURIComponent(exchangeErr.message)}`
-    )
+  // Support both OAuth callback (`code`) and magic-link callback (`token_hash`)
+  let authSession: { provider_token?: string | null; provider_refresh_token?: string | null } | null = null
+
+  if (code) {
+    const { data, error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code)
+    if (exchangeErr) {
+      console.error('[auth/callback] exchange error:', exchangeErr.message)
+      return NextResponse.redirect(
+        `${origin}/auth/login?error=${encodeURIComponent(exchangeErr.message)}`
+      )
+    }
+    authSession = data?.session ?? null
+  } else if (tokenHash && otpType) {
+    const { data, error: otpErr } = await supabase.auth.verifyOtp({ type: otpType, token_hash: tokenHash })
+    if (otpErr) {
+      console.error('[auth/callback] verifyOtp error:', otpErr.message)
+      return NextResponse.redirect(
+        `${origin}/auth/login?error=${encodeURIComponent(otpErr.message)}`
+      )
+    }
+    authSession = data?.session ?? null
+  } else {
+    return NextResponse.redirect(`${origin}/auth/login?error=missing_code_or_token`)
   }
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -96,22 +111,27 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Extract Google OAuth tokens from session ──────────────────────────────
-  const providerToken        = sessionData?.session?.provider_token        ?? null
-  const providerRefreshToken = sessionData?.session?.provider_refresh_token ?? null
+  const providerToken        = authSession?.provider_token ?? null
+  const providerRefreshToken = authSession?.provider_refresh_token ?? null
   const googleEmail          = user.user_metadata?.email ?? user.email ?? null
 
-  // Use service client for all DB writes — bypasses RLS reliably
-  const admin = createServiceClient(
-    getSupabaseUrl(),
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  // Use service client for DB writes when available; fall back to user session
+  // so auth callback still works if service role key is temporarily missing.
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY
+  const db = serviceRoleKey
+    ? createServiceClient(getSupabaseUrl(), serviceRoleKey)
+    : supabase
+
+  if (!serviceRoleKey) {
+    console.warn('[auth/callback] SUPABASE_SERVICE_ROLE_KEY missing; using session client fallback')
+  }
 
   // Check existing profile
-  const { data: existingProfile } = await admin
+  const { data: existingProfile } = await db
     .from('user_profiles')
     .select('id, onboarded, full_name, google_refresh_token_enc')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   const isNewUser = !existingProfile
 
@@ -121,7 +141,7 @@ export async function GET(request: NextRequest) {
       ?? user.email?.split('@')[0]
       ?? 'there'
 
-    await admin.from('user_profiles').upsert({
+    await db.from('user_profiles').upsert({
       id:                   user.id,
       user_id:              user.id,
       full_name:            fullName,
@@ -138,7 +158,7 @@ export async function GET(request: NextRequest) {
       updated_at:           new Date().toISOString(),
     }, { onConflict: 'id' })
 
-    await admin.from('exec_intelligence_config').upsert({
+    await db.from('exec_intelligence_config').upsert({
       user_id:        user.id,
       ai_calls_used:  0,
       ai_calls_limit: 50,
@@ -155,7 +175,7 @@ export async function GET(request: NextRequest) {
   if (shouldConnectWorkspace && providerToken) {
     const tokenExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
 
-    await admin.from('user_profiles').update({
+    await db.from('user_profiles').update({
       google_access_token_enc:  providerToken,
       google_refresh_token_enc: providerRefreshToken ?? null,
       google_email:         googleEmail,
@@ -164,7 +184,7 @@ export async function GET(request: NextRequest) {
     }).eq('id', user.id)
 
     if (googleEmail) {
-      await admin.from('connected_email_accounts').upsert({
+      await db.from('connected_email_accounts').upsert({
         user_id:              user.id,
         email_address:        googleEmail,
         display_name:         user.user_metadata?.full_name ?? googleEmail.split('@')[0],

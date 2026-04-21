@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.redirect(`${appUrl}/login?error=session_expired`)
+    return NextResponse.redirect(`${appUrl}/auth/login?error=session_expired`)
   }
 
   // ── Verify signed state before token exchange ─────────────────────────────
@@ -182,8 +182,8 @@ export async function GET(req: NextRequest) {
       display_name:     displayName || autoLabel,
       context:          inferredContext,
       label:            autoLabel,
-      ms_access_token:  access_token,
-      ms_refresh_token: refresh_token,
+      ms_access_token_enc:  access_token,
+      ms_refresh_token_enc: refresh_token,
       ms_token_expiry:  tokenExpiry,
       ms_tenant_id:     msTenantId,
       ms_scopes:        ['Mail.Read','Mail.Send','Calendars.Read','User.Read'],

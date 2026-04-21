@@ -21,7 +21,9 @@ async function callClaude(prompt: string, system: string, maxTokens = 1500): Pro
 export async function GET() {
   try {
     const supabase = createClient()
-    const svc      = createServiceClient()
+    const svc = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY)
+      ? createServiceClient()
+      : supabase
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { data: cal }     = await svc.from('nemoclaw_calibration').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single()
@@ -35,7 +37,9 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient()
-    const svc      = createServiceClient()
+    const svc = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY)
+      ? createServiceClient()
+      : supabase
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -47,8 +51,8 @@ export async function POST(req: NextRequest) {
     const fname = file.name.toLowerCase()
     console.log('[CV]', fname, file.type, file.size)
 
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File must be under 5MB.' }, { status: 400 })
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File must be under 10MB.' }, { status: 400 })
     }
 
     const isTxt  = fname.endsWith('.txt')  || file.type.includes('text/plain')

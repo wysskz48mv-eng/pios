@@ -200,7 +200,7 @@ async function triageAndDraft({
     })
 
     // Create Gmail draft from the CORRECT account
-    if (draftBody && account.provider === 'gmail' && account.google_access_token_enc) {
+    if (draftBody && ['google', 'gmail'].includes(account.provider) && account.google_access_token_enc) {
       draftId = await createGmailDraft({
         accessToken:  account.google_access_token_enc,
         refreshToken: account.google_refresh_token_enc,
@@ -403,8 +403,8 @@ async function createGmailDraft({
         )
         await persistAdmin.from('connected_email_accounts')
           .update({
-            access_token: token,
-            ...(refreshData.expires_in ? { token_expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString() } : {}),
+            google_access_token_enc: token,
+            ...(refreshData.expires_in ? { google_token_expiry: new Date(Date.now() + refreshData.expires_in * 1000).toISOString() } : {}),
           })
           .eq('email_address', fromAddress)
       }
