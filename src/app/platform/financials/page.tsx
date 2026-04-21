@@ -5,6 +5,7 @@
  */
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { TrendingUp, Zap, Loader2, RefreshCw, Copy, Check, DollarSign, PiggyBank, FileText, BarChart2 } from 'lucide-react'
 import { InvoiceDetailView, type InvoiceDetail } from '@/components/financial/InvoiceDetailView'
 
@@ -707,7 +708,16 @@ export default function FinancialsPage() {
                   <p className="text-xs text-[var(--pios-muted)]">Manage document identity, colours, numbering, and sender settings.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {brandSettings?.logo_url && <img src={brandSettings.logo_url} alt="Brand logo" className="h-10 w-auto rounded border border-[var(--pios-border)] bg-white p-1" />}
+                  {brandSettings?.logo_url && (
+                    <Image
+                      src={brandSettings.logo_url}
+                      alt="Brand logo"
+                      width={96}
+                      height={40}
+                      unoptimized
+                      className="h-10 w-auto rounded border border-[var(--pios-border)] bg-white p-1"
+                    />
+                  )}
                   <label className="text-xs text-[var(--pios-muted)] border border-[var(--pios-border)] rounded-lg px-3 py-2 cursor-pointer hover:text-[var(--pios-text)]">
                     {uploadingLogo ? 'Uploading…' : 'Upload logo'}
                     <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(e) => {

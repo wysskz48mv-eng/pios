@@ -1,6 +1,29 @@
 import type { Metadata } from 'next'
+import { DM_Mono, DM_Sans, Cormorant_Garamond, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 import CookieNotice from '@/components/CookieNotice'
+
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-sans', display: 'swap' })
+const dmMono = DM_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['400', '500'],
+  display: 'swap',
+})
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+})
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+})
 
 export const viewport = {
   width: 'device-width',
@@ -29,22 +52,10 @@ export const metadata: Metadata = {
   },
 }
 
-import { headers } from 'next/headers'
-
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nonce = (await headers()).get('x-nonce') ?? ''
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>
+      <body className={`${dmSans.variable} ${dmMono.variable} ${cormorant.variable} ${instrumentSerif.variable}`}>
         {children}
         <CookieNotice />
       </body>

@@ -1,7 +1,6 @@
-// @ts-nocheck
 'use client'
 // PIOS™ v3.7.0 | Sprint O — Platform Status | VeritasIQ Technologies Ltd
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { CheckCircle2, AlertCircle, XCircle, Loader2, RefreshCw } from 'lucide-react'
 
 interface ServiceCheck {
@@ -16,82 +15,116 @@ export default function StatusPage() {
   const [loading,   setLoading]   = useState(true)
   const [lastCheck, setLastCheck] = useState<string | null>(null)
 
-  async function runChecks() {
+  const runChecks = useCallback(async () => {
     setLoading(true)
-    const start = Date.now()
 
     const services: ServiceCheck[] = [
-      { name:'PIOS API',        status:'checking' },
-      { name:'Supabase DB',     status:'checking' },
-      { name:'Anthropic AI',    status:'checking' },
-      { name:'Stripe Billing',  status:'checking' },
-      { name:'RESEND Email',    status:'checking' },
-      { name:'CRON Jobs',       status:'checking' },
-      { name:'Gmail OAuth',     status:'checking' },
-      { name:'VeritasEdge™',   status:'checking' },
-      { name:'InvestiScript™', status:'checking' },
+      { name: 'PIOS API', status: 'checking' },
+      { name: 'Supabase DB', status: 'checking' },
+      { name: 'Anthropic AI', status: 'checking' },
+      { name: 'Stripe Billing', status: 'checking' },
+      { name: 'RESEND Email', status: 'checking' },
+      { name: 'CRON Jobs', status: 'checking' },
+      { name: 'Gmail OAuth', status: 'checking' },
+      { name: 'VeritasEdge™', status: 'checking' },
+      { name: 'InvestiScript™', status: 'checking' },
     ]
-    setChecks(services.map(s => ({...s})))
+    setChecks(services.map((service) => ({ ...service })))
 
     // Check PIOS API health
     try {
-      const t = Date.now()
-      const r = await fetch('/api/health/smoke')
-      const d = await r.json()
-      updateCheck('PIOS API', r.ok ? 'ok' : 'error', Date.now()-t, d.status ?? (r.ok?'healthy':'unhealthy'))
-    } catch { updateCheck('PIOS API', 'error', undefined, 'Request failed') }
+      const startTime = Date.now()
+      const response = await fetch('/api/health/smoke')
+      const data = await response.json()
+      updateCheck(
+        'PIOS API',
+        response.ok ? 'ok' : 'error',
+        Date.now() - startTime,
+        data.status ?? (response.ok ? 'healthy' : 'unhealthy')
+      )
+    } catch {
+      updateCheck('PIOS API', 'error', undefined, 'Request failed')
+    }
 
     // Check onboarding (hits DB)
     try {
-      const t = Date.now()
-      const r = await fetch('/api/onboarding')
-      const d = await r.json()
-      const lat = Date.now()-t
-      updateCheck('Supabase DB', r.ok ? 'ok' : 'error', lat, r.ok?'Connected':'Failed')
+      const startTime = Date.now()
+      const response = await fetch('/api/onboarding')
+      const data = await response.json()
+      const latency = Date.now() - startTime
+      updateCheck('Supabase DB', response.ok ? 'ok' : 'error', latency, response.ok ? 'Connected' : 'Failed')
+
       // Check env flags from onboarding readiness
-      if (d.readiness) {
-        updateCheck('Stripe Billing',  d.readiness.stripe_live ? 'ok' : 'warn', undefined, d.readiness.stripe_live ? 'Live keys configured' : 'Needs sk_live_ key in Vercel')
-        updateCheck('RESEND Email',    d.readiness.resend      ? 'ok' : 'warn', undefined, d.readiness.resend      ? 'RESEND_API_KEY set'  : 'Add RESEND_API_KEY to Vercel')
-        updateCheck('CRON Jobs',       d.readiness.cron        ? 'ok' : 'warn', undefined, d.readiness.cron        ? 'CRON_SECRET set'     : 'Add CRON_SECRET to Vercel — 13 crons configured in vercel.json')
-        updateCheck('Gmail OAuth',     d.readiness.nemoclaw    ? 'ok' : 'warn', undefined, 'Check Google OAuth client config')
+      if (data.readiness) {
+        updateCheck(
+          'Stripe Billing',
+          data.readiness.stripe_live ? 'ok' : 'warn',
+          undefined,
+          data.readiness.stripe_live ? 'Live keys configured' : 'Needs sk_live_ key in Vercel'
+        )
+        updateCheck(
+          'RESEND Email',
+          data.readiness.resend ? 'ok' : 'warn',
+          undefined,
+          data.readiness.resend ? 'RESEND_API_KEY set' : 'Add RESEND_API_KEY to Vercel'
+        )
+        updateCheck(
+          'CRON Jobs',
+          data.readiness.cron ? 'ok' : 'warn',
+          undefined,
+          data.readiness.cron ? 'CRON_SECRET set' : 'Add CRON_SECRET to Vercel — 13 crons configured in vercel.json'
+        )
+        updateCheck('Gmail OAuth', data.readiness.nemoclaw ? 'ok' : 'warn', undefined, 'Check Google OAuth client config')
       }
-    } catch { updateCheck('Supabase DB', 'error', undefined, 'Request failed') }
+    } catch {
+      updateCheck('Supabase DB', 'error', undefined, 'Request failed')
+    }
 
     // Check Anthropic
     try {
-      const t = Date.now()
-      const r = await fetch('/api/notifications/smart', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'digest', notifications:[]}),
+      const startTime = Date.now()
+      const response = await fetch('/api/notifications/smart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'digest', notifications: [] }),
       })
-      updateCheck('Anthropic AI', r.ok ? 'ok' : 'error', Date.now()-t, r.ok?'Haiku 4.5 responding':'API error')
-    } catch { updateCheck('Anthropic AI', 'warn', undefined, 'Check ANTHROPIC_API_KEY') }
+      updateCheck(
+        'Anthropic AI',
+        response.ok ? 'ok' : 'error',
+        Date.now() - startTime,
+        response.ok ? 'Haiku 4.5 responding' : 'API error'
+      )
+    } catch {
+      updateCheck('Anthropic AI', 'warn', undefined, 'Check ANTHROPIC_API_KEY')
+    }
 
     // Check external platforms (just reachability)
-    for (const [name, url] of [
-      ['VeritasEdge™',   'https://sustainedge.vercel.app/api/health'],
+    const externalChecks: Array<[string, string]> = [
+      ['VeritasEdge™', 'https://sustainedge.vercel.app/api/health'],
       ['InvestiScript™', 'https://investiscript.vercel.app/api/health'],
-    ]) {
+    ]
+
+    for (const [name, url] of externalChecks) {
       try {
-        const t = Date.now()
-        const r = await fetch(url, { mode:'no-cors', signal:AbortSignal.timeout(5000) })
-        updateCheck(name, 'ok', Date.now()-t, 'Reachable')
+        const startTime = Date.now()
+        await fetch(url, { mode: 'no-cors', signal: AbortSignal.timeout(5000) })
+        updateCheck(name, 'ok', Date.now() - startTime, 'Reachable')
       } catch {
         updateCheck(name, 'warn', undefined, 'Check deployment status')
       }
     }
 
-    setLastCheck(new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'}))
+    setLastCheck(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
     setLoading(false)
-  }
+  }, [])
 
   function updateCheck(name: string, status: ServiceCheck['status'], latency?: number, note?: string) {
     setChecks(prev => prev.map(c => c.name===name ? {...c, status, latency, note} : c))
   }
 
-  useEffect(() => { runChecks() }, [])
-
-  const C = { navy:'#0D2B52', gold:'#C9A84C' }
+  useEffect(() => {
+    void runChecks()
+  }, [runChecks])
   const statusIcon = (s: string) => {
     if (s==='ok')       return <CheckCircle2 size={16} color='#22c55e'/>
     if (s==='warn')     return <AlertCircle  size={16} color='#f59e0b'/>
