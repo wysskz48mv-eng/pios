@@ -145,7 +145,10 @@ export default function OnboardingPage() {
 
     try {
       const res = await fetch('/api/onboarding/state', { cache: 'no-store' })
-      if (!res.ok) throw new Error('Could not load onboarding state')
+      if (!res.ok) {
+        const details = await res.text().catch(() => '')
+        throw new Error(`Could not load onboarding state (status=${res.status}) ${details}`.trim())
+      }
       const data = await res.json()
 
       const nextStep = clampStep(data?.state?.current_step ?? local.current_step ?? 1)

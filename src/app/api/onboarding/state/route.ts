@@ -14,6 +14,8 @@ type SupabaseErrorLike = {
 type DbClient = ReturnType<typeof createClient>
 
 const SCHEMA_DRIFT_CODES = new Set(['42P01', '42703'])
+const RLS_OR_PERMISSION_CODES = new Set(['42501'])
+const ONBOARDING_FEATURE_LAUNCH_DATE = '2026-04-22T14:00:00.000Z'
 
 function clampStep(value: unknown) {
   const n = typeof value === 'number' ? value : Number(value)
@@ -35,6 +37,18 @@ function asSupabaseError(error: unknown): SupabaseErrorLike {
 function isSchemaDriftError(error: unknown) {
   const e = asSupabaseError(error)
   return Boolean(e.code && SCHEMA_DRIFT_CODES.has(e.code))
+}
+
+function isPermissionError(error: unknown) {
+  const e = asSupabaseError(error)
+  return Boolean(e.code && RLS_OR_PERMISSION_CODES.has(e.code))
+}
+
+function isCreatedBeforeLaunch(createdAt: string | null | undefined): boolean {
+  if (!createdAt) return false
+  const ts = Date.parse(createdAt)
+  if (Number.isNaN(ts)) return false
+  return ts < Date.parse(ONBOARDING_FEATURE_LAUNCH_DATE)
 }
 
 function logDbError(scope: string, error: unknown, context?: Record<string, unknown>) {
@@ -71,7 +85,7 @@ function maybeServiceClient(): DbClient {
 async function queryProfile(admin: DbClient, userId: string) {
   const profileQuery = await admin
     .from('user_profiles')
-    .select('id,full_name,job_title,organisation,persona_type,onboarding_complete,onboarding_current_step,onboarded')
+    .select('id,full_name,job_title,organisation,persona_type,onboarding_complete,onboarding_current_step,onboarded,created_at')
     .eq('id', userId)
     .maybeSingle()
 
@@ -80,7 +94,7 @@ async function queryProfile(admin: DbClient, userId: string) {
   if (profileQuery.error.code === '42703') {
     const legacyProfileQuery = await admin
       .from('user_profiles')
-      .select('id,full_name,job_title,organisation,persona_type,onboarded')
+      .select('id,full_name,job_title,organisation,persona_type,onboarded,created_at')
       .eq('id', userId)
       .maybeSingle()
 
@@ -103,18 +117,44 @@ async function queryOnboardingState(admin: DbClient, userId: string) {
     .eq('user_id', userId)
     .maybeSingle()
 
-  if (!stateQuery.error) return stateQuery.data as Record<string, unknown> | null
+  if (!stateQuery.error) {
+    return {
+      data: stateQuery.data as Record<string, unknown> | null,
+      readBlocked: false,
+      missingTableOrColumn: false,
+    }
+  }
 
   if (isSchemaDriftError(stateQuery.error)) {
     console.warn('[onboarding/state] GET onboarding_state unavailable; continuing with profile-only fallback', {
       userId,
       ...asSupabaseError(stateQuery.error),
     })
-    return null
+    return {
+      data: null,
+      readBlocked: false,
+      missingTableOrColumn: true,
+    }
+  }
+
+  if (isPermissionError(stateQuery.error)) {
+    console.error('[onboarding/state] GET onboarding_state blocked by permission/RLS policy', {
+      userId,
+      ...asSupabaseError(stateQuery.error),
+    })
+    return {
+      data: null,
+      readBlocked: true,
+      missingTableOrColumn: false,
+    }
   }
 
   logDbError('[onboarding/state] GET state', stateQuery.error, { userId })
-  return null
+  return {
+    data: null,
+    readBlocked: true,
+    missingTableOrColumn: false,
+  }
 }
 
 async function queryCalibration(admin: DbClient, userId: string) {
@@ -153,17 +193,24 @@ export async function GET() {
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const [profile, stateRow, calibration] = await Promise.all([
+    const [profile, stateRead, calibration] = await Promise.all([
       queryProfile(admin, user.id),
       queryOnboardingState(admin, user.id),
       queryCalibration(admin, user.id),
     ])
 
-    const mergedComplete = Boolean(
+    const stateRow = stateRead.data
+    const isLegacyUser = isCreatedBeforeLaunch(user.created_at)
+      || isCreatedBeforeLaunch(typeof profile?.created_at === 'string' ? profile.created_at : null)
+
+    const explicitComplete = Boolean(
       stateRow?.onboarding_complete
       ?? profile?.onboarding_complete
       ?? profile?.onboarded,
     )
+
+    const bypassOnboarding = isLegacyUser || profile?.onboarding_complete == null || stateRead.readBlocked
+    const mergedComplete = explicitComplete || bypassOnboarding
 
     const personaSelected = stateRow?.persona_selected ?? profile?.persona_type ?? null
 
@@ -174,7 +221,7 @@ export async function GET() {
         personaSelected ? 2 : 1,
       )
 
-    if (!stateRow) {
+    if (!stateRow && !stateRead.readBlocked && !stateRead.missingTableOrColumn) {
       const upsertResult = await admin.from('onboarding_state').upsert({
         user_id: user.id,
         current_step: ensuredStep,
@@ -190,10 +237,16 @@ export async function GET() {
       }
     }
 
+    const warnings: string[] = []
+    if (stateRead.readBlocked) warnings.push('onboarding_state_read_blocked')
+    if (stateRead.missingTableOrColumn) warnings.push('onboarding_state_schema_missing')
+    if (isLegacyUser && !explicitComplete) warnings.push('legacy_user_bypass_applied')
+
     const calibrationConfig = getPersonaCalibrationConfig(typeof personaSelected === 'string' ? personaSelected : null)
 
     return NextResponse.json({
       ok: true,
+      warning: warnings.length ? warnings.join(',') : undefined,
       profile: profile ?? null,
       state: {
         ...(stateRow ?? {}),
@@ -208,9 +261,9 @@ export async function GET() {
     console.error('[onboarding/state] GET', error)
     return NextResponse.json({
       ok: true,
-      warning: 'state_read_failed',
+      warning: 'state_read_failed_assumed_complete',
       profile: null,
-      state: { current_step: 1, onboarding_complete: false, persona_selected: null },
+      state: { current_step: 6, onboarding_complete: true, persona_selected: null },
       calibration: null,
       persona_config: getPersonaCalibrationConfig(null),
     })

@@ -54,12 +54,21 @@ const SEC_HEADERS: Record<string, string> = {
   // CSP defined in next.config.js headers() to avoid conflicts
 }
 
+const ONBOARDING_FEATURE_LAUNCH_DATE = '2026-04-22T14:00:00.000Z'
+
 function normaliseNextPath(next: string | null): string | null {
   if (!next) return null
   if (!next.startsWith('/')) return null
   if (next.startsWith('//')) return null
   if (next.startsWith('/auth/')) return null
   return next
+}
+
+function isCreatedBeforeLaunch(createdAt: string | null | undefined): boolean {
+  if (!createdAt) return false
+  const ts = Date.parse(createdAt)
+  if (Number.isNaN(ts)) return false
+  return ts < Date.parse(ONBOARDING_FEATURE_LAUNCH_DATE)
 }
 
 function parseJwtPayload(accessToken: string | null | undefined): Record<string, unknown> | null {
@@ -229,25 +238,63 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  let profile: { onboarded: boolean | null; onboarding_complete?: boolean | null; onboarding_current_step?: number | null } | null = null
-
-  if (user) {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('onboarded,onboarding_complete,onboarding_current_step')
-      .eq('id', user.id)
-      .maybeSingle()
-    profile = data
+  type OnboardingProfileRow = {
+    onboarded: boolean | null
+    onboarding_complete?: boolean | null
+    onboarding_current_step?: number | null
+    created_at?: string | null
   }
 
-  const isOnboarded = profile?.onboarding_complete === true || profile?.onboarded === true
+  let profile: OnboardingProfileRow | null = null
+  let profileReadFailed = false
+
+  if (user) {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('onboarded,onboarding_complete,onboarding_current_step,created_at')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (error) {
+      profileReadFailed = true
+      console.error('[middleware] failed to read onboarding profile; failing open to avoid redirect loop', {
+        userId: user.id,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      })
+    } else {
+      profile = data
+    }
+  }
+
   const resumeStep = typeof profile?.onboarding_current_step === 'number'
     ? Math.min(6, Math.max(1, profile.onboarding_current_step))
     : 1
 
-  // Onboarding gate — redirect incomplete users to wizard
+  const isLegacyUser = isCreatedBeforeLaunch(user?.created_at)
+    || isCreatedBeforeLaunch(profile?.created_at)
+
+  const explicitComplete = profile?.onboarding_complete === true || profile?.onboarded === true
+  const hasLegacyNullComplete = profile?.onboarding_complete == null
+  const bypassOnboarding = isLegacyUser || hasLegacyNullComplete
+
+  // IMPORTANT: only force onboarding if we positively know user is incomplete.
+  const knownIncomplete = !profileReadFailed
+    && !explicitComplete
+    && !bypassOnboarding
+    && (
+      profile?.onboarding_complete === false
+      || profile?.onboarded === false
+      || profile === null
+    )
+
+  const isOnboarded = explicitComplete || bypassOnboarding || profileReadFailed
+
+  // Onboarding gate — redirect only when we KNOW user is incomplete.
   if (user && pathname.startsWith('/platform/') && !pathname.startsWith('/platform/demo')) {
-    if (!isOnboarded) {
+    if (knownIncomplete) {
       return NextResponse.redirect(new URL(`/onboarding?step=${resumeStep}`, request.url))
     }
   }
