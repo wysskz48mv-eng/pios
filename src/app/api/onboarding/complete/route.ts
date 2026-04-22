@@ -11,6 +11,72 @@ function maybeServiceClient() {
   }
 }
 
+function logSupabaseError(operation: string, error: unknown, extra?: Record<string, unknown>) {
+  const e = (error ?? {}) as {
+    code?: string
+    message?: string
+    details?: string
+    hint?: string
+  }
+
+  console.error('[onboarding/complete] operation failed', {
+    operation,
+    code: e.code,
+    message: e.message,
+    details: e.details,
+    hint: e.hint,
+    ...(extra ?? {}),
+  })
+}
+
+async function tryWriteProfile(
+  client: any,
+  userId: string,
+  payload: Record<string, unknown>,
+  whereColumn: 'id' | 'user_id',
+  shouldInsertIfMissing: boolean,
+) {
+  const query = client.from('user_profiles')
+
+  const existing = await query.select('id,onboarded').eq(whereColumn, userId).maybeSingle()
+
+  if (existing.error) {
+    return { data: null, error: existing.error, mode: 'read_existing' as const }
+  }
+
+  if (existing.data) {
+    const updated = await query
+      .update(payload)
+      .eq(whereColumn, userId)
+      .select('id,onboarded')
+      .single()
+
+    return { ...updated, mode: 'update' as const }
+  }
+
+  if (!shouldInsertIfMissing) {
+    return {
+      data: null,
+      error: {
+        code: 'NO_PROFILE_ROW',
+        message: `No user_profiles row found via ${whereColumn}`,
+      },
+      mode: 'missing' as const,
+    }
+  }
+
+  const insertPayload = whereColumn === 'id'
+    ? { ...payload, id: userId }
+    : { ...payload, user_id: userId }
+
+  const inserted = await query
+    .insert(insertPayload)
+    .select('id,onboarded')
+    .single()
+
+  return { ...inserted, mode: 'insert' as const }
+}
+
 /**
  * POST /api/onboarding/complete
  * VeritasIQ Technologies Ltd · PIOS
@@ -129,44 +195,71 @@ export async function POST(req: NextRequest) {
       console.error('[onboarding] bootstrap error (non-fatal):', e)
     }
 
-    const { data: existingProfile } = await admin
-      .from('user_profiles').select('id').eq('id', user.id).maybeSingle()
+    const legacyPayload: Record<string, unknown> = {
+      ...profilePayload,
+      onboarded: true,
+    }
+    delete legacyPayload.onboarding_complete
+    delete legacyPayload.onboarding_current_step
+    delete legacyPayload.onboarding_completed_at
 
-    const writeProfile = async (payload: Record<string, unknown>) => (
-      existingProfile
-        ? admin.from('user_profiles').update(payload).eq('id', user.id).select('id,onboarded').single()
-        : admin.from('user_profiles').insert(payload).select('id,onboarded').single()
-    )
-
-    let profileWrite = await writeProfile(profilePayload as Record<string, unknown>)
-
-    if (profileWrite.error?.code === '42703') {
-      console.warn('[onboarding] profile update encountered schema drift; retrying with legacy payload', {
-        code: profileWrite.error.code,
-        message: profileWrite.error.message,
-      })
-
-      const legacyPayload: Record<string, unknown> = {
-        ...profilePayload,
-        onboarded: true,
-      }
-      delete legacyPayload.onboarding_complete
-      delete legacyPayload.onboarding_current_step
-      delete legacyPayload.onboarding_completed_at
-
-      profileWrite = await writeProfile(legacyPayload)
+    const minimalCompletionPayload: Record<string, unknown> = {
+      onboarded: true,
+      onboarding_complete: true,
+      onboarding_current_step: 6,
+      onboarding_completed_at: now,
+      updated_at: now,
     }
 
-    const { data: profileRow, error: profileErr } = profileWrite
-    if (profileErr || !profileRow?.onboarded) {
-      console.error('[onboarding] profile update error:', {
-        code: profileErr?.code,
-        message: profileErr?.message,
-        details: profileErr?.details,
-        hint: profileErr?.hint,
+    const profileWriteAttempts: Array<{
+      name: string
+      where: 'id' | 'user_id'
+      payload: Record<string, unknown>
+      shouldInsertIfMissing: boolean
+    }> = [
+      { name: 'primary_full_id', where: 'id', payload: profilePayload as Record<string, unknown>, shouldInsertIfMissing: true },
+      { name: 'legacy_schema_id', where: 'id', payload: legacyPayload, shouldInsertIfMissing: true },
+      { name: 'minimal_completion_id', where: 'id', payload: minimalCompletionPayload, shouldInsertIfMissing: false },
+      { name: 'primary_full_user_id', where: 'user_id', payload: profilePayload as Record<string, unknown>, shouldInsertIfMissing: true },
+      { name: 'legacy_schema_user_id', where: 'user_id', payload: legacyPayload, shouldInsertIfMissing: true },
+      { name: 'minimal_completion_user_id', where: 'user_id', payload: minimalCompletionPayload, shouldInsertIfMissing: false },
+    ]
+
+    let profileRow: { id?: string; onboarded?: boolean } | null = null
+    let profileErr: any = null
+
+    for (const attempt of profileWriteAttempts) {
+      const attemptResult = await tryWriteProfile(
+        admin,
+        user.id,
+        attempt.payload,
+        attempt.where,
+        attempt.shouldInsertIfMissing,
+      )
+
+      if (!attemptResult.error && attemptResult.data?.onboarded) {
+        profileRow = attemptResult.data
+        profileErr = null
+        console.info('[onboarding/complete] profile completion write succeeded', {
+          attempt: attempt.name,
+          mode: attemptResult.mode,
+          userId: user.id,
+        })
+        break
+      }
+
+      profileErr = attemptResult.error
+      logSupabaseError('profile_write_attempt_failed', attemptResult.error, {
+        attempt: attempt.name,
+        mode: attemptResult.mode,
+        where: attempt.where,
         userId: user.id,
       })
-      return NextResponse.json({ error: 'Could not save onboarding state. Please try again.' }, { status: 500 })
+    }
+
+    const profilePersisted = Boolean(profileRow?.onboarded)
+    if (!profilePersisted) {
+      logSupabaseError('profile_write_exhausted_all_attempts', profileErr, { userId: user.id })
     }
 
     const secondaryPersona = canonicalPersona === 'CEO' ? 'CHIEF_OF_STAFF' : null
@@ -391,9 +484,13 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      ok: true, persona: canonicalPersona,
+      ok: true,
+      persisted: profilePersisted,
+      warning: profilePersisted ? null : 'profile_update_failed_degraded_success',
+      persona: canonicalPersona,
       modules: resolvedModules.length,
-      deploy: deploy_mode, theme: normalizedTheme,
+      deploy: deploy_mode,
+      theme: normalizedTheme,
     })
 
   } catch (err) {
