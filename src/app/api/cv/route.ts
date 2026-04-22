@@ -13,6 +13,15 @@ import { checkPromptSafety } from '@/lib/security-middleware'
 import { buildCompetencyScores, topCompetencies } from '@/lib/onboarding/competency-scoring'
 import { toCanonicalPersona } from '@/lib/persona-packaging'
 
+function maybeServiceClient() {
+  try {
+    return createServiceClient()
+  } catch (error) {
+    console.error('[CV] service client unavailable, falling back to session client', error)
+    return createClient()
+  }
+}
+
 export const runtime     = 'nodejs'
 export const maxDuration = 60
 
@@ -23,9 +32,7 @@ async function callClaude(prompt: string, system: string, maxTokens = 1500): Pro
 export async function GET() {
   try {
     const supabase = createClient()
-    const svc = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY)
-      ? createServiceClient()
-      : supabase
+    const svc = maybeServiceClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { data: cal }     = await svc.from('nemoclaw_calibration').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single()
@@ -39,9 +46,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient()
-    const svc = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY)
-      ? createServiceClient()
-      : supabase
+    const svc = maybeServiceClient()
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -11,6 +11,10 @@ type SupabaseErrorLike = {
   hint?: string
 }
 
+type DbClient = ReturnType<typeof createClient>
+
+const SCHEMA_DRIFT_CODES = new Set(['42P01', '42703'])
+
 function clampStep(value: unknown) {
   const n = typeof value === 'number' ? value : Number(value)
   if (!Number.isFinite(n)) return 1
@@ -30,7 +34,7 @@ function asSupabaseError(error: unknown): SupabaseErrorLike {
 
 function isSchemaDriftError(error: unknown) {
   const e = asSupabaseError(error)
-  return e.code === '42P01' || e.code === '42703'
+  return Boolean(e.code && SCHEMA_DRIFT_CODES.has(e.code))
 }
 
 function logDbError(scope: string, error: unknown, context?: Record<string, unknown>) {
@@ -44,100 +48,131 @@ function logDbError(scope: string, error: unknown, context?: Record<string, unkn
   })
 }
 
+function readBool(value: unknown): boolean | null {
+  if (typeof value === 'boolean') return value
+  return null
+}
+
+function readStep(value: unknown): number | null {
+  if (typeof value === 'number') return clampStep(value)
+  const n = Number(value)
+  return Number.isFinite(n) ? clampStep(n) : null
+}
+
+function maybeServiceClient(): DbClient {
+  try {
+    return createServiceClient()
+  } catch (error) {
+    logDbError('[onboarding/state] service client unavailable, falling back to session client', error)
+    return createClient()
+  }
+}
+
+async function queryProfile(admin: DbClient, userId: string) {
+  const profileQuery = await admin
+    .from('user_profiles')
+    .select('id,full_name,job_title,organisation,persona_type,onboarding_complete,onboarding_current_step,onboarded')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!profileQuery.error) return profileQuery.data as Record<string, unknown> | null
+
+  if (profileQuery.error.code === '42703') {
+    const legacyProfileQuery = await admin
+      .from('user_profiles')
+      .select('id,full_name,job_title,organisation,persona_type,onboarded')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (legacyProfileQuery.error) {
+      logDbError('[onboarding/state] GET profile legacy', legacyProfileQuery.error, { userId })
+      return null
+    }
+
+    return legacyProfileQuery.data as Record<string, unknown> | null
+  }
+
+  logDbError('[onboarding/state] GET profile', profileQuery.error, { userId })
+  return null
+}
+
+async function queryOnboardingState(admin: DbClient, userId: string) {
+  const stateQuery = await admin
+    .from('onboarding_state')
+    .select('user_id,current_step,step_history,persona_selected,calibration_answers,cv_uploaded,cv_analyzed,cv_skipped,onboarding_complete,started_at,completed_at,last_seen_at,updated_at')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!stateQuery.error) return stateQuery.data as Record<string, unknown> | null
+
+  if (isSchemaDriftError(stateQuery.error)) {
+    console.warn('[onboarding/state] GET onboarding_state unavailable; continuing with profile-only fallback', {
+      userId,
+      ...asSupabaseError(stateQuery.error),
+    })
+    return null
+  }
+
+  logDbError('[onboarding/state] GET state', stateQuery.error, { userId })
+  return null
+}
+
+async function queryCalibration(admin: DbClient, userId: string) {
+  const calibrationQuery = await admin
+    .from('nemoclaw_calibration')
+    .select('communication_register,coaching_intensity,recommended_frameworks,competency_scores,top_competencies,cv_profile_summary,updated_at')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!calibrationQuery.error) return calibrationQuery.data as Record<string, unknown> | null
+
+  if (calibrationQuery.error.code === '42703') {
+    const calibrationLegacyQuery = await admin
+      .from('nemoclaw_calibration')
+      .select('communication_register,coaching_intensity,recommended_frameworks,calibration_summary,updated_at')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (calibrationLegacyQuery.error) {
+      logDbError('[onboarding/state] GET calibration legacy', calibrationLegacyQuery.error, { userId })
+      return null
+    }
+
+    return calibrationLegacyQuery.data as Record<string, unknown> | null
+  }
+
+  logDbError('[onboarding/state] GET calibration', calibrationQuery.error, { userId })
+  return null
+}
+
 export async function GET() {
   try {
     const supabase = createClient()
-    const admin = createServiceClient()
+    const admin = maybeServiceClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    let profile: Record<string, unknown> | null = null
-    {
-      const profileQuery = await admin
-        .from('user_profiles')
-        .select('id,full_name,job_title,organisation,persona_type,onboarding_complete,onboarding_current_step,onboarded')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (profileQuery.error?.code === '42703') {
-        const legacyProfileQuery = await admin
-          .from('user_profiles')
-          .select('id,full_name,job_title,organisation,persona_type,onboarded')
-          .eq('id', user.id)
-          .maybeSingle()
-
-        if (legacyProfileQuery.error) {
-          logDbError('[onboarding/state] GET profile legacy', legacyProfileQuery.error, { userId: user.id })
-          return NextResponse.json({ error: 'Could not load onboarding state' }, { status: 500 })
-        }
-
-        profile = legacyProfileQuery.data as Record<string, unknown> | null
-      } else if (profileQuery.error) {
-        logDbError('[onboarding/state] GET profile', profileQuery.error, { userId: user.id })
-        return NextResponse.json({ error: 'Could not load onboarding state' }, { status: 500 })
-      } else {
-        profile = profileQuery.data as Record<string, unknown> | null
-      }
-    }
-
-    let stateRow: Record<string, unknown> | null = null
-    {
-      const stateQuery = await admin
-        .from('onboarding_state')
-        .select('user_id,current_step,step_history,persona_selected,calibration_answers,cv_uploaded,cv_analyzed,cv_skipped,onboarding_complete,started_at,completed_at,last_seen_at,updated_at')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      if (stateQuery.error && stateQuery.error.code !== '42P01') {
-        logDbError('[onboarding/state] GET state', stateQuery.error, { userId: user.id })
-        return NextResponse.json({ error: 'Could not load onboarding state' }, { status: 500 })
-      }
-
-      if (stateQuery.error?.code === '42P01') {
-        console.warn('[onboarding/state] GET onboarding_state table missing; using profile fallback', { userId: user.id })
-      } else {
-        stateRow = stateQuery.data as Record<string, unknown> | null
-      }
-    }
-
-    let calibration: Record<string, unknown> | null = null
-    {
-      const calibrationQuery = await admin
-        .from('nemoclaw_calibration')
-        .select('communication_register,coaching_intensity,recommended_frameworks,competency_scores,top_competencies,cv_profile_summary,updated_at')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      if (calibrationQuery.error?.code === '42703') {
-        const calibrationLegacyQuery = await admin
-          .from('nemoclaw_calibration')
-          .select('communication_register,coaching_intensity,recommended_frameworks,calibration_summary,updated_at')
-          .eq('user_id', user.id)
-          .maybeSingle()
-
-        if (calibrationLegacyQuery.error) {
-          logDbError('[onboarding/state] GET calibration legacy', calibrationLegacyQuery.error, { userId: user.id })
-        } else {
-          calibration = calibrationLegacyQuery.data as Record<string, unknown> | null
-        }
-      } else if (calibrationQuery.error) {
-        logDbError('[onboarding/state] GET calibration', calibrationQuery.error, { userId: user.id })
-      } else {
-        calibration = calibrationQuery.data as Record<string, unknown> | null
-      }
-    }
+    const [profile, stateRow, calibration] = await Promise.all([
+      queryProfile(admin, user.id),
+      queryOnboardingState(admin, user.id),
+      queryCalibration(admin, user.id),
+    ])
 
     const mergedComplete = Boolean(
       stateRow?.onboarding_complete
       ?? profile?.onboarding_complete
-      ?? profile?.onboarded
+      ?? profile?.onboarded,
     )
+
     const personaSelected = stateRow?.persona_selected ?? profile?.persona_type ?? null
 
     const ensuredStep = mergedComplete
       ? 6
-      : Math.max(clampStep(stateRow?.current_step ?? profile?.onboarding_current_step ?? 1), personaSelected ? 2 : 1)
+      : Math.max(
+        clampStep(stateRow?.current_step ?? profile?.onboarding_current_step ?? 1),
+        personaSelected ? 2 : 1,
+      )
 
     if (!stateRow) {
       const upsertResult = await admin.from('onboarding_state').upsert({
@@ -150,25 +185,12 @@ export async function GET() {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
 
-      if (upsertResult.error && upsertResult.error.code !== '42P01') {
-        logDbError('[onboarding/state] GET auto-create onboarding_state', upsertResult.error, { userId: user.id })
-      }
-    } else {
-      const updateResult = await admin.from('onboarding_state').update({
-        current_step: ensuredStep,
-        onboarding_complete: mergedComplete,
-        last_seen_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq('user_id', user.id)
-
-      if (updateResult.error) {
-        logDbError('[onboarding/state] GET sync onboarding_state', updateResult.error, { userId: user.id })
+      if (upsertResult.error) {
+        logDbError('[onboarding/state] GET auto-create onboarding_state (non-fatal)', upsertResult.error, { userId: user.id })
       }
     }
 
-    const calibrationConfig = getPersonaCalibrationConfig(
-      typeof personaSelected === 'string' ? personaSelected : null,
-    )
+    const calibrationConfig = getPersonaCalibrationConfig(typeof personaSelected === 'string' ? personaSelected : null)
 
     return NextResponse.json({
       ok: true,
@@ -184,93 +206,141 @@ export async function GET() {
     })
   } catch (error) {
     console.error('[onboarding/state] GET', error)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    return NextResponse.json({
+      ok: true,
+      warning: 'state_read_failed',
+      profile: null,
+      state: { current_step: 1, onboarding_complete: false, persona_selected: null },
+      calibration: null,
+      persona_config: getPersonaCalibrationConfig(null),
+    })
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
     const supabase = createClient()
-    const admin = createServiceClient()
+    const admin = maybeServiceClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const body = await req.json().catch(() => ({}))
+    const body = await req.json().catch(() => ({})) as Record<string, unknown>
     const nextStep = clampStep(body.current_step)
     const now = new Date().toISOString()
 
+    const requestedComplete = readBool(body.onboarding_complete)
+    const resolvedComplete = requestedComplete ?? false
+
     const payload: Record<string, unknown> = {
       user_id: user.id,
-      current_step: nextStep,
+      current_step: resolvedComplete ? 6 : nextStep,
       last_seen_at: now,
       updated_at: now,
       created_at: now,
     }
 
-    if (typeof body.persona_selected === 'string' && body.persona_selected.trim()) payload.persona_selected = body.persona_selected.trim()
+    if (typeof body.persona_selected === 'string' && body.persona_selected.trim()) {
+      payload.persona_selected = body.persona_selected.trim()
+    }
     if (typeof body.cv_uploaded === 'boolean') payload.cv_uploaded = body.cv_uploaded
     if (typeof body.cv_analyzed === 'boolean') payload.cv_analyzed = body.cv_analyzed
     if (typeof body.cv_skipped === 'boolean') payload.cv_skipped = body.cv_skipped
-    if (typeof body.onboarding_complete === 'boolean') {
-      payload.onboarding_complete = body.onboarding_complete
-      payload.completed_at = body.onboarding_complete ? now : null
-      payload.current_step = body.onboarding_complete ? 6 : nextStep
+    if (requestedComplete !== null) {
+      payload.onboarding_complete = requestedComplete
+      payload.completed_at = requestedComplete ? now : null
     }
-
     if (body.calibration_answers && typeof body.calibration_answers === 'object') {
       payload.calibration_answers = body.calibration_answers
     }
 
-    const upsertResult = await admin
+    let stateSaved = false
+    const onboardingStateWrite = await admin
       .from('onboarding_state')
       .upsert(payload, { onConflict: 'user_id' })
 
-    if (!upsertResult.error) {
-      return NextResponse.json({ ok: true })
+    if (onboardingStateWrite.error) {
+      logDbError('[onboarding/state] PATCH onboarding_state upsert failed', onboardingStateWrite.error, {
+        userId: user.id,
+        payload,
+      })
+    } else {
+      stateSaved = true
     }
 
-    if (!isSchemaDriftError(upsertResult.error)) {
-      logDbError('[onboarding/state] PATCH upsert', upsertResult.error, { userId: user.id, payload })
-      return NextResponse.json({ error: 'Could not save onboarding state' }, { status: 500 })
-    }
+    const desiredStep = requestedComplete ? 6 : (readStep(body.current_step) ?? nextStep)
 
-    console.warn('[onboarding/state] PATCH onboarding_state unavailable, falling back to user_profiles', {
-      userId: user.id,
-      code: upsertResult.error.code,
-      message: upsertResult.error.message,
-    })
+    const profilePayloadCandidates: Record<string, unknown>[] = [
+      {
+        updated_at: now,
+        onboarded: resolvedComplete,
+        onboarding_current_step: desiredStep,
+        onboarding_complete: resolvedComplete,
+        onboarding_completed_at: resolvedComplete ? now : null,
+      },
+      {
+        updated_at: now,
+        onboarded: resolvedComplete,
+        onboarding_current_step: desiredStep,
+      },
+      {
+        updated_at: now,
+        onboarded: resolvedComplete,
+      },
+    ]
 
-    const fallbackPayload: Record<string, unknown> = {
-      updated_at: now,
-      onboarded: Boolean(body.onboarding_complete),
-      onboarding_current_step: body.onboarding_complete ? 6 : nextStep,
-      onboarding_complete: Boolean(body.onboarding_complete),
-      onboarding_completed_at: body.onboarding_complete ? now : null,
-    }
+    let profileSaved = false
+    let lastProfileError: unknown = null
 
-    let fallbackResult = await admin
-      .from('user_profiles')
-      .update(fallbackPayload)
-      .eq('id', user.id)
-
-    if (fallbackResult.error?.code === '42703') {
-      fallbackResult = await admin
+    for (const candidate of profilePayloadCandidates) {
+      const profileWrite = await admin
         .from('user_profiles')
-        .update({
-          updated_at: now,
-          onboarded: Boolean(body.onboarding_complete),
-        })
+        .update(candidate)
         .eq('id', user.id)
+
+      if (!profileWrite.error) {
+        profileSaved = true
+        break
+      }
+
+      lastProfileError = profileWrite.error
+      logDbError('[onboarding/state] PATCH user_profiles fallback failed', profileWrite.error, {
+        userId: user.id,
+        candidate,
+      })
+
+      if (!isSchemaDriftError(profileWrite.error)) {
+        break
+      }
     }
 
-    if (fallbackResult.error) {
-      logDbError('[onboarding/state] PATCH fallback user_profiles', fallbackResult.error, { userId: user.id })
-      return NextResponse.json({ error: 'Could not save onboarding state' }, { status: 500 })
+    if (!stateSaved && !profileSaved) {
+      console.warn('[onboarding/state] PATCH persistence unavailable; returning non-blocking success', {
+        userId: user.id,
+        onboardingStateError: asSupabaseError(onboardingStateWrite.error),
+        userProfileError: asSupabaseError(lastProfileError),
+      })
+
+      return NextResponse.json({
+        ok: true,
+        persisted: false,
+        warning: 'state_persistence_degraded',
+      })
     }
 
-    return NextResponse.json({ ok: true, warning: 'onboarding_state_table_unavailable' })
+    return NextResponse.json({
+      ok: true,
+      persisted: stateSaved || profileSaved,
+      saved_to: {
+        onboarding_state: stateSaved,
+        user_profiles: profileSaved,
+      },
+    })
   } catch (error) {
-    console.error('[onboarding/state] PATCH', error)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    console.error('[onboarding/state] PATCH unexpected error; returning non-blocking success', error)
+    return NextResponse.json({
+      ok: true,
+      persisted: false,
+      warning: 'state_persistence_failed_unexpectedly',
+    })
   }
 }

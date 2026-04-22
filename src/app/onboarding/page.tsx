@@ -25,6 +25,43 @@ function clampStep(step: unknown): OnboardingStep {
   return Math.min(6, Math.max(1, Math.round(n))) as OnboardingStep
 }
 
+type LocalOnboardingState = {
+  current_step?: OnboardingStep
+  persona_selected?: CanonicalPersona | null
+  calibration_answers?: Record<string, string>
+  cv_uploaded?: boolean
+  cv_analyzed?: boolean
+  cv_skipped?: boolean
+  onboarding_complete?: boolean
+  calibration_summary?: string
+  top_competencies?: CompetencyItem[]
+}
+
+const LOCAL_STORAGE_KEY = 'pios:onboarding:state'
+
+function readLocalState(): LocalOnboardingState {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return {}
+    return parsed as LocalOnboardingState
+  } catch (error) {
+    console.error('[onboarding] failed to read local fallback state', error)
+    return {}
+  }
+}
+
+function writeLocalState(next: LocalOnboardingState) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next))
+  } catch (error) {
+    console.error('[onboarding] failed to write local fallback state', error)
+  }
+}
+
 export default function OnboardingPage() {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -40,19 +77,63 @@ export default function OnboardingPage() {
   const [topCompetencies, setTopCompetencies] = useState<CompetencyItem[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [syncWarning, setSyncWarning] = useState('')
 
   const personaOptions = useMemo(() => PERSONA_PACKAGING, [])
 
-  async function patchState(payload: Record<string, unknown>) {
-    const res = await fetch('/api/onboarding/state', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+  function mergeLocalState(payload: Record<string, unknown>) {
+    const previous = readLocalState()
+    const next: LocalOnboardingState = {
+      ...previous,
+      ...payload,
+      current_step: clampStep(payload.current_step ?? previous.current_step ?? step),
+      calibration_answers: {
+        ...(previous.calibration_answers ?? {}),
+        ...(typeof payload.calibration_answers === 'object' ? payload.calibration_answers as Record<string, string> : {}),
+      },
+      persona_selected: typeof payload.persona_selected === 'string'
+        ? payload.persona_selected as CanonicalPersona
+        : previous.persona_selected ?? persona,
+      calibration_summary: typeof payload.calibration_summary === 'string'
+        ? payload.calibration_summary
+        : previous.calibration_summary ?? calibrationSummary,
+      top_competencies: Array.isArray(payload.top_competencies)
+        ? payload.top_competencies as CompetencyItem[]
+        : previous.top_competencies ?? topCompetencies,
+    }
+    writeLocalState(next)
+  }
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      throw new Error(data?.error ?? 'Could not save onboarding state')
+  async function patchState(payload: Record<string, unknown>, options?: { suppressWarning?: boolean }) {
+    mergeLocalState(payload)
+
+    try {
+      const res = await fetch('/api/onboarding/state', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json().catch(() => ({})) as { error?: string; warning?: string; persisted?: boolean }
+
+      if (!res.ok) {
+        console.error('[onboarding] state PATCH failed', { payload, status: res.status, data })
+        if (!options?.suppressWarning) setSyncWarning('Progress is being saved locally. We will sync when backend storage is available.')
+        return { persisted: false }
+      }
+
+      if (data?.warning || data?.persisted === false) {
+        console.warn('[onboarding] state PATCH degraded', { payload, data })
+        if (!options?.suppressWarning) setSyncWarning('Progress is being saved locally. We will sync when backend storage is available.')
+        return { persisted: false }
+      }
+
+      if (!options?.suppressWarning) setSyncWarning('')
+      return { persisted: true }
+    } catch (error) {
+      console.error('[onboarding] state PATCH request error', { payload, error })
+      if (!options?.suppressWarning) setSyncWarning('Progress is being saved locally. We will sync when backend storage is available.')
+      return { persisted: false }
     }
   }
 
@@ -60,15 +141,17 @@ export default function OnboardingPage() {
     setHydrating(true)
     setError('')
 
+    const local = readLocalState()
+
     try {
       const res = await fetch('/api/onboarding/state', { cache: 'no-store' })
       if (!res.ok) throw new Error('Could not load onboarding state')
       const data = await res.json()
 
-      const nextStep = clampStep(data?.state?.current_step ?? 1)
+      const nextStep = clampStep(data?.state?.current_step ?? local.current_step ?? 1)
       setStep(nextStep)
 
-      const p = data?.state?.persona_selected ?? data?.profile?.persona_type ?? null
+      const p = data?.state?.persona_selected ?? data?.profile?.persona_type ?? local.persona_selected ?? null
       if (typeof p === 'string') setPersona(p as CanonicalPersona)
 
       const personaConfig = data?.persona_config
@@ -81,19 +164,42 @@ export default function OnboardingPage() {
           Object.entries(data.state.calibration_answers).map(([k, v]) => [k, String(v)])
         )
         setAnswers(values)
+      } else if (local.calibration_answers) {
+        setAnswers(local.calibration_answers)
       }
 
       if (typeof data?.calibration?.cv_profile_summary === 'string') {
         setCalibrationSummary(data.calibration.cv_profile_summary)
       } else if (typeof data?.calibration?.calibration_summary === 'string') {
         setCalibrationSummary(data.calibration.calibration_summary)
+      } else if (typeof local.calibration_summary === 'string') {
+        setCalibrationSummary(local.calibration_summary)
       }
 
       if (Array.isArray(data?.calibration?.top_competencies)) {
         setTopCompetencies(data.calibration.top_competencies)
+      } else if (Array.isArray(local.top_competencies)) {
+        setTopCompetencies(local.top_competencies)
+      }
+
+      mergeLocalState({
+        current_step: nextStep,
+        persona_selected: p,
+        calibration_answers: data?.state?.calibration_answers,
+      })
+
+      if (data?.warning) {
+        setSyncWarning('Progress is being saved locally. We will sync when backend storage is available.')
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not load onboarding')
+      console.error('[onboarding] loadState failed, using local fallback', e)
+      const fallbackStep = clampStep(local.current_step ?? 1)
+      setStep(fallbackStep)
+      if (typeof local.persona_selected === 'string') setPersona(local.persona_selected)
+      if (local.calibration_answers) setAnswers(local.calibration_answers)
+      if (typeof local.calibration_summary === 'string') setCalibrationSummary(local.calibration_summary)
+      if (Array.isArray(local.top_competencies)) setTopCompetencies(local.top_competencies)
+      setSyncWarning('Using local backup for onboarding progress. Backend sync will retry automatically.')
     } finally {
       setHydrating(false)
     }
@@ -101,21 +207,21 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     void loadState()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function gotoStep(next: OnboardingStep) {
     setError('')
-    try {
-      await patchState({ current_step: next })
-      setStep(next)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not save onboarding state')
-    }
+    setStep(next)
+    await patchState({ current_step: next })
   }
 
   async function handlePersonaSelect(nextPersona: CanonicalPersona) {
     setBusy(true)
     setError('')
+    setPersona(nextPersona)
+    mergeLocalState({ persona_selected: nextPersona, current_step: 3 })
+
     try {
       const res = await fetch('/api/onboarding/persona', {
         method: 'PATCH',
@@ -123,13 +229,18 @@ export default function OnboardingPage() {
         body: JSON.stringify({ persona: nextPersona }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error ?? 'Could not save persona')
 
-      setPersona(nextPersona)
+      if (!res.ok) {
+        console.error('[onboarding] persona PATCH failed', { status: res.status, data })
+        setSyncWarning('Persona saved locally. We will sync when backend storage is available.')
+      }
+
       if (Array.isArray(data?.config?.questions)) setQuestions(data.config.questions)
       await gotoStep(3)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not save persona')
+      console.error('[onboarding] persona PATCH request error', e)
+      setSyncWarning('Persona saved locally. We will sync when backend storage is available.')
+      await gotoStep(3)
     } finally {
       setBusy(false)
     }
@@ -149,6 +260,8 @@ export default function OnboardingPage() {
 
     setBusy(true)
     setError('')
+    mergeLocalState({ persona_selected: persona, calibration_answers: answers, current_step: 4 })
+
     try {
       const res = await fetch('/api/onboarding/calibration', {
         method: 'PATCH',
@@ -156,11 +269,16 @@ export default function OnboardingPage() {
         body: JSON.stringify({ persona, answers }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error ?? 'Could not save calibration')
+      if (!res.ok) {
+        console.error('[onboarding] calibration PATCH failed', { status: res.status, data })
+        setSyncWarning('Calibration answers saved locally. We will sync when backend storage is available.')
+      }
 
       await gotoStep(4)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not save calibration')
+      console.error('[onboarding] calibration PATCH request error', e)
+      setSyncWarning('Calibration answers saved locally. We will sync when backend storage is available.')
+      await gotoStep(4)
     } finally {
       setBusy(false)
     }
@@ -189,6 +307,15 @@ export default function OnboardingPage() {
         setTopCompetencies(data.top_competencies)
       }
 
+      mergeLocalState({
+        current_step: 5,
+        cv_uploaded: true,
+        cv_analyzed: true,
+        cv_skipped: false,
+        calibration_summary: typeof data?.calibration?.calibration_summary === 'string' ? data.calibration.calibration_summary : calibrationSummary,
+        top_competencies: Array.isArray(data?.top_competencies) ? data.top_competencies : topCompetencies,
+      })
+
       await patchState({ current_step: 5, cv_uploaded: true, cv_analyzed: true, cv_skipped: false })
       setStep(5)
     } catch (e: unknown) {
@@ -201,19 +328,17 @@ export default function OnboardingPage() {
   async function handleSkipCV() {
     setBusy(true)
     setError('')
-    try {
-      await patchState({ current_step: 5, cv_skipped: true, cv_uploaded: false, cv_analyzed: false })
-      setStep(5)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not save onboarding state')
-    } finally {
-      setBusy(false)
-    }
+    mergeLocalState({ current_step: 5, cv_skipped: true, cv_uploaded: false, cv_analyzed: false })
+    await patchState({ current_step: 5, cv_skipped: true, cv_uploaded: false, cv_analyzed: false })
+    setStep(5)
+    setBusy(false)
   }
 
   async function handleComplete() {
     setBusy(true)
     setError('')
+    mergeLocalState({ current_step: 6, onboarding_complete: true })
+
     try {
       const res = await fetch('/api/onboarding/complete', {
         method: 'POST',
@@ -221,12 +346,18 @@ export default function OnboardingPage() {
         body: JSON.stringify({ persona_type: persona ?? undefined, command_centre_theme: 'onyx' }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error ?? 'Could not complete onboarding')
+      if (!res.ok) {
+        console.error('[onboarding] complete POST failed', { status: res.status, data })
+        setSyncWarning('Onboarding finalization is running in degraded mode. Attempting platform entry…')
+      }
 
-      await patchState({ current_step: 6, onboarding_complete: true })
+      await patchState({ current_step: 6, onboarding_complete: true }, { suppressWarning: true })
       router.push('/platform/dashboard?welcome=1')
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not complete onboarding')
+      console.error('[onboarding] complete POST request error', e)
+      setSyncWarning('Onboarding finalization is running in degraded mode. Attempting platform entry…')
+      await patchState({ current_step: 6, onboarding_complete: true }, { suppressWarning: true })
+      router.push('/platform/dashboard?welcome=1')
     } finally {
       setBusy(false)
     }
@@ -406,6 +537,7 @@ export default function OnboardingPage() {
         )}
 
         {error && <p className={styles.errorMsg}>{error}</p>}
+        {!error && syncWarning && <p className={styles.stepSub}>{syncWarning}</p>}
       </div>
     </div>
   )

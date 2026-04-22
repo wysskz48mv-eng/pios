@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPersonaPackaging, toCanonicalPersona } from '@/lib/persona-packaging'
 
+function maybeServiceClient() {
+  try {
+    return createServiceClient()
+  } catch (error) {
+    console.error('[onboarding/complete] service client unavailable, falling back to session client', error)
+    return createClient()
+  }
+}
+
 /**
  * POST /api/onboarding/complete
  * VeritasIQ Technologies Ltd · PIOS
@@ -32,7 +41,7 @@ export async function POST(req: NextRequest) {
       cv_storage_path,
     } = body
 
-    const admin = createServiceClient()
+    const admin = maybeServiceClient()
 
     const { data: existingPersonaProfile } = await admin
       .from('user_profiles')

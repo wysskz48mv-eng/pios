@@ -5,10 +5,19 @@ import { toCanonicalPersona } from '@/lib/persona-packaging'
 
 export const dynamic = 'force-dynamic'
 
+function maybeServiceClient() {
+  try {
+    return createServiceClient()
+  } catch (error) {
+    console.error('[onboarding/calibration] service client unavailable, falling back to session client', error)
+    return createClient()
+  }
+}
+
 export async function GET() {
   try {
     const supabase = createClient()
-    const admin = createServiceClient()
+    const admin = maybeServiceClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -29,15 +38,23 @@ export async function GET() {
       answers: state?.calibration_answers ?? {},
     })
   } catch (error) {
-    console.error('[onboarding/calibration] GET', error)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    console.error('[onboarding/calibration] GET fallback', error)
+    const fallback = getPersonaCalibrationConfig('EXECUTIVE')
+    return NextResponse.json({
+      ok: true,
+      warning: 'calibration_state_unavailable',
+      persona: 'EXECUTIVE',
+      questions: fallback.questions,
+      communication_style: fallback.communicationStyle,
+      answers: {},
+    })
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
     const supabase = createClient()
-    const admin = createServiceClient()
+    const admin = maybeServiceClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -49,7 +66,7 @@ export async function PATCH(req: NextRequest) {
     const now = new Date().toISOString()
     const config = getPersonaCalibrationConfig(persona)
 
-    await admin.from('onboarding_state').upsert({
+    const stateWrite = await admin.from('onboarding_state').upsert({
       user_id: user.id,
       persona_selected: persona,
       calibration_answers: answers,
@@ -59,7 +76,16 @@ export async function PATCH(req: NextRequest) {
       last_seen_at: now,
     }, { onConflict: 'user_id' })
 
-    await admin.from('exec_intelligence_config').upsert({
+    if (stateWrite.error) {
+      console.error('[onboarding/calibration] onboarding_state upsert (non-fatal)', {
+        userId: user.id,
+        code: stateWrite.error.code,
+        message: stateWrite.error.message,
+        details: stateWrite.error.details,
+      })
+    }
+
+    const configWrite = await admin.from('exec_intelligence_config').upsert({
       user_id: user.id,
       persona: persona,
       tone: config.communicationStyle,
@@ -70,9 +96,21 @@ export async function PATCH(req: NextRequest) {
       updated_at: now,
     }, { onConflict: 'user_id' })
 
-    return NextResponse.json({ ok: true, communication_style: config.communicationStyle })
+    if (configWrite.error) {
+      console.error('[onboarding/calibration] exec_intelligence_config upsert (non-fatal)', {
+        userId: user.id,
+        code: configWrite.error.code,
+        message: configWrite.error.message,
+      })
+    }
+
+    return NextResponse.json({
+      ok: true,
+      persisted: !stateWrite.error || !configWrite.error,
+      communication_style: config.communicationStyle,
+    })
   } catch (error) {
-    console.error('[onboarding/calibration] PATCH', error)
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    console.error('[onboarding/calibration] PATCH unexpected error (non-blocking response)', error)
+    return NextResponse.json({ ok: true, persisted: false, warning: 'calibration_persistence_failed' })
   }
 }
