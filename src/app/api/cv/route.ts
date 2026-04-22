@@ -10,6 +10,8 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { callClaude as callClaudeAI } from '@/lib/ai/client'
 
 import { checkPromptSafety } from '@/lib/security-middleware'
+import { buildCompetencyScores, topCompetencies } from '@/lib/onboarding/competency-scoring'
+import { toCanonicalPersona } from '@/lib/persona-packaging'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 60
@@ -155,6 +157,27 @@ PROFILE: ${JSON.stringify(extracted, null, 2)}`,
       calibration = { communication_register:'professional', coaching_intensity:'balanced', recommended_frameworks:['SDL','POM','ADF'], growth_areas:[], strengths:[], work_life_signals:'', decision_style:'analytical', calibration_summary:"Welcome to PIOS. I've reviewed your profile and I'm ready to provide bespoke intelligence." }
     }
 
+    const { data: profileRow } = await svc
+      .from('user_profiles')
+      .select('persona_type')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const canonicalPersona = toCanonicalPersona(profileRow?.persona_type) ?? 'EXECUTIVE'
+    const competencyDetails = buildCompetencyScores({
+      text: cvTextSafe,
+      extracted,
+      personaHint: canonicalPersona,
+    })
+
+    const competencyScores = Object.fromEntries(
+      Object.entries(competencyDetails).map(([k, v]) => [k, v.score])
+    )
+    const competencyConfidence = Object.fromEntries(
+      Object.entries(competencyDetails).map(([k, v]) => [k, v.confidence])
+    )
+    const topScores = topCompetencies(competencyDetails)
+
     await svc.from('nemoclaw_calibration').upsert({
       user_id: user.id,
       education_level: extracted.education_level as string, education_detail: extracted.education_detail as string,
@@ -167,19 +190,52 @@ PROFILE: ${JSON.stringify(extracted, null, 2)}`,
       recommended_frameworks: (calibration.recommended_frameworks as string[]) ?? [],
       growth_areas: (calibration.growth_areas as string[]) ?? [], strengths: (calibration.strengths as string[]) ?? [],
       work_life_signals: calibration.work_life_signals as string, decision_style: calibration.decision_style as string,
-      calibration_summary: calibration.calibration_summary as string, updated_at: new Date().toISOString(),
+      calibration_summary: calibration.calibration_summary as string,
+      competency_scores: competencyScores,
+      competency_confidence: competencyConfidence,
+      top_competencies: topScores,
+      cv_profile_summary: calibration.calibration_summary as string,
+      calibrated_via: 'cv',
+      updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
 
-    const profileUpdates: Record<string, unknown> = { cv_processing_status: 'complete' }
+    const profileUpdates: Record<string, unknown> = {
+      cv_processing_status: 'complete',
+      onboarding_current_step: 5,
+    }
     if (extracted.full_name    && !formData.get('skip_autofill')) profileUpdates.full_name    = extracted.full_name
     if (extracted.job_title)                                       profileUpdates.job_title    = extracted.job_title
     if (extracted.organisation)                                    profileUpdates.organisation = extracted.organisation
     await svc.from('user_profiles').update(profileUpdates).eq('id', user.id)
 
+    await svc.from('onboarding_state').upsert({
+      user_id: user.id,
+      current_step: 5,
+      cv_uploaded: true,
+      cv_analyzed: true,
+      cv_skipped: false,
+      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      last_seen_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+
     return NextResponse.json({
-      success:     true,
-      autofill:    { full_name: extracted.full_name, job_title: extracted.job_title, organisation: extracted.organisation },
-      calibration: { seniority_level: extracted.seniority_level, education_level: extracted.education_level, career_years: extracted.career_years, communication_register: calibration.communication_register, coaching_intensity: calibration.coaching_intensity, recommended_frameworks: calibration.recommended_frameworks, growth_areas: calibration.growth_areas, strengths: calibration.strengths, decision_style: calibration.decision_style, calibration_summary: calibration.calibration_summary },
+      success: true,
+      autofill: { full_name: extracted.full_name, job_title: extracted.job_title, organisation: extracted.organisation },
+      calibration: {
+        seniority_level: extracted.seniority_level,
+        education_level: extracted.education_level,
+        career_years: extracted.career_years,
+        communication_register: calibration.communication_register,
+        coaching_intensity: calibration.coaching_intensity,
+        recommended_frameworks: calibration.recommended_frameworks,
+        growth_areas: calibration.growth_areas,
+        strengths: calibration.strengths,
+        decision_style: calibration.decision_style,
+        calibration_summary: calibration.calibration_summary,
+      },
+      competency_scores: competencyScores,
+      top_competencies: topScores,
     })
 
   } catch (err: unknown) {

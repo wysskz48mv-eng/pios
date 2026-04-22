@@ -229,21 +229,33 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  let profile: { onboarded: boolean | null } | null = null
+  let profile: { onboarded: boolean | null; onboarding_complete?: boolean | null; onboarding_current_step?: number | null } | null = null
 
   if (user) {
     const { data } = await supabase
       .from('user_profiles')
-      .select('onboarded')
+      .select('onboarded,onboarding_complete,onboarding_current_step')
       .eq('id', user.id)
       .maybeSingle()
     profile = data
   }
 
+  const isOnboarded = profile?.onboarding_complete === true || profile?.onboarded === true
+  const resumeStep = typeof profile?.onboarding_current_step === 'number'
+    ? Math.min(6, Math.max(1, profile.onboarding_current_step))
+    : 1
+
   // Onboarding gate — redirect incomplete users to wizard
   if (user && pathname.startsWith('/platform/') && !pathname.startsWith('/platform/demo')) {
-    if (profile?.onboarded !== true) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
+    if (!isOnboarded) {
+      return NextResponse.redirect(new URL(`/onboarding?step=${resumeStep}`, request.url))
+    }
+  }
+
+  if (user && pathname === '/onboarding') {
+    const force = request.nextUrl.searchParams.get('force')
+    if (isOnboarded && force !== '1') {
+      return NextResponse.redirect(new URL('/platform/dashboard', request.url))
     }
   }
 
@@ -283,7 +295,7 @@ export async function middleware(request: NextRequest) {
   // Authenticated user on login/signup — respect onboarding state and intended destination.
   if (pathname === '/auth/login' || pathname === '/auth/signup') {
     const next = normaliseNextPath(request.nextUrl.searchParams.get('next'))
-    const destination = profile?.onboarded !== true ? '/onboarding' : (next ?? '/platform/dashboard')
+    const destination = !isOnboarded ? `/onboarding?step=${resumeStep}` : (next ?? '/platform/dashboard')
     return NextResponse.redirect(new URL(destination, request.url))
   }
 

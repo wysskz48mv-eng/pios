@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-    const body = await req.json()
+    const body = await req.json().catch(() => ({}))
     const {
       persona,
       persona_type,
@@ -32,15 +32,23 @@ export async function POST(req: NextRequest) {
       cv_storage_path,
     } = body
 
-    const requestedPersona = typeof persona_type === 'string' ? persona_type : persona
-    if (!requestedPersona) return NextResponse.json({ error: 'Persona required' }, { status: 400 })
-
     const admin = createServiceClient()
+
+    const { data: existingPersonaProfile } = await admin
+      .from('user_profiles')
+      .select('persona_type')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const requestedPersona =
+      (typeof persona_type === 'string' ? persona_type : undefined)
+      ?? (typeof persona === 'string' ? persona : undefined)
+      ?? existingPersonaProfile?.persona_type
 
     const canonicalPersona = toCanonicalPersona(requestedPersona)
     if (!canonicalPersona) {
       return NextResponse.json({
-        error: 'Invalid persona. Valid values: CEO, CONSULTANT, ACADEMIC, EXECUTIVE, founder, pro, starter, consultant, academic',
+        error: 'Persona required. Valid values: CEO, CONSULTANT, ACADEMIC, EXECUTIVE.',
       }, { status: 400 })
     }
     const personaPackaging = getPersonaPackaging(canonicalPersona)
@@ -83,7 +91,8 @@ export async function POST(req: NextRequest) {
       plan:            'free',
       persona_type:    canonicalPersona,
       onboarded:       true,
-      onboarding_step: 9,
+      onboarding_complete: true,
+      onboarding_current_step: 6,
       onboarding_completed_at: now,
       deployment_mode: deploy_mode ?? 'full',
       active_modules:  resolvedModules,
@@ -243,6 +252,78 @@ export async function POST(req: NextRequest) {
     try {
       await admin.from('onboarding_drafts').delete().eq('user_id', user.id)
     } catch (e) { console.error('[onboarding] onboarding_drafts delete (non-fatal):', e) }
+
+    // Final onboarding state
+    try {
+      await admin.from('onboarding_state').upsert({
+        user_id: user.id,
+        persona_selected: canonicalPersona,
+        current_step: 6,
+        onboarding_complete: true,
+        completed_at: now,
+        last_seen_at: now,
+        updated_at: now,
+        created_at: now,
+      }, { onConflict: 'user_id' })
+    } catch (e) { console.error('[onboarding] onboarding_state upsert (non-fatal):', e) }
+
+    // First-time NemoClaw welcome seed
+    try {
+      const welcomeText = `Welcome to PIOS. I am NemoClaw™, now calibrated for your ${canonicalPersona} operating context.\n\nI am ready to support strategic clarity, execution momentum, and intelligent decisions from your command centre.`
+
+      const { data: existingSession } = await admin
+        .from('ai_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const sessionId = existingSession?.id
+        ? existingSession.id
+        : (
+          await admin
+            .from('ai_sessions')
+            .insert({
+              user_id: user.id,
+              title: 'Welcome to NemoClaw™',
+              domain_mode: 'general',
+              domain: 'general',
+              message_count: 0,
+              last_message_at: now,
+              updated_at: now,
+            })
+            .select('id')
+            .single()
+        ).data?.id
+
+      if (sessionId) {
+        const { data: existingWelcome } = await admin
+          .from('ai_messages')
+          .select('id')
+          .eq('session_id', sessionId)
+          .eq('role', 'assistant')
+          .ilike('content', 'Welcome to PIOS.%')
+          .limit(1)
+          .maybeSingle()
+
+        if (!existingWelcome?.id) {
+          await admin.from('ai_messages').insert({
+            session_id: sessionId,
+            user_id: user.id,
+            role: 'assistant',
+            content: welcomeText,
+            metadata: { source: 'onboarding' },
+          })
+
+          await admin.from('ai_sessions').update({
+            message_count: 1,
+            last_message_at: now,
+            updated_at: now,
+          }).eq('id', sessionId)
+        }
+      }
+    } catch (e) { console.error('[onboarding] ai welcome seed (non-fatal):', e) }
 
     // Welcome email
     const resendKey = process.env.RESEND_API_KEY

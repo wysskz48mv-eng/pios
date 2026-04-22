@@ -11,12 +11,18 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('id, full_name, display_name, persona_type, command_centre_theme, onboarded, plan, job_title, organisation')
+    .select('id, full_name, display_name, persona_type, command_centre_theme, onboarded, onboarding_complete, onboarding_current_step, plan, job_title, organisation')
     .eq('id', user.id)
     .single()
 
   if (!profile) redirect('/auth/login')
-  if (!profile.onboarded) redirect('/onboarding')
+  const onboarded = profile.onboarding_complete === true || profile.onboarded === true
+  if (!onboarded) {
+    const resumeStep = typeof profile.onboarding_current_step === 'number'
+      ? Math.min(6, Math.max(1, profile.onboarding_current_step))
+      : 1
+    redirect(`/onboarding?step=${resumeStep}`)
+  }
 
   return (
     <CommandCentre

@@ -110,13 +110,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ reply: "I can't process that request. Please rephrase your question." }, { status: 200 })
     }
 
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('full_name,job_title,organisation,persona_type')
-      .eq('id', user.id)
-      .single()
+    const [{ data: profile }, { data: calibration }] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('full_name,job_title,organisation,persona_type')
+        .eq('id', user.id)
+        .single(),
+      supabase
+        .from('nemoclaw_calibration')
+        .select('communication_register,coaching_intensity,recommended_frameworks,top_competencies,cv_profile_summary')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+    ])
 
     const context = await buildLiveContext(supabase, user.id)
+
+    const topCompetencyLine = Array.isArray(calibration?.top_competencies)
+      ? calibration.top_competencies
+        .slice(0, 4)
+        .map((item: any) => `${item.dimension ?? 'Competency'} ${item.score ?? '-'}%`)
+        .join(', ')
+      : 'No competency profile yet'
 
     const system = `You are NemoClaw™, the persistent AI operating layer inside PIOS.
 
@@ -125,6 +139,11 @@ USER:
 - Role: ${profile?.job_title ?? 'Executive'}
 - Organisation: ${profile?.organisation ?? 'PIOS'}
 - Persona: ${profile?.persona_type ?? 'professional'}
+- Communication register: ${calibration?.communication_register ?? 'professional'}
+- Coaching intensity: ${calibration?.coaching_intensity ?? 'balanced'}
+- Recommended frameworks: ${(calibration?.recommended_frameworks ?? []).join(', ') || 'none'}
+- Top competencies: ${topCompetencyLine}
+- Calibration summary: ${calibration?.cv_profile_summary ?? 'Not yet calibrated from CV'}
 
 CURRENT MODULE CONTEXT:
 - Route: ${moduleContext.route}

@@ -18,13 +18,17 @@ export default async function PlatformLayout({ children }: { children: React.Rea
   )
   const { data: profile } = await admin
     .from('user_profiles')
-    .select('full_name, avatar_url, role, persona_type, job_title, organisation, programme_name, google_email, tenant_id, onboarded')
+    .select('full_name, avatar_url, role, persona_type, job_title, organisation, programme_name, google_email, tenant_id, onboarded, onboarding_complete, onboarding_current_step')
     .eq('id', user.id)
     .single()
 
-  // Onboarding gate — redirect unboarded users
-  if (profile?.onboarded === false) {
-    redirect('/onboarding')
+  // Onboarding gate — redirect incomplete users
+  const onboarded = profile?.onboarding_complete === true || profile?.onboarded === true
+  if (!onboarded) {
+    const resumeStep = typeof profile?.onboarding_current_step === 'number'
+      ? Math.min(6, Math.max(1, profile.onboarding_current_step))
+      : 1
+    redirect(`/onboarding?step=${resumeStep}`)
   }
 
   const { data: tenant } = await admin

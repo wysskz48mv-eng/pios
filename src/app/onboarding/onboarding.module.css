@@ -572,3 +572,137 @@
   .themeGrid { grid-template-columns: 1fr; }
   .stepHeader { padding: 16px 24px; }
 }
+
+
+.progressMeta {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.progressRail {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.25s ease;
+}
+
+.questionsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.questionBlock {
+  border: 1px solid var(--border);
+  background: var(--surf);
+  border-radius: 4px;
+  padding: 18px;
+}
+
+.questionPrompt {
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.questionOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.optionBtn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.optionBtnSelected {
+  color: #07080D;
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.actionInlineGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summaryCard {
+  border: 1px solid var(--border);
+  background: var(--surf);
+  border-radius: 4px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.summaryCard h3 {
+  color: var(--gold);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.summaryCard p {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.competencyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.competencyCard {
+  border: 1px solid var(--border);
+  background: var(--surf);
+  border-radius: 4px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.competencyCard span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.competencyCard strong {
+  color: var(--gold);
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .progressMeta {
+    display: none;
+  }
+
+  .competencyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionInlineGroup {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+}
