@@ -44,11 +44,16 @@ export default function OnboardingPage() {
   const personaOptions = useMemo(() => PERSONA_PACKAGING, [])
 
   async function patchState(payload: Record<string, unknown>) {
-    await fetch('/api/onboarding/state', {
+    const res = await fetch('/api/onboarding/state', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data?.error ?? 'Could not save onboarding state')
+    }
   }
 
   async function loadState() {
@@ -99,8 +104,13 @@ export default function OnboardingPage() {
   }, [])
 
   async function gotoStep(next: OnboardingStep) {
-    setStep(next)
-    await patchState({ current_step: next })
+    setError('')
+    try {
+      await patchState({ current_step: next })
+      setStep(next)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Could not save onboarding state')
+    }
   }
 
   async function handlePersonaSelect(nextPersona: CanonicalPersona) {
@@ -189,9 +199,16 @@ export default function OnboardingPage() {
   }
 
   async function handleSkipCV() {
+    setBusy(true)
     setError('')
-    await patchState({ current_step: 5, cv_skipped: true, cv_uploaded: false, cv_analyzed: false })
-    setStep(5)
+    try {
+      await patchState({ current_step: 5, cv_skipped: true, cv_uploaded: false, cv_analyzed: false })
+      setStep(5)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Could not save onboarding state')
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleComplete() {
@@ -335,7 +352,7 @@ export default function OnboardingPage() {
             <div className={styles.stepActions}>
               <button className={styles.backBtn} onClick={() => gotoStep(3)} disabled={cvUploading}>← Back</button>
               <div className={styles.actionInlineGroup}>
-                <button className={styles.backBtn} onClick={handleSkipCV} disabled={cvUploading}>Skip for now</button>
+                <button className={styles.backBtn} onClick={handleSkipCV} disabled={cvUploading || busy}>Skip for now</button>
                 <button className={styles.nextBtn} onClick={handleCVUpload} disabled={cvUploading}>
                   {cvUploading ? 'Analysing…' : 'Upload & analyse →'}
                 </button>

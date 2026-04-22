@@ -123,15 +123,39 @@ export async function POST(req: NextRequest) {
     const { data: existingProfile } = await admin
       .from('user_profiles').select('id').eq('id', user.id).maybeSingle()
 
-    const profileWrite = existingProfile
-      ? await admin.from('user_profiles').update(profilePayload).eq('id', user.id).select('id,onboarded').single()
-      : await admin.from('user_profiles').insert(profilePayload).select('id,onboarded').single()
+    const writeProfile = async (payload: Record<string, unknown>) => (
+      existingProfile
+        ? admin.from('user_profiles').update(payload).eq('id', user.id).select('id,onboarded').single()
+        : admin.from('user_profiles').insert(payload).select('id,onboarded').single()
+    )
+
+    let profileWrite = await writeProfile(profilePayload as Record<string, unknown>)
+
+    if (profileWrite.error?.code === '42703') {
+      console.warn('[onboarding] profile update encountered schema drift; retrying with legacy payload', {
+        code: profileWrite.error.code,
+        message: profileWrite.error.message,
+      })
+
+      const legacyPayload: Record<string, unknown> = {
+        ...profilePayload,
+        onboarded: true,
+      }
+      delete legacyPayload.onboarding_complete
+      delete legacyPayload.onboarding_current_step
+      delete legacyPayload.onboarding_completed_at
+
+      profileWrite = await writeProfile(legacyPayload)
+    }
 
     const { data: profileRow, error: profileErr } = profileWrite
     if (profileErr || !profileRow?.onboarded) {
       console.error('[onboarding] profile update error:', {
-        code: profileErr?.code, message: profileErr?.message,
-        details: profileErr?.details, hint: profileErr?.hint,
+        code: profileErr?.code,
+        message: profileErr?.message,
+        details: profileErr?.details,
+        hint: profileErr?.hint,
+        userId: user.id,
       })
       return NextResponse.json({ error: 'Could not save onboarding state. Please try again.' }, { status: 500 })
     }
