@@ -271,20 +271,20 @@ as $$
   select
     ei.id as email_id,
     ei.subject,
-    coalesce(ei.from_name, ei.from_address) as sender_name,
-    ei.from_address as sender_email,
+    coalesce(ei.sender_name, ei.sender_email) as sender_name,
+    ei.sender_email as sender_email,
     ei.received_at,
     (
-      case when coalesce(ei.from_name, '') ilike '%' || coalesce(p_client_name, '') || '%' then 0.55 else 0 end +
+      case when coalesce(ei.sender_name, '') ilike '%' || coalesce(p_client_name, '') || '%' then 0.55 else 0 end +
       case when coalesce(ei.subject, '') ilike '%' || coalesce(p_client_name, '') || '%' then 0.45 else 0 end
     )::numeric as match_score
   from public.email_items ei
   where ei.user_id = p_user_id
     and coalesce(trim(p_client_name), '') <> ''
     and (
-      coalesce(ei.from_name, '') ilike '%' || p_client_name || '%'
+      coalesce(ei.sender_name, '') ilike '%' || p_client_name || '%'
       or coalesce(ei.subject, '') ilike '%' || p_client_name || '%'
-      or coalesce(ei.from_address, '') ilike '%' || p_client_name || '%'
+      or coalesce(ei.sender_email, '') ilike '%' || p_client_name || '%'
     )
   order by match_score desc, ei.received_at desc
   limit greatest(coalesce(p_limit, 10), 1);
