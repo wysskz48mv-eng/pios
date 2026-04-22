@@ -63,6 +63,38 @@ create index if not exists idx_fm_risk_library_category on public.fm_risk_librar
 create index if not exists idx_fm_risk_library_engagement_types on public.fm_risk_library using gin(engagement_types);
 create index if not exists idx_fm_risk_library_search on public.fm_risk_library using gin(to_tsvector('english', coalesce(risk_code,'') || ' ' || coalesce(title,'') || ' ' || coalesce(description,'')));
 
+-- 2.5) Ensure consulting_engagements has tenant_id for downstream FK + RLS consistency
+alter table public.consulting_engagements
+  add column if not exists tenant_id uuid references public.tenants(id);
+
+update public.consulting_engagements ce
+set tenant_id = up.tenant_id
+from public.user_profiles up
+where ce.tenant_id is null
+  and up.tenant_id is not null
+  and up.user_id = ce.user_id;
+
+-- Fallback for environments where user_profiles.id is canonical and user_id may be sparse
+update public.consulting_engagements ce
+set tenant_id = up.tenant_id
+from public.user_profiles up
+where ce.tenant_id is null
+  and up.tenant_id is not null
+  and up.id = ce.user_id;
+
+do $$
+begin
+  if exists (select 1 from public.consulting_engagements where tenant_id is null) then
+    raise exception 'M108 backfill failed: consulting_engagements.tenant_id remains NULL for % rows',
+      (select count(*) from public.consulting_engagements where tenant_id is null);
+  end if;
+end $$;
+
+alter table public.consulting_engagements
+  alter column tenant_id set not null;
+
+create index if not exists idx_consulting_engagements_tenant_id on public.consulting_engagements(tenant_id);
+
 -- 3) Engagement risks
 create table if not exists public.engagement_risks (
   id uuid primary key default gen_random_uuid(),
@@ -220,7 +252,7 @@ begin
       and e.user_id = v_engagement.user_id
       and (
         coalesce(e.sender_name, '') ilike '%' || v_engagement.client_name || '%'
-        or coalesce(e.from_name, '') ilike '%' || v_engagement.client_name || '%'
+        or coalesce(e.sender_name, '') ilike '%' || v_engagement.client_name || '%'
         or coalesce(e.subject, '') ilike '%' || v_engagement.client_name || '%'
       )
       and e.received_at >= v_engagement.created_at - interval '30 days'
@@ -257,6 +289,7 @@ drop trigger if exists trg_fm_precedents_updated_at on public.fm_precedents;
 create trigger trg_fm_precedents_updated_at before update on public.fm_precedents for each row execute function public.pios_set_updated_at();
 
 -- 8) RLS
+alter table public.consulting_engagements enable row level security;
 alter table public.fm_engagement_types enable row level security;
 alter table public.fm_risk_library enable row level security;
 alter table public.engagement_risks enable row level security;
@@ -265,6 +298,29 @@ alter table public.fm_precedents enable row level security;
 
 do $$
 begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='consulting_engagements' and policyname='consulting_engagements_tenant_owner') then
+    create policy consulting_engagements_tenant_owner on public.consulting_engagements
+      for all
+      using (
+        user_id = auth.uid()
+        and tenant_id = (
+          select up.tenant_id
+          from public.user_profiles up
+          where up.id = auth.uid() or up.user_id = auth.uid()
+          limit 1
+        )
+      )
+      with check (
+        user_id = auth.uid()
+        and tenant_id = (
+          select up.tenant_id
+          from public.user_profiles up
+          where up.id = auth.uid() or up.user_id = auth.uid()
+          limit 1
+        )
+      );
+  end if;
+
   if not exists (select 1 from pg_policies where schemaname='public' and tablename='fm_engagement_types' and policyname='fm_engagement_types_read') then
     create policy fm_engagement_types_read on public.fm_engagement_types for select using (auth.role() = 'authenticated' and is_active = true);
   end if;
