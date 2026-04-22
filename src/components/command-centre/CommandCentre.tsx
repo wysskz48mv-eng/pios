@@ -19,6 +19,8 @@ export interface CCProfile {
   plan: string
   jobTitle: string
   organisation: string
+  activePersonas?: string[]
+  activeModuleCodes?: string[]
 }
 
 interface Props {

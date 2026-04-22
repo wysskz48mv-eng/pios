@@ -65,7 +65,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: 'var(--font-sans)', background: '#07080D' }}>
-      {!isMobile && <Sidebar userProfile={userProfile as Record<string, string> | undefined} tenant={tenant as Record<string, string> | undefined} />}
+      {!isMobile && <Sidebar userProfile={userProfile as Record<string, unknown> | undefined} tenant={tenant as Record<string, unknown> | undefined} />}
 
       {isMobile && mobileMenuOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--pios-bg)', overflowY: 'auto' }}>
@@ -74,7 +74,7 @@ export function PlatformShell({ children, userProfile, tenant }: PlatformShellPr
             <button onClick={() => setMenuOpen(false)} className="pios-btn pios-btn-ghost pios-btn-sm">Close</button>
           </div>
           <div style={{ height: 'calc(100vh - 56px)', overflowY: 'auto' }}>
-            <Sidebar userProfile={userProfile as Record<string, string> | undefined} tenant={tenant as Record<string, string> | undefined} />
+            <Sidebar userProfile={userProfile as Record<string, unknown> | undefined} tenant={tenant as Record<string, unknown> | undefined} />
           </div>
         </div>
       )}

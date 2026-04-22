@@ -88,6 +88,8 @@ const NAV_GROUPS = [
     items: [
       { href: '/platform/executive',        icon: 'executive',    label: 'Executive OS',      badge: 'EOSA™', accent: C.pro },
       { href: '/platform/consulting',       icon: 'consulting',   label: 'Consulting',        badge: 'CSA™',  accent: C.violet },
+      { href: '/platform/engagements',      icon: 'projects',     label: 'Engagements',                       accent: C.amber },
+      { href: '/platform/cpd',              icon: 'learning',     label: 'CPD',                               accent: C.fm },
       { href: '/platform/projects',         icon: 'projects',     label: 'Projects',                          accent: C.amber },
       { href: '/platform/tasks',            icon: 'tasks',        label: 'Tasks',                             accent: C.violet },
       { href: '/platform/contracts',        icon: 'contracts',    label: 'Contracts',                         accent: C.academic },
@@ -168,22 +170,42 @@ const ALWAYS_VISIBLE = new Set([
   '/platform/documents','/platform/files',
 ])
 
-function isItemVisible(href: string, persona: string | undefined): boolean {
+const MODULE_ROUTE_REQUIREMENTS: Record<string, string[]> = {
+  '/platform/research': ['ACADEMIC'],
+  '/platform/cpd': ['CPD'],
+  '/platform/consulting': ['CONSULTING_HUB'],
+  '/platform/engagements': ['FM_CONSULTANT'],
+}
+
+function isItemVisible(href: string, persona: string | undefined, activeModuleCodes: string[]): boolean {
   if (ALWAYS_VISIBLE.has(href)) return true
+
+  const requiredModules = MODULE_ROUTE_REQUIREMENTS[href]
+  if (requiredModules && activeModuleCodes.length > 0) {
+    return requiredModules.some((moduleCode) => activeModuleCodes.includes(moduleCode))
+  }
+
   const canonicalPersona = toCanonicalPersona(persona) ?? 'CEO'
   const personaSet = new Set(PERSONA_NAV_HREFS[canonicalPersona])
   return personaSet.has(href)
 }
 
 interface SidebarProps {
-  userProfile?: Record<string,string> | null
-  tenant?: Record<string,string> | null
+  userProfile?: Record<string, unknown> | null
+  tenant?: Record<string, unknown> | null
 }
 
 export function Sidebar({ userProfile, tenant }: SidebarProps) {
   const pathname = usePathname()
   const router   = useRouter()
-  const persona  = userProfile?.persona_type ?? 'CEO'
+  const persona  = String(userProfile?.persona_type ?? 'CEO')
+  const activePersonas = Array.isArray(userProfile?.active_personas)
+    ? (userProfile?.active_personas as string[])
+    : []
+  const activeModuleCodes = Array.isArray(userProfile?.active_module_codes)
+    ? (userProfile?.active_module_codes as string[])
+    : []
+  const needsProfileConfiguration = activePersonas.length === 0
   const supabase = createClient()
   const [collapsed, setCollapsed] = useState(false)
   const [unread,    setUnread]    = useState(0)
@@ -206,14 +228,14 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
     router.push('/auth/login')
   }
 
-  const initials  = userProfile?.full_name
-    ? userProfile.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+  const fullName = typeof userProfile?.full_name === 'string' ? userProfile.full_name : 'User'
+  const jobTitle = typeof userProfile?.job_title === 'string' ? userProfile.job_title : 'Group CEO'
+  const planRaw = typeof tenant?.plan === 'string' ? tenant.plan : 'Executive'
+
+  const initials = fullName
+    ? fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'DM'
-  const planLabel = tenant?.plan
-    ? tenant.plan.charAt(0).toUpperCase() + tenant.plan.slice(1)
-    : 'Executive'
-  const fullName  = userProfile?.full_name || 'User'
-  const jobTitle  = userProfile?.job_title || 'Group CEO'
+  const planLabel = planRaw.charAt(0).toUpperCase() + planRaw.slice(1)
   const W = collapsed ? 52 : 220
 
   // Hex logomark SVG
@@ -262,12 +284,23 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
         )}
       </div>
 
+      {needsProfileConfiguration && !collapsed && (
+        <div style={{ margin: '10px 10px 2px', padding: 10, borderRadius: 10, border: `1px solid ${C.violetGlow}`, background: C.violetSubtle }}>
+          <div style={{ fontSize: 11, color: C.sub, marginBottom: 8, lineHeight: 1.4 }}>
+            Activate your personas to unlock module-aware navigation and NemoClaw context.
+          </div>
+          <Link href="/settings/profile/persona" style={{ textDecoration: 'none' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#bcb1ff' }}>Configure Profile →</div>
+          </Link>
+        </div>
+      )}
+
       {/* ── Nav ── */}
       <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '6px 0 10px' }}>
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi}>
             {/* Group label */}
-            {!collapsed && group.label && group.items.some((it: Record<string, unknown>) => isItemVisible(it.href as string, persona)) && (
+            {!collapsed && group.label && group.items.some((it: Record<string, unknown>) => isItemVisible(it.href as string, persona, activeModuleCodes)) && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '12px 16px 4px',
@@ -284,7 +317,7 @@ export function Sidebar({ userProfile, tenant }: SidebarProps) {
               <div style={{ height: 1, background: C.border, margin: '5px 10px' }} />
             )}
 
-            {group.items.filter((item: Record<string, unknown>) => isItemVisible(item.href as string, persona)).map((item: Record<string, unknown>) => {
+            {group.items.filter((item: Record<string, unknown>) => isItemVisible(item.href as string, persona, activeModuleCodes)).map((item: Record<string, unknown>) => {
               const href     = item.href as string
               const iconName = item.icon as string
               const label    = item.label as string

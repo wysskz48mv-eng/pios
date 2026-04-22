@@ -20,7 +20,7 @@ export default async function DashboardPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
-    .select('id, full_name, display_name, persona_type, command_centre_theme, onboarded, onboarding_complete, onboarding_current_step, plan, job_title, organisation, created_at')
+    .select('id, full_name, display_name, persona_type, active_personas, active_module_codes, command_centre_theme, onboarded, onboarding_complete, onboarding_current_step, plan, job_title, organisation, created_at')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -62,6 +62,8 @@ export default async function DashboardPage() {
         plan: profile?.plan ?? 'free',
         jobTitle: profile?.job_title ?? '',
         organisation: profile?.organisation ?? '',
+        activePersonas: Array.isArray(profile?.active_personas) ? (profile?.active_personas as string[]) : [],
+        activeModuleCodes: Array.isArray(profile?.active_module_codes) ? (profile?.active_module_codes as string[]) : [],
       }}
     />
   )

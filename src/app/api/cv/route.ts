@@ -12,6 +12,7 @@ import { callClaude as callClaudeAI } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 import { buildCompetencyScores, topCompetencies } from '@/lib/onboarding/competency-scoring'
 import { toCanonicalPersona } from '@/lib/persona-packaging'
+import { inferPersonaSuggestionsFromCvSummary } from '@/lib/persona-modules'
 
 function maybeServiceClient() {
   try {
@@ -224,8 +225,13 @@ PROFILE: ${JSON.stringify(extracted, null, 2)}`,
       last_seen_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
 
+    const suggestedPersonas = inferPersonaSuggestionsFromCvSummary(
+      (calibration.calibration_summary as string | undefined) ?? null
+    )
+
     return NextResponse.json({
       success: true,
+      suggested_personas: suggestedPersonas,
       autofill: { full_name: extracted.full_name, job_title: extracted.job_title, organisation: extracted.organisation },
       calibration: {
         seniority_level: extracted.seniority_level,

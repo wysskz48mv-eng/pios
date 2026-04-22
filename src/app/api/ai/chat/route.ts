@@ -6,6 +6,7 @@ import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
 import { checkRateLimit, LIMITS } from '@/lib/redis-rate-limit'
 import { NEMOCLAW_TOOLS, runNemoclawTool } from '@/lib/nemoclaw/tool-registry'
+import { getProfilePersonaModuleState } from '@/lib/profile-persona-service'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -110,10 +111,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ reply: "I can't process that request. Please rephrase your question." }, { status: 200 })
     }
 
-    const [{ data: profile }, { data: calibration }] = await Promise.all([
+    const [profileState, { data: profile }, { data: calibration }] = await Promise.all([
+      getProfilePersonaModuleState(user.id),
       supabase
         .from('user_profiles')
-        .select('full_name,job_title,organisation,persona_type')
+        .select('full_name,job_title,organisation,persona_type,active_personas,active_module_codes')
         .eq('id', user.id)
         .single(),
       supabase
@@ -139,6 +141,9 @@ USER:
 - Role: ${profile?.job_title ?? 'Executive'}
 - Organisation: ${profile?.organisation ?? 'PIOS'}
 - Persona: ${profile?.persona_type ?? 'professional'}
+- Active personas: ${(profileState?.activePersonas ?? []).join(', ') || 'none'}
+- Active modules: ${(profileState?.activeModules ?? []).join(', ') || 'none'}
+- Workload tracking enabled: ${profileState?.workloadTrackingEnabled ? 'yes' : 'no'}
 - Communication register: ${calibration?.communication_register ?? 'professional'}
 - Coaching intensity: ${calibration?.coaching_intensity ?? 'balanced'}
 - Recommended frameworks: ${(calibration?.recommended_frameworks ?? []).join(', ') || 'none'}

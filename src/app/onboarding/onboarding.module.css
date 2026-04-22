@@ -194,6 +194,15 @@
 
 .personaCardSelected .pcMod { border-color: rgba(200, 169, 110, 0.2); color: var(--muted); }
 
+.pcHint {
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.85;
+}
+
 .pcPrice {
   font-family: 'Cormorant Garamond', serif;
   font-size: 16px;

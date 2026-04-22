@@ -25,6 +25,17 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
     year: 'numeric',
   })
 
+  const activeModules = Array.isArray(profile.activeModuleCodes) ? profile.activeModuleCodes : []
+  const moduleCards = [
+    { icon: '⚖', name: 'Decisions', stat: `${stats?.decisions?.pending ?? 0} awaiting review`, href: '/platform/decisions' },
+    { icon: '✉', name: 'Email Triage', stat: `${stats?.email?.unread ?? 0} classified · ${stats?.email?.urgent ?? 0} urgent`, href: '/platform/email' },
+    { icon: '▣', name: 'Board Pack', stat: 'Preparation active', href: '/platform/board' },
+    { icon: '◈', name: 'Consulting Hub', stat: 'Frameworks active', href: '/platform/consulting', module: 'CONSULTING_HUB' },
+    { icon: '◌', name: 'Academic', stat: 'Research workflows active', href: '/platform/research', module: 'ACADEMIC' },
+    { icon: '⊞', name: 'CPD', stat: 'Professional development', href: '/platform/cpd', module: 'CPD' },
+    { icon: '◉', name: 'Stakeholders', stat: `${stats?.stakeholders?.overdue ?? 0} overdue`, href: '/platform/stakeholders' },
+  ].filter((card) => !card.module || activeModules.length === 0 || activeModules.includes(card.module))
+
   return (
     <div className={`${styles.ccRoot} ${styles.onyx}`}>
       <main className={styles.onyxMain} style={{ marginLeft: 0 }}>
@@ -76,14 +87,7 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
           </div>
 
           <div className={styles.onyxModuleGrid}>
-            {[
-              { icon: '⚖', name: 'Decisions', stat: `${stats?.decisions?.pending ?? 0} awaiting review`, href: '/platform/decisions' },
-              { icon: '✉', name: 'Email Triage', stat: `${stats?.email?.unread ?? 0} classified · ${stats?.email?.urgent ?? 0} urgent`, href: '/platform/email' },
-              { icon: '▣', name: 'Board Pack', stat: 'Preparation active', href: '/platform/board' },
-              { icon: '◈', name: 'EOSA™', stat: 'Frameworks active', href: '/platform/frameworks' },
-              { icon: '⊞', name: 'Chief of Staff', stat: 'Weekly review', href: '/platform/cos' },
-              { icon: '◉', name: 'Stakeholders', stat: `${stats?.stakeholders?.overdue ?? 0} overdue`, href: '/platform/stakeholders' },
-            ].map((module) => (
+            {moduleCards.map((module) => (
               <Link key={module.name} href={module.href} className={styles.onyxModCard}>
                 <span className={styles.onyxModIcon}>{module.icon}</span>
                 <span className={styles.onyxModName}>{module.name}</span>

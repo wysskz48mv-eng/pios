@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PERSONA_PACKAGING, type CanonicalPersona } from '@/lib/persona-packaging'
+import type { PersonaCode } from '@/types/persona-modules'
 import styles from './onboarding.module.css'
 
 type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6
@@ -39,6 +40,47 @@ type LocalOnboardingState = {
 
 const LOCAL_STORAGE_KEY = 'pios:onboarding:state'
 
+type PersonaChoice = {
+  id: 'FOUNDER' | 'FM_CONSULTANT' | 'MANAGEMENT_CONSULTANT' | 'ACADEMIC_PHD'
+  label: string
+  tagline: string
+  description: string
+  persona: CanonicalPersona
+  fmConsultant?: boolean
+}
+
+const ONBOARDING_PERSONA_CHOICES: PersonaChoice[] = [
+  {
+    id: 'FOUNDER',
+    label: 'Founder',
+    tagline: 'Build · Lead · Scale',
+    description: 'Neutral strategic frameworks with founder operating context.',
+    persona: 'CEO',
+  },
+  {
+    id: 'FM_CONSULTANT',
+    label: 'FM Consultant',
+    tagline: 'Comply · Deliver · Transition',
+    description: 'Consulting workflows with FM-specific approach activation.',
+    persona: 'CONSULTANT',
+    fmConsultant: true,
+  },
+  {
+    id: 'MANAGEMENT_CONSULTANT',
+    label: 'Management Consultant',
+    tagline: 'Diagnose · Prioritise · Recommend',
+    description: 'Neutral consulting workbench, without FM-specific activation.',
+    persona: 'CONSULTANT',
+  },
+  {
+    id: 'ACADEMIC_PHD',
+    label: 'Academic / PhD',
+    tagline: 'Research · Publish · Defend',
+    description: 'Research workflows with citation graph and CPD support.',
+    persona: 'ACADEMIC',
+  },
+]
+
 function readLocalState(): LocalOnboardingState {
   if (typeof window === 'undefined') return {}
   try {
@@ -69,6 +111,8 @@ export default function OnboardingPage() {
   const [hydrating, setHydrating] = useState(true)
   const [step, setStep] = useState<OnboardingStep>(1)
   const [persona, setPersona] = useState<CanonicalPersona | null>(null)
+  const [selectedPersonaChoice, setSelectedPersonaChoice] = useState<PersonaChoice['id'] | null>(null)
+  const [cvSuggestedPersonas, setCvSuggestedPersonas] = useState<PersonaCode[]>([])
   const [questions, setQuestions] = useState<CalibrationQuestion[]>([])
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [cvFile, setCvFile] = useState<File | null>(null)
@@ -79,7 +123,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState('')
   const [syncWarning, setSyncWarning] = useState('')
 
-  const personaOptions = useMemo(() => PERSONA_PACKAGING, [])
+  const personaOptions = useMemo(() => ONBOARDING_PERSONA_CHOICES, [])
 
   function mergeLocalState(payload: Record<string, unknown>) {
     const previous = readLocalState()
@@ -155,7 +199,16 @@ export default function OnboardingPage() {
       setStep(nextStep)
 
       const p = data?.state?.persona_selected ?? data?.profile?.persona_type ?? local.persona_selected ?? null
-      if (typeof p === 'string') setPersona(p as CanonicalPersona)
+      if (typeof p === 'string') {
+        const canonical = p as CanonicalPersona
+        setPersona(canonical)
+        const mappedChoice = ONBOARDING_PERSONA_CHOICES.find((choice) => choice.persona === canonical)
+        setSelectedPersonaChoice(mappedChoice?.id ?? null)
+      }
+
+      if (Array.isArray(data?.calibration?.recommended_personas)) {
+        setCvSuggestedPersonas(data.calibration.recommended_personas as PersonaCode[])
+      }
 
       const personaConfig = data?.persona_config
       if (Array.isArray(personaConfig?.questions)) {
@@ -198,7 +251,11 @@ export default function OnboardingPage() {
       console.error('[onboarding] loadState failed, using local fallback', e)
       const fallbackStep = clampStep(local.current_step ?? 1)
       setStep(fallbackStep)
-      if (typeof local.persona_selected === 'string') setPersona(local.persona_selected)
+      if (typeof local.persona_selected === 'string') {
+        setPersona(local.persona_selected)
+        const mappedChoice = ONBOARDING_PERSONA_CHOICES.find((choice) => choice.persona === local.persona_selected)
+        setSelectedPersonaChoice(mappedChoice?.id ?? null)
+      }
       if (local.calibration_answers) setAnswers(local.calibration_answers)
       if (typeof local.calibration_summary === 'string') setCalibrationSummary(local.calibration_summary)
       if (Array.isArray(local.top_competencies)) setTopCompetencies(local.top_competencies)
@@ -219,17 +276,18 @@ export default function OnboardingPage() {
     await patchState({ current_step: next })
   }
 
-  async function handlePersonaSelect(nextPersona: CanonicalPersona) {
+  async function handlePersonaSelect(choice: PersonaChoice) {
     setBusy(true)
     setError('')
-    setPersona(nextPersona)
-    mergeLocalState({ persona_selected: nextPersona, current_step: 3 })
+    setPersona(choice.persona)
+    setSelectedPersonaChoice(choice.id)
+    mergeLocalState({ persona_selected: choice.persona, current_step: 3 })
 
     try {
       const res = await fetch('/api/onboarding/persona', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ persona: nextPersona }),
+        body: JSON.stringify({ persona: choice.persona, fm_consultant: Boolean(choice.fmConsultant) }),
       })
       const data = await res.json().catch(() => ({}))
 
@@ -308,6 +366,9 @@ export default function OnboardingPage() {
       }
       if (Array.isArray(data?.top_competencies)) {
         setTopCompetencies(data.top_competencies)
+      }
+      if (Array.isArray(data?.suggested_personas)) {
+        setCvSuggestedPersonas(data.suggested_personas as PersonaCode[])
       }
 
       mergeLocalState({
@@ -411,18 +472,24 @@ export default function OnboardingPage() {
             <p className={styles.stepSub}>This sets your default modules, decision language, and workflow emphasis.</p>
 
             <div className={styles.personaGrid}>
-              {personaOptions.map((option) => (
-                <button
-                  key={option.id}
-                  className={`${styles.personaCard} ${persona === option.id ? styles.personaCardSelected : ''}`}
-                  onClick={() => handlePersonaSelect(option.id)}
-                  disabled={busy}
-                >
-                  <div className={styles.pcTag}>{option.label}</div>
-                  <div className={styles.pcTitle}>{option.tagline}</div>
-                  <p className={styles.pcDesc}>{option.description}</p>
-                </button>
-              ))}
+              {personaOptions.map((option) => {
+                const isSelected = selectedPersonaChoice === option.id
+                const isSuggested = cvSuggestedPersonas.includes(option.persona as PersonaCode)
+
+                return (
+                  <button
+                    key={option.id}
+                    className={`${styles.personaCard} ${isSelected ? styles.personaCardSelected : ''}`}
+                    onClick={() => handlePersonaSelect(option)}
+                    disabled={busy}
+                  >
+                    <div className={styles.pcTag}>{option.label}</div>
+                    <div className={styles.pcTitle}>{option.tagline}</div>
+                    <p className={styles.pcDesc}>{option.description}</p>
+                    {isSuggested && <div className={styles.pcHint}>Suggested from CV</div>}
+                  </button>
+                )
+              })}
             </div>
           </section>
         )}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPersonaPackaging, toCanonicalPersona } from '@/lib/persona-packaging'
 import { getPersonaCalibrationConfig } from '@/lib/onboarding/persona-calibration'
+import { setUserPersonasAndModules } from '@/lib/profile-persona-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,9 @@ export async function PATCH(req: NextRequest) {
     if (!persona) {
       return NextResponse.json({ error: 'Invalid persona' }, { status: 400 })
     }
+
+    const fmConsultant = Boolean(body.fm_consultant)
+    const ribaEnabled = Boolean(body.riba_enabled)
 
     const packaging = getPersonaPackaging(persona)
     const now = new Date().toISOString()
@@ -79,11 +83,21 @@ export async function PATCH(req: NextRequest) {
       })
     }
 
+    const activation = await setUserPersonasAndModules({
+      userId: user.id,
+      personas: [persona],
+      primaryPersona: persona,
+      fmConsultant,
+      ribaEnabled,
+    })
+
     return NextResponse.json({
       ok: true,
-      persisted: !profileWrite.error || !stateWrite.error,
+      persisted: !profileWrite.error && !stateWrite.error,
       persona,
       modules: packaging.fallbackFrameworkCodes,
+      active_modules: activation.modules,
+      active_personas: activation.personas,
       config: getPersonaCalibrationConfig(persona),
     })
   } catch (error) {

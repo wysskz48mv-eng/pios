@@ -30,7 +30,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
 
   const { data: profile, error: profileError } = await admin
     .from('user_profiles')
-    .select('full_name, avatar_url, role, persona_type, job_title, organisation, programme_name, google_email, tenant_id, onboarded, onboarding_complete, onboarding_current_step, created_at')
+    .select('full_name, avatar_url, role, persona_type, active_personas, active_module_codes, job_title, organisation, programme_name, google_email, tenant_id, onboarded, onboarding_complete, onboarding_current_step, created_at')
     .eq('id', user.id)
     .maybeSingle()
 
