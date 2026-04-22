@@ -170,6 +170,11 @@ export async function getValidToken(supabase: any, account: any, userId: string)
   return null
 }
 
+function detectMeetingSignal(subject: string, from: string, snippet: string) {
+  const haystack = `${subject} ${from} ${snippet}`.toLowerCase()
+  return /(meeting|invite|invitation|calendar|rsvp|accepted|declined|tentative|rescheduled|cancelled|cancellation|google meet|zoom|microsoft teams|outlook event|ical|\.ics)/i.test(haystack)
+}
+
 async function triageEmail(
   subject: string, from: string, snippet: string,
   context: string, domainOverride: string | null,
@@ -177,6 +182,7 @@ async function triageEmail(
 ) {
   const text = `${subject} ${snippet}`.toLowerCase()
   const looksLikeReceipt = receiptEnabled && receiptKeywords.some(kw => text.includes(kw.toLowerCase()))
+  const looksLikeMeeting = detectMeetingSignal(subject, from, snippet)
   const domainHint = domainOverride
     ? `Force domain to '${domainOverride}'.`
     : `Email from ${context} inbox. Bias domain accordingly.`
@@ -191,18 +197,38 @@ Set is_meeting=true if the email contains a meeting invite, calendar event, RSVP
       system, 400
     )
     const p = JSON.parse(raw.replace(/```json|```/g, '').trim())
+    const parsedClass = TRIAGE_CLASSES.includes(p.triage_class) ? p.triage_class : null
+    const inferredMeeting = !!p.is_meeting || parsedClass === 'meeting' || looksLikeMeeting
+    const triageClass = parsedClass ?? (inferredMeeting ? 'meeting' : 'fyi')
     return {
-      domain:         domainOverride ?? (DOMAINS.includes(p.domain) ? p.domain : 'personal'),
-      triage_class:   TRIAGE_CLASSES.includes(p.triage_class) ? p.triage_class : null,
-      is_meeting:     !!p.is_meeting,
-      priority_score: Math.min(10, Math.max(1, parseInt(p.priority_score) || 3)),
+      domain:          domainOverride ?? (DOMAINS.includes(p.domain) ? p.domain : 'personal'),
+      triage_class:    triageClass,
+      is_meeting:      inferredMeeting,
+      priority_score:  Math.min(10, Math.max(1, parseInt(p.priority_score) || 3)),
       action_required: p.action_required || null,
       ai_draft_reply:  p.ai_draft_reply  || null,
-      is_receipt:      !!p.is_receipt,
-      receipt_data:    p.receipt_data    || null,
+      is_receipt:      !!p.is_receipt || looksLikeReceipt,
+      receipt_data:    p.receipt_data || null,
+      fallback_used:   parsedClass == null,
     }
-  } catch {
-    return { domain: domainOverride ?? 'personal', triage_class: null, is_meeting: false, priority_score: 3, action_required: null, ai_draft_reply: null, is_receipt: looksLikeReceipt, receipt_data: null }
+  } catch (error) {
+    logEmailSync('triage_fallback_used', {
+      reason: (error as Error)?.message ?? 'triage_parse_error',
+      subject,
+      from,
+      detectedMeeting: looksLikeMeeting,
+    })
+    return {
+      domain: domainOverride ?? 'personal',
+      triage_class: looksLikeMeeting ? 'meeting' : 'fyi',
+      is_meeting: looksLikeMeeting,
+      priority_score: looksLikeMeeting ? 5 : 3,
+      action_required: null,
+      ai_draft_reply: null,
+      is_receipt: looksLikeReceipt,
+      receipt_data: null,
+      fallback_used: true,
+    }
   }
 }
 async function autoCreateExpense(supabase: any, userId: string, rd: any, domain: string, subject: string) {
@@ -250,7 +276,7 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
 
   if (!res.ok) return { synced: 0, receipts: 0, blocked: 0, error: `Gmail ${res.status}` }
 
-  const { messages = [] } = await res.json()
+  const { messages = [], nextPageToken = null } = await res.json()
 
   // Load blocked senders for this user
   const { data: blockedList } = await supabase
@@ -269,12 +295,21 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
     .order('priority')
 
   let synced = 0, receipts = 0, blocked = 0
-  for (const msg of messages.slice(0, max)) {
+  let triaged = 0
+  let detailFetchFailed = 0
+  let upsertErrors = 0
+  let triageFallbacks = 0
+
+  for (const msg of messages) {
     const dr = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=List-Unsubscribe`,
       { headers: { Authorization: `Bearer ${token}` } },
     )
-    if (!dr.ok) continue
+    if (!dr.ok) {
+      detailFetchFailed++
+      logEmailSync('gmail_message_detail_fetch_failed', { accountId: account.id, userId, messageId: msg.id, status: dr.status })
+      continue
+    }
 
     const d = await dr.json()
     const h: Record<string, string> = {}
@@ -282,6 +317,7 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
     const subject = h.Subject ?? '(no subject)', from = h.From ?? '', snippet = d.snippet ?? ''
     const senderEmail = (from.match(/<(.+)>/)?.[1] ?? from).toLowerCase()
     const senderDomain = senderEmail.split('@')[1] ?? ''
+    const receivedAt = d.internalDate ? new Date(parseInt(d.internalDate)).toISOString() : new Date().toISOString()
 
     // Extract unsubscribe URL from List-Unsubscribe header
     const unsubHeader = h['List-Unsubscribe'] ?? ''
@@ -289,21 +325,36 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
 
     // Check if sender is blocked
     if (blockedEmails.has(senderEmail) || blockedDomains.has(senderDomain)) {
-      // Auto-spam blocked senders
-      await supabase.from('email_items').upsert({
-        user_id: userId, account_id: account.id,
-        gmail_message_id: msg.id, gmail_thread_id: d.threadId,
-        subject, sender_name: from.split('<')[0].trim(), sender_email: senderEmail,
-        received_at: new Date(parseInt(d.internalDate)).toISOString(), snippet,
-        status: 'spam', is_blocked: true, is_spam: true,
+      const { error: blockedUpsertError } = await supabase.from('email_items').upsert({
+        user_id: userId,
+        account_id: account.id,
+        gmail_message_id: msg.id,
+        gmail_thread_id: d.threadId,
+        subject,
+        sender_name: from.split('<')[0].trim(),
+        sender_email: senderEmail,
+        inbox_address: account.email_address ?? null,
+        received_at: receivedAt,
+        snippet,
+        status: 'spam',
+        is_blocked: true,
+        is_spam: true,
         unsubscribe_url: unsubscribeUrl,
-        inbox_context: account.context, inbox_label: account.label ?? account.display_name,
+        inbox_context: account.context,
+        inbox_label: account.label ?? account.display_name,
       }, { onConflict: 'gmail_message_id' })
+      if (blockedUpsertError) {
+        upsertErrors++
+        logEmailSync('gmail_blocked_upsert_failed', { accountId: account.id, userId, messageId: msg.id, code: blockedUpsertError.code, message: blockedUpsertError.message })
+        continue
+      }
       blocked++
       continue
     }
 
     const t = await triageEmail(subject, from, snippet, account.context, account.ai_domain_override, account.receipt_scan_enabled, account.receipt_keywords ?? [])
+    if (t.fallback_used) triageFallbacks++
+    triaged++
     if (t.is_receipt) { receipts++; await autoCreateExpense(supabase, userId, t.receipt_data, t.domain, subject) }
 
     // Apply user email filters
@@ -340,19 +391,38 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
       }
     }
 
-    await supabase.from('email_items').upsert({
-      user_id: userId, account_id: account.id, inbox_context: account.context,
+    const { error: upsertError } = await supabase.from('email_items').upsert({
+      user_id: userId,
+      account_id: account.id,
+      inbox_context: account.context,
       inbox_label: account.label ?? account.display_name,
-      gmail_message_id: msg.id, gmail_thread_id: d.threadId,
-      subject, sender_name: from.split('<')[0].trim(), sender_email: senderEmail,
-      received_at: new Date(parseInt(d.internalDate)).toISOString(), snippet,
-      domain_tag: t.domain, triage_class: t.triage_class, priority_score: t.priority_score,
-      action_required: t.action_required, ai_draft_reply: t.ai_draft_reply,
-      is_receipt: t.is_receipt, receipt_data: t.receipt_data,
+      inbox_address: account.email_address ?? null,
+      gmail_message_id: msg.id,
+      gmail_thread_id: d.threadId,
+      subject,
+      sender_name: from.split('<')[0].trim(),
+      sender_email: senderEmail,
+      received_at: receivedAt,
+      snippet,
+      domain_tag: t.domain,
+      triage_class: t.triage_class,
+      priority_score: t.priority_score,
+      action_required: t.action_required,
+      ai_draft_reply: t.ai_draft_reply,
+      is_meeting: t.is_meeting,
+      is_receipt: t.is_receipt,
+      receipt_data: t.receipt_data,
+      triage_at: new Date().toISOString(),
       unsubscribe_url: unsubscribeUrl,
-      is_flagged: filterFlagged, is_spam: filterSpam,
+      is_flagged: filterFlagged,
+      is_spam: filterSpam,
       status: filterStatus,
     }, { onConflict: 'gmail_message_id' })
+    if (upsertError) {
+      upsertErrors++
+      logEmailSync('gmail_upsert_failed', { accountId: account.id, userId, messageId: msg.id, code: upsertError.code, message: upsertError.message })
+      continue
+    }
     synced++
   }
 
@@ -361,7 +431,22 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
       .update({ last_synced_at: new Date().toISOString(), last_sync_error: null }).eq('id', account.id)
   }
 
-  return { synced, receipts, blocked }
+  logEmailSync('gmail_sync_summary', {
+    accountId: account.id,
+    userId,
+    requestedMax: max,
+    fetched: messages.length,
+    hasMoreUnread: !!nextPageToken,
+    triaged,
+    synced,
+    blocked,
+    receipts,
+    triageFallbacks,
+    detailFetchFailed,
+    upsertErrors,
+  })
+
+  return { synced, receipts, blocked, triaged, fetched: messages.length, detail_fetch_failed: detailFetchFailed, triage_fallbacks: triageFallbacks, upsert_errors: upsertErrors, has_more_unread: !!nextPageToken }
 }
 export async function syncMicrosoft(supabase: any, userId: string, account: any, token: string, max: number) {
   const url = `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=${max}&$filter=isRead eq false&$select=id,subject,from,receivedDateTime,bodyPreview,conversationId`
@@ -381,30 +466,64 @@ export async function syncMicrosoft(supabase: any, userId: string, account: any,
 
   if (!res.ok) { const e = await res.text(); return { synced: 0, receipts: 0, error: `Graph ${res.status}: ${e.slice(0,100)}` } }
   const { value: messages = [] } = await res.json()
-  let synced = 0, receipts = 0
-  for (const msg of messages.slice(0, max)) {
+  let synced = 0, receipts = 0, triaged = 0, triageFallbacks = 0, upsertErrors = 0
+  for (const msg of messages) {
     const subject = msg.subject ?? '(no subject)'
     const fromName  = msg.from?.emailAddress?.name    ?? ''
     const fromEmail = msg.from?.emailAddress?.address ?? ''
     const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail
     const snippet = msg.bodyPreview ?? ''
     const t = await triageEmail(subject, from, snippet, account.context, account.ai_domain_override, account.receipt_scan_enabled, account.receipt_keywords ?? [])
+    triaged++
+    if (t.fallback_used) triageFallbacks++
     if (t.is_receipt) { receipts++; await autoCreateExpense(supabase, userId, t.receipt_data, t.domain, subject) }
-    await supabase.from('email_items').upsert({
-      user_id: userId, account_id: account.id, inbox_context: account.context,
+    const { error: upsertError } = await supabase.from('email_items').upsert({
+      user_id: userId,
+      account_id: account.id,
+      inbox_context: account.context,
       inbox_label: account.label ?? account.display_name,
-      gmail_message_id: `ms:${msg.id}`, gmail_thread_id: msg.conversationId ?? null,
-      subject, sender_name: fromName, sender_email: fromEmail,
-      received_at: msg.receivedDateTime, snippet,
-      domain_tag: t.domain, triage_class: t.triage_class, priority_score: t.priority_score,
-      action_required: t.action_required, ai_draft_reply: t.ai_draft_reply,
-      is_receipt: t.is_receipt, receipt_data: t.receipt_data, status: 'triaged',
+      inbox_address: account.email_address ?? null,
+      gmail_message_id: `ms:${msg.id}`,
+      gmail_thread_id: msg.conversationId ?? null,
+      subject,
+      sender_name: fromName,
+      sender_email: fromEmail,
+      received_at: msg.receivedDateTime,
+      snippet,
+      domain_tag: t.domain,
+      triage_class: t.triage_class,
+      priority_score: t.priority_score,
+      action_required: t.action_required,
+      ai_draft_reply: t.ai_draft_reply,
+      is_meeting: t.is_meeting,
+      is_receipt: t.is_receipt,
+      receipt_data: t.receipt_data,
+      triage_at: new Date().toISOString(),
+      status: 'triaged',
     }, { onConflict: 'gmail_message_id' })
+    if (upsertError) {
+      upsertErrors++
+      logEmailSync('microsoft_upsert_failed', { accountId: account.id, userId, messageId: msg.id, code: upsertError.code, message: upsertError.message })
+      continue
+    }
     synced++
   }
   await supabase.from('connected_email_accounts')
     .update({ last_synced_at: new Date().toISOString(), last_sync_error: null }).eq('id', account.id)
-  return { synced, receipts }
+
+  logEmailSync('microsoft_sync_summary', {
+    accountId: account.id,
+    userId,
+    requestedMax: max,
+    fetched: messages.length,
+    triaged,
+    synced,
+    receipts,
+    triageFallbacks,
+    upsertErrors,
+  })
+
+  return { synced, receipts, triaged, fetched: messages.length, triage_fallbacks: triageFallbacks, upsert_errors: upsertErrors }
 }
 
 export async function POST(req: NextRequest) {
@@ -414,7 +533,8 @@ export async function POST(req: NextRequest) {
   let body: Record<string,unknown> = {}
   try { body = await req.json() } catch { /**/ }
   const targetId = body.account_id ?? null
-  const max = Math.min(parseInt(String(body.max_per_acct ?? '15')), 50)
+  const parsedMax = parseInt(String(body.max_per_acct ?? '50'), 10)
+  const max = Math.min(Math.max(Number.isFinite(parsedMax) ? parsedMax : 50, 1), 100)
   let q = supabase.from('connected_email_accounts').select('*')
     .eq('user_id', user.id).eq('is_active', true).eq('sync_enabled', true)
   if (targetId) q = q.eq('id', targetId)
@@ -454,9 +574,25 @@ export async function POST(req: NextRequest) {
     return { account_id: acc.id, email: acc.email_address, synced: 0, receipts: 0, error: 'IMAP coming soon' }
   }))
   const detail = results.map((r: any) => r.status === 'fulfilled' ? (r as any).value : { error: String(r.reason) })
+  const totals = {
+    synced: detail.reduce((s: number, r: any) => s + (r?.synced ?? 0), 0),
+    triaged: detail.reduce((s: number, r: any) => s + (r?.triaged ?? 0), 0),
+    fetched: detail.reduce((s: number, r: any) => s + (r?.fetched ?? 0), 0),
+    receipts: detail.reduce((s: number, r: any) => s + (r?.receipts ?? 0), 0),
+    detail_fetch_failed: detail.reduce((s: number, r: any) => s + (r?.detail_fetch_failed ?? 0), 0),
+    triage_fallbacks: detail.reduce((s: number, r: any) => s + (r?.triage_fallbacks ?? 0), 0),
+    upsert_errors: detail.reduce((s: number, r: any) => s + (r?.upsert_errors ?? 0), 0),
+  }
+
+  logEmailSync('sync_request_summary', {
+    userId: user.id,
+    accountCount: accounts.length,
+    requestedMaxPerAccount: max,
+    ...totals,
+  })
+
   return NextResponse.json({
-    synced:          detail.reduce((s: number, r: any) => s + (r?.synced ?? 0), 0),
-    receipts:        detail.reduce((s: number, r: any) => s + (r?.receipts ?? 0), 0),
+    ...totals,
     accounts_synced: accounts.length,
     detail,
   })

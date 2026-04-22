@@ -61,19 +61,44 @@ interface ConnectedAccount {
   ai_triage_enabled: boolean
 }
 
+function logEmailTriage(event: string, meta?: Record<string, unknown>) {
+  console.log('[email/triage]', JSON.stringify({ event, ts: new Date().toISOString(), ...(meta ?? {}) }))
+}
+
+const DEFAULT_TRIAGE_BATCH = 200
+const MAX_TRIAGE_BATCH = 1000
+
+function normalizeEmailShape(email: Record<string, any>) {
+  const fromAddress = email.from_address ?? email.sender_email ?? ''
+  const fromName = email.from_name ?? email.sender_name ?? ''
+  const bodyPreview = email.body_preview ?? email.snippet ?? ''
+  const inboxAddress = email.inbox_address ?? email.inbox_label ?? ''
+  return {
+    ...email,
+    from_address: fromAddress,
+    from_name: fromName,
+    body_preview: bodyPreview,
+    inbox_address: inboxAddress,
+  }
+}
+
 /* ── Main handler ─────────────────────────────────────────── */
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-  const body = await req.json()
+  let body: Record<string, any> = {}
+  try { body = await req.json() } catch { body = {} }
+
   // Prompt injection defence — IS-POL-008
   const _userText = Object.values(body ?? {}).filter(v => typeof v === 'string').join(' ')
   const _safety = checkPromptSafety(_userText)
   if (!_safety.safe) return NextResponse.json({ error: 'Input rejected: ' + _safety.reason }, { status: 400 })
 
-  const emailIds: string[] = body.email_ids ?? []
+  const emailIds: string[] = Array.isArray(body.email_ids) ? body.email_ids : []
+  const requestedBatch = Number.isFinite(Number(body.max_emails)) ? Number(body.max_emails) : DEFAULT_TRIAGE_BATCH
+  const maxEmails = Math.min(Math.max(Math.trunc(requestedBatch), 1), MAX_TRIAGE_BATCH)
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -107,45 +132,61 @@ export async function POST(req: NextRequest) {
     accountMap.set(acc.email_address.toLowerCase(), acc as ConnectedAccount)
   }
 
-  // Load unprocessed emails
-  let emailQuery = admin
-    .from('email_items')
-    .select('*')
-    .eq('user_id', user.id)
-    .is('triage_class', null)
-    .order('received_at', { ascending: false })
-    .limit(20)
-
+  // Load unprocessed emails. If specific ids are provided, process only those.
+  const emails: EmailItem[] = []
   if (emailIds.length > 0) {
-    emailQuery = admin
+    const { data } = await admin
       .from('email_items')
       .select('*')
       .eq('user_id', user.id)
-      .in('id', emailIds)
+      .in('id', emailIds.slice(0, maxEmails))
+
+    for (const row of (data ?? [])) emails.push(normalizeEmailShape(row) as EmailItem)
+  } else {
+    const { data } = await admin
+      .from('email_items')
+      .select('*')
+      .eq('user_id', user.id)
+      .is('triage_class', null)
+      .order('received_at', { ascending: false })
+      .limit(maxEmails)
+
+    for (const row of (data ?? [])) emails.push(normalizeEmailShape(row) as EmailItem)
   }
 
-  const { data: emails } = await emailQuery as { data: EmailItem[] | null }
-  if (!emails?.length) {
+  if (!emails.length) {
     return NextResponse.json({ ok: true, processed: 0, message: 'No emails to triage' })
   }
 
-  const results: Record<string, string> = {}
+  logEmailTriage('triage_batch_loaded', {
+    userId: user.id,
+    requestedIds: emailIds.length,
+    maxEmails,
+    loaded: emails.length,
+  })
 
-  for (const email of emails) {
+  const results: Record<string, string> = {}
+  let classifiedOnly = 0
+  let fullTriage = 0
+  let errors = 0
+
+  for (const rawEmail of emails) {
+    const email = normalizeEmailShape(rawEmail) as EmailItem
     try {
       // CRITICAL: find account matching the inbox the email arrived in
       const inboxAddr = (email.inbox_address ?? '').toLowerCase()
-      const account   = accountMap.get(inboxAddr)
+      const account = accountMap.get(inboxAddr)
 
       if (!account) {
         // Inbox not connected — classify only, no draft
         const classification = await classifyEmail(email, calib)
         await admin.from('email_items').update({
           triage_class: classification.class,
-          triage_at:    new Date().toISOString(),
-          triage_note:  'Classified only — inbox not connected for drafting',
+          triage_at: new Date().toISOString(),
+          triage_note: 'Classified only — inbox not connected for drafting',
         }).eq('id', email.id)
         results[email.id] = `classified: ${classification.class} (no draft — inbox not connected)`
+        classifiedOnly++
         continue
       }
 
@@ -154,13 +195,29 @@ export async function POST(req: NextRequest) {
         email, account, calib, userName, admin, userId: user.id,
       })
       results[email.id] = result
-
+      fullTriage++
     } catch (err) {
       results[email.id] = `error: ${err instanceof Error ? err.message : 'unknown'}`
+      errors++
     }
   }
 
-  return NextResponse.json({ ok: true, processed: emails.length, results })
+  logEmailTriage('triage_batch_completed', {
+    userId: user.id,
+    processed: emails.length,
+    fullTriage,
+    classifiedOnly,
+    errors,
+  })
+
+  return NextResponse.json({
+    ok: true,
+    processed: emails.length,
+    full_triage: fullTriage,
+    classified_only: classifiedOnly,
+    errors,
+    results,
+  })
 }
 
 /* ── Full triage + draft for one email ─────────────────────── */
