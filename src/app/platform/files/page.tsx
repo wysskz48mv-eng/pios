@@ -1,11 +1,12 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+import { UnifiedFileManager } from '@/components/files/UnifiedFileManager'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // File Intelligence — Drive scan, folder structure, invoice tracker, filing rules
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TABS = ['structure', 'files', 'invoices', 'rules'] as const
+const TABS = ['library', 'structure', 'files', 'invoices', 'rules'] as const
 type Tab = typeof TABS[number]
 
 const CAT_COLOURS: Record<string, string> = {
@@ -513,7 +514,7 @@ type FileRule = {
 }
 
 export default function FilesPage() {
-  const [tab, setTab]           = useState<Tab>('structure')
+  const [tab, setTab]           = useState<Tab>('library')
   const [spaces, setSpaces]     = useState<FileSpace[]>([])
   const [stats, setStats]       = useState<Record<string,unknown>|null>(null)
   const [scanning, setScanning] = useState(false)
@@ -546,13 +547,15 @@ export default function FilesPage() {
         </p>
       </div>
 
-      <div style={{ display:'flex', gap:2, borderBottom:'1px solid var(--pios-border)', marginBottom:20 }}>
+      <div style={{ display:'flex', gap:2, borderBottom:'1px solid var(--pios-border)', marginBottom:20, flexWrap:'wrap' as const }}>
+        <TabBtn active={tab==='library'}  onClick={()=>setTab('library')}>🧠 Unified Library</TabBtn>
         <TabBtn active={tab==='structure'} onClick={()=>setTab('structure')}>🗂️ Folder Structure</TabBtn>
         <TabBtn active={tab==='files'}     onClick={()=>setTab('files')}>📄 Files</TabBtn>
         <TabBtn active={tab==='invoices'}  onClick={()=>setTab('invoices')}>🧾 Invoices</TabBtn>
         <TabBtn active={tab==='rules'}     onClick={()=>setTab('rules')}>⚙ Filing Rules</TabBtn>
       </div>
 
+      {tab==='library'   && <UnifiedFileManager initialSource="all" />}
       {tab==='structure' && <StructureTab spaces={spaces} onScan={runScan} scanning={scanning} scanResult={scanResult} stats={stats} />}
       {tab==='files'     && <FilesTab spaces={spaces} />}
       {tab==='invoices'  && <InvoicesTab />}

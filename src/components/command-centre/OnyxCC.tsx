@@ -10,25 +10,12 @@ interface Props {
   onOpenThemePicker: () => void
 }
 
-function getNavItems(stats: any) {
-  return [
-    { icon: '⌂', label: 'Brief', href: '/platform/dashboard', active: true },
-    { icon: '◎', label: 'NemoClaw™', href: '/platform/nemoclaw' },
-    { icon: '✉', label: 'Email', href: '/platform/email', badge: stats?.email?.unread || undefined },
-    { icon: '⚖', label: 'Decisions', href: '/platform/decisions', badge: stats?.decisions?.pending || undefined },
-    { icon: '◈', label: 'EOSA™', href: '/platform/frameworks' },
-    { icon: '◉', label: 'Stakeholders', href: '/platform/stakeholders' },
-    { icon: '▣', label: 'Board Pack', href: '/platform/board' },
-    { icon: '⊞', label: 'Chief of Staff', href: '/platform/cos' },
-  ]
-}
-
 export function OnyxCC({ profile, onOpenThemePicker }: Props) {
   const [nemoQuery, setNemoQuery] = useState('')
   const [stats, setStats] = useState<any>(null)
 
   useEffect(() => {
-    fetch('/api/command-centre').then(r => r.json()).then(setStats).catch(() => {})
+    fetch('/api/command-centre').then((r) => r.json()).then(setStats).catch(() => {})
   }, [])
 
   const today = new Date().toLocaleDateString('en-GB', {
@@ -40,36 +27,19 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
 
   return (
     <div className={`${styles.ccRoot} ${styles.onyx}`}>
-      <aside className={styles.onyxSidebar}>
-        <div className={styles.onyxLogo}>P</div>
-        {getNavItems(stats).map((item) => (
-          <Link key={item.label} href={item.href} className={`${styles.onyxNavItem} ${item.active ? styles.onyxNavActive : ''}`}>
-            <span className={styles.onyxNavIcon}>{item.icon}</span>
-            {item.badge && <span className={styles.onyxNavBadge}>{item.badge}</span>}
-            <span className={styles.onyxTooltip}>{item.label}</span>
-          </Link>
-        ))}
-        <div style={{ marginTop: 'auto' }}></div>
-        <button className={styles.onyxNavItem} onClick={onOpenThemePicker} title="Change theme" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-          <span className={styles.onyxNavIcon} style={{ opacity: 0.3 }}>◐</span>
-          <span className={styles.onyxTooltip}>Change theme</span>
-        </button>
-        <Link href="/platform/settings" className={styles.onyxNavItem}>
-          <span className={styles.onyxNavIcon} style={{ opacity: 0.3 }}>⚙</span>
-          <span className={styles.onyxTooltip}>Settings</span>
-        </Link>
-      </aside>
-
-      <main className={styles.onyxMain}>
+      <main className={styles.onyxMain} style={{ marginLeft: 0 }}>
         <div className={styles.onyxCenter}>
           <div className={styles.onyxCenterHeader}>
             <div>
               <div className={styles.onyxDate}>{today}</div>
               <h1 className={styles.onyxGreeting}>Good morning, {profile.name.split(' ')[0]}.</h1>
             </div>
-            <span className={styles.onyxPersonaBadge}>
-              {profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} · {profile.jobTitle || 'Executive'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className={styles.onyxPersonaBadge} onClick={onOpenThemePicker}>Theme</button>
+              <span className={styles.onyxPersonaBadge}>
+                {profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} · {profile.jobTitle || 'Executive'}
+              </span>
+            </div>
           </div>
 
           <div className={styles.onyxCard}>
@@ -161,23 +131,6 @@ export function OnyxCC({ profile, onOpenThemePicker }: Props) {
                 <div className={styles.onyxStkRole}>{stakeholder.role}</div>
               </div>
               {stakeholder.dot && <div className={styles.onyxStkDot}></div>}
-            </div>
-          ))}
-
-          <div className={styles.onyxPanelTitle} style={{ marginTop: 24 }}>OKRs</div>
-          {[
-            { name: 'Platform launch', pct: 78 },
-            { name: 'Research delivery', pct: 62 },
-            { name: 'Revenue target', pct: 12 },
-          ].map((okr) => (
-            <div key={okr.name} className={styles.onyxOkr}>
-              <div className={styles.onyxOkrRow}>
-                <span className={styles.onyxOkrName}>{okr.name}</span>
-                <span className={styles.onyxOkrPct}>{okr.pct}%</span>
-              </div>
-              <div className={styles.onyxOkrTrack}>
-                <div className={styles.onyxOkrFill} style={{ width: `${okr.pct}%` }}></div>
-              </div>
             </div>
           ))}
         </aside>

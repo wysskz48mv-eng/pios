@@ -1,89 +1,126 @@
-import { apiError } from '@/lib/api-error'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { callClaude } from '@/lib/ai/client'
-import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
 
 export const runtime = 'nodejs'
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GET  /api/ai/sessions              — list all sessions (title, id, domain, updated_at)
-// GET  /api/ai/sessions?id=uuid      — fetch a single session with messages
-// POST { action:'create', domain? }  — create new session
-// POST { action:'save', id, messages, tokens_used? } — save messages
-// POST { action:'title', id, messages } — auto-generate title from first exchange
-// POST { action:'delete', id }       — delete session
-// ─────────────────────────────────────────────────────────────────────────────
 
 export async function GET(request: Request) {
   try {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
     if (id) {
-      const { data } = await supabase.from('ai_sessions').select('*').eq('id', id).eq('user_id', user.id).single()
-      return NextResponse.json({ session: data })
+      const { data: session } = await supabase
+        .from('ai_sessions')
+        .select('id,title,domain_mode,message_count,last_message_at,updated_at,created_at')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single()
+
+      const { data: messageRows } = await supabase
+        .from('ai_messages')
+        .select('id,session_id,role,content,metadata,created_at')
+        .eq('session_id', id)
+        .order('created_at', { ascending: true })
+
+      return NextResponse.json({ session: { ...session, messages: messageRows ?? [] } })
     }
 
-    const { data } = await supabase.from('ai_sessions')
-      .select('id, title, domain, tokens_used, created_at, updated_at')
+    const { data } = await supabase
+      .from('ai_sessions')
+      .select('id,title,domain_mode,message_count,last_message_at,updated_at,created_at')
       .eq('user_id', user.id)
+      .order('last_message_at', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })
-      .limit(30)
+      .limit(50)
+
     return NextResponse.json({ sessions: data ?? [] })
-  } catch (err: unknown) {
-    return apiError(err)
+  } catch (error) {
+    return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
   try {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
     const { action } = body
 
     if (action === 'create') {
-      const { domain = 'general' } = body
-      const { data } = await supabase.from('ai_sessions').insert({
-        user_id: user.id,
-        title: 'New conversation',
-        domain,
-        messages: [],
-        tokens_used: 0,
-      }).select('id').single()
-      return NextResponse.json({ id: data?.id })
-    }
+      const domainMode = body.domain_mode ?? body.domain ?? 'general'
+      const { data } = await supabase
+        .from('ai_sessions')
+        .insert({
+          user_id: user.id,
+          title: 'New conversation',
+          domain_mode: domainMode,
+          domain: domainMode,
+          message_count: 0,
+        })
+        .select('id')
+        .single()
 
-    if (action === 'save') {
-      const { id, messages, tokens_used } = body
-      await supabase.from('ai_sessions').update({
-        messages,
-        tokens_used: tokens_used ?? 0,
-        updated_at: new Date().toISOString(),
-      }).eq('id', id).eq('user_id', user.id)
-      return NextResponse.json({ saved: true })
+      return NextResponse.json({ id: data?.id })
     }
 
     if (action === 'title') {
       const { id, messages } = body
       if (!messages?.length) return NextResponse.json({ title: 'New conversation' })
-      // Generate a short title from the first user message
-      const firstUser = messages.find((m: unknown) => (m as any)?.role === 'user')?.content ?? ''
+
+      const firstUser = messages.find((m: { role: string }) => m.role === 'user')?.content ?? ''
       const raw = await callClaude(
-        [{ role: 'user', content: `Generate a 4-6 word title for a conversation that starts with: "${firstUser.slice(0, 200)}". Return only the title, no quotes.` }],
-        'Return only a short title. No quotes, no punctuation at the end.',
+        [{ role: 'user', content: `Generate a 4-6 word title for: "${String(firstUser).slice(0, 200)}". Return only title.` }],
+        'Return only a short title with no punctuation.',
         50
       )
-      const title = raw.trim().replace(/^["']|["']$/g, '').slice(0, 60)
+
+      const title = raw.trim().replace(/^['"]|['"]$/g, '').slice(0, 60)
       await supabase.from('ai_sessions').update({ title, updated_at: new Date().toISOString() }).eq('id', id).eq('user_id', user.id)
       return NextResponse.json({ title })
+    }
+
+    if (action === 'save') {
+      const { id, messages } = body
+      if (!id || !Array.isArray(messages)) return NextResponse.json({ error: 'id and messages are required' }, { status: 400 })
+
+      await supabase.from('ai_messages').delete().eq('session_id', id)
+
+      if (messages.length > 0) {
+        await supabase.from('ai_messages').insert(
+          messages.map((m: Record<string, unknown>) => ({
+            session_id: id,
+            user_id: user.id,
+            role: m.role,
+            content: String(m.content ?? ''),
+            metadata: (m.metadata ?? null) as Record<string, unknown> | null,
+          }))
+        )
+      }
+
+      await supabase
+        .from('ai_sessions')
+        .update({
+          message_count: messages.length,
+          last_message_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .eq('user_id', user.id)
+
+      return NextResponse.json({ saved: true })
     }
 
     if (action === 'delete') {
@@ -92,7 +129,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  } catch (err: unknown) {
-    return apiError(err)
+  } catch (error) {
+    return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }
