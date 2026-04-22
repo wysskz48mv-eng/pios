@@ -121,8 +121,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'current_phase must be setup|execution|reporting|soft_landing|closeout' }, { status: 400 })
     }
 
+    const { data: profile } = await admin
+      .from('user_profiles')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!profile?.tenant_id) {
+      return NextResponse.json({ error: 'Tenant context missing' }, { status: 422 })
+    }
+
     const insertPayload = {
       user_id: user.id,
+      tenant_id: profile.tenant_id,
       client_name: clientName,
       title: title || `${clientName} Engagement`,
       engagement_type: VALID_ENGAGEMENT_TYPES.has(engagementType) ? engagementType : 'strategy',
