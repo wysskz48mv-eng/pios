@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
 
     await db.from('user_profiles').update({
       google_access_token_enc:  encryptOAuthToken(providerToken),
-      google_refresh_token_enc: providerRefreshToken ? encryptOAuthToken(providerRefreshToken) : null,
+      ...(providerRefreshToken ? { google_refresh_token_enc: encryptOAuthToken(providerRefreshToken) } : {}),
       google_email:         googleEmail,
       google_token_expiry:  tokenExpiry,
       token_encryption_alg: 'aes-256-gcm',
@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
         ai_triage_enabled:    true,
         receipt_scan_enabled: false,
         google_access_token_enc:  encryptOAuthToken(providerToken),
-        google_refresh_token_enc: providerRefreshToken ? encryptOAuthToken(providerRefreshToken) : null,
+        ...(providerRefreshToken ? { google_refresh_token_enc: encryptOAuthToken(providerRefreshToken) } : {}),
         google_token_expiry:  tokenExpiry,
         token_encryption_alg: 'aes-256-gcm',
         google_scopes:        ['email', 'profile', 'https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive.readonly'],

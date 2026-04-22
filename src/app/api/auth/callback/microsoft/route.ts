@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { verifySignedOAuthState }    from '@/lib/security/oauth-state'
+import { encryptOAuthToken }         from '@/lib/security/oauth-token-crypto'
 
 export const runtime = 'nodejs'
 
@@ -182,9 +183,10 @@ export async function GET(req: NextRequest) {
       display_name:     displayName || autoLabel,
       context:          inferredContext,
       label:            autoLabel,
-      ms_access_token_enc:  access_token,
-      ms_refresh_token_enc: refresh_token,
+      ms_access_token_enc:  encryptOAuthToken(access_token),
+      ...(refresh_token ? { ms_refresh_token_enc: encryptOAuthToken(refresh_token) } : {}),
       ms_token_expiry:  tokenExpiry,
+      token_encryption_alg: 'aes-256-gcm',
       ms_tenant_id:     msTenantId,
       ms_scopes:        ['Mail.Read','Mail.Send','Calendars.Read','User.Read'],
       is_primary:       (count ?? 0) === 0,
