@@ -71,6 +71,10 @@
     {
       "path": "/api/cron/citation-graph",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/agents",
+      "schedule": "0 * * * *"
     }
   ],
   "functions": {
@@ -157,6 +161,9 @@
     },
     "src/app/api/cron/citation-graph/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/cron/agents/route.ts": {
+      "maxDuration": 60
     },
     "src/app/api/postdoc/career-planner/route.ts": {
       "maxDuration": 30

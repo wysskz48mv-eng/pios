@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient, type EmailOtpType } from '@supabase/supabase-js'
 import { GOOGLE_OAUTH_INTENT_PARAM, parseGoogleOAuthIntent } from '@/lib/auth/google-oauth'
+import { encryptOAuthToken } from '@/lib/security/oauth-token-crypto'
 import { getSupabasePublicKey, getSupabaseUrl } from '@/lib/supabase/env'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
@@ -149,11 +150,12 @@ export async function GET(request: NextRequest) {
       persona_type:         'executive',
       onboarded:            false,
       google_email:         googleEmail,
-      google_access_token_enc:  shouldConnectWorkspace ? providerToken : null,
-      google_refresh_token_enc: shouldConnectWorkspace ? providerRefreshToken : null,
+      google_access_token_enc:  shouldConnectWorkspace ? encryptOAuthToken(providerToken) : null,
+      google_refresh_token_enc: shouldConnectWorkspace ? encryptOAuthToken(providerRefreshToken) : null,
       google_token_expiry:  shouldConnectWorkspace && providerToken
         ? new Date(Date.now() + 3600 * 1000).toISOString()
         : null,
+      token_encryption_alg: shouldConnectWorkspace && providerToken ? 'aes-256-gcm' : 'none',
       created_at:           new Date().toISOString(),
       updated_at:           new Date().toISOString(),
     }, { onConflict: 'id' })
@@ -176,10 +178,11 @@ export async function GET(request: NextRequest) {
     const tokenExpiry = new Date(Date.now() + 3600 * 1000).toISOString()
 
     await db.from('user_profiles').update({
-      google_access_token_enc:  providerToken,
-      google_refresh_token_enc: providerRefreshToken ?? null,
+      google_access_token_enc:  encryptOAuthToken(providerToken),
+      google_refresh_token_enc: providerRefreshToken ? encryptOAuthToken(providerRefreshToken) : null,
       google_email:         googleEmail,
       google_token_expiry:  tokenExpiry,
+      token_encryption_alg: 'aes-256-gcm',
       updated_at:           new Date().toISOString(),
     }).eq('id', user.id)
 
@@ -196,9 +199,10 @@ export async function GET(request: NextRequest) {
         sync_enabled:         true,
         ai_triage_enabled:    true,
         receipt_scan_enabled: false,
-        google_access_token_enc:  providerToken,
-        google_refresh_token_enc: providerRefreshToken,
+        google_access_token_enc:  encryptOAuthToken(providerToken),
+        google_refresh_token_enc: providerRefreshToken ? encryptOAuthToken(providerRefreshToken) : null,
         google_token_expiry:  tokenExpiry,
+        token_encryption_alg: 'aes-256-gcm',
         google_scopes:        ['email', 'profile', 'https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive.readonly'],
         connected_at:         new Date().toISOString(),
       }, { onConflict: 'user_id,email_address' })

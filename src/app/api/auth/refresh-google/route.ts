@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { decryptOAuthTokenSafe, encryptOAuthToken } from '@/lib/security/oauth-token-crypto'
 
 // POST /api/auth/refresh-google
 // Exchanges a Google refresh_token for a new access_token
@@ -15,12 +16,13 @@ export async function POST() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.google_refresh_token_enc) {
+  const refreshToken = decryptOAuthTokenSafe(profile?.google_refresh_token_enc)
+  if (!refreshToken) {
     return NextResponse.json({ error: 'No refresh token stored. Please sign in with Google again.' }, { status: 400 })
   }
 
   // Check if token is actually expired (within 5 min buffer)
-  if (profile.google_token_expiry) {
+  if (profile?.google_token_expiry) {
     const expiry = new Date(profile.google_token_expiry)
     if (expiry > new Date(Date.now() + 5 * 60 * 1000)) {
       return NextResponse.json({ refreshed: false, message: 'Token still valid' })
@@ -40,7 +42,7 @@ export async function POST() {
       body: new URLSearchParams({
         client_id: clientId,
         client_secret: clientSecret,
-        refresh_token: profile.google_refresh_token_enc,
+        refresh_token: refreshToken,
         grant_type: 'refresh_token',
       }),
     })
@@ -54,10 +56,11 @@ export async function POST() {
     const newExpiry = new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000).toISOString()
 
     await supabase.from('user_profiles').update({
-      google_access_token_enc: tokens.access_token,
+      google_access_token_enc: encryptOAuthToken(tokens.access_token),
       google_token_expiry: newExpiry,
+      token_encryption_alg: 'aes-256-gcm',
       // Google only returns a new refresh_token if rotation is enabled
-      ...(tokens.refresh_token ? { google_refresh_token_enc: tokens.refresh_token } : {}),
+      ...(tokens.refresh_token ? { google_refresh_token_enc: encryptOAuthToken(tokens.refresh_token) } : {}),
     }).eq('id', user.id)
 
     return NextResponse.json({ refreshed: true, expires_at: newExpiry })

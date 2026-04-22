@@ -27,13 +27,34 @@ const VALID_TIMEZONES_PARTIAL = [
   'Europe/', 'America/', 'Asia/', 'Africa/', 'Australia/', 'Pacific/', 'UTC',
 ]
 
+const SENSITIVE_PROFILE_KEYS = [
+  'google_access_token_enc',
+  'google_refresh_token_enc',
+  'google_access_token',
+  'google_refresh_token',
+  'ms_access_token_enc',
+  'ms_refresh_token_enc',
+  'token_encryption_alg',
+  'stripe_customer_id',
+  'stripe_subscription_id',
+]
+
+function sanitiseProfileForClient(profile: Record<string, unknown> | null) {
+  if (!profile) return null
+  const clone = { ...profile }
+  for (const key of SENSITIVE_PROFILE_KEYS) {
+    delete clone[key]
+  }
+  return clone
+}
+
 export async function GET() {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Use service client — bypasses RLS, guarantees all columns including new ones
+    // Use service client — bypasses RLS for server-side use, but sanitise payload before returning
     const admin = createServiceClient()
 
     const { data: profileData } = await admin
@@ -46,14 +67,14 @@ export async function GET() {
     const tenantId = profileData?.tenant_id
     const { data: tenantData } = tenantId
       ? await admin.from('tenants').select(
-          'id,name,plan,plan_status,ai_credits_used,ai_credits_limit,trial_ends_at,subscription_id,stripe_customer_id,stripe_subscription_id'
+          'id,name,plan,plan_status,ai_credits_used,ai_credits_limit,trial_ends_at,subscription_id'
         ).eq('id', tenantId).single()
       : { data: null }
 
     return NextResponse.json({
       user:    { id: user.id, email: user.email },
-      profile: profileData ?? null,
-      tenant:  tenantData  ?? null,
+      profile: sanitiseProfileForClient((profileData ?? null) as Record<string, unknown> | null),
+      tenant:  tenantData ?? null,
     })
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message ?? 'Internal server error' }, { status: 500 })

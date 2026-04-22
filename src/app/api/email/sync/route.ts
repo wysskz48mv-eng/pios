@@ -6,14 +6,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }              from '@/lib/supabase/server'
 import { callClaude }                from '@/lib/ai/client'
-import { checkPromptSafety, sanitiseApiResponse, auditLog } from '@/lib/security-middleware'
+import { decryptOAuthTokenSafe, encryptOAuthToken } from '@/lib/security/oauth-token-crypto'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
 const DOMAINS = ['academic','fm_consulting','saas','business','personal']
-async function refreshGoogleToken(supabase: any, account: any): Promise<string | null> {
-  if (!account.google_refresh_token_enc) return null
+
+async function refreshGoogleToken(
+  supabase: any,
+  account: any,
+  opts?: { force?: boolean; userId?: string },
+): Promise<string | null> {
+  const refreshToken = decryptOAuthTokenSafe(account.google_refresh_token_enc)
+  if (!refreshToken) return null
+
+  const force = opts?.force ?? false
+  if (!force && account.google_token_expiry) {
+    const expiry = new Date(account.google_token_expiry).getTime()
+    if (expiry > Date.now() + 5 * 60 * 1000) {
+      const existing = decryptOAuthTokenSafe(account.google_access_token_enc)
+      if (existing) return existing
+    }
+  }
+
   try {
     const res = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -21,21 +37,46 @@ async function refreshGoogleToken(supabase: any, account: any): Promise<string |
       body: new URLSearchParams({
         client_id:     process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        refresh_token: account.google_refresh_token_enc,
+        refresh_token: refreshToken,
         grant_type:    'refresh_token',
       }),
     })
+
     const data = await res.json()
-    if (!data.access_token) return null
+    if (!res.ok || !data.access_token) {
+      console.error('[email/sync] Google refresh failed', { accountId: account.id, status: res.status, error: data?.error })
+      return null
+    }
+
     const expiry = new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString()
-    await supabase.from('connected_email_accounts')
-      .update({ google_access_token_enc: data.access_token, google_token_expiry: expiry })
-      .eq('id', account.id)
+    const updatePayload: Record<string, unknown> = {
+      google_access_token_enc: encryptOAuthToken(data.access_token),
+      google_token_expiry: expiry,
+      token_encryption_alg: 'aes-256-gcm',
+    }
+    if (data.refresh_token) updatePayload.google_refresh_token_enc = encryptOAuthToken(data.refresh_token)
+
+    if (account.id === 'legacy') {
+      await supabase.from('user_profiles').update(updatePayload).eq('id', opts?.userId)
+    } else {
+      await supabase.from('connected_email_accounts').update(updatePayload).eq('id', account.id)
+    }
+
+    account.google_access_token_enc = updatePayload.google_access_token_enc
+    if (updatePayload.google_refresh_token_enc) account.google_refresh_token_enc = updatePayload.google_refresh_token_enc
+    account.google_token_expiry = expiry
+
     return data.access_token
-  } catch { return null }
+  } catch (error) {
+    console.error('[email/sync] Google token refresh exception', { accountId: account.id, error: (error as Error).message })
+    return null
+  }
 }
+
 async function refreshMicrosoftToken(supabase: any, account: any): Promise<string | null> {
-  if (!account.ms_refresh_token_enc) return null
+  const refreshToken = decryptOAuthTokenSafe(account.ms_refresh_token_enc)
+  if (!refreshToken) return null
+
   try {
     const res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
       method: 'POST',
@@ -43,30 +84,51 @@ async function refreshMicrosoftToken(supabase: any, account: any): Promise<strin
       body: new URLSearchParams({
         client_id:     process.env.AZURE_CLIENT_ID!,
         client_secret: process.env.AZURE_CLIENT_SECRET!,
-        refresh_token: account.ms_refresh_token_enc,
+        refresh_token: refreshToken,
         grant_type:    'refresh_token',
         scope:         'Mail.Read Mail.Send Calendars.Read User.Read offline_access',
       }),
     })
+
     const data = await res.json()
-    if (!data.access_token) return null
+    if (!res.ok || !data.access_token) {
+      console.error('[email/sync] Microsoft refresh failed', { accountId: account.id, status: res.status, error: data?.error })
+      return null
+    }
+
     const expiry = new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString()
-    await supabase.from('connected_email_accounts')
-      .update({ ms_access_token_enc: data.access_token, ms_token_expiry: expiry })
-      .eq('id', account.id)
+    const updatePayload: Record<string, unknown> = {
+      ms_access_token_enc: encryptOAuthToken(data.access_token),
+      ms_token_expiry: expiry,
+      token_encryption_alg: 'aes-256-gcm',
+    }
+    if (data.refresh_token) updatePayload.ms_refresh_token_enc = encryptOAuthToken(data.refresh_token)
+
+    await supabase.from('connected_email_accounts').update(updatePayload).eq('id', account.id)
+
+    account.ms_access_token_enc = updatePayload.ms_access_token_enc
+    if (updatePayload.ms_refresh_token_enc) account.ms_refresh_token_enc = updatePayload.ms_refresh_token_enc
+    account.ms_token_expiry = expiry
+
     return data.access_token
-  } catch { return null }
+  } catch (error) {
+    console.error('[email/sync] Microsoft token refresh exception', { accountId: account.id, error: (error as Error).message })
+    return null
+  }
 }
-async function getValidToken(supabase: any, account: any): Promise<string | null> {
+
+async function getValidToken(supabase: any, account: any, userId: string): Promise<string | null> {
   const buf = 5 * 60 * 1000
   if (account.provider === 'google') {
     const exp = account.google_token_expiry ? new Date(account.google_token_expiry) : null
-    if (exp && exp > new Date(Date.now() + buf)) return account.google_access_token_enc
-    return refreshGoogleToken(supabase, account)
+    const currentAccess = decryptOAuthTokenSafe(account.google_access_token_enc)
+    if (currentAccess && exp && exp > new Date(Date.now() + buf)) return currentAccess
+    return refreshGoogleToken(supabase, account, { userId })
   }
   if (account.provider === 'microsoft') {
     const exp = account.ms_token_expiry ? new Date(account.ms_token_expiry) : null
-    if (exp && exp > new Date(Date.now() + buf)) return account.ms_access_token_enc
+    const currentAccess = decryptOAuthTokenSafe(account.ms_access_token_enc)
+    if (currentAccess && exp && exp > new Date(Date.now() + buf)) return currentAccess
     return refreshMicrosoftToken(supabase, account)
   }
   return null
@@ -122,12 +184,33 @@ async function autoCreateExpense(supabase: any, userId: string, rd: any, domain:
     updated_at: new Date().toISOString(),
   })
 }
-async function syncGmail(supabase: any, userId: string, account: any, token: string, max: number) {
-  const res = await fetch(
+async function syncGmail(supabase: any, userId: string, account: any, max: number) {
+  let token = await getValidToken(supabase, account, userId)
+  if (!token) {
+    return { synced: 0, receipts: 0, blocked: 0, error: 'Token expired' }
+  }
+
+  const fetchList = async (bearer: string) => fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=is:unread+-category:promotions`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: { Authorization: `Bearer ${bearer}` } },
   )
+
+  let res = await fetchList(token)
+  if (res.status === 401) {
+    console.warn('[email/sync] Gmail returned 401, forcing token refresh', { accountId: account.id, userId })
+    const refreshed = await refreshGoogleToken(supabase, account, { force: true, userId })
+    if (!refreshed) {
+      if (account.id !== 'legacy') {
+        await supabase.from('connected_email_accounts').update({ last_sync_error: 'Token expired — reconnect required' }).eq('id', account.id)
+      }
+      return { synced: 0, receipts: 0, blocked: 0, error: 'Token refresh failed after 401' }
+    }
+    token = refreshed
+    res = await fetchList(token)
+  }
+
   if (!res.ok) return { synced: 0, receipts: 0, blocked: 0, error: `Gmail ${res.status}` }
+
   const { messages = [] } = await res.json()
 
   // Load blocked senders for this user
@@ -150,12 +233,13 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
   for (const msg of messages.slice(0, max)) {
     const dr = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=List-Unsubscribe`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     )
     if (!dr.ok) continue
+
     const d = await dr.json()
     const h: Record<string, string> = {}
-    d.payload?.headers?.forEach((x: Record<string, unknown>) => { h[String(x.name ?? "")] = String(x.value ?? "") })
+    d.payload?.headers?.forEach((x: Record<string, unknown>) => { h[String(x.name ?? '')] = String(x.value ?? '') })
     const subject = h.Subject ?? '(no subject)', from = h.From ?? '', snippet = d.snippet ?? ''
     const senderEmail = (from.match(/<(.+)>/)?.[1] ?? from).toLowerCase()
     const senderDomain = senderEmail.split('@')[1] ?? ''
@@ -232,8 +316,12 @@ async function syncGmail(supabase: any, userId: string, account: any, token: str
     }, { onConflict: 'gmail_message_id' })
     synced++
   }
-  await supabase.from('connected_email_accounts')
-    .update({ last_synced_at: new Date().toISOString(), last_sync_error: null }).eq('id', account.id)
+
+  if (account.id !== 'legacy') {
+    await supabase.from('connected_email_accounts')
+      .update({ last_synced_at: new Date().toISOString(), last_sync_error: null }).eq('id', account.id)
+  }
+
   return { synced, receipts, blocked }
 }
 async function syncMicrosoft(supabase: any, userId: string, account: any, token: string, max: number) {
@@ -284,18 +372,26 @@ export async function POST(req: NextRequest) {
       .select('google_access_token_enc,google_refresh_token_enc,google_token_expiry').eq('id', user.id).single()
     if (!profile?.google_access_token_enc) return NextResponse.json({ synced: 0, receipts: 0, message: 'No email accounts connected. Add one in Settings → Email Accounts.' })
     const legacyAcc = { id: 'legacy', provider: 'google', context: 'personal', label: 'Gmail', display_name: 'Gmail', ai_domain_override: null, receipt_scan_enabled: false, receipt_keywords: [], ...profile }
-    const token = await getValidToken(supabase, legacyAcc)
-    if (!token) return NextResponse.json({ synced: 0, receipts: 0, error: 'Google inbox token expired. Reconnect it in Settings → Email Accounts.' })
-    const r = await syncGmail(supabase, user.id, legacyAcc, token, max)
+    const r = await syncGmail(supabase, user.id, legacyAcc, max)
     return NextResponse.json({ ...r, accounts_synced: 1 })
   }
   const results = await Promise.allSettled(accounts.map(async (acc: any) => {
-    const token = await getValidToken(supabase, acc)
-    if (!token) { await supabase.from('connected_email_accounts').update({ last_sync_error: 'Token expired — reconnect' }).eq('id', acc.id); return { account_id: acc.id, email: acc.email_address, synced: 0, receipts: 0, error: 'Token expired' } }
-    const r = acc.provider === 'google' ? await syncGmail(supabase, user.id, acc, token, max) :
-              acc.provider === 'microsoft' ? await syncMicrosoft(supabase, user.id, acc, token, max) :
-              { synced: 0, receipts: 0, error: 'IMAP coming soon' }
-    return { account_id: acc.id, email: acc.email_address, ...r }
+    if (acc.provider === 'google') {
+      const r = await syncGmail(supabase, user.id, acc, max)
+      return { account_id: acc.id, email: acc.email_address, ...r }
+    }
+
+    if (acc.provider === 'microsoft') {
+      const token = await getValidToken(supabase, acc, user.id)
+      if (!token) {
+        await supabase.from('connected_email_accounts').update({ last_sync_error: 'Token expired — reconnect' }).eq('id', acc.id)
+        return { account_id: acc.id, email: acc.email_address, synced: 0, receipts: 0, error: 'Token expired' }
+      }
+      const r = await syncMicrosoft(supabase, user.id, acc, token, max)
+      return { account_id: acc.id, email: acc.email_address, ...r }
+    }
+
+    return { account_id: acc.id, email: acc.email_address, synced: 0, receipts: 0, error: 'IMAP coming soon' }
   }))
   const detail = results.map((r: any) => r.status === 'fulfilled' ? (r as any).value : { error: String(r.reason) })
   return NextResponse.json({

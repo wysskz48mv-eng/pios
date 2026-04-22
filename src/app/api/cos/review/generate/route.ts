@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { callClaude } from '@/lib/ai/client'
 import { checkPromptSafety } from '@/lib/security-middleware'
+import { requireCronSecret } from '@/lib/security/route-guards'
 
 /**
  * POST /api/cos/review/generate
@@ -149,10 +150,8 @@ UK English. Use specific names and dates from the data.`
 
 /* ── CRON: Friday 16:00 UTC ─────────────────────────────────── */
 export async function GET(req: NextRequest) {
-  const auth = req.headers.get('Authorization')
-  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-  }
+  const blocked = requireCronSecret(req)
+  if (blocked) return blocked
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
