@@ -205,6 +205,9 @@ PROFILE: ${JSON.stringify(extracted, null, 2)}`,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
 
+    // Keep onboarding calibration gates in sync after every calibration write.
+    await svc.rpc('evaluate_calibration_gates', { p_user_id: user.id })
+
     const profileUpdates: Record<string, unknown> = {
       cv_processing_status: 'complete',
       onboarding_current_step: 5,

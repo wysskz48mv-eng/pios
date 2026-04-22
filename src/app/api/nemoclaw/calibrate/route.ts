@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
       updated_at:             new Date().toISOString(),
     }, { onConflict: 'user_id' })
 
+    await supabase.rpc('evaluate_calibration_gates', { p_user_id: user.id })
+
     // Build context summary — purely from evidence, no hardcoded domains
     // NemoClaw receives whatever the signal layer provided.
     // Layer 1 (CV): job history vocabulary

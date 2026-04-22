@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import ConsultingSubnav from '@/components/consulting/ConsultingSubnav'
 
 /* ── Types ──────────────────────────────────────────────────── */
 interface Proposal {
@@ -115,6 +116,8 @@ export default function ConsultingPage() {
           </Link>
         </div>
       </div>
+
+      <ConsultingSubnav />
 
       {/* Tab bar */}
       <div style={{ display: 'flex', gap: 2, borderBottom: '1px solid var(--pios-border)', marginBottom: 24 }}>
