@@ -109,20 +109,23 @@ export default function ConsultingEngagementsPage() {
   const [riskLibrary, setRiskLibrary] = useState<FMRiskLibraryItem[]>([])
   const [precedents, setPrecedents] = useState<FMPrecedent[]>([])
   const [dashboardWidgets, setDashboardWidgets] = useState<DashboardWidgets | null>(null)
-  const [activeTab, setActiveTab] = useState<'workbench' | 'risks' | 'options' | 'precedents' | 'reports'>('workbench')
+  const [activeTab, setActiveTab] = useState<'workbench' | 'risks' | 'options' | 'precedents' | 'reports' | 'emails'>('workbench')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [running, setRunning] = useState(false)
   const [generatingOptions, setGeneratingOptions] = useState(false)
   const [generatingReport, setGeneratingReport] = useState(false)
   const [fmEnabled, setFmEnabled] = useState(false)
-  const [reportFormat, setReportFormat] = useState<'markdown' | 'html' | 'pdf'>('html')
+  const [reportFormat, setReportFormat] = useState<'json' | 'html' | 'pdf' | 'pptx'>('html')
   const [reportColor, setReportColor] = useState('#6349ff')
   const [latestReportUrl, setLatestReportUrl] = useState<string | null>(null)
   const [runResult, setRunResult] = useState<Record<string, any> | null>(null)
   const [selectedRiskId, setSelectedRiskId] = useState<string | null>(null)
   const [riskScenario, setRiskScenario] = useState('')
   const [riskSuggestions, setRiskSuggestions] = useState<FMRiskLibraryItem[]>([])
+  const [linkedEmails, setLinkedEmails] = useState<Array<Record<string, any>>>([])
+  const [emailsLoading, setEmailsLoading] = useState(false)
+  const [emailCorrelationCount, setEmailCorrelationCount] = useState<number | null>(null)
 
   const createForm = useForm<CreateEngagementInput>({
     resolver: zodResolver(createEngagementSchema),
@@ -224,6 +227,21 @@ export default function ConsultingEngagementsPage() {
     setFrameworks(json.frameworks ?? [])
   }, [])
 
+  const loadEngagementEmails = useCallback(async (engagementId: string) => {
+    setEmailsLoading(true)
+    try {
+      const response = await fetch(`/api/engagements/${engagementId}/emails`)
+      if (!response.ok) {
+        setLinkedEmails([])
+        return
+      }
+      const json = await response.json()
+      setLinkedEmails(json.emails ?? [])
+    } finally {
+      setEmailsLoading(false)
+    }
+  }, [])
+
   const loadFmBootData = useCallback(async () => {
     const [typesRes, riskRes, widgetRes] = await Promise.all([
       fetch('/api/fm/engagement-types'),
@@ -266,6 +284,11 @@ export default function ConsultingEngagementsPage() {
   useEffect(() => {
     loadStepFrameworks(activeStep)
   }, [activeStep, loadStepFrameworks])
+
+  useEffect(() => {
+    if (!selectedId || activeTab !== 'emails') return
+    loadEngagementEmails(selectedId)
+  }, [activeTab, loadEngagementEmails, selectedId])
 
   useEffect(() => {
     if (!riskScenario.trim()) {
@@ -418,6 +441,22 @@ export default function ConsultingEngagementsPage() {
     await loadEngagementDetail(selectedId)
   }
 
+  async function correlateEngagementEmails() {
+    if (!selectedId) return
+    setEmailsLoading(true)
+    try {
+      const response = await fetch(`/api/engagements/${selectedId}/emails/correlate`, { method: 'POST' })
+      const json = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(json.error ?? 'Failed to correlate emails')
+      setEmailCorrelationCount(Number(json.correlated_count ?? 0))
+      await Promise.all([loadEngagementDetail(selectedId), loadEngagementEmails(selectedId)])
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to correlate emails')
+    } finally {
+      setEmailsLoading(false)
+    }
+  }
+
   async function generateOptions() {
     if (!selectedId || !detail) return
     setGeneratingOptions(true)
@@ -483,10 +522,11 @@ export default function ConsultingEngagementsPage() {
     if (!selectedId) return
     setGeneratingReport(true)
     try {
-      const res = await fetch(`/api/engagements/${selectedId}/reports/generate?format=${reportFormat}`, {
+      const res = await fetch(`/api/engagements/${selectedId}/reports/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          format: reportFormat,
           branding: {
             color_scheme: reportColor,
           },
@@ -503,7 +543,7 @@ export default function ConsultingEngagementsPage() {
     }
   }
 
-  const latestReport = detail?.deliverables?.find((item) => ['markdown', 'html', 'pdf'].includes(item.deliverable_type))
+  const latestReport = detail?.deliverables?.find((item) => ['json', 'html', 'pdf', 'pptx'].includes(item.deliverable_type))
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1300, margin: '0 auto' }}>
@@ -668,6 +708,7 @@ export default function ConsultingEngagementsPage() {
                   { id: 'risks', label: `Risk Register (${detail.risks?.length ?? 0})` },
                   { id: 'options', label: `Options (${detail.options?.length ?? 0})` },
                   { id: 'precedents', label: 'Precedents' },
+                  { id: 'emails', label: `Email Correlation (${(detail.engagement.linked_email_ids ?? []).length})` },
                   { id: 'reports', label: 'Report Generator' },
                 ].map((tab) => (
                   <button
@@ -1038,15 +1079,57 @@ export default function ConsultingEngagementsPage() {
                 </div>
               )}
 
+              {activeTab === 'emails' && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center' }}>
+                    <button onClick={correlateEngagementEmails} style={ghostButtonStyle} disabled={emailsLoading}>
+                      {emailsLoading ? 'Correlating…' : 'Run Email Correlation'}
+                    </button>
+                    <button onClick={() => selectedId && loadEngagementEmails(selectedId)} style={ghostButtonStyle} disabled={emailsLoading || !selectedId}>
+                      Refresh linked emails
+                    </button>
+                    {emailCorrelationCount != null && (
+                      <span style={{ fontSize: 11, color: 'var(--pios-muted)' }}>
+                        Last correlation matched {emailCorrelationCount} emails.
+                      </span>
+                    )}
+                  </div>
+
+                  {emailsLoading ? (
+                    <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>Loading linked emails…</div>
+                  ) : linkedEmails.length === 0 ? (
+                    <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>No linked emails yet. Run correlation to attach relevant messages.</div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {linkedEmails.map((email) => (
+                        <div key={String(email.id)} style={{ border: '1px solid var(--pios-border)', borderRadius: 8, padding: 10 }}>
+                          <div style={{ fontSize: 12, color: 'var(--pios-text)', fontWeight: 600 }}>
+                            {String(email.subject ?? '(no subject)')}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginTop: 4 }}>
+                            {String(email.sender_name ?? email.from_name ?? email.sender_email ?? email.from_address ?? 'Unknown sender')} ·{' '}
+                            {email.received_at ? new Date(String(email.received_at)).toLocaleString('en-GB') : 'Unknown date'}
+                          </div>
+                          {email.body_preview && (
+                            <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginTop: 6 }}>{String(email.body_preview)}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {activeTab === 'reports' && (
                 <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '300px 1fr', gap: 12 }}>
                   <div style={{ border: '1px solid var(--pios-border)', borderRadius: 8, padding: 10 }}>
                     <div style={{ fontSize: 12, color: 'var(--pios-text)', fontWeight: 600, marginBottom: 8 }}>Report Settings</div>
                     <label style={{ fontSize: 11, color: 'var(--pios-muted)' }}>Format</label>
                     <select value={reportFormat} onChange={(event) => setReportFormat(event.target.value as any)} style={{ ...inputStyle, width: '100%', marginTop: 4 }}>
-                      <option value="markdown">Markdown</option>
+                      <option value="json">JSON</option>
                       <option value="html">HTML</option>
                       <option value="pdf">PDF</option>
+                      <option value="pptx">PPTX</option>
                     </select>
 
                     <label style={{ fontSize: 11, color: 'var(--pios-muted)', marginTop: 8, display: 'block' }}>Brand color</label>
@@ -1058,16 +1141,22 @@ export default function ConsultingEngagementsPage() {
 
                     {latestReportUrl && (
                       <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginTop: 8 }}>
-                        Report link: <span style={{ color: 'var(--ai)' }}>{latestReportUrl}</span>
+                        <a href={latestReportUrl} style={{ color: 'var(--ai)', textDecoration: 'none' }}>Download latest report →</a>
                       </div>
                     )}
                   </div>
 
                   <div style={{ border: '1px solid var(--pios-border)', borderRadius: 8, padding: 10, maxHeight: 420, overflow: 'auto' }}>
                     <div style={{ fontSize: 12, color: 'var(--pios-muted)', marginBottom: 6 }}>Report preview</div>
-                    <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12, color: 'var(--pios-text)' }}>
-                      {latestReport?.content ?? 'Generate a report to preview output.'}
-                    </pre>
+                    {latestReport?.deliverable_type === 'pdf' || latestReport?.deliverable_type === 'pptx' ? (
+                      <div style={{ fontSize: 12, color: 'var(--pios-muted)' }}>
+                        Binary report generated ({latestReport.deliverable_type.toUpperCase()}). Use the download link to open the file.
+                      </div>
+                    ) : (
+                      <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12, color: 'var(--pios-text)' }}>
+                        {latestReport?.content ?? 'Generate a report to preview output.'}
+                      </pre>
+                    )}
                   </div>
                 </div>
               )}

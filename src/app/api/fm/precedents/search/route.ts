@@ -20,10 +20,13 @@ export async function GET(req: NextRequest) {
     const tags = cleanStringArray((params.get('tags') ?? '').split(',').map((x) => x.trim()).filter(Boolean))
     const limit = Math.max(1, Math.min(Number(params.get('limit') ?? 30), 100))
 
+    const { data: profile } = await admin.from('user_profiles').select('tenant_id').eq('id', user.id).maybeSingle()
+    if (!profile?.tenant_id) return Response.json({ precedents: [] })
+
     let q = admin
       .from('fm_precedents')
       .select('*')
-      .or(`user_id.eq.${user.id},is_public.eq.true`)
+      .or(`tenant_id.eq.${profile.tenant_id},is_public.eq.true`)
       .order('updated_at', { ascending: false })
       .limit(limit)
 
@@ -31,9 +34,7 @@ export async function GET(req: NextRequest) {
     if (sector) q = q.eq('industry_sector', sector)
     if (scale) q = q.eq('project_scale', scale)
     if (tags.length) q = q.overlaps('tags', tags)
-    if (query) {
-      q = q.or(`title.ilike.%${query}%,anonymized_excerpt.ilike.%${query}%`)
-    }
+    if (query) q = q.or(`title.ilike.%${query}%,anonymized_excerpt.ilike.%${query}%`)
 
     const { data, error } = await q
     if (error) throw error
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
       .split(/[^a-z0-9]+/g)
       .filter((term) => term.length >= 3)
 
-    const ranked = (data ?? []).map((item) => {
+    const ranked = (data ?? []).map((item: any) => {
       const hay = `${item.title} ${item.anonymized_excerpt ?? ''} ${(item.tags ?? []).join(' ')}`.toLowerCase()
       const score = terms.length
         ? terms.reduce((acc, term) => acc + (hay.includes(term) ? 1 : 0), 0) / terms.length

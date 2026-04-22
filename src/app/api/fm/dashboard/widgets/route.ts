@@ -12,19 +12,24 @@ export async function GET(req: NextRequest) {
 
     const { admin, user } = auth
 
-    const [{ data: engagements }, { data: risks }, { data: fmTypes }] = await Promise.all([
+    const [{ data: profile }, { data: engagements }, { data: fmTypes }] = await Promise.all([
+      admin.from('user_profiles').select('tenant_id').eq('id', user.id).maybeSingle(),
       admin
         .from('consulting_engagements')
-        .select('id,status,fm_engagement_type_code')
+        .select('id,status,fm_engagement_type_code,tenant_id')
         .eq('user_id', user.id)
         .not('fm_engagement_type_code', 'is', null)
         .neq('status', 'archived'),
-      admin
-        .from('engagement_risks')
-        .select('engagement_id,probability,impact,risk_score,risk_library:fm_risk_library(title,iso_references)')
-        .eq('user_id', user.id),
       admin.from('fm_engagement_types').select('type_code,name,iso_standards').eq('is_active', true),
     ])
+
+    const engagementIds = (engagements ?? []).map((item) => item.id)
+    const { data: risks } = engagementIds.length
+      ? await admin
+          .from('engagement_risks')
+          .select('engagement_id,probability,impact,risk_score,risk_library:fm_risk_library(title,iso_references)')
+          .in('engagement_id', engagementIds)
+      : { data: [] as any[] }
 
     const fmByTypeMap = new Map<string, number>()
     for (const engagement of engagements ?? []) {
@@ -92,6 +97,7 @@ export async function GET(req: NextRequest) {
     const compliancePercent = total > 0 ? Math.round((compliant / total) * 100) : 100
 
     return Response.json({
+      tenant_id: profile?.tenant_id ?? null,
       risk_heatmap: heatmap,
       active_fm_engagements_by_type: activeByType,
       compliance_status_percent: compliancePercent,

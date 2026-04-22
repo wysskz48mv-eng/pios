@@ -70,7 +70,6 @@ export async function PATCH(req: NextRequest, context: { params: Promise<RoutePa
     if (body.custom_title !== undefined) updates.custom_title = body.custom_title == null ? null : String(body.custom_title)
     if (body.custom_description !== undefined) updates.custom_description = body.custom_description == null ? null : String(body.custom_description)
     if (body.linked_email_ids !== undefined) updates.linked_email_ids = cleanStringArray(body.linked_email_ids)
-    if (body.evidence_document_ids !== undefined) updates.evidence_document_ids = cleanStringArray(body.evidence_document_ids)
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })

@@ -42,7 +42,12 @@ export async function requireOwnedEngagement(req: NextRequest, engagementId: str
     return { error: NextResponse.json({ error: 'Engagement not found' }, { status: 404 }) }
   }
 
-  return { user, admin, engagement }
+  const tenantId = engagement.tenant_id as string | null
+  if (!tenantId) {
+    return { error: NextResponse.json({ error: 'Engagement is missing tenant scope' }, { status: 422 }) }
+  }
+
+  return { user, admin, engagement, tenantId }
 }
 
 export function parseJsonArray<T>(value: unknown): T[] {

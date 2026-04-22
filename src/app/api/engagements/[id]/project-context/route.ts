@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, context: { params: Promise<RoutePara
         .maybeSingle(),
       admin
         .from('engagement_risks')
-        .select('id,custom_title,evidence_document_ids')
+        .select('id,custom_title,linked_email_ids,notes')
         .eq('engagement_id', id),
     ])
 

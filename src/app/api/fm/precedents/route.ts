@@ -11,7 +11,6 @@ function anonymize(input: string, clientName?: string | null) {
     const esc = clientName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     output = output.replace(new RegExp(esc, 'gi'), '[CLIENT]')
   }
-  // Light anonymisation for common direct identifiers.
   output = output.replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[EMAIL]')
   output = output.replace(/\+?\d[\d\s().-]{7,}\d/g, '[PHONE]')
   return output
@@ -35,6 +34,11 @@ export async function POST(req: NextRequest) {
       frameworks_used?: string[]
       reusable_artifacts?: Record<string, unknown>
       is_public?: boolean
+    }
+
+    const { data: profile } = await admin.from('user_profiles').select('tenant_id').eq('id', user.id).maybeSingle()
+    if (!profile?.tenant_id) {
+      return NextResponse.json({ error: 'Tenant context missing' }, { status: 422 })
     }
 
     let sourceEngagement: Record<string, any> | null = null
@@ -73,7 +77,7 @@ export async function POST(req: NextRequest) {
         : ''
 
     const payload = {
-      user_id: user.id,
+      tenant_id: profile.tenant_id,
       title: String(body.title ?? sourceEngagement?.title ?? 'Untitled precedent').trim(),
       engagement_type: String(body.engagement_type ?? sourceEngagement?.fm_engagement_type_code ?? sourceEngagement?.engagement_type ?? 'fm_type_1'),
       industry_sector: body.industry_sector ?? sourceEngagement?.industry_sector ?? null,
@@ -84,16 +88,10 @@ export async function POST(req: NextRequest) {
       frameworks_used: cleanStringArray(body.frameworks_used),
       reusable_artifacts: reusableArtifacts,
       original_engagement_id: body.engagement_id ?? null,
-      created_from_engagement_at: body.engagement_id ? new Date().toISOString() : null,
       is_public: body.is_public === true,
     }
 
-    const { data, error } = await admin
-      .from('fm_precedents')
-      .insert(payload)
-      .select('*')
-      .single()
-
+    const { data, error } = await admin.from('fm_precedents').insert(payload).select('*').single()
     if (error) throw error
 
     return NextResponse.json({ precedent: data }, { status: 201 })

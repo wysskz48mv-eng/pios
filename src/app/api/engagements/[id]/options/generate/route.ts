@@ -60,7 +60,7 @@ export async function POST(req: NextRequest, context: { params: Promise<RoutePar
     const auth = await requireOwnedEngagement(req, id)
     if ('error' in auth) return auth.error
 
-    const { admin, user, engagement } = auth
+    const { admin, tenantId, engagement } = auth
 
     const body = (await req.json().catch(() => ({}))) as {
       objectives?: string
@@ -138,7 +138,7 @@ Return JSON as either:
       .filter((opt) => opt && typeof opt === 'object')
       .slice(0, 4)
       .map((opt, idx) => ({
-        user_id: user.id,
+        tenant_id: tenantId,
         engagement_id: id,
         option_number: idx + 1,
         title: String(opt.title ?? `Option ${idx + 1}`),
@@ -169,6 +169,12 @@ Return JSON as either:
         },
         { status: 502 }
       )
+    }
+
+    if (!generated.some((option) => option.is_recommended)) {
+      generated[0].is_recommended = true
+      generated[0].recommendation_reasoning =
+        generated[0].recommendation_reasoning ?? 'Selected as baseline recommendation pending further stakeholder review.'
     }
 
     // Replace previous generated options for a clean comparison set.
