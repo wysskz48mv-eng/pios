@@ -175,6 +175,72 @@ function detectMeetingSignal(subject: string, from: string, snippet: string) {
   return /(meeting|invite|invitation|calendar|rsvp|accepted|declined|tentative|rescheduled|cancelled|cancellation|google meet|zoom|microsoft teams|outlook event|ical|\.ics)/i.test(haystack)
 }
 
+function decodeBase64UrlToUtf8(input?: string | null): string {
+  if (!input) return ''
+  try {
+    const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
+    const padLength = (4 - (normalized.length % 4)) % 4
+    const padded = normalized + '='.repeat(padLength)
+    return Buffer.from(padded, 'base64').toString('utf-8')
+  } catch {
+    return ''
+  }
+}
+
+function stripHtmlTags(value: string): string {
+  return value
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function extractBodyTextFromPart(part: any): { plain: string; html: string } {
+  const plain = part?.mimeType === 'text/plain' ? decodeBase64UrlToUtf8(part?.body?.data) : ''
+  const html = part?.mimeType === 'text/html' ? decodeBase64UrlToUtf8(part?.body?.data) : ''
+
+  let nestedPlain = ''
+  let nestedHtml = ''
+  for (const child of part?.parts ?? []) {
+    const nested = extractBodyTextFromPart(child)
+    if (!nestedPlain && nested.plain) nestedPlain = nested.plain
+    if (!nestedHtml && nested.html) nestedHtml = nested.html
+    if (nestedPlain && nestedHtml) break
+  }
+
+  return {
+    plain: plain || nestedPlain,
+    html: html || nestedHtml,
+  }
+}
+
+function extractBodyText(message: any): string {
+  const rootBody = decodeBase64UrlToUtf8(message?.payload?.body?.data)
+  if (rootBody.trim()) return rootBody.trim()
+
+  const extracted = extractBodyTextFromPart(message?.payload)
+  if (extracted.plain.trim()) return extracted.plain.trim()
+  if (extracted.html.trim()) return stripHtmlTags(extracted.html)
+
+  return (message?.snippet ?? '').trim()
+}
+
+function parseAuthenticationResults(headerValue?: string | null) {
+  const value = (headerValue ?? '').trim()
+  const pick = (regex: RegExp) => value.match(regex)?.[1]?.toLowerCase() ?? null
+  return {
+    raw: value || null,
+    spf: pick(/\bspf=(pass|fail|softfail|neutral|none|temperror|permerror)\b/i),
+    dkim: pick(/\bdkim=(pass|fail|none|temperror|permerror|policy|neutral)\b/i),
+    dmarc: pick(/\bdmarc=(pass|fail|bestguesspass|none|temperror|permerror)\b/i),
+  }
+}
+
 async function triageEmail(
   subject: string, from: string, snippet: string,
   context: string, domainOverride: string | null,
@@ -302,7 +368,7 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
 
   for (const msg of messages) {
     const dr = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=List-Unsubscribe`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
       { headers: { Authorization: `Bearer ${token}` } },
     )
     if (!dr.ok) {
@@ -313,15 +379,27 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
 
     const d = await dr.json()
     const h: Record<string, string> = {}
-    d.payload?.headers?.forEach((x: Record<string, unknown>) => { h[String(x.name ?? '')] = String(x.value ?? '') })
-    const subject = h.Subject ?? '(no subject)', from = h.From ?? '', snippet = d.snippet ?? ''
+    d.payload?.headers?.forEach((x: Record<string, unknown>) => {
+      const key = String(x.name ?? '')
+      if (key) h[key] = String(x.value ?? '')
+    })
+
+    const subject = h.Subject ?? '(no subject)'
+    const from = h.From ?? ''
+    const snippet = d.snippet ?? ''
     const senderEmail = (from.match(/<(.+)>/)?.[1] ?? from).toLowerCase()
     const senderDomain = senderEmail.split('@')[1] ?? ''
     const receivedAt = d.internalDate ? new Date(parseInt(d.internalDate)).toISOString() : new Date().toISOString()
 
-    // Extract unsubscribe URL from List-Unsubscribe header
-    const unsubHeader = h['List-Unsubscribe'] ?? ''
-    const unsubscribeUrl = unsubHeader.match(/<(https?:\/\/[^>]+)>/)?.[1] ?? null
+    const bodyText = extractBodyText(d)
+    const hasBody = bodyText.trim().length > 0
+
+    // Keep raw List-Unsubscribe and derived URL for later workflows
+    const listUnsubscribeHeader = h['List-Unsubscribe'] ?? null
+    const unsubscribeUrl = listUnsubscribeHeader?.match(/<(https?:\/\/[^>]+)>/)?.[1] ?? null
+
+    // Capture authentication outcomes for downstream trust scoring
+    const authResults = parseAuthenticationResults(h['Authentication-Results'] ?? null)
 
     // Check if sender is blocked
     if (blockedEmails.has(senderEmail) || blockedDomains.has(senderDomain)) {
@@ -336,6 +414,12 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
         inbox_address: account.email_address ?? null,
         received_at: receivedAt,
         snippet,
+        body_text: bodyText,
+        has_body: hasBody,
+        sender_domain: senderDomain,
+        has_unsubscribe_link: !!listUnsubscribeHeader,
+        list_unsubscribe_header: listUnsubscribeHeader,
+        auth_results: authResults,
         status: 'spam',
         is_blocked: true,
         is_spam: true,
@@ -402,8 +486,14 @@ export async function syncGmail(supabase: any, userId: string, account: any, max
       subject,
       sender_name: from.split('<')[0].trim(),
       sender_email: senderEmail,
+      sender_domain: senderDomain,
       received_at: receivedAt,
       snippet,
+      body_text: bodyText,
+      has_body: hasBody,
+      has_unsubscribe_link: !!listUnsubscribeHeader,
+      list_unsubscribe_header: listUnsubscribeHeader,
+      auth_results: authResults,
       domain_tag: t.domain,
       triage_class: t.triage_class,
       priority_score: t.priority_score,
