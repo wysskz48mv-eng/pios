@@ -6,6 +6,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 type RouteParams = { id: string }
+const VALID_PHASES = new Set(['setup', 'execution', 'reporting', 'soft_landing', 'closeout'])
 
 async function requireOwnedEngagement(req: NextRequest, engagementId: string) {
   const auth = await requireWorkbenchUser(req)
@@ -35,10 +36,24 @@ export async function GET(req: NextRequest, context: { params: Promise<RoutePara
 
     const { admin, engagement } = auth
 
-    const [{ data: steps }, { data: appliedFrameworks }, { data: deliverables }] = await Promise.all([
+    const [
+      { data: steps },
+      { data: appliedFrameworks },
+      { data: deliverables },
+      { data: risks },
+      { data: options },
+      { data: stakeholders },
+    ] = await Promise.all([
       admin.from('engagement_steps').select('*').eq('engagement_id', id).order('step_number', { ascending: true }),
       admin.from('engagement_frameworks').select('*').eq('engagement_id', id).order('created_at', { ascending: false }),
       admin.from('engagement_deliverables').select('*').eq('engagement_id', id).order('created_at', { ascending: false }),
+      admin
+        .from('engagement_risks')
+        .select('*, risk_library:fm_risk_library(*)')
+        .eq('engagement_id', id)
+        .order('risk_score', { ascending: false }),
+      admin.from('fm_options').select('*').eq('engagement_id', id).order('option_number', { ascending: true }),
+      admin.from('engagement_stakeholders').select('*').eq('engagement_id', id),
     ])
 
     return NextResponse.json({
@@ -46,6 +61,9 @@ export async function GET(req: NextRequest, context: { params: Promise<RoutePara
       steps: steps ?? [],
       frameworks: appliedFrameworks ?? [],
       deliverables: deliverables ?? [],
+      risks: risks ?? [],
+      options: options ?? [],
+      stakeholders: stakeholders ?? [],
     })
   } catch (err: unknown) {
     return apiError(err)
@@ -94,6 +112,18 @@ export async function PATCH(req: NextRequest, context: { params: Promise<RoutePa
       updates.current_step = step
     }
 
+    if (body.current_phase !== undefined) {
+      const phase = String(body.current_phase).toLowerCase()
+      if (!VALID_PHASES.has(phase)) {
+        return NextResponse.json(
+          { error: 'current_phase must be setup|execution|reporting|soft_landing|closeout' },
+          { status: 400 }
+        )
+      }
+      updates.current_phase = phase
+    }
+
+    if (body.phase_gate_state !== undefined) updates.phase_gate_state = body.phase_gate_state
     if (body.brief !== undefined) updates.brief = body.brief == null ? null : String(body.brief)
     if (body.framework_used !== undefined) updates.framework_used = body.framework_used == null ? null : String(body.framework_used)
     if (body.project_id !== undefined) updates.project_id = body.project_id
@@ -101,6 +131,11 @@ export async function PATCH(req: NextRequest, context: { params: Promise<RoutePa
     if (body.end_date !== undefined) updates.end_date = body.end_date
     if (body.value !== undefined) updates.value = body.value
     if (body.currency !== undefined) updates.currency = body.currency
+    if (body.fm_engagement_type_code !== undefined) updates.fm_engagement_type_code = body.fm_engagement_type_code
+    if (body.industry_sector !== undefined) updates.industry_sector = body.industry_sector
+    if (body.building_type !== undefined) updates.building_type = body.building_type
+    if (body.project_scale !== undefined) updates.project_scale = body.project_scale
+
     if (body.tags !== undefined) {
       updates.tags = Array.isArray(body.tags) ? body.tags.map((tag) => String(tag)) : []
     }
@@ -114,7 +149,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<RoutePa
       .from('consulting_engagements')
       .update(updates)
       .eq('id', id)
-      .select()
+      .select('*')
       .single()
 
     if (error) throw error
@@ -137,7 +172,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<RouteP
       .from('consulting_engagements')
       .update({ status: 'archived', archived_at: new Date().toISOString() })
       .eq('id', id)
-      .select()
+      .select('*')
       .single()
 
     if (error) throw error

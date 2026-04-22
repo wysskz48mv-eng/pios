@@ -30,6 +30,11 @@ interface Subscription {
   id: string; name: string; category?: string; amount?: number
   currency?: string; next_renewal?: string; status: string; auto_detected?: boolean
 }
+interface FmWidgets {
+  compliance_status_percent?: number
+  active_fm_engagements_by_type?: Array<{ name: string; count: number }>
+  top_risks_across_portfolio?: Array<{ title: string; count: number }>
+}
 
 /* ── Stat card ───────────────────────────────────────────────── */
 function Stat({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: string }) {
@@ -63,21 +68,24 @@ export default function ConsultingPage() {
   const [timesheet, setTimesheet]   = useState<TimesheetEntry[]>([])
   const [cpd, setCpd]               = useState<CPDEntry[]>([])
   const [subs, setSubs]             = useState<Subscription[]>([])
+  const [fmWidgets, setFmWidgets]   = useState<FmWidgets | null>(null)
   const [loading, setLoading]       = useState(true)
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [pRes, tRes, cRes, sRes] = await Promise.allSettled([
+      const [pRes, tRes, cRes, sRes, fmRes] = await Promise.allSettled([
         fetch('/api/consulting/proposals').then(r => r.ok ? r.json() : { proposals: [] }),
         fetch('/api/consulting/timesheet').then(r => r.ok ? r.json() : { entries: [] }),
         fetch('/api/consulting/cpd').then(r => r.ok ? r.json() : { entries: [] }),
         fetch('/api/consulting/subscriptions').then(r => r.ok ? r.json() : { subscriptions: [] }),
+        fetch('/api/fm/dashboard/widgets').then(r => r.ok ? r.json() : null),
       ])
       if (pRes.status === 'fulfilled') setProposals(pRes.value.proposals ?? [])
       if (tRes.status === 'fulfilled') setTimesheet(tRes.value.entries ?? [])
       if (cRes.status === 'fulfilled') setCpd(cRes.value.entries ?? [])
       if (sRes.status === 'fulfilled') setSubs(sRes.value.subscriptions ?? [])
+      if (fmRes.status === 'fulfilled') setFmWidgets(fmRes.value)
     } finally {
       setLoading(false)
     }
@@ -138,6 +146,27 @@ export default function ConsultingPage() {
             <Stat label="CPD hours (YTD)"    value={`${totalCPD.toFixed(1)}h`}      sub="logged this year"  />
             <Stat label="Renewals due (90d)" value={renewalsDue}                    sub="subscriptions"      accent={renewalsDue > 0 ? 'var(--warn)' : undefined} />
           </div>
+
+          {fmWidgets && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div style={{ background: 'var(--pios-card)', border: '1px solid var(--pios-border)', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ fontSize: 10, color: 'var(--pios-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>FM Compliance Status</div>
+                <div style={{ marginTop: 6, fontSize: 24, color: 'var(--ai)' }}>{fmWidgets.compliance_status_percent ?? 0}%</div>
+              </div>
+              <div style={{ background: 'var(--pios-card)', border: '1px solid var(--pios-border)', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ fontSize: 10, color: 'var(--pios-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Active FM Engagements by Type</div>
+                {(fmWidgets.active_fm_engagements_by_type ?? []).slice(0, 3).map((item) => (
+                  <div key={item.name} style={{ fontSize: 12, color: 'var(--pios-text)', marginTop: 6 }}>{item.name}: {item.count}</div>
+                ))}
+              </div>
+              <div style={{ background: 'var(--pios-card)', border: '1px solid var(--pios-border)', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ fontSize: 10, color: 'var(--pios-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Top Portfolio Risks</div>
+                {(fmWidgets.top_risks_across_portfolio ?? []).slice(0, 3).map((item) => (
+                  <div key={item.title} style={{ fontSize: 12, color: 'var(--pios-text)', marginTop: 6 }}>{item.title} ({item.count})</div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Recent proposals */}
           <div style={{ background: 'var(--pios-card)', border: '1px solid var(--pios-border)', borderRadius: 12, padding: '20px', marginBottom: 16 }}>
