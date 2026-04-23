@@ -14,7 +14,7 @@ import ConsultingSubnav from '@/components/consulting/ConsultingSubnav'
 
 /* ── Types ──────────────────────────────────────────────────── */
 interface Proposal {
-  id: string; title: string; client_id?: string; client_name?: string
+  id: string; title: string; client_id?: string; client_name?: string; client_org?: string
   status: string; fee_gbp?: number; sent_at?: string; created_at: string
 }
 interface TimesheetEntry {
@@ -75,7 +75,7 @@ export default function ConsultingPage() {
     setLoading(true)
     try {
       const [pRes, tRes, cRes, sRes, fmRes] = await Promise.allSettled([
-        fetch('/api/consulting/proposals').then(r => r.ok ? r.json() : { proposals: [] }),
+        fetch('/api/proposals').then(r => r.ok ? r.json() : { proposals: [] }),
         fetch('/api/consulting/timesheet').then(r => r.ok ? r.json() : { entries: [] }),
         fetch('/api/consulting/cpd').then(r => r.ok ? r.json() : { entries: [] }),
         fetch('/api/consulting/subscriptions').then(r => r.ok ? r.json() : { subscriptions: [] }),
@@ -184,7 +184,7 @@ export default function ConsultingPage() {
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--pios-border)' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--pios-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginTop: 2 }}>{p.client_name ?? 'No client'} · {new Date(p.created_at).toLocaleDateString('en-GB')}</div>
+                  <div style={{ fontSize: 11, color: 'var(--pios-muted)', marginTop: 2 }}>{p.client_org ?? p.client_name ?? 'No client'} · {new Date(p.created_at).toLocaleDateString('en-GB')}</div>
                 </div>
                 {p.fee_gbp && <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--pios-text)', flexShrink: 0 }}>£{p.fee_gbp.toLocaleString()}</div>}
                 <Badge status={p.status} />
@@ -231,7 +231,7 @@ export default function ConsultingPage() {
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 0', borderBottom: '1px solid var(--pios-border)' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--pios-text)' }}>{p.title}</div>
-                <div style={{ fontSize: 12, color: 'var(--pios-muted)', marginTop: 3 }}>{p.client_name ?? 'No client'} · Created {new Date(p.created_at).toLocaleDateString('en-GB')}</div>
+                <div style={{ fontSize: 12, color: 'var(--pios-muted)', marginTop: 3 }}>{p.client_org ?? p.client_name ?? 'No client'} · Created {new Date(p.created_at).toLocaleDateString('en-GB')}</div>
               </div>
               {p.fee_gbp && <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--pios-text)' }}>£{p.fee_gbp.toLocaleString()}</div>}
               <Badge status={p.status} />
